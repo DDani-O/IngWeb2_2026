@@ -1,0 +1,945 @@
+/* ========================
+   ESTILOS PERSONALIZADOS - FinTrack
+   Diseño Premium para Plataforma de Gestión de Gastos
+   ======================== */
+
+/* ========================
+   IMPORTO TIPOGRAFÍA DE GOOGLE FONTS
+   ======================== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* ========================
+   VARIABLES GLOBALES (CSS Custom Properties)
+   Paleta profesional para servicios financieros
+   ======================== */
+:root {
+    /* Colores Principales - Financiero & Premium */
+    --primary: #1e293b;              /* Azul marino profundo - Estabilidad */
+    --primary-light: #334155;        /* Variante más clara */
+    --primary-darker: #0f172a;       /* Variante más oscura */
+
+    --success: #10b981;              /* Verde éxito - Positivo y confianza */
+    --success-light: #d1fae5;        /* Fondo verde suave */
+    --success-dark: #059669;         /* Verde más oscuro */
+
+    --secondary: #64748b;            /* Gris azulado - Profesional */
+    --secondary-light: #cbd5e1;      /* Gris claro para bordes */
+    --secondary-lighter: #f1f5f9;    /* Gris muy claro para fondos */
+
+    /* Colores de Estado */
+    --danger: #ef4444;               /* Rojo para alertas */
+    --warning: #f59e0b;              /* Ámbar para advertencias */
+    --info: #0891b2;                 /* Cian para información */
+
+    /* Colores Base */
+    --background: #f8fafc;           /* Blanco roto muy claro */
+    --background-secondary: #ffffff; /* Blanco puro para cards */
+    --text-primary: #0f172a;         /* Casi negro con toque azul */
+    --text-secondary: #475569;       /* Gris oscuro para texto secundario */
+    --text-muted: #64748b;           /* Gris para texto deshabilitado */
+    --border-color: #e2e8f0;         /* Gris muy claro para bordes */
+
+    /* Tipografía */
+    --font-main: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+    /* Espaciado y Dimensiones */
+    --border-radius-sm: 8px;
+    --border-radius-md: 12px;
+    --border-radius-lg: 16px;
+
+    /* Sombras - Sutiles pero significativas */
+    --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.08);
+    --shadow-md: 0 4px 16px rgba(15, 23, 42, 0.12);
+    --shadow-lg: 0 8px 24px rgba(15, 23, 42, 0.15);
+    --shadow-xl: 0 12px 32px rgba(15, 23, 42, 0.2);
+
+    /* Transiciones */
+    --transition-fast: 0.15s ease;
+    --transition: 0.3s ease;
+    --transition-slow: 0.5s ease;
+}
+
+/* ========================
+   RESETEOS Y ESTILOS BASE
+   ======================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: var(--font-main);
+    color: var(--text-primary);
+    background-color: var(--background);
+    line-height: 1.6;
+    font-weight: 400;
+    font-size: 1rem;
+}
+
+/* ========================
+   TIPOGRAFÍA - PROFESIONAL Y CLARA
+   ======================== */
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-main);
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+}
+
+h1 {
+    font-size: clamp(1.875rem, 5vw, 3.5rem);
+}
+
+h2 {
+    font-size: clamp(1.5rem, 4vw, 2.75rem);
+}
+
+h3 {
+    font-size: clamp(1.25rem, 3vw, 2rem);
+}
+
+h4 {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+h5 {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+h6 {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+p {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    line-height: 1.65;
+}
+
+.lead {
+    font-size: 1.15rem;
+    line-height: 1.75;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+small, .small {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+a {
+    color: var(--primary);
+    text-decoration: none;
+    transition: color var(--transition);
+}
+
+a:hover {
+    color: var(--success);
+}
+
+/* ========================
+   NAVBAR - NAVEGACIÓN PROFESIONAL
+   ======================== */
+
+.navbar {
+    background-color: var(--background-secondary);
+    border-bottom: 1px solid var(--border-color);
+    padding: 1.25rem 0;
+    box-shadow: var(--shadow-sm);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.navbar-brand {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary) !important;
+    font-family: var(--font-main);
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.navbar-brand:hover {
+    color: var(--success) !important;
+}
+
+.navbar-brand i {
+    font-size: 1.75rem;
+}
+
+.nav-link {
+    font-weight: 500;
+    color: var(--text-secondary) !important;
+    font-size: 0.95rem;
+    position: relative;
+    padding: 0.5rem 1rem !important;
+    transition: color var(--transition);
+    margin: 0 0.25rem;
+}
+
+.nav-link:hover {
+    color: var(--primary) !important;
+}
+
+.nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 1rem;
+    right: 1rem;
+    height: 2px;
+    background: linear-gradient(90deg, var(--primary), var(--success));
+    transform: scaleX(0);
+    transform-origin: center;
+    transition: transform var(--transition);
+}
+
+.nav-link:hover::after {
+    transform: scaleX(1);
+}
+
+/* Botones del navbar */
+.navbar .btn {
+    border-radius: var(--border-radius-md);
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 0.625rem 1.25rem;
+    transition: all var(--transition);
+    border: none;
+}
+
+.navbar .btn-outline-primary {
+    color: var(--primary);
+    border: 2px solid var(--primary);
+}
+
+.navbar .btn-outline-primary:hover {
+    background-color: var(--primary);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.navbar .btn-primary {
+    background-color: var(--primary);
+    color: white;
+}
+
+.navbar .btn-primary:hover {
+    background-color: var(--primary-darker);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* ========================
+   HERO SECTION - ENCABEZADO IMPACTANTE
+   ======================== */
+
+.hero-section {
+    background-color: var(--background);
+    padding: 5rem 0 6rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: -300px;
+    right: -200px;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.12) 0%, transparent 70%);
+    border-radius: 50%;
+    animation: float 15s ease-in-out infinite;
+}
+
+.hero-section::after {
+    content: '';
+    position: absolute;
+    bottom: -200px;
+    left: -150px;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(30, 41, 59, 0.08) 0%, transparent 70%);
+    border-radius: 50%;
+}
+
+.hero-section h1 {
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    animation: fadeInUp 0.8s ease-out;
+    position: relative;
+    z-index: 1;
+}
+
+.hero-section h1 .text-primary {
+    background: linear-gradient(135deg, var(--primary), var(--success));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.hero-section .lead {
+    color: var(--text-secondary);
+    margin-bottom: 2.5rem;
+    animation: fadeInUp 0.8s ease-out 0.15s both;
+    position: relative;
+    z-index: 1;
+}
+
+.hero-section .d-flex.gap-3 {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    animation: fadeInUp 0.8s ease-out 0.3s both;
+    position: relative;
+    z-index: 1;
+}
+
+.hero-section .btn {
+    border-radius: var(--border-radius-md);
+    padding: 0.875rem 2rem;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all var(--transition);
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.hero-section .btn-primary {
+    background-color: var(--primary);
+    color: white;
+}
+
+.hero-section .btn-primary:hover {
+    background-color: var(--primary-darker);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+}
+
+.hero-section .btn-outline-primary {
+    color: var(--primary);
+    border: 2px solid var(--primary);
+    background-color: transparent;
+}
+
+.hero-section .btn-outline-primary:hover {
+    background-color: var(--primary);
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+}
+
+.hero-image-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 420px;
+    background: linear-gradient(135deg, var(--secondary-lighter) 0%, rgba(30, 41, 59, 0.05) 100%);
+    border-radius: var(--border-radius-lg);
+    border: 2px solid var(--border-color);
+    animation: fadeInRight 0.8s ease-out 0.2s both;
+    position: relative;
+    z-index: 1;
+}
+
+.hero-image-placeholder i {
+    color: var(--primary);
+    opacity: 0.2;
+    margin-bottom: 1.5rem;
+}
+
+.hero-image-placeholder p {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+/* ========================
+   FEATURES SECTION - CARACTERÍSTICAS
+   ======================== */
+
+.features-section {
+    padding: 5rem 0;
+    background-color: var(--background-secondary);
+}
+
+.features-section > div > h2 {
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+}
+
+.features-section > div > p.lead {
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.feature-card {
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--border-color);
+    background-color: var(--background-secondary);
+    transition: all var(--transition);
+    overflow: hidden;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.feature-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--success);
+}
+
+.feature-card .card-body {
+    padding: 2rem;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.feature-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(30, 41, 59, 0.05) 100%);
+    border-radius: 50%;
+    margin: 0 auto 1.5rem;
+    transition: all var(--transition);
+}
+
+.feature-card:hover .feature-icon {
+    background: linear-gradient(135deg, var(--success), rgba(16, 185, 129, 0.2));
+    transform: scale(1.1);
+}
+
+.feature-icon i {
+    color: var(--primary);
+    font-size: 2rem;
+}
+
+.feature-card .card-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+}
+
+.feature-card .card-text {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+}
+
+/* ========================
+   CTA SECTION - LLAMADA A LA ACCIÓN
+   ======================== */
+
+.cta-section {
+    padding: 4rem 0;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    position: relative;
+    overflow: hidden;
+    color: white;
+}
+
+.cta-section::before {
+    content: '';
+    position: absolute;
+    top: -150px;
+    right: -100px;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, transparent 70%);
+    border-radius: 50%;
+}
+
+.cta-section::after {
+    content: '';
+    position: absolute;
+    bottom: -100px;
+    left: -50px;
+    width: 350px;
+    height: 350px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    border-radius: 50%;
+}
+
+.cta-section h2 {
+    color: white;
+    margin-bottom: 1rem;
+    position: relative;
+    z-index: 1;
+}
+
+.cta-section .lead {
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 2rem;
+    position: relative;
+    z-index: 1;
+}
+
+.cta-section .btn-light {
+    border-radius: var(--border-radius-md);
+    padding: 0.875rem 2.5rem;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all var(--transition);
+    border: none;
+    background-color: white;
+    color: var(--primary);
+    position: relative;
+    z-index: 1;
+}
+
+.cta-section .btn-light:hover {
+    background-color: var(--background);
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-3px);
+}
+
+/* ========================
+   FOOTER - PIE DE PÁGINA
+   ======================== */
+
+.footer-section {
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--primary-darker) 100%);
+    color: rgba(255, 255, 255, 0.9);
+    padding: 4rem 0 2rem;
+    margin-top: 5rem;
+}
+
+.footer-section h5,
+.footer-section h6 {
+    color: white;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+}
+
+.footer-section p {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.95rem;
+    line-height: 1.7;
+}
+
+.footer-section a {
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    transition: all var(--transition);
+}
+
+.footer-section a:hover {
+    color: var(--success);
+}
+
+.footer-section ul li {
+    margin-bottom: 0.75rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.footer-section ul li i {
+    margin-right: 0.75rem;
+    color: var(--success);
+    width: 20px;
+}
+
+.footer-section .small {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.875rem;
+}
+
+.footer-section hr {
+    border-color: rgba(255, 255, 255, 0.1);
+    margin: 2rem 0;
+}
+
+.social-links {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.social-links a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    color: white;
+    transition: all var(--transition);
+    border: 2px solid transparent;
+}
+
+.social-links a:hover {
+    background-color: var(--success);
+    color: white;
+    transform: translateY(-3px);
+    border-color: var(--success);
+}
+
+/* ========================
+   UTILIDADES Y SOBRESCRITURAS DE BOOTSTRAP
+   ======================== */
+
+.btn-primary {
+    background-color: var(--primary) !important;
+    border-color: var(--primary) !important;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-darker) !important;
+    border-color: var(--primary-darker) !important;
+}
+
+.btn-success {
+    background-color: var(--success) !important;
+    border-color: var(--success) !important;
+}
+
+.btn-success:hover {
+    background-color: var(--success-dark) !important;
+    border-color: var(--success-dark) !important;
+}
+
+.text-primary {
+    color: var(--primary) !important;
+}
+
+.text-success {
+    color: var(--success) !important;
+}
+
+.text-muted {
+    color: var(--text-muted) !important;
+}
+
+.bg-light {
+    background-color: var(--background) !important;
+}
+
+.border-0 {
+    border: none !important;
+}
+
+.card {
+    border: 1px solid var(--border-color) !important;
+    border-radius: var(--border-radius-md) !important;
+    box-shadow: var(--shadow-sm) !important;
+}
+
+.card:hover {
+    box-shadow: var(--shadow-md) !important;
+}
+
+/* ========================
+   ANIMACIONES
+   ======================== */
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInRight {
+    from {
+        opacity: 0;
+        transform: translateX(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(20px);
+    }
+}
+
+/* ========================
+   RESPONSIVE DESIGN
+   ======================== */
+
+/* Tablets y laptops medianas (max 1024px) */
+@media (max-width: 1024px) {
+    .hero-section {
+        padding: 4rem 0 5rem;
+    }
+
+    .hero-image-placeholder {
+        margin-top: 2rem;
+    }
+
+    .features-section {
+        padding: 4rem 0;
+    }
+}
+
+/* Tablets (max 768px) */
+@media (max-width: 768px) {
+    h1 {
+        font-size: clamp(1.5rem, 5vw, 2.5rem);
+    }
+
+    h2 {
+        font-size: clamp(1.25rem, 4vw, 2rem);
+    }
+
+    .hero-section {
+        padding: 3rem 0 4rem;
+    }
+
+    .hero-section .d-flex.gap-3 {
+        flex-direction: column;
+    }
+
+    .hero-section .d-flex.gap-3 .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .hero-image-placeholder {
+        min-height: 300px;
+        margin-top: 2rem;
+    }
+
+    .feature-card {
+        margin-bottom: 1.5rem;
+    }
+
+    .cta-section {
+        padding: 3rem 0;
+    }
+
+    .cta-section h2 {
+        font-size: 1.75rem;
+    }
+
+    .footer-section {
+        padding: 3rem 0 1.5rem;
+    }
+
+    .footer-section > div:first-child {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .social-links {
+        justify-content: center;
+        margin-top: 1.5rem;
+    }
+}
+
+/* Móviles (max 576px) */
+@media (max-width: 576px) {
+    h1 {
+        font-size: 1.5rem;
+    }
+
+    h2 {
+        font-size: 1.25rem;
+    }
+
+    .navbar {
+        padding: 1rem 0;
+    }
+
+    .navbar-brand {
+        font-size: 1.25rem;
+    }
+
+    .navbar .btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+    }
+
+    .nav-link {
+        font-size: 0.85rem;
+        padding: 0.4rem 0.75rem !important;
+    }
+
+    .hero-section {
+        padding: 2rem 0 3rem;
+    }
+
+    .hero-section .lead {
+        font-size: 0.95rem;
+    }
+
+    .hero-section .btn {
+        padding: 0.75rem 1.5rem;
+        font-size: 0.9rem;
+    }
+
+    .hero-image-placeholder {
+        min-height: 250px;
+    }
+
+    .feature-icon {
+        width: 70px;
+        height: 70px;
+    }
+
+    .feature-icon i {
+        font-size: 1.75rem;
+    }
+
+    .feature-card .card-title {
+        font-size: 1.1rem;
+    }
+
+    .feature-card .card-text {
+        font-size: 0.9rem;
+    }
+
+    .cta-section {
+        padding: 2.5rem 0;
+    }
+
+    .cta-section h2 {
+        font-size: 1.5rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .cta-section .lead {
+        font-size: 0.95rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .cta-section .btn-light {
+        padding: 0.75rem 2rem;
+    }
+
+    .footer-section {
+        padding: 2rem 0 1rem;
+    }
+
+    .footer-section h5,
+    .footer-section h6 {
+        font-size: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .footer-section p {
+        font-size: 0.9rem;
+    }
+
+    .social-links a {
+        width: 40px;
+        height: 40px;
+    }
+}
+
+/* ========================
+   ACCESIBILIDAD
+   ======================== */
+
+/* Respeta preferencia de movimiento reducido */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Modo oscuro del sistema (opcional) */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --background: #0f172a;
+        --background-secondary: #1e293b;
+        --text-primary: #f1f5f9;
+        --text-secondary: #cbd5e1;
+        --text-muted: #94a3b8;
+        --border-color: #334155;
+    }
+
+    body {
+        background-color: var(--background);
+        color: var(--text-primary);
+    }
+
+    .navbar {
+        background-color: var(--background-secondary);
+        border-bottom-color: var(--border-color);
+    }
+
+    .feature-card {
+        background-color: var(--background-secondary);
+        border-color: var(--border-color);
+    }
+
+    .feature-card:hover {
+        border-color: var(--success);
+    }
+
+    .hero-image-placeholder {
+        background: linear-gradient(135deg, var(--background-secondary) 0%, rgba(30, 41, 59, 0.5) 100%);
+        border-color: var(--border-color);
+    }
+
+    .footer-section a {
+        color: rgba(241, 245, 249, 0.8);
+    }
+}
+
+/* ========================
+   IMPRESIÓN
+   ======================== */
+
+@media print {
+    .navbar,
+    .cta-section,
+    .social-links {
+        display: none;
+    }
+
+    body {
+        background-color: white;
+        color: black;
+    }
+
+    .feature-card {
+        page-break-inside: avoid;
+    }
+}
