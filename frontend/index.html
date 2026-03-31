@@ -10,9 +10,21 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="./assets/css/estilos.css">
+    
+    <!-- 📦 Importar Componentes -->
+    <script src="./components/Button.js"></script>
+    <script src="./components/FeatureCard.js"></script>
+    <script src="./components/PricingCard.js"></script>
+    <script src="./components/SectionHeader.js"></script>
+    <script src="./components/TestimonialCard.js"></script>
+    <script src="./components/SocialButtons.js"></script>
+    <script src="./components/Modal.js"></script>
+    <script src="./components/FormInput.js"></script>
 </head>
 <body>
-    <!-- Barra de navegación fija en la parte superior: enlaces internos y botones de acceso -->
+    <!-- ============================================
+         🧭 NAVBAR
+         ============================================ -->
     <nav class="navbar navbar-expand-lg navbar-dark shadow-sm sticky-top">
         <div class="container-fluid px-4">
             <a class="navbar-brand fw-bold text-white" href="#home">
@@ -29,18 +41,16 @@
                     <li class="nav-item"><a class="nav-link" href="#ventajas">Ventajas</a></li>
                     <li class="nav-item"><a class="nav-link" href="#precios">Planes</a></li>
                     
-                    <li class="nav-item ms-lg-3 mt-2 mt-lg-0">
-                        <button class="btn btn-outline-accent me-2" id="btnLoginNav">Iniciar Sesión</button>
-                    </li>
-                    <li class="nav-item mt-2 mt-lg-0">
-                        <button class="btn btn-accent text-dark fw-bold" id="btnRegisterNav">Empezar Gratis</button>
-                    </li>
+                    <li class="nav-item ms-lg-3 mt-2 mt-lg-0" id="navbar-login"></li>
+                    <li class="nav-item mt-2 mt-lg-0" id="navbar-register"></li>
                 </ul>
             </div>
         </div>
     </nav>
 
-    <!-- Sección Hero: bienvenida, propuesta de valor y llamada a la acción principal -->
+    <!-- ============================================
+         🎯 HERO SECTION
+         ============================================ -->
     <section id="home" class="hero-section py-5 bg-brand-gradient">
         <div class="container">
             <div class="row align-items-center">
@@ -51,9 +61,7 @@
                     <p class="lead mb-4 text-light-gray">
                         Registra lo que gastas en segundos, entiende tus números sin marearte y recibe consejos de expertos que te ayudan a tomar decisiones inteligentes con tu plata.
                     </p>
-                    <div class="d-grid gap-2 d-md-flex justify-content-md-start">
-                        <button type="button" class="btn btn-accent btn-lg px-4 me-md-2 text-dark fw-bold shadow-glow action-register">Tomar el control hoy</button>
-                    </div>
+                    <div id="hero-cta"></div>
                 </div>
                 <div class="col-lg-6">
                     <div class="hero-video-placeholder rounded-4 shadow-lg d-flex align-items-center justify-content-center flex-column text-white p-5 text-center">
@@ -125,181 +133,38 @@
         </div>
     </section>
 
-    <!-- Sección Cómo Funciona: pasos visuales del proceso que sigue el usuario dentro de la app -->
+    <!-- ============================================
+         ✨ SECCIÓN: CÓMO FUNCIONA
+         ============================================ -->
     <hr class="elegant-divider">
-
     <section id="como-funciona" class="py-5">
         <div class="container py-5">
-            <div class="text-center mb-5">
-                <h2 class="fw-bold text-white">Un equipo trabajando para tu bolsillo</h2>
-                <p class="text-light-gray">El proceso es simple: tú subes la info, nosotros te ayudamos a entenderla.</p>
-            </div>
-            
-            <div class="row g-4 position-relative">
-                <div class="col-md-4 text-center">
-                    <div class="icon-wrapper mb-4 mx-auto bg-accent-transparent text-accent rounded-circle d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
-                        <i class="fas fa-receipt fa-2x"></i>
-                    </div>
-                    <h4 class="fw-bold text-white">1. Registra al instante</h4>
-                    <p class="text-light-gray px-3">Sube tus gastos como prefieras: tómale una foto a tu ticket o cárgalo a mano en segundos.</p>
-                </div>
-                <div class="col-md-4 text-center">
-                    <div class="icon-wrapper mb-4 mx-auto bg-accent-transparent text-accent rounded-circle d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
-                        <i class="fas fa-eye fa-2x"></i>
-                    </div>
-                    <h4 class="fw-bold text-white">2. Alguien vigila por ti</h4>
-                    <p class="text-light-gray px-3">Un asesor revisa tu actividad para detectar gastos hormiga, fugas de dinero y patrones extraños.</p>
-                </div>
-                <div class="col-md-4 text-center">
-                    <div class="icon-wrapper mb-4 mx-auto bg-accent-transparent text-accent rounded-circle d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
-                        <i class="fas fa-comments-dollar fa-2x"></i>
-                    </div>
-                    <h4 class="fw-bold text-white">3. Interactúa y mejora</h4>
-                    <p class="text-light-gray px-3">Analiza tus gráficos de manera simple y lee los consejos de tu asesor para tomar decisiones inteligentes.</p>
-                </div>
-            </div>
+            <div id="como-funciona-header"></div>
+            <div class="row g-4 position-relative" id="features-row"></div>
         </div>
     </section>
 
-    <!-- Sección Ventajas: razones principales para elegir FinTrack y testimonios reales -->
+    <!-- ============================================
+         💎 SECCIÓN: VENTAJAS
+         ============================================ -->
     <hr class="elegant-divider">
-
     <section id="ventajas" class="py-5">
         <div class="container py-5">
             <div class="row align-items-center">
-                <div class="col-lg-5 mb-4 mb-lg-0">
-                    <h2 class="fw-bold text-white mb-4">¿Por qué usar  <span class="text-gradient">FinTrack?</span> </h2>
-                    <p class="text-light-gray mb-4">Menos explicación larga, más claridad visual. Todo lo que necesitas para sentir tu dinero bajo control.</p>
-                    
-                    <div class="d-grid gap-3">
-                        <div class="adv-item d-flex align-items-start mb-3">
-                            <div class="adv-icon me-3 mt-1"><i class="fas fa-robot text-accent fa-lg"></i></div>
-                            <div>
-                                <h5 class="text-white mb-1">Carga automatizada con IA</h5>
-                                <p class="mb-0 text-light-gray small">Nuestra Inteligencia Artificial extrae los datos al instante de tus fotos.</p>
-                            </div>
-                        </div>
-                        <div class="adv-item d-flex align-items-start mb-3">
-                            <div class="adv-icon me-3 mt-1"><i class="fas fa-user-check text-accent fa-lg"></i></div>
-                            <div>
-                                <h5 class="text-white mb-1">Asesor real</h5>
-                                <p class="mb-0 text-light-gray small">Feedback humano y profesional cuando más lo necesitas.</p>
-                            </div>
-                        </div>
-                        <div class="adv-item d-flex align-items-start mb-3">
-                            <div class="adv-icon me-3 mt-1"><i class="fas fa-bell text-accent fa-lg"></i></div>
-                            <div>
-                                <h5 class="text-white mb-1">Alertas Inteligentes</h5>
-                                <p class="mb-0 text-light-gray small">Notificaciones automáticas si tus gastos se salen de presupuesto.</p>
-                            </div>
-                        </div>
-                        <div class="adv-item d-flex align-items-start mb-3">
-                            <div class="adv-icon me-3 mt-1"><i class="fas fa-shield-alt text-accent fa-lg"></i></div>
-                            <div>
-                                <h5 class="text-white mb-1">Seguridad Bancaria</h5>
-                                <p class="mb-0 text-light-gray small">Tus datos financieros viajan encriptados y protegidos al máximo nivel.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-6 offset-lg-1">
-                    <div id="userTestimonialsCarousel" class="carousel slide" data-bs-ride="carousel">
-                        <div class="carousel-inner rounded-4 overflow-hidden border border-secondary" style="background-color: rgba(255,255,255,0.02);">
-                            <div class="carousel-item active p-4">
-                                <blockquote class="blockquote mb-0 text-light-gray fst-italic">
-                                    <p>"En menos de una semana dejé de gastar en cosas que no necesitaba. La app me mostró dónde estaba perdiendo plata."</p>
-                                    <footer class="blockquote-footer mt-3 text-accent">María, <cite title="Source Title">emprendedora</cite></footer>
-                                </blockquote>
-                            </div>
-                            <div class="carousel-item p-4">
-                                <blockquote class="blockquote mb-0 text-light-gray fst-italic">
-                                    <p>"Ya no siento que mi cajero hable solo. Con FinTrack veo justo lo que debo pagar y cuánto puedo ahorrar."</p>
-                                    <footer class="blockquote-footer mt-3 text-accent">Lucas, <cite title="Source Title">freelancer</cite></footer>
-                                </blockquote>
-                            </div>
-                        </div>
-                        <button class="carousel-control-prev" type="button" data-bs-target="#userTestimonialsCarousel" data-bs-slide="prev">
-                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                            <span class="visually-hidden">Anterior</span>
-                        </button>
-                        <button class="carousel-control-next" type="button" data-bs-target="#userTestimonialsCarousel" data-bs-slide="next">
-                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                            <span class="visually-hidden">Siguiente</span>
-                        </button>
-                    </div>
-                </div>
+                <div class="col-lg-5 mb-4 mb-lg-0" id="ventajas-container"></div>
+                <div class="col-lg-6 offset-lg-1" id="testimonials-container"></div>
             </div>
         </div>
     </section>
 
-    <!-- Sección Planes y Precios: muestra las opciones de suscripción y destaca el plan más popular -->
+    <!-- ============================================
+         💰 SECCIÓN: PRECIOS
+         ============================================ -->
     <hr class="elegant-divider">
-
     <section id="precios" class="py-5">
         <div class="container py-5">
-            <div class="text-center mb-5">
-                <h2 class="fw-bold text-white">Elige el plan ideal para ti</h2>
-                <p class="text-light-gray">Comienza gratis y mejora cuando estés listo para llevar tus finanzas al siguiente nivel.</p>
-            </div>
-
-            <div class="row g-4 justify-content-center">
-                <div class="col-lg-4 col-md-6">
-                    <div class="card h-100 p-4 border border-secondary bg-transparent rounded-4">
-                        <div class="card-body d-flex flex-column">
-                            <h5 class="text-white fw-bold">Plan Básico</h5>
-                            <h2 class="display-4 fw-bold text-white mb-1">$0<span class="fs-6 text-light-gray fw-normal">/mes</span></h2>
-                            <p class="text-light-gray mb-4">Perfecto para empezar a organizarte.</p>
-                            
-                            <ul class="list-unstyled text-light-gray flex-grow-1">
-                                <li class="mb-3"><i class="fas fa-check text-accent me-2"></i>Carga de tickets con IA (limitado)</li>
-                                <li class="mb-3"><i class="fas fa-check text-accent me-2"></i>Registro manual ilimitado</li>
-                                <li class="mb-3"><i class="fas fa-check text-accent me-2"></i>Gráficos de gastos básicos</li>
-                                <li class="mb-3"><i class="fas fa-user-check text-accent me-2"></i>Asesor virtual incluido</li>
-                            </ul>
-                            <button class="btn btn-outline-accent w-100 mt-3 action-register">Comenzar Gratis</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-lg-4 col-md-6">
-                    <div class="card h-100 p-4 border-0 rounded-4 shadow-glow position-relative" style="background: rgba(255,255,255,0.05); border: 1px solid var(--accent-line) !important;">
-                        <div class="position-absolute top-0 start-50 translate-middle badge rounded-pill text-dark fw-bold px-3 py-2" style="background-color: var(--accent-line);">
-                            MÁS POPULAR
-                        </div>
-                        <div class="card-body d-flex flex-column mt-2">
-                            <h5 class="fw-bold" style="color: var(--accent-line);">Plan Pro</h5>
-                            <h2 class="display-4 fw-bold text-white mb-1">$4<span class="fs-6 text-light-gray fw-normal">.99/mes</span></h2>
-                            <p class="text-light-gray mb-4">Tus finanzas supervisadas por expertos.</p>
-                            
-                            <ul class="list-unstyled text-light-gray flex-grow-1">
-                                <li class="mb-3"><i class="fas fa-check me-2" style="color: var(--accent-line);"></i><strong>Asesor Financiero asignado</strong></li>
-                                <li class="mb-3"><i class="fas fa-check me-2" style="color: var(--accent-line);"></i>Recomendaciones mensuales</li>
-                                <li class="mb-3"><i class="fas fa-check me-2" style="color: var(--accent-line);"></i>Detección de gastos hormiga</li>
-                                <li class="mb-3"><i class="fas fa-check me-2" style="color: var(--accent-line);"></i>Carga con IA ilimitada</li>
-                            </ul>
-                            <button class="btn text-dark fw-bold w-100 mt-3 action-register" style="background-color: var(--accent-line);">Elegir Pro</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-lg-4 col-md-6">
-                    <div class="card h-100 p-4 border border-secondary bg-transparent rounded-4">
-                        <div class="card-body d-flex flex-column">
-                            <h5 class="text-white fw-bold">Plan Premium</h5>
-                            <h2 class="display-4 fw-bold text-white mb-1">$12<span class="fs-6 text-light-gray fw-normal">.99/mes</span></h2>
-                            <p class="text-light-gray mb-4">Comunicación directa y prioritaria.</p>
-                            
-                            <ul class="list-unstyled text-light-gray flex-grow-1">
-                                <li class="mb-3"><i class="fas fa-check text-accent me-2"></i>Todo lo del Plan Pro</li>
-                                <li class="mb-3"><i class="fas fa-check text-accent me-2"></i><strong>Chat directo con tu asesor</strong></li>
-                                <li class="mb-3"><i class="fas fa-check text-accent me-2"></i>Alertas de desvío en tiempo real</li>
-                                <li class="mb-3"><i class="fas fa-check text-accent me-2"></i>Análisis de inversiones y ahorros</li>
-                            </ul>
-                            <button class="btn btn-outline-accent w-100 mt-3 action-register">Elegir Premium</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <div id="precios-header"></div>
+            <div class="row g-4 justify-content-center" id="pricing-row"></div>
         </div>
     </section>
 
@@ -336,17 +201,7 @@
 
                 <div class="col-lg-3 col-md-4">
                     <h5 class="text-white fw-bold mb-3">Conéctate</h5>
-                    <div class="d-flex gap-3">
-                        <a href="#" class="btn btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; border-color: rgba(255,255,255,0.2);">
-                            <i class="fab fa-twitter text-light-gray"></i>
-                        </a>
-                        <a href="#" class="btn btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; border-color: rgba(255,255,255,0.2);">
-                            <i class="fab fa-instagram text-light-gray"></i>
-                        </a>
-                        <a href="#" class="btn btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; border-color: rgba(255,255,255,0.2);">
-                            <i class="fab fa-linkedin-in text-light-gray"></i>
-                        </a>
-                    </div>
+                    <div id="social-icons"></div>
                 </div>
             </div>
 
@@ -363,118 +218,271 @@
         </div>
     </footer>
 
-    <!-- Modal de inicio de sesión: formulario rápido para usuarios existentes -->
-    <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border border-secondary text-white rounded-4" style="background-color: var(--bg-main);">
-                <div class="modal-header border-bottom border-secondary">
-                    <h5 class="modal-title fw-bold" id="loginModalLabel">Bienvenido de nuevo</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                
-                <div class="modal-body p-4">
-                    <form id="formLogin">
-                        <div class="mb-3">
-                            <label for="loginEmail" class="form-label text-light-gray">Correo Electrónico</label>
-                            <input type="email" class="form-control custom-input" id="loginEmail" placeholder="tu@correo.com" required>
-                        </div>
-                        <div class="mb-4">
-                            <label for="loginPassword" class="form-label text-light-gray">Contraseña</label>
-                            <input type="password" class="form-control custom-input" id="loginPassword" placeholder="••••••••" required>
-                        </div>
-                        <button type="submit" class="btn btn-accent text-dark fw-bold w-100 py-2 mb-3">Ingresar a mi cuenta</button>
-                        
-                        <div class="d-flex align-items-center my-3">
-                            <hr class="flex-grow-1 border-secondary">
-                            <span class="mx-2 text-light-gray small">o continuar con</span>
-                            <hr class="flex-grow-1 border-secondary">
-                        </div>
-
-                        <div class="d-flex gap-2">
-                            <button type="button" class="btn btn-outline-secondary w-50 d-flex align-items-center justify-content-center text-white custom-social-btn">
-                                <i class="fab fa-google me-2 text-danger"></i> Google
-                            </button>
-                            <button type="button" class="btn btn-outline-secondary w-50 d-flex align-items-center justify-content-center text-white custom-social-btn">
-                                <i class="fab fa-microsoft me-2 text-info"></i> Microsoft
-                            </button>
-                        </div>
-
-                        <div class="text-center mt-4">
-                            <a href="#" class="text-accent text-decoration-none small">¿Olvidaste tu contraseña?</a>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal de registro: formulario para crear cuenta nueva y elegir rol -->
-    <div class="modal fade" id="registerModal" tabindex="-1" aria-labelledby="registerModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border border-secondary text-white rounded-4" style="background-color: var(--bg-main);">
-                <div class="modal-header border-bottom border-secondary">
-                    <h5 class="modal-title fw-bold" id="registerModalLabel">Crea tu cuenta gratis</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                
-                <div class="modal-body p-4">
-                    <form id="formRegister">
-                        <div class="mb-3">
-                            <label for="regName" class="form-label text-light-gray">Nombre Completo</label>
-                            <input type="text" class="form-control custom-input" id="regName" placeholder="Ej: Juan Pérez" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="regEmail" class="form-label text-light-gray">Correo Electrónico</label>
-                            <input type="email" class="form-control custom-input" id="regEmail" placeholder="tu@correo.com" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="regPassword" class="form-label text-light-gray">Contraseña</label>
-                            <input type="password" class="form-control custom-input" id="regPassword" placeholder="••••••••" required>
-                        </div>
-                        <div class="mb-4">
-                            <label for="regRole" class="form-label text-light-gray">¿Cómo usarás FinTrack?</label>
-                            <select class="form-select custom-input" id="regRole" required>
-                                <option value="usuario">Quiero controlar mis propios gastos (Usuario)</option>
-                                <option value="asesor">Soy profesional y quiero asesorar (Asesor)</option>
-                            </select>
-                        </div>
-                        <button type="submit" class="btn btn-accent text-dark fw-bold w-100 py-2">Comenzar mi prueba</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Scripts: carga de Bootstrap y comportamiento básico de los modales y botones -->
+    <!-- ============================================
+         📜 SCRIPTS
+         ============================================ -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
-            const registerModal = new bootstrap.Modal(document.getElementById('registerModal'));
+        document.addEventListener('DOMContentLoaded', function() {            try {
+                console.log('✅ DOMContentLoaded iniciado');
+            // ========== � MODALES (PRIMERO) ==========
+            console.log('Creando modales...');
+            const loginModal = new Modal('login-modal', {
+                title: 'Bienvenido de nuevo',
+                size: 'md',
+                centered: true,
+                content: '<div id="login-email"></div><div id="login-password" style="margin-top: 1rem;"></div><div style="text-align: center; margin-top: 1rem;"><a href="#" style="color: var(--accent); text-decoration: none; font-size: 0.9rem;">¿Olvidaste tu contraseña?</a></div>',
+                buttons: [
+                    {
+                        text: 'Ingresar',
+                        variant: 'accent',
+                        onClick: () => {
+                            alert('¡Inicio de sesión exitoso!');
+                            loginModal.hide();
+                        }
+                    }
+                ]
+            });
 
-            document.getElementById('btnLoginNav').addEventListener('click', function() { loginModal.show(); });
-            document.getElementById('btnRegisterNav').addEventListener('click', function() { registerModal.show(); });
+            const registerModal = new Modal('register-modal', {
+                title: 'Crea tu cuenta gratis',
+                size: 'md',
+                centered: true,
+                content: '<div id="reg-name"></div><div id="reg-email" style="margin-top: 1rem;"></div><div id="reg-password" style="margin-top: 1rem;"></div>',
+                buttons: [
+                    {
+                        text: 'Comenzar mi prueba',
+                        variant: 'accent',
+                        onClick: () => {
+                            alert('¡Cuenta creada con éxito!');
+                            registerModal.hide();
+                        }
+                    }
+                ]
+            });
+            console.log('✅ Modales creados');
 
-            const registerButtons = document.querySelectorAll('.action-register');
-            registerButtons.forEach(button => {
-                button.addEventListener('click', function(e) {
-                    e.preventDefault(); 
-                    registerModal.show(); 
+            // ========== 🔵 NAVBAR BUTTONS ==========
+            console.log('Creando botones navbar...');
+            new Button('#navbar-login', {
+                text: 'Iniciar Sesión',
+                variant: 'outline-accent',
+                size: 'sm',
+                onClick: () => loginModal.show()
+            });
+
+            new Button('#navbar-register', {
+                text: 'Empezar Gratis',
+                variant: 'accent',
+                size: 'sm',
+                onClick: () => registerModal.show()
+            });
+
+            // ========== 🎯 HERO CTA ==========
+            new Button('#hero-cta', {
+                text: 'Tomar el control hoy',
+                variant: 'accent',
+                size: 'lg',
+                onClick: () => registerModal.show()
+            });
+
+            // ========== ✨ SECCIÓN: CÓMO FUNCIONA ==========
+            new SectionHeader('#como-funciona-header', {
+                title: 'Un equipo trabajando para tu bolsillo',
+                subtitle: 'El proceso es simple: tú subes la info, nosotros te ayudamos a entenderla.',
+                centered: true
+            });
+
+            const features = [
+                {
+                    icon: 'fas fa-receipt',
+                    step: '1',
+                    title: 'Registra al instante',
+                    description: 'Sube tus gastos como prefieras: tómale una foto a tu ticket o cárgalo a mano en segundos.'
+                },
+                {
+                    icon: 'fas fa-eye',
+                    step: '2',
+                    title: 'Alguien vigila por ti',
+                    description: 'Un asesor revisa tu actividad para detectar gastos hormiga, fugas de dinero y patrones extraños.'
+                },
+                {
+                    icon: 'fas fa-comments-dollar',
+                    step: '3',
+                    title: 'Interactúa y mejora',
+                    description: 'Analiza tus gráficos de manera simple y lee los consejos de tu asesor para tomar decisiones inteligentes.'
+                }
+            ];
+
+            const featuresRow = document.getElementById('features-row');
+            features.forEach((feature, i) => {
+                const col = document.createElement('div');
+                col.className = 'col-md-4';
+                col.id = `feature-${i}`;
+                featuresRow.appendChild(col);
+                new FeatureCard(`#feature-${i}`, feature);
+            });
+
+            // ========== 💎 SECCIÓN: VENTAJAS ==========
+            const ventajasHTML = '<h2 class="fw-bold text-white mb-4">¿Por qué usar <span class="text-gradient">FinTrack?</span></h2><p class="text-light-gray mb-4">Menos explicación larga, más claridad visual. Todo lo que necesitas para sentir tu dinero bajo control.</p><div class="d-grid gap-3"><div class="adv-item d-flex align-items-start mb-3"><div class="adv-icon me-3 mt-1"><i class="fas fa-robot text-accent fa-lg"></i></div><div><h5 class="text-white mb-1">Carga automatizada con IA</h5><p class="mb-0 text-light-gray small">Nuestra Inteligencia Artificial extrae los datos al instante de tus fotos.</p></div></div><div class="adv-item d-flex align-items-start mb-3"><div class="adv-icon me-3 mt-1"><i class="fas fa-user-check text-accent fa-lg"></i></div><div><h5 class="text-white mb-1">Asesor real</h5><p class="mb-0 text-light-gray small">Feedback humano y profesional cuando más lo necesitas.</p></div></div><div class="adv-item d-flex align-items-start mb-3"><div class="adv-icon me-3 mt-1"><i class="fas fa-bell text-accent fa-lg"></i></div><div><h5 class="text-white mb-1">Alertas Inteligentes</h5><p class="mb-0 text-light-gray small">Notificaciones automáticas si tus gastos se salen de presupuesto.</p></div></div><div class="adv-item d-flex align-items-start mb-3"><div class="adv-icon me-3 mt-1"><i class="fas fa-shield-alt text-accent fa-lg"></i></div><div><h5 class="text-white mb-1">Seguridad Bancaria</h5><p class="mb-0 text-light-gray small">Tus datos financieros viajan encriptados y protegidos al máximo nivel.</p></div></div></div>';
+            document.getElementById('ventajas-container').innerHTML = ventajasHTML;
+
+            // Testimonios
+            const testimonialsHTML = '<div id="userTestimonialsCarousel" class="carousel slide" data-bs-ride="carousel"><div class="carousel-inner rounded-4 overflow-hidden border border-secondary" style="background-color: rgba(255,255,255,0.02);"><div class="carousel-item active p-4" id="testimonial-0"></div><div class="carousel-item p-4" id="testimonial-1"></div></div><button class="carousel-control-prev" type="button" data-bs-target="#userTestimonialsCarousel" data-bs-slide="prev"><span class="carousel-control-prev-icon" aria-hidden="true"></span></button><button class="carousel-control-next" type="button" data-bs-target="#userTestimonialsCarousel" data-bs-slide="next"><span class="carousel-control-next-icon" aria-hidden="true"></span></button></div>';
+            document.getElementById('testimonials-container').innerHTML = testimonialsHTML;
+
+            // Usar un delay pequeño para asegurar que el DOM está listo
+            setTimeout(() => {
+                const testimonialTemplate = (quote, author, role) => {
+                    return '<blockquote class="blockquote mb-0 text-light-gray fst-italic"><p>"' + quote + '"</p><footer class="blockquote-footer mt-3 text-accent">' + author + ', <cite>' + role + '</cite></footer></blockquote>';
+                };
+
+                document.getElementById('testimonial-0').innerHTML = testimonialTemplate(
+                    'En menos de una semana dejé de gastar en cosas que no necesitaba. La app me mostró dónde estaba perdiendo plata.',
+                    'María',
+                    'Emprendedora'
+                );
+                document.getElementById('testimonial-1').innerHTML = testimonialTemplate(
+                    'Ya no siento que mi cajero hable solo. Con FinTrack veo justo lo que debo pagar y cuánto puedo ahorrar.',
+                    'Lucas',
+                    'Freelancer'
+                );
+            }, 50);
+
+            // ========== 💰 SECCIÓN: PRECIOS ==========
+            new SectionHeader('#precios-header', {
+                title: 'Elige el plan ideal para ti',
+                subtitle: 'Comienza gratis y mejora cuando estés listo para llevar tus finanzas al siguiente nivel.',
+                accentWord: 'plan',
+                centered: true
+            });
+
+            const plans = [
+                {
+                    name: 'Plan Básico',
+                    price: '0',
+                    period: '/mes',
+                    description: 'Perfecto para empezar a organizarte.',
+                    features: [
+                        'Carga de tickets con IA (limitado)',
+                        'Registro manual ilimitado',
+                        'Gráficos de gastos básicos',
+                        'Asesor virtual incluido'
+                    ],
+                    buttonText: 'Comenzar Gratis',
+                    buttonColor: 'outline-accent',
+                    highlight: false
+                },
+                {
+                    name: 'Plan Pro',
+                    price: '4.99',
+                    period: '/mes',
+                    description: 'Tus finanzas supervisadas por expertos.',
+                    features: [
+                        'Asesor Financiero asignado',
+                        'Recomendaciones mensuales',
+                        'Detección de gastos hormiga',
+                        'Carga con IA ilimitada'
+                    ],
+                    buttonText: 'Elegir Pro',
+                    buttonColor: 'accent',
+                    highlight: true,
+                    badge: 'MÁS POPULAR'
+                },
+                {
+                    name: 'Plan Premium',
+                    price: '12.99',
+                    period: '/mes',
+                    description: 'Comunicación directa y prioritaria.',
+                    features: [
+                        'Todo lo del Plan Pro',
+                        'Chat directo con tu asesor',
+                        'Alertas de desvío en tiempo real',
+                        'Análisis de inversiones y ahorros'
+                    ],
+                    buttonText: 'Elegir Premium',
+                    buttonColor: 'outline-accent',
+                    highlight: false
+                }
+            ];
+
+            const pricingRow = document.getElementById('pricing-row');
+            plans.forEach((plan, i) => {
+                const col = document.createElement('div');
+                col.className = 'col-lg-4 col-md-6';
+                col.id = 'pricing-' + i;
+                pricingRow.appendChild(col);
+                new PricingCard('#pricing-' + i, {
+                    ...plan,
+                    onButtonClick: () => registerModal.show()
                 });
             });
 
-            document.getElementById('formLogin').addEventListener('submit', function(e) {
-                e.preventDefault();
-                alert("¡Inicio de sesión simulado exitoso! Redirigiendo al Dashboard...");
-                loginModal.hide();
+            // ========== 📱 FOOTER: SOCIAL BUTTONS ==========
+            new SocialButtons('#social-icons', {
+                platforms: ['twitter', 'instagram', 'linkedin'],
+                variant: 'outline',
+                size: 'md',
+                urls: {
+                    twitter: '#',
+                    instagram: '#',
+                    linkedin: '#'
+                }
             });
 
-            document.getElementById('formRegister').addEventListener('submit', function(e) {
-                e.preventDefault();
-                const rol = document.getElementById('regRole').value;
-                alert("¡Cuenta de " + rol + " creada con éxito! Redirigiendo...");
-                registerModal.hide(); 
-            });
+            // Esperar a que los modales carguen sus formularios
+            setTimeout(() => {
+                new FormInput('#login-email', {
+                    type: 'email',
+                    label: 'Correo Electrónico',
+                    placeholder: 'tu@correo.com',
+                    required: true,
+                    icon: 'fas fa-envelope'
+                });
+
+                new FormInput('#login-password', {
+                    type: 'password',
+                    label: 'Contraseña',
+                    placeholder: '••••••••',
+                    required: true,
+                    icon: 'fas fa-lock'
+                });
+                console.log('✅ Modal de login creado');
+            }, 100);
+
+            setTimeout(() => {
+                new FormInput('#reg-name', {
+                    type: 'text',
+                    label: 'Nombre Completo',
+                    placeholder: 'Ej: Juan Pérez',
+                    required: true,
+                    icon: 'fas fa-user'
+                });
+
+                new FormInput('#reg-email', {
+                    type: 'email',
+                    label: 'Correo Electrónico',
+                    placeholder: 'tu@correo.com',
+                    required: true,
+                    icon: 'fas fa-envelope'
+                });
+
+                new FormInput('#reg-password', {
+                    type: 'password',
+                    label: 'Contraseña',
+                    placeholder: '••••••••',
+                    required: true,
+                    icon: 'fas fa-lock'
+                });
+                console.log('✅ Modal de registro creado');
+            }, 100);
+
+            console.log('✅✅✅ Todos los componentes cargados correctamente');
+
+            } catch (error) {
+                console.error('❌ Error en la carga de componentes:', error);
+                console.error('Stack:', error.stack);
+            }
         });
     </script>
 </body>
