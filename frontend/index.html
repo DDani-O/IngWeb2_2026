@@ -248,14 +248,54 @@
                 title: 'Crea tu cuenta gratis',
                 size: 'md',
                 centered: true,
-                content: '<div id="reg-name"></div><div id="reg-email" style="margin-top: 1rem;"></div><div id="reg-password" style="margin-top: 1rem;"></div>',
+                content: '<div id="reg-name"></div><div id="reg-email" style="margin-top: 1rem;"></div><div id="reg-password" style="margin-top: 1rem;"></div><div class="mt-3" id="reg-role"><div class="form-group" style="margin-bottom: 0;"><label class="form-label">Quiero usar FinTrack como</label><div class="d-flex gap-3"><label class="form-check" style="margin:0;"><input class="form-check-input" type="radio" name="reg-role" id="reg-role-cliente" value="cliente" checked><span class="form-check-label" style="margin-left:.35rem;">Cliente</span></label><label class="form-check" style="margin:0;"><input class="form-check-input" type="radio" name="reg-role" id="reg-role-asesor" value="asesor"><span class="form-check-label" style="margin-left:.35rem;">Asesor</span></label></div></div></div><div id="advisor-auth-extra" style="display:none; margin-top: 1rem;"><div class="small" style="color: var(--text-muted); margin-bottom: .75rem;">Autenticación de asesor (paso extra)</div><div id="advisor-matricula"></div><div id="advisor-especialidad" style="margin-top: 1rem;"></div></div>',
                 buttons: [
                     {
                         text: 'Comenzar mi prueba',
                         variant: 'accent',
                         onClick: () => {
+                            const modalRoot = registerModal.modal;
+                            const rol = modalRoot?.querySelector('input[name="reg-role"]:checked')?.value;
+
+                            const nombre = modalRoot?.querySelector('#reg-name-input')?.value?.trim() || '';
+                            const email = modalRoot?.querySelector('#reg-email-input')?.value?.trim() || '';
+                            const password = modalRoot?.querySelector('#reg-password-input')?.value || '';
+
+                            if (!nombre || !email || !password) {
+                                alert('Completá nombre, email y contraseña.');
+                                return;
+                            }
+
+                            if (rol === 'asesor') {
+                                const matricula = modalRoot?.querySelector('#advisor-matricula-input')?.value?.trim() || '';
+                                const especialidad = modalRoot?.querySelector('#advisor-especialidad-input')?.value?.trim() || '';
+                                if (!matricula || !especialidad) {
+                                    alert('Para asesor, completá matrícula y especialidad.');
+                                    return;
+                                }
+                                localStorage.setItem('usuarioActual', JSON.stringify({
+                                    id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+                                    nombre_completo: nombre,
+                                    email,
+                                    rol: 'asesor',
+                                    matricula,
+                                    especialidad
+                                }));
+                                registerModal.hide();
+                                window.location.href = './pages/asesor/dashboard.html';
+                                return;
+                            }
+
+                            // Cliente
+                            localStorage.setItem('usuarioActual', JSON.stringify({
+                                id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+                                nombre_completo: nombre,
+                                email,
+                                rol: 'cliente'
+                            }));
                             alert('¡Cuenta creada con éxito!');
                             registerModal.hide();
+                            window.location.href = './pages/usuario/dashboard.html';
                         }
                     }
                 ]
@@ -264,18 +304,147 @@
 
             // ========== 🔵 NAVBAR BUTTONS ==========
             console.log('Creando botones navbar...');
+            
+            // Banderas para controlar la creación de inputs
+            let loginInputsCreados = false;
+            let registerInputsCreados = false;
+            let advisorInputsCreados = false;
+
+            const ensureLoginInputs = () => {
+                if (loginInputsCreados) return;
+                const emailHost = loginModal.modal?.querySelector('#login-email');
+                const passHost = loginModal.modal?.querySelector('#login-password');
+                new FormInput(emailHost, {
+                    type: 'email',
+                    label: 'Correo Electrónico',
+                    placeholder: 'tu@email.com',
+                    icon: 'fas fa-envelope',
+                    id: 'login-email-input',
+                    name: 'email'
+                });
+                new FormInput(passHost, {
+                    type: 'password',
+                    label: 'Contraseña',
+                    placeholder: '••••••••',
+                    icon: 'fas fa-lock',
+                    id: 'login-password-input',
+                    name: 'password'
+                });
+                loginInputsCreados = true;
+                console.log('✅ Campos de login creados');
+            };
+
+            const ensureRegisterInputs = () => {
+                if (registerInputsCreados) return;
+                const nameHost = registerModal.modal?.querySelector('#reg-name');
+                const emailHost = registerModal.modal?.querySelector('#reg-email');
+                const passHost = registerModal.modal?.querySelector('#reg-password');
+                new FormInput(nameHost, {
+                    type: 'text',
+                    label: 'Nombre Completo',
+                    placeholder: 'Juan Pérez',
+                    icon: 'fas fa-user',
+                    id: 'reg-name-input',
+                    name: 'name'
+                });
+                new FormInput(emailHost, {
+                    type: 'email',
+                    label: 'Correo Electrónico',
+                    placeholder: 'tu@email.com',
+                    icon: 'fas fa-envelope',
+                    id: 'reg-email-input',
+                    name: 'email'
+                });
+                new FormInput(passHost, {
+                    type: 'password',
+                    label: 'Crea una Contraseña',
+                    placeholder: 'Mínimo 8 caracteres',
+                    icon: 'fas fa-lock',
+                    id: 'reg-password-input',
+                    name: 'password'
+                });
+
+                const ensureAdvisorInputs = () => {
+                    if (advisorInputsCreados) return;
+                    const matriculaHost = registerModal.modal?.querySelector('#advisor-matricula');
+                    const especialidadHost = registerModal.modal?.querySelector('#advisor-especialidad');
+                    new FormInput(matriculaHost, {
+                        type: 'text',
+                        label: 'Matrícula',
+                        placeholder: 'Ej: A-12345',
+                        icon: 'fas fa-id-card',
+                        id: 'advisor-matricula-input',
+                        name: 'matricula',
+                        required: true,
+                        errorMessage: 'La matrícula es obligatoria'
+                    });
+                    new FormInput(especialidadHost, {
+                        type: 'text',
+                        label: 'Especialidad',
+                        placeholder: 'Ej: Finanzas personales',
+                        icon: 'fas fa-briefcase',
+                        id: 'advisor-especialidad-input',
+                        name: 'especialidad',
+                        required: true,
+                        errorMessage: 'La especialidad es obligatoria'
+                    });
+                    advisorInputsCreados = true;
+                    console.log('✅ Campos de autenticación de asesor creados');
+                };
+
+                const extra = registerModal.modal?.querySelector('#advisor-auth-extra');
+                const toggleExtra = () => {
+                    const rol = registerModal.modal?.querySelector('input[name="reg-role"]:checked')?.value;
+                    if (!extra) return;
+                    if (rol === 'asesor') {
+                        extra.style.display = 'block';
+                        ensureAdvisorInputs();
+                    } else {
+                        extra.style.display = 'none';
+                    }
+                };
+
+                registerModal.modal?.querySelectorAll('input[name="reg-role"]').forEach(r => {
+                    r.addEventListener('change', toggleExtra);
+                });
+                toggleExtra();
+
+                registerInputsCreados = true;
+                console.log('✅ Campos de registro creados');
+            };
+
             new Button('#navbar-login', {
                 text: 'Iniciar Sesión',
                 variant: 'outline-accent',
                 size: 'sm',
-                onClick: () => loginModal.show()
+                onClick: () => {
+                    loginModal.show();
+                    // Crear los inputs solo la primera vez que se abre el modal
+                    requestAnimationFrame(() => {
+                        try {
+                            ensureLoginInputs();
+                        } catch (e) {
+                            console.error('❌ Error creando campos de login:', e);
+                        }
+                    });
+                }
             });
 
             new Button('#navbar-register', {
                 text: 'Empezar Gratis',
                 variant: 'accent',
                 size: 'sm',
-                onClick: () => registerModal.show()
+                onClick: () => {
+                    registerModal.show();
+                    // Crear los inputs solo la primera vez que se abre el modal
+                    requestAnimationFrame(() => {
+                        try {
+                            ensureRegisterInputs();
+                        } catch (e) {
+                            console.error('❌ Error creando campos de registro:', e);
+                        }
+                    });
+                }
             });
 
             // ========== 🎯 HERO CTA ==========
@@ -283,7 +452,17 @@
                 text: 'Tomar el control hoy',
                 variant: 'accent',
                 size: 'lg',
-                onClick: () => registerModal.show()
+                onClick: () => {
+                    registerModal.show();
+                    // Reutilizamos la misma lógica para el botón principal
+                    requestAnimationFrame(() => {
+                        try {
+                            ensureRegisterInputs();
+                        } catch (e) {
+                            console.error('❌ Error creando campos de registro:', e);
+                        }
+                    });
+                }
             });
 
             // ========== ✨ SECCIÓN: CÓMO FUNCIONA ==========
@@ -435,16 +614,13 @@
                 new FormInput('#login-email', {
                     type: 'email',
                     label: 'Correo Electrónico',
-                    placeholder: 'tu@correo.com',
-                    required: true,
+                    placeholder: 'tu@email.com',
                     icon: 'fas fa-envelope'
                 });
-
                 new FormInput('#login-password', {
                     type: 'password',
                     label: 'Contraseña',
                     placeholder: '••••••••',
-                    required: true,
                     icon: 'fas fa-lock'
                 });
                 console.log('✅ Modal de login creado');
@@ -454,24 +630,19 @@
                 new FormInput('#reg-name', {
                     type: 'text',
                     label: 'Nombre Completo',
-                    placeholder: 'Ej: Juan Pérez',
-                    required: true,
+                    placeholder: 'Juan Pérez',
                     icon: 'fas fa-user'
                 });
-
                 new FormInput('#reg-email', {
                     type: 'email',
                     label: 'Correo Electrónico',
-                    placeholder: 'tu@correo.com',
-                    required: true,
+                    placeholder: 'tu@email.com',
                     icon: 'fas fa-envelope'
                 });
-
                 new FormInput('#reg-password', {
                     type: 'password',
-                    label: 'Contraseña',
-                    placeholder: '••••••••',
-                    required: true,
+                    label: 'Crea una Contraseña',
+                    placeholder: 'Mínimo 8 caracteres',
                     icon: 'fas fa-lock'
                 });
                 console.log('✅ Modal de registro creado');

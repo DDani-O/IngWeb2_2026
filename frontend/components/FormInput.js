@@ -15,7 +15,10 @@
 
 class FormInput {
   constructor(selector, options = {}) {
-    this.elemento = document.querySelector(selector);
+    this.elemento = typeof selector === 'string' ? document.querySelector(selector) : selector;
+    if (!this.elemento) {
+      throw new Error(`FormInput: contenedor no encontrado para selector/elemento: ${selector}`);
+    }
     this.options = {
       type: options.type || 'text',
       label: options.label || 'Campo',

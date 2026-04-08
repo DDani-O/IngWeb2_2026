@@ -137,6 +137,7 @@ class Modal {
           align-items: center;
           justify-content: center;
           z-index: 1000;
+          padding: 1rem;
         }
 
         .custom-modal.modal-centered {
@@ -158,6 +159,7 @@ class Modal {
           z-index: 1;
           width: 90%;
           max-width: 500px;
+          max-height: 90vh;
         }
 
         /* Tamaños */
@@ -179,6 +181,25 @@ class Modal {
           border-radius: 12px;
           overflow: hidden;
           animation: slideInUp 0.3s ease;
+          max-height: 90vh;
+          overflow-y: auto;
+        }
+
+        .modal-content::-webkit-scrollbar {
+          width: 10px;
+        }
+
+        .modal-content::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.05);
+        }
+
+        .modal-content::-webkit-scrollbar-thumb {
+          background: rgba(45, 212, 191, 0.35);
+          border-radius: 8px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb:hover {
+          background: rgba(45, 212, 191, 0.55);
         }
 
         @keyframes slideInUp {
