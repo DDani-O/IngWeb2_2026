@@ -506,26 +506,89 @@
             const ventajasHTML = '<h2 class="fw-bold text-white mb-4">¿Por qué usar <span class="text-gradient">FinTrack?</span></h2><p class="text-light-gray mb-4">Menos explicación larga, más claridad visual. Todo lo que necesitas para sentir tu dinero bajo control.</p><div class="d-grid gap-3"><div class="adv-item d-flex align-items-start mb-3"><div class="adv-icon me-3 mt-1"><i class="fas fa-robot text-accent fa-lg"></i></div><div><h5 class="text-white mb-1">Carga automatizada con IA</h5><p class="mb-0 text-light-gray small">Nuestra Inteligencia Artificial extrae los datos al instante de tus fotos.</p></div></div><div class="adv-item d-flex align-items-start mb-3"><div class="adv-icon me-3 mt-1"><i class="fas fa-user-check text-accent fa-lg"></i></div><div><h5 class="text-white mb-1">Asesor real</h5><p class="mb-0 text-light-gray small">Feedback humano y profesional cuando más lo necesitas.</p></div></div><div class="adv-item d-flex align-items-start mb-3"><div class="adv-icon me-3 mt-1"><i class="fas fa-bell text-accent fa-lg"></i></div><div><h5 class="text-white mb-1">Alertas Inteligentes</h5><p class="mb-0 text-light-gray small">Notificaciones automáticas si tus gastos se salen de presupuesto.</p></div></div><div class="adv-item d-flex align-items-start mb-3"><div class="adv-icon me-3 mt-1"><i class="fas fa-shield-alt text-accent fa-lg"></i></div><div><h5 class="text-white mb-1">Seguridad Bancaria</h5><p class="mb-0 text-light-gray small">Tus datos financieros viajan encriptados y protegidos al máximo nivel.</p></div></div></div>';
             document.getElementById('ventajas-container').innerHTML = ventajasHTML;
 
-            // Testimonios
-            const testimonialsHTML = '<div id="userTestimonialsCarousel" class="carousel slide" data-bs-ride="carousel"><div class="carousel-inner rounded-4 overflow-hidden border border-secondary" style="background-color: rgba(255,255,255,0.02);"><div class="carousel-item active p-4" id="testimonial-0"></div><div class="carousel-item p-4" id="testimonial-1"></div></div><button class="carousel-control-prev" type="button" data-bs-target="#userTestimonialsCarousel" data-bs-slide="prev"><span class="carousel-control-prev-icon" aria-hidden="true"></span></button><button class="carousel-control-next" type="button" data-bs-target="#userTestimonialsCarousel" data-bs-slide="next"><span class="carousel-control-next-icon" aria-hidden="true"></span></button></div>';
+            // ========== 💬 SECCIÓN: TESTIMONIOS ==========
+            const testimonialsHTML = `
+                <div id="testimonials-wrapper" style="position: relative; display: flex; align-items: center; gap: 1rem;">
+                    <div id="testimonial-btn-prev" style="display: inline-block; opacity: 0; transition: opacity 0.3s ease;"></div>
+                    
+                    <div id="userTestimonialsCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="5000" style="flex: 1; position: relative;">
+                        <div class="carousel-inner rounded-4 overflow-hidden border border-secondary" style="background-color: rgba(255,255,255,0.02);">
+                            <div class="carousel-item active p-4" id="testimonial-0"></div>
+                            <div class="carousel-item p-4" id="testimonial-1"></div>
+                        </div>
+                    </div>
+                    
+                    <div id="testimonial-btn-next" style="display: inline-block; opacity: 0; transition: opacity 0.3s ease;"></div>
+                </div>
+            `;
             document.getElementById('testimonials-container').innerHTML = testimonialsHTML;
 
             // Usar un delay pequeño para asegurar que el DOM está listo
             setTimeout(() => {
-                const testimonialTemplate = (quote, author, role) => {
-                    return '<blockquote class="blockquote mb-0 text-light-gray fst-italic"><p>"' + quote + '"</p><footer class="blockquote-footer mt-3 text-accent">' + author + ', <cite>' + role + '</cite></footer></blockquote>';
-                };
+                // Crear TestimonialCards
+                new TestimonialCard('#testimonial-0', {
+                    quote: 'En menos de una semana dejé de gastar en cosas que no necesitaba. La app me mostró dónde estaba perdiendo plata.',
+                    author: 'María',
+                    role: 'Emprendedora',
+                    rating: 5
+                });
 
-                document.getElementById('testimonial-0').innerHTML = testimonialTemplate(
-                    'En menos de una semana dejé de gastar en cosas que no necesitaba. La app me mostró dónde estaba perdiendo plata.',
-                    'María',
-                    'Emprendedora'
-                );
-                document.getElementById('testimonial-1').innerHTML = testimonialTemplate(
-                    'Ya no siento que mi cajero hable solo. Con FinTrack veo justo lo que debo pagar y cuánto puedo ahorrar.',
-                    'Lucas',
-                    'Freelancer'
-                );
+                new TestimonialCard('#testimonial-1', {
+                    quote: 'Ya no siento que mi cajero hable solo. Con FinTrack veo justo lo que debo pagar y cuánto puedo ahorrar.',
+                    author: 'Lucas',
+                    role: 'Freelancer',
+                    rating: 5
+                });
+
+                // Crear botones de navegación con componente Button
+                new Button('#testimonial-btn-prev', {
+                    icon: 'fas fa-chevron-left',
+                    variant: 'outline-accent',
+                    size: 'icon',
+                    iconOnly: true,
+                    rounded: true,
+                    onClick: () => {
+                        const carouselElement = document.getElementById('userTestimonialsCarousel');
+                        const carousel = bootstrap.Carousel.getInstance(carouselElement);
+                        if (carousel) {
+                            carousel.prev();
+                        }
+                    }
+                });
+
+                new Button('#testimonial-btn-next', {
+                    icon: 'fas fa-chevron-right',
+                    variant: 'outline-accent',
+                    size: 'icon',
+                    iconOnly: true,
+                    rounded: true,
+                    onClick: () => {
+                        const carouselElement = document.getElementById('userTestimonialsCarousel');
+                        const carousel = bootstrap.Carousel.getInstance(carouselElement);
+                        if (carousel) {
+                            carousel.next();
+                        }
+                    }
+                });
+
+                // Agregar evento de hover para mostrar/ocultar botones
+                const wrapper = document.getElementById('testimonials-wrapper');
+                const btnPrev = document.getElementById('testimonial-btn-prev');
+                const btnNext = document.getElementById('testimonial-btn-next');
+
+                if (wrapper && btnPrev && btnNext) {
+                    wrapper.addEventListener('mouseenter', () => {
+                        btnPrev.style.opacity = '1';
+                        btnNext.style.opacity = '1';
+                    });
+
+                    wrapper.addEventListener('mouseleave', () => {
+                        btnPrev.style.opacity = '0';
+                        btnNext.style.opacity = '0';
+                    });
+                }
+
+                console.log('✅ Testimonios creados con componentes (TestimonialCard + Button)');
             }, 50);
 
             // ========== 💰 SECCIÓN: PRECIOS ==========

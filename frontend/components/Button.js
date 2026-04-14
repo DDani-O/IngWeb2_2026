@@ -18,11 +18,13 @@ class Button {
     this.options = {
       text: options.text || 'Botón',
       variant: options.variant || 'primary', // primary, accent, outline-accent, secondary
-      size: options.size || 'md', // sm, md, lg
+      size: options.size || 'md', // sm, md, lg, icon
       icon: options.icon || null,
       iconPosition: options.iconPosition || 'left', // left, right
       disabled: options.disabled || false,
       fullWidth: options.fullWidth || false,
+      iconOnly: options.iconOnly || false, // solo muestra el ícono
+      rounded: options.rounded || false, // botón más redondeado/circular
       onClick: options.onClick || (() => {}),
       type: options.type || 'button'
     };
@@ -38,16 +40,19 @@ class Button {
     const iconClass = this.options.icon ? `icon-${this.options.iconPosition}` : '';
     const sizeClass = `btn-size-${this.options.size}`;
     const widthClass = this.options.fullWidth ? 'btn-full-width' : '';
+    const roundedClass = this.options.rounded ? 'btn-rounded' : '';
+
+    const buttonContent = this.options.iconOnly
+      ? icon
+      : `${this.options.iconPosition === 'left' ? icon : ''}<span>${this.options.text}</span>${this.options.iconPosition === 'right' ? icon : ''}`;
 
     this.elemento.innerHTML = `
       <button 
-        class="custom-btn btn-${this.options.variant} ${sizeClass} ${widthClass} ${iconClass}"
+        class="custom-btn btn-${this.options.variant} ${sizeClass} ${widthClass} ${iconClass} ${roundedClass}"
         type="${this.options.type}"
         ${this.options.disabled ? 'disabled' : ''}
       >
-        ${this.options.iconPosition === 'left' ? icon : ''}
-        <span>${this.options.text}</span>
-        ${this.options.iconPosition === 'right' ? icon : ''}
+        ${buttonContent}
       </button>
     `;
 
@@ -144,6 +149,21 @@ class Button {
         .btn-size-lg {
           padding: 0.85rem 1.75rem;
           font-size: 1.1rem;
+        }
+
+        .btn-size-icon {
+          padding: 0.75rem;
+          font-size: 1.2rem;
+          width: 48px;
+          height: 48px;
+          display: flex !important;
+          align-items: center;
+          justify-content: center;
+          border-radius: 50%;
+        }
+
+        .btn-rounded {
+          border-radius: 20px;
         }
 
         .btn-full-width {
