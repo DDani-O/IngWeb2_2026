@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinTrack - Página en Desarrollo</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="../assets/css/estilos.css">
+    
+    <style>
+        body { 
+            background-color: var(--bg-main) !important; 
+            color: var(--text-main) !important;
+            padding-top: 70px;
+        }
+
+        .navbar {
+            background-color: rgba(11, 17, 32, 0.95) !important;
+            border-bottom: 1px solid rgba(45, 212, 191, 0.1);
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1040;
+        }
+
+        main {
+            min-height: calc(100vh - 70px);
+            padding: 40px 20px;
+        }
+
+        .wip-banner {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(251, 146, 60, 0.05) 100%);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .wip-banner h2 {
+            color: #f59e0b;
+            margin: 0 0 8px 0;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .wip-banner p {
+            color: var(--text-muted);
+            margin: 0;
+            font-size: 14px;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(45, 212, 191, 0.2);
+            border: 1px solid rgba(45, 212, 191, 0.3);
+            color: var(--accent) !important;
+            padding: 10px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .back-btn:hover {
+            background: rgba(45, 212, 191, 0.3);
+            box-shadow: 0 4px 12px rgba(45, 212, 191, 0.2);
+            text-decoration: none;
+            color: var(--accent) !important;
+        }
+
+        .content-container {
+            background: linear-gradient(135deg, rgba(45, 212, 191, 0.08) 0%, rgba(2, 132, 199, 0.04) 100%);
+            border: 1px solid rgba(45, 212, 191, 0.15);
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .content-icon {
+            font-size: 80px;
+            color: var(--accent);
+            opacity: 0.3;
+            margin-bottom: 20px;
+        }
+
+        .content-title {
+            color: var(--text-main);
+            font-size: 28px;
+            font-weight: 700;
+            margin: 20px 0;
+        }
+
+        .content-description {
+            color: var(--text-muted);
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        .param-display {
+            background: rgba(45, 212, 191, 0.1);
+            border: 1px solid rgba(45, 212, 191, 0.2);
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-family: monospace;
+            font-size: 12px;
+            color: var(--accent);
+            margin-top: 20px;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid px-4">
+            <a href="../index.html" class="navbar-brand fw-bold text-white">
+                <i class="fas fa-chart-pie text-accent"></i> FinTrack
+            </a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container-xl">
+        <button onclick="handleBackClick()" class="back-btn">
+            <i class="fas fa-arrow-left"></i> Volver
+        </button>
+
+        <div class="wip-banner">
+            <h2><i class="fas fa-wrench me-2"></i> 🚧 En Construcción</h2>
+            <p>Esta página está en desarrollo. Vuelve pronto.</p>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <div class="content-container">
+                    <div class="content-icon" id="pageIcon">📄</div>
+                    <h3 class="content-title" id="pageTitle">Página en Desarrollo</h3>
+                    <p class="content-description" id="pageDescription">
+                        Esta funcionalidad está siendo desarrollada. Pronto podrás acceder a ella.
+                    </p>
+                    <div class="param-display" id="paramDisplay" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Función para manejar el botón de retorno
+        function handleBackClick() {
+            // Si hay historial previo, volver
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                // Si no hay historial (pestaña nueva), cerrar la pestaña
+                window.close();
+            }
+        }
+
+        // Configuración de páginas
+        const pageConfig = {
+            'perfil': {
+                title: 'Perfil del Asesor',
+                icon: '🔧',
+                description: 'Aquí podrás actualizar tu información personal, especialidades y disponibilidad.'
+            },
+            'resumen-usuario': {
+                title: 'Resumen del Cliente',
+                icon: '👤',
+                description: 'Aquí podrás ver detalles completos del cliente, su historial de gastos, perfil de consumo y recomendaciones.',
+                paramName: 'id',
+                paramLabel: 'ID del Cliente'
+            },
+            'visualizar-usuarios': {
+                title: 'Mis Clientes',
+                icon: '👥',
+                description: 'Aquí podrás ver la lista completa de tus clientes con filtros avanzados, ordenamiento y búsqueda.'
+            },
+            'mensaje-detalle': {
+                title: 'Detalle del Mensaje',
+                icon: '💬',
+                description: 'Aquí podrás ver el contenido completo del mensaje o ticket, con la opción de responder.',
+                paramName: 'id',
+                paramLabel: 'ID del Mensaje'
+            },
+            'recomendaciones': {
+                title: 'Recomendaciones Detalladas',
+                icon: '💡',
+                description: 'Aquí podrás ver todas tus recomendaciones, filtrar por estado (enviadas, vistas, implementadas) y hacer seguimiento.',
+                paramName: 'status',
+                paramLabel: 'Estado Filtrado',
+                paramMap: {
+                    'sent': 'Enviadas',
+                    'viewed': 'Vistas',
+                    'implemented': 'Implementadas'
+                }
+            },
+            'comisiones': {
+                title: 'Mis Comisiones',
+                icon: '💰',
+                description: 'Aquí podrás ver el detalle de tus comisiones generadas, historial de pagos y proyecciones.'
+            },
+            'tareas': {
+                title: 'Tareas Pendientes',
+                icon: '✓',
+                description: 'Aquí podrás ver todas tus tareas pendientes, realizar seguimiento y actualizaciones.'
+            },
+            'reportes': {
+                title: 'Descargar Reportes',
+                icon: '📊',
+                description: 'Aquí podrás descargar reportes de tu desempeño, comisiones y análisis de clientes.'
+            },
+            'bandeja-entrada': {
+                title: 'Bandeja de Entrada',
+                icon: '📨',
+                description: 'Aquí podrás ver todos tus mensajes y tickets, con opciones de filtrado y búsqueda avanzada.'
+            }
+        };
+
+        // Obtener parámetros de la URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const page = urlParams.get('page') || 'default';
+        const config = pageConfig[page] || pageConfig['default'];
+
+        // Actualizar contenido de la página
+        document.getElementById('pageIcon').textContent = config.icon;
+        document.getElementById('pageTitle').textContent = config.title;
+        document.getElementById('pageDescription').textContent = config.description;
+        document.title = `FinTrack - ${config.title}`;
+
+        // Mostrar parámetro si existe
+        if (config.paramName) {
+            const paramValue = urlParams.get(config.paramName);
+            if (paramValue) {
+                const paramDisplay = document.getElementById('paramDisplay');
+                const displayValue = config.paramMap ? (config.paramMap[paramValue] || paramValue) : paramValue;
+                paramDisplay.textContent = `${config.paramLabel}: ${displayValue}`;
+                paramDisplay.style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>
