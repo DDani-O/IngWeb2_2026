@@ -10,6 +10,7 @@ class StatCardAdvanced {
         this.value = options.value || '0';
         this.unit = options.unit || '';
         this.icon = options.icon || 'fas fa-chart-bar';
+        this.emoji = options.emoji || '';
         this.trend = options.trend || null; // { value: 15, direction: 'up' }
         this.colorStart = options.colorStart || '#2dd4bf';
         this.colorEnd = options.colorEnd || '#0284c7';

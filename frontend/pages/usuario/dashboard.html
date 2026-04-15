@@ -324,64 +324,12 @@
 
             <!-- Right Section - Notifications -->
             <div class="col-lg-6" style="position: relative; z-index: 1;">
-                <div style="display: flex; flex-direction: column; gap: 12px;">
-                    <!-- Alert 1 -->
-                    <div style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(244, 63, 94, 0.05) 100%); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; padding: 14px 16px; display: flex; gap: 12px; align-items: flex-start;">
-                        <div style="font-size: 20px; min-width: 24px;">⚠️</div>
-                        <div style="flex: 1;">
-                            <p style="font-size: 13px; font-weight: 600; color: #ef4444; margin: 0 0 4px 0;">¡Has gastado más de lo normal!</p>
-                            <small class="text-light-gray" style="font-size: 11px; line-height: 1.4;">Tu gasto diario excede el promedio. Revisa dónde está el incremento.</small>
-                        </div>
-                    </div>
-
-                    <!-- Alert 2 -->
-                    <div style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(251, 146, 60, 0.05) 100%); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px; padding: 14px 16px; display: flex; gap: 12px; align-items: flex-start;">
-                        <div style="font-size: 20px; min-width: 24px;">💡</div>
-                        <div style="flex: 1;">
-                            <p style="font-size: 13px; font-weight: 600; color: #f59e0b; margin: 0 0 4px 0;">Oportunidad de ahorro detectada</p>
-                            <small class="text-light-gray" style="font-size: 11px; line-height: 1.4;">Tienes 3 suscripciones activas que podrías revisar.</small>
-                        </div>
-                    </div>
-
-                    <!-- Alert 3 -->
-                    <div style="background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(132, 204, 22, 0.05) 100%); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 12px; padding: 14px 16px; display: flex; gap: 12px; align-items: flex-start;">
-                        <div style="font-size: 20px; min-width: 24px;">🎯</div>
-                        <div style="flex: 1;">
-                            <p style="font-size: 13px; font-weight: 600; color: #22c55e; margin: 0 0 4px 0;">¡Buen mes de ahorro!</p>
-                            <small class="text-light-gray" style="font-size: 11px; line-height: 1.4;">Estás 15% por encima de tu meta de esta semana. 📈</small>
-                        </div>
-                    </div>
-                </div>
+                <div id="heroNotifications" style="display: flex; flex-direction: column; gap: 12px;"></div>
             </div>
         </div>
 
         <!-- Consumption Profile Card -->
-        <div class="mb-5" style="max-width: 100%; padding: 24px; border-radius: 16px; background: linear-gradient(135deg, rgba(101, 163, 13, 0.15) 0%, rgba(20, 184, 166, 0.05) 100%); border: 2px solid #22c55e; position: relative; overflow: hidden;">
-            <div style="position: absolute; top: 0; right: -20px; width: 120px; height: 120px; border-radius: 50%; background: radial-gradient(circle, #22c55e 0%, transparent 70%); opacity: 0.1; pointer-events: none;"></div>
-            <div style="position: relative;">
-                <div class="d-flex align-items-center mb-3">
-                    <span style="font-size: 48px; margin-right: 15px;">⚖️</span>
-                    <div>
-                        <h5 class="fw-bold mb-0" style="color: #22c55e;">Equilibrista Cósmico</h5>
-                        <small class="text-light-gray">Tu Perfil de Consumidor</small>
-                    </div>
-                </div>
-                <p class="text-light-gray mb-3 small" style="line-height: 1.5; font-size: 14px;">
-                    Perfecto balance entre gasto y ahorro. Eres el tipo de persona que confunde su presupuesto con un arte. 🎨
-                </p>
-                <div style="padding: 12px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);" class="mb-3">
-                    <small class="text-accent d-block mb-2" style="font-style: italic;">
-                        💡 ¿Quieres conocer otros tipos de perfiles y cómo llegar a serlo?
-                    </small>
-                    <a href="perfiles.html" class="btn btn-sm btn-outline-primary" style="font-size: 12px;">
-                        Explorar perfiles →
-                    </a>
-                </div>
-                <small class="text-light-gray d-block" style="font-style: italic;">
-                    ⓘ Este perfil se actualiza según tus hábitos de consumo
-                </small>
-            </div>
-        </div>
+        <div id="consumptionProfileContainer" class="mb-5"></div>
 
         <!-- Stats Section -->
         <div class="mb-5">
@@ -571,9 +519,9 @@
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
     <script src="../../components/ProfileCard.js"></script>
+    <script src="../../components/NotificationCard.js"></script>
     <script src="../../components/ConsumptionProfile.js"></script>
     <script src="../../components/StatCardAdvanced.js"></script>
-    <script src="../../components/FinancialAdvisor.js"></script>
     <script src="../../components/SummaryCard.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -582,6 +530,9 @@
         // Initialize Components
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Dashboard iniciando...');
+
+            const TOAST_HIDE_DELAY_MS = 5000;
+            const TOAST_ANIMATION_MS = 400;
 
             // Update Calendar
             function updateCalendar() {
@@ -604,6 +555,9 @@
 
             updateCalendar();
 
+            // Renderiza alertas del hero desde configuración para evitar duplicar HTML.
+            renderHeroNotifications();
+
             // 1. Profile Card en el panel
             try {
                 if (typeof ProfileCard !== 'undefined') {
@@ -622,6 +576,13 @@
                 }
             } catch(e) {
                 console.error('Error en ProfileCard:', e);
+            }
+
+            // 2. Perfil de consumo reutilizando componente existente.
+            try {
+                renderConsumptionProfile();
+            } catch(e) {
+                console.error('Error en ConsumptionProfile:', e);
             }
 
             // 3. Stats Cards
@@ -646,8 +607,8 @@
                         label: 'Presupuesto Restante',
                         value: '$14,770',
                         unit: '.00',
-                        icon: 'fas fa-target',
-                        emoji: '🎯',
+                        icon: 'fas fa-balance-scale',
+                        emoji: '🤔',
                         colorStart: '#06b6d4',
                         colorEnd: '#0ea5e9',
                         subtitle: '75% del presupuesto utilizado',
@@ -700,75 +661,7 @@
 
             // 4. Summary Cards
             try {
-                if (typeof SummaryCard !== 'undefined') {
-                    // Patterns Summary
-                    const patternsSummary = new SummaryCard({
-                        title: 'Patrones de Consumo',
-                        icon: 'fas fa-chart-pie',
-                        subtitle: 'Análisis de tus gastos',
-                        accentColor: '#2dd4bf',
-                        borderColor: 'rgba(45, 212, 191, 0.3)',
-                        colorGradient: 'linear-gradient(135deg, rgba(45, 212, 191, 0.15) 0%, rgba(20, 184, 166, 0.05) 100%)',
-                        items: [
-                            { label: 'Alimentación', value: '35%' },
-                            { label: 'Transportes', value: '20%' },
-                            { label: 'Entretenimiento', value: '15%' },
-                            { label: 'Otros', value: '30%' }
-                        ],
-                        onClick: () => {
-                            window.location.href = 'patrones.html';
-                        }
-                    });
-                    const patternsContainer = document.getElementById('summaryPatternsContainer');
-                    if (patternsContainer) {
-                        patternsContainer.appendChild(patternsSummary.render());
-                    }
-
-                    // Recommendations Summary
-                    const recSummary = new SummaryCard({
-                        title: 'Recomendaciones',
-                        icon: 'fas fa-lightbulb',
-                        subtitle: '3 activas para ti',
-                        accentColor: '#f59e0b',
-                        borderColor: 'rgba(245, 158, 11, 0.3)',
-                        colorGradient: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(249, 115, 22, 0.05) 100%)',
-                        items: [
-                            { label: '🎯 Gastos hormiga', value: '+$500/mes' },
-                            { label: '🍕 Menos comidas fuera', value: '+$300/mes' },
-                            { label: '🎬 Revisar suscripciones', value: '+$200/mes' }
-                        ],
-                        onClick: () => {
-                            window.location.href = 'recomendaciones.html';
-                        }
-                    });
-                    const recContainer = document.getElementById('summaryRecommendationsContainer');
-                    if (recContainer) {
-                        recContainer.appendChild(recSummary.render());
-                    }
-
-                    // History Summary
-                    const historySummary = new SummaryCard({
-                        title: 'Últimos Gastos',
-                        icon: 'fas fa-history',
-                        subtitle: 'Ver historial completo',
-                        accentColor: '#06b6d4',
-                        borderColor: 'rgba(6, 182, 212, 0.3)',
-                        colorGradient: 'linear-gradient(135deg, rgba(6, 182, 212, 0.15) 0%, rgba(2, 132, 199, 0.05) 100%)',
-                        items: [
-                            { label: 'Supermercado', value: '-$18,500' },
-                            { label: 'Servicios', value: '-$12,300' },
-                            { label: 'Restaurante', value: '-$8,450' },
-                            { label: 'Transporte', value: '-$5,200' }
-                        ],
-                        onClick: () => {
-                            window.location.href = 'historial.html';
-                        }
-                    });
-                    const historyContainer = document.getElementById('summaryHistoryContainer');
-                    if (historyContainer) {
-                        historyContainer.appendChild(historySummary.render());
-                    }
-                }
+                renderSummaryCards();
             } catch(e) {
                 console.error('Error en Summary Cards:', e);
             }
@@ -786,14 +679,10 @@
                         setTimeout(() => {
                             advisorToast.style.display = 'none';
                             advisorToast.style.animation = 'slideInUp 0.4s ease-out';
-                            
-                            // Show floating button
-                            const floatingBtn = document.getElementById('floatingChatBtn');
-                            if (floatingBtn) {
-                                floatingBtn.style.display = 'block';
-                            }
-                        }, 400);
-                    }, 5000);
+
+                            showFloatingChatButton();
+                        }, TOAST_ANIMATION_MS);
+                    }, TOAST_HIDE_DELAY_MS);
                 }
             } catch(e) {
                 console.error('Error en Advisor Toast:', e);
@@ -823,6 +712,153 @@
 
             console.log('Dashboard cargado correctamente');
         });
+
+        function renderHeroNotifications() {
+            const notificationsContainer = document.getElementById('heroNotifications');
+            if (!notificationsContainer) return;
+
+            const notifications = [
+                {
+                    emoji: '⚠️',
+                    title: '¡Has gastado más de lo normal!',
+                    message: 'Tu gasto diario excede el promedio. Revisa dónde está el incremento.',
+                    titleColor: '#ef4444',
+                    bg: 'linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(244, 63, 94, 0.05) 100%)',
+                    border: '1px solid rgba(239, 68, 68, 0.3)'
+                },
+                {
+                    emoji: '💡',
+                    title: 'Oportunidad de ahorro detectada',
+                    message: 'Tienes 3 suscripciones activas que podrías revisar.',
+                    titleColor: '#f59e0b',
+                    bg: 'linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(251, 146, 60, 0.05) 100%)',
+                    border: '1px solid rgba(245, 158, 11, 0.3)'
+                },
+                {
+                    emoji: '🎯',
+                    title: '¡Buen mes de ahorro!',
+                    message: 'Estás 15% por encima de tu meta de esta semana. 📈',
+                    titleColor: '#22c55e',
+                    bg: 'linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(132, 204, 22, 0.05) 100%)',
+                    border: '1px solid rgba(34, 197, 94, 0.3)'
+                }
+            ];
+
+            notificationsContainer.innerHTML = '';
+
+            notifications.forEach((item) => {
+                if (typeof NotificationCard === 'undefined') {
+                    return;
+                }
+
+                const card = new NotificationCard({
+                    emoji: item.emoji,
+                    title: item.title,
+                    message: item.message,
+                    titleColor: item.titleColor,
+                    background: item.bg,
+                    border: item.border
+                });
+                notificationsContainer.appendChild(card.render());
+            });
+        }
+
+        function renderConsumptionProfile() {
+            if (typeof ConsumptionProfile === 'undefined') return;
+
+            const profileContainer = document.getElementById('consumptionProfileContainer');
+            if (!profileContainer) return;
+
+            const profileCard = new ConsumptionProfile({
+                profileType: 'equilibrado',
+                perceptionPercentage: 65
+            });
+
+            profileContainer.innerHTML = '';
+            profileContainer.appendChild(profileCard.render());
+        }
+
+        // Crea los 3 resúmenes desde una única configuración para mantener consistencia.
+        function renderSummaryCards() {
+            if (typeof SummaryCard === 'undefined') return;
+
+            const summaryConfigs = [
+                {
+                    containerId: 'summaryPatternsContainer',
+                    options: {
+                        title: 'Patrones de Consumo',
+                        icon: 'fas fa-chart-pie',
+                        subtitle: 'Análisis de tus gastos',
+                        accentColor: '#2dd4bf',
+                        borderColor: 'rgba(45, 212, 191, 0.3)',
+                        colorGradient: 'linear-gradient(135deg, rgba(45, 212, 191, 0.15) 0%, rgba(20, 184, 166, 0.05) 100%)',
+                        items: [
+                            { label: 'Alimentación', value: '35%' },
+                            { label: 'Transportes', value: '20%' },
+                            { label: 'Entretenimiento', value: '15%' },
+                            { label: 'Otros', value: '30%' }
+                        ],
+                        onClick: () => {
+                            window.location.href = 'patrones.html';
+                        }
+                    }
+                },
+                {
+                    containerId: 'summaryRecommendationsContainer',
+                    options: {
+                        title: 'Recomendaciones',
+                        icon: 'fas fa-lightbulb',
+                        subtitle: '3 activas para ti',
+                        accentColor: '#f59e0b',
+                        borderColor: 'rgba(245, 158, 11, 0.3)',
+                        colorGradient: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(249, 115, 22, 0.05) 100%)',
+                        items: [
+                            { label: '🎯 Gastos hormiga', value: '+$500/mes' },
+                            { label: '🍕 Menos comidas fuera', value: '+$300/mes' },
+                            { label: '🎬 Revisar suscripciones', value: '+$200/mes' }
+                        ],
+                        onClick: () => {
+                            window.location.href = 'recomendaciones.html';
+                        }
+                    }
+                },
+                {
+                    containerId: 'summaryHistoryContainer',
+                    options: {
+                        title: 'Últimos Gastos',
+                        icon: 'fas fa-history',
+                        subtitle: 'Ver historial completo',
+                        accentColor: '#06b6d4',
+                        borderColor: 'rgba(6, 182, 212, 0.3)',
+                        colorGradient: 'linear-gradient(135deg, rgba(6, 182, 212, 0.15) 0%, rgba(2, 132, 199, 0.05) 100%)',
+                        items: [
+                            { label: 'Supermercado', value: '-$18,500' },
+                            { label: 'Servicios', value: '-$12,300' },
+                            { label: 'Restaurante', value: '-$8,450' },
+                            { label: 'Transporte', value: '-$5,200' }
+                        ],
+                        onClick: () => {
+                            window.location.href = 'historial.html';
+                        }
+                    }
+                }
+            ];
+
+            summaryConfigs.forEach((summary) => {
+                const container = document.getElementById(summary.containerId);
+                if (!container) return;
+
+                container.innerHTML = '';
+                container.appendChild(new SummaryCard(summary.options).render());
+            });
+        }
+
+        function showFloatingChatButton() {
+            const floatingBtn = document.getElementById('floatingChatBtn');
+            if (floatingBtn) {
+                floatingBtn.style.display = 'block';
+            }
+        }
 
         // Initialize Charts
         function initializeCharts() {
@@ -943,12 +979,8 @@
                 toast.style.animation = 'slideOutDown 0.4s ease-out';
                 setTimeout(() => {
                     toast.style.display = 'none';
-                    
-                    // Show floating button
-                    const floatingBtn = document.getElementById('floatingChatBtn');
-                    if (floatingBtn) {
-                        floatingBtn.style.display = 'block';
-                    }
+
+                    showFloatingChatButton();
                 }, 400);
             }
         }
@@ -1035,4 +1067,3 @@
     </script>
 </body>
 </html>
-</html
