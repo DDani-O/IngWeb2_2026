@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recomendaciones Financieras | FinTrack</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../../assets/css/estilos.css">
+    <style>
+        :root {
+            --bg-main: #0b1120;
+            --accent: #2dd4bf;
+            --text-muted: #999999;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: #fff;
+        }
+
+        .recommendation-card {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(249, 115, 22, 0.05) 100%);
+            border: 2px solid rgba(245, 158, 11, 0.3);
+            padding: 24px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .recommendation-card:hover {
+            border-color: #f59e0b;
+            box-shadow: 0 8px 32px rgba(245, 158, 11, 0.2);
+        }
+
+        .recommendation-card.high {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(248, 113, 113, 0.05) 100%);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        .recommendation-card.high:hover {
+            border-color: #ef4444;
+        }
+
+        .recommendation-card.medium {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(74, 222, 128, 0.05) 100%);
+            border-color: rgba(34, 197, 94, 0.3);
+        }
+
+        .recommendation-card.medium:hover {
+            border-color: #22c55e;
+        }
+
+        .priority-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .priority-badge.high {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .priority-badge.medium {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+        }
+
+        .priority-badge.low {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+
+        .savings-pill {
+            display: inline-block;
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .how-to {
+            background: rgba(255,255,255,0.02);
+            border-left: 3px solid #2dd4bf;
+            padding: 16px;
+            border-radius: 4px;
+            margin-top: 12px;
+        }
+
+        .step {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .step-number {
+            min-width: 24px;
+            height: 24px;
+            background: rgba(45, 212, 191, 0.3);
+            border: 1px solid #2dd4bf;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            color: #2dd4bf;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark py-3" style="background: rgba(11, 17, 32, 0.95); border-bottom: 1px solid rgba(45, 212, 191, 0.1);">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="../../../index.html" style="color: var(--accent);">
+                <i class="fas fa-chart-line me-2"></i>FinTrack
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="dashboard.html">
+                            <i class="fas fa-arrow-left me-2"></i>Volver al Dashboard
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container py-5">
+        <!-- Header -->
+        <div class="mb-5 pb-3" style="border-bottom: 1px solid rgba(45, 212, 191, 0.2);">
+            <h1 class="mb-2" style="font-size: 32px; font-weight: 700;">
+                <i class="fas fa-lightbulb text-accent me-3"></i>Recomendaciones Financieras
+            </h1>
+            <p class="text-light-gray mb-0">
+                Personalizadas según tu perfil y hábitos. Acciones que puedes tomar hoy para mejorar tu situación financiera.
+            </p>
+        </div>
+
+        <!-- High Priority -->
+        <div class="mb-5">
+            <h4 class="text-white fw-bold mb-4" style="font-size: 18px;">
+                <i class="fas fa-exclamation-circle me-2" style="color: #ef4444;"></i>Prioridad Alta
+            </h4>
+
+            <!-- Rec 1 -->
+            <div class="recommendation-card high">
+                <div class="priority-badge high">🔴 ALTA PRIORIDAD</div>
+                <h5 class="text-white fw-bold mb-2">
+                    <span style="font-size: 24px;">🎯</span> Reduce tus Gastos Hormiga
+                </h5>
+                <p class="text-light-gray mb-3" style="line-height: 1.6; font-size: 14px;">
+                    Detectamos que realizas muchas pequeñas compras frecuentes que, aunque parecen insignificantes, suman rápidamente. Estos gastos representan <strong>$3,450 del mes</strong> (7.6% de tu presupuesto).
+                </p>
+                <div class="mb-3">
+                    <span class="savings-pill">💰 Ahorro potencial: +$500/mes</span>
+                </div>
+                <div class="how-to">
+                    <small class="text-accent fw-bold d-block mb-2">¿Cómo implementar esta recomendación?</small>
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div>Identifica tus compras hormiga (café, snacks, apps)</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div>Lleva efectivo limitado para estos gastos</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div>Establece un límite diario de $30</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">4</div>
+                        <div>Realiza un seguimiento semanal</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rec 2 -->
+            <div class="recommendation-card high">
+                <div class="priority-badge high">🔴 ALTA PRIORIDAD</div>
+                <h5 class="text-white fw-bold mb-2">
+                    <span style="font-size: 24px;">🍕</span> Reduce Comidas Fuera de Casa
+                </h5>
+                <p class="text-light-gray mb-3" style="line-height: 1.6; font-size: 14px;">
+                    Este mes invertiste <strong>$8,450 en restaurantes</strong>. Si cocinases en casa más frecuentemente, podrías preparar comidas nutritivas a una fracción del costo.
+                </p>
+                <div class="mb-3">
+                    <span class="savings-pill">💰 Ahorro potencial: +$300/mes</span>
+                </div>
+                <div class="how-to">
+                    <small class="text-accent fw-bold d-block mb-2">¿Cómo implementar esta recomendación?</small>
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div>Planifica comidas para la semana</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div>Compra ingredientes en oferta local</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div>Limita restaurantes a 2 veces/semana</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">4</div>
+                        <div>Prepara lunch para el trabajo</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Medium Priority -->
+        <div class="mb-5">
+            <h4 class="text-white fw-bold mb-4" style="font-size: 18px;">
+                <i class="fas fa-info-circle me-2" style="color: #22c55e;"></i>Prioridad Media
+            </h4>
+
+            <!-- Rec 3 -->
+            <div class="recommendation-card medium">
+                <div class="priority-badge medium">🟢 MEDIA PRIORIDAD</div>
+                <h5 class="text-white fw-bold mb-2">
+                    <span style="font-size: 24px;">🎬</span> Revisa tus Suscripciones
+                </h5>
+                <p class="text-light-gray mb-3" style="line-height: 1.6; font-size: 14px;">
+                    Identificamos <strong>5 suscripciones activas</strong> que podrían tener duplicadas o no estés usando. Varias plataformas de streaming pueden optimizarse.
+                </p>
+                <div class="mb-3">
+                    <span class="savings-pill">💰 Ahorro potencial: +$200/mes</span>
+                </div>
+                <div class="how-to">
+                    <small class="text-accent fw-bold d-block mb-2">¿Cómo implementar esta recomendación?</small>
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div>Lista todas tus suscripciones activas</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div>Elimina las que no uses mensualmente</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div>Comparte cuentas familiares si es posible</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">4</div>
+                        <div>Configura recordatorios de renovación</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rec 4 -->
+            <div class="recommendation-card medium">
+                <div class="priority-badge medium">🟢 MEDIA PRIORIDAD</div>
+                <h5 class="text-white fw-bold mb-2">
+                    <span style="font-size: 24px;">🚗</span> Optimiza tu Transporte
+                </h5>
+                <p class="text-light-gray mb-3" style="line-height: 1.6; font-size: 14px;">
+                    Actualmente gastas $5,200 en transporte. Usar más transporte público o compartido podría reducir significativamente este monto.
+                </p>
+                <div class="mb-3">
+                    <span class="savings-pill">💰 Ahorro potencial: +$150/mes</span>
+                </div>
+                <div class="how-to">
+                    <small class="text-accent fw-bold d-block mb-2">¿Cómo implementar esta recomendación?</small>
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div>Evalúa rutas de transporte público</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div>Prueba apps de carpooling</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div>Considera pase mensual si es más barato</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">4</div>
+                        <div>Combina transporte según necesidad</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Box -->
+        <div style="background: linear-gradient(135deg, rgba(45, 212, 191, 0.15) 0%, rgba(2, 132, 199, 0.05) 100%); border: 2px solid rgba(45, 212, 191, 0.3); border-radius: 12px; padding: 24px; text-align: center;">
+            <h5 class="text-accent fw-bold mb-2">💡 Total de Ahorro Potencial</h5>
+            <h2 class="text-white" style="font-size: 36px; font-weight: 700;">+$1,150 /mes</h2>
+            <p class="text-light-gray mb-0">Si implementas todas las recomendaciones, podrías ahorrar hasta $13,800 anuales.</p>
+        </div>
+
+        <!-- Back Button -->
+        <div class="text-center mt-5">
+            <a href="dashboard.html" class="btn btn-primary" style="background-color: var(--accent); border-color: var(--accent); color: var(--bg-main); font-weight: 600;">
+                <i class="fas fa-arrow-left me-2"></i>Volver al Dashboard
+            </a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
