@@ -8,6 +8,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../../assets/css/estilos.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <script src="../../components/StatCardAdvanced.js"></script>
+    <script src="../../components/NotificationCard.js"></script>
+    <script src="../../components/UnusualExpenseCard.js"></script>
     <style>
         :root {
             --bg-main: #0b1120;
@@ -18,14 +21,6 @@
         body {
             background-color: var(--bg-main);
             color: #fff;
-        }
-
-        .stat-badge {
-            background: linear-gradient(135deg, rgba(45, 212, 191, 0.15) 0%, rgba(2, 132, 199, 0.05) 100%);
-            border: 1px solid rgba(45, 212, 191, 0.3);
-            padding: 16px 20px;
-            border-radius: 12px;
-            text-align: center;
         }
 
         .chart-container {
@@ -48,6 +43,19 @@
 
         .category-row:hover {
             background: rgba(255,255,255,0.04);
+        }
+
+        .unusual-card {
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            border-left: 4px solid #ef4444;
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 12px;
+        }
+
+        .unusual-card:last-child {
+            margin-bottom: 0;
         }
     </style>
 </head>
@@ -85,83 +93,76 @@
             </p>
         </div>
 
-        <!-- Summary Stats -->
-        <div class="row g-3 mb-5">
-            <div class="col-md-3">
-                <div class="stat-badge">
-                    <small class="text-light-gray d-block mb-2">Total Gastado</small>
-                    <h4 class="text-accent mb-0">$45,230</h4>
-                    <small class="text-light-gray" style="font-size: 11px;">Últimos 30 días</small>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="stat-badge">
-                    <small class="text-light-gray d-block mb-2">Promedio Diario</small>
-                    <h4 class="text-accent mb-0">$1,508</h4>
-                    <small class="text-light-gray" style="font-size: 11px;">Por día</small>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="stat-badge">
-                    <small class="text-light-gray d-block mb-2">Mayor Gasto</small>
-                    <h4 class="text-accent mb-0">Alimentación</h4>
-                    <small class="text-light-gray" style="font-size: 11px;">35% del total</small>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="stat-badge">
-                    <small class="text-light-gray d-block mb-2">Categorías</small>
-                    <h4 class="text-accent mb-0">12</h4>
-                    <small class="text-light-gray" style="font-size: 11px;">Diferentes</small>
-                </div>
-            </div>
-        </div>
-
-        <!-- Pie Chart -->
-        <div class="chart-container">
-            <h5 class="text-accent fw-bold mb-4">
-                <i class="fas fa-square-poll-horizontal me-2"></i>Distribución de Gastos
-            </h5>
-            <div style="max-width: 400px; margin: 0 auto;">
-                <canvas id="categoryChart"></canvas>
-            </div>
-        </div>
-
-        <!-- Category Breakdown -->
-        <div class="chart-container">
-            <h5 class="text-accent fw-bold mb-4">
-                <i class="fas fa-bars me-2"></i>Desglose por Categoría
-            </h5>
-            <div id="categoryBreakdown"></div>
-        </div>
-
-        <!-- Trends -->
-        <div class="chart-container">
-            <h5 class="text-accent fw-bold mb-4">
-                <i class="fas fa-chart-line me-2"></i>Tendencias Mensual
-            </h5>
-            <div style="max-width: 100%; height: 300px;">
-                <canvas id="trendChart"></canvas>
-            </div>
-        </div>
-
         <!-- Insights -->
         <div class="chart-container">
             <h5 class="text-accent fw-bold mb-4">
                 <i class="fas fa-lightbulb me-2"></i>Información Clave
             </h5>
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <div style="padding: 12px; background: rgba(34, 197, 94, 0.1); border-left: 3px solid #22c55e; border-radius: 4px;">
-                        <small class="text-accent fw-bold">📈 Tendencia Positiva</small>
-                        <p class="mb-0 text-light-gray" style="font-size: 13px;">Tus gastos bajaron 12% respecto al mes anterior. ¡Buen trabajo!</p>
+            <div id="insightsContainer" class="row g-3"></div>
+        </div>
+
+        <!-- Summary Stats -->
+        <div class="row g-3 mb-5">
+            <div class="col-md-6 col-lg-3"><div id="summaryStat1"></div></div>
+            <div class="col-md-6 col-lg-3"><div id="summaryStat2"></div></div>
+            <div class="col-md-6 col-lg-3"><div id="summaryStat3"></div></div>
+            <div class="col-md-6 col-lg-3"><div id="summaryStat4"></div></div>
+        </div>
+
+        <!-- Categories Overview -->
+        <div class="chart-container">
+            <h5 class="text-accent fw-bold mb-4">
+                <i class="fas fa-layer-group me-2"></i>Categorías donde más dinero se gasta
+            </h5>
+            <div class="row g-4 align-items-center">
+                <div class="col-lg-6">
+                    <div style="max-width: 400px; margin: 0 auto;">
+                        <canvas id="categoryChart"></canvas>
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <div style="padding: 12px; background: rgba(245, 158, 11, 0.1); border-left: 3px solid #f59e0b; border-radius: 4px;">
-                        <small class="text-accent fw-bold">⚠️ Área de Atención</small>
-                        <p class="mb-0 text-light-gray" style="font-size: 13px;">Los gastos hormiga representan $3,450. Podrías ahorrar hasta $500/mes.</p>
+                <div class="col-lg-6">
+                    <div id="categoryBreakdown"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trends -->
+        <div class="chart-container">
+            <h5 class="text-accent fw-bold mb-4">
+                <i class="fas fa-chart-line me-2"></i>Evolución de Gastos en el Tiempo
+            </h5>
+            <div class="row g-4 align-items-stretch">
+                <div class="col-lg-6">
+                    <h6 class="text-light-gray fw-semibold mb-3" style="font-size: 13px;">Gasto total mensual</h6>
+                    <div style="max-width: 100%; height: 300px;">
+                        <canvas id="trendChart"></canvas>
                     </div>
+                </div>
+                <div class="col-lg-6">
+                    <h6 class="text-light-gray fw-semibold mb-3" style="font-size: 13px;">Evolución por categoría</h6>
+                    <div style="max-width: 100%; height: 300px;">
+                        <canvas id="categoryTrendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Unusual Expenses -->
+        <div class="chart-container">
+            <h5 class="text-accent fw-bold mb-4">
+                <i class="fas fa-triangle-exclamation me-2"></i>Gastos Inusuales
+            </h5>
+            <p class="text-light-gray mb-4" style="font-size: 13px;">
+                Movimientos que superan más de un 35% tu promedio histórico en cada categoría.
+            </p>
+            <div class="row g-4 align-items-stretch">
+                <div class="col-lg-7">
+                    <div style="max-width: 100%; height: 280px;">
+                        <canvas id="unusualChart"></canvas>
+                    </div>
+                </div>
+                <div class="col-lg-5">
+                    <div id="unusualExpensesList"></div>
                 </div>
             </div>
         </div>
@@ -177,16 +178,104 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            const monthLabels = ['Oct', 'Nov', 'Dic', 'Ene', 'Feb', 'Mar', 'Abr'];
+            // Fuente única: desde aquí se deriva el total mensual y el estado de categorías actual.
+            const monthlyCategoryBreakdown = {
+                Oct: [
+                    { category: 'Alimentación', amount: 15000 },
+                    { category: 'Transportes', amount: 8300 },
+                    { category: 'Entretenimiento', amount: 6200 },
+                    { category: 'Servicios', amount: 6400 },
+                    { category: 'Otros', amount: 6100 }
+                ],
+                Nov: [
+                    { category: 'Alimentación', amount: 15750 },
+                    { category: 'Transportes', amount: 8900 },
+                    { category: 'Entretenimiento', amount: 6700 },
+                    { category: 'Servicios', amount: 6700 },
+                    { category: 'Otros', amount: 6950 }
+                ],
+                Dic: [
+                    { category: 'Alimentación', amount: 16800 },
+                    { category: 'Transportes', amount: 9500 },
+                    { category: 'Entretenimiento', amount: 7900 },
+                    { category: 'Servicios', amount: 6900 },
+                    { category: 'Otros', amount: 6900 }
+                ],
+                Ene: [
+                    { category: 'Alimentación', amount: 15800 },
+                    { category: 'Transportes', amount: 9050 },
+                    { category: 'Entretenimiento', amount: 6800 },
+                    { category: 'Servicios', amount: 6650 },
+                    { category: 'Otros', amount: 6930 }
+                ],
+                Feb: [
+                    { category: 'Alimentación', amount: 15500 },
+                    { category: 'Transportes', amount: 8850 },
+                    { category: 'Entretenimiento', amount: 6500 },
+                    { category: 'Servicios', amount: 6550 },
+                    { category: 'Otros', amount: 7100 }
+                ],
+                Mar: [
+                    { category: 'Alimentación', amount: 16200 },
+                    { category: 'Transportes', amount: 9300 },
+                    { category: 'Entretenimiento', amount: 6900 },
+                    { category: 'Servicios', amount: 6700 },
+                    { category: 'Otros', amount: 7100 }
+                ],
+                Abr: [
+                    { category: 'Alimentación', amount: 15750 },
+                    { category: 'Transportes', amount: 9000 },
+                    { category: 'Entretenimiento', amount: 6750 },
+                    { category: 'Servicios', amount: 6750 },
+                    { category: 'Otros', amount: 6980 }
+                ]
+            };
+
+            const monthlySpending = monthLabels.map((month) => {
+                const rows = monthlyCategoryBreakdown[month] || [];
+                return rows.reduce((sum, row) => sum + row.amount, 0);
+            });
+
+            const currentMonth = monthLabels[monthLabels.length - 1];
+            const currentMonthRows = monthlyCategoryBreakdown[currentMonth] || [];
+            const totalCurrentMonth = currentMonthRows.reduce((sum, row) => sum + row.amount, 0);
+            const categories = currentMonthRows.map((row, index) => {
+                const palette = ['#2dd4bf', '#06b6d4', '#f59e0b', '#a855f7', '#ec4899'];
+                return {
+                    name: row.category,
+                    amount: row.amount,
+                    percentage: totalCurrentMonth > 0 ? Math.round((row.amount / totalCurrentMonth) * 100) : 0,
+                    color: palette[index % palette.length]
+                };
+            });
+
+            const unusualExpenses = [
+                { category: 'Restaurantes', date: '12 Abr', expected: 4200, detected: 8450, severity: 'Alta' },
+                { category: 'Compras Online', date: '05 Abr', expected: 2800, detected: 5900, severity: 'Alta' },
+                { category: 'Transporte App', date: '09 Abr', expected: 1500, detected: 3200, severity: 'Media' }
+            ];
+
+            const highestExpense = {
+                description: 'Compra de computadora',
+                amount: 185000,
+                date: '02 Abr'
+            };
+
+            // Centralizar datos evita inconsistencias entre tarjetas y gráficos.
+            renderSummaryStats(monthlySpending, categories, unusualExpenses, highestExpense);
+            renderInsightsCards();
+
             // Pie Chart
             const categoryCtx = document.getElementById('categoryChart');
             if (categoryCtx) {
                 new Chart(categoryCtx, {
                     type: 'doughnut',
                     data: {
-                        labels: ['Alimentación', 'Transportes', 'Entretenimiento', 'Servicios', 'Otros'],
+                        labels: categories.map(cat => cat.name),
                         datasets: [{
-                            data: [35, 20, 15, 15, 15],
-                            backgroundColor: ['#2dd4bf', '#06b6d4', '#f59e0b', '#a855f7', '#ec4899'],
+                            data: categories.map(cat => cat.percentage),
+                            backgroundColor: categories.map(cat => cat.color),
                             borderColor: '#0b1120',
                             borderWidth: 3
                         }]
@@ -204,14 +293,6 @@
             }
 
             // Category Breakdown
-            const categories = [
-                { name: 'Alimentación', percentage: 35, amount: '$15,750', color: '#2dd4bf' },
-                { name: 'Transportes', percentage: 20, amount: '$9,000', color: '#06b6d4' },
-                { name: 'Entretenimiento', percentage: 15, amount: '$6,750', color: '#f59e0b' },
-                { name: 'Servicios', percentage: 15, amount: '$6,750', color: '#a855f7' },
-                { name: 'Otros', percentage: 15, amount: '$6,750', color: '#ec4899' }
-            ];
-
             const breakdownHtml = categories.map(cat => `
                 <div class="category-row">
                     <div class="d-flex align-items-center gap-2">
@@ -222,7 +303,7 @@
                     </div>
                     <div class="text-right">
                         <p class="mb-0 text-accent fw-bold">${cat.percentage}%</p>
-                        <small class="text-light-gray">${cat.amount}</small>
+                        <small class="text-light-gray">${formatCurrency(cat.amount)}</small>
                     </div>
                 </div>
             `).join('');
@@ -235,10 +316,10 @@
                 new Chart(trendCtx, {
                     type: 'line',
                     data: {
-                        labels: ['Oct', 'Nov', 'Dic', 'Ene', 'Feb', 'Mar', 'Abr'],
+                        labels: monthLabels,
                         datasets: [{
                             label: 'Gasto Mensual',
-                            data: [42000, 45000, 48000, 45230, 44500, 46200, 45230],
+                            data: monthlySpending,
                             borderColor: '#2dd4bf',
                             backgroundColor: 'rgba(45, 212, 191, 0.1)',
                             borderWidth: 3,
@@ -269,7 +350,246 @@
                     }
                 });
             }
+
+            // Evolución por categoría (cada línea representa una categoría durante los meses).
+            const categoryTrendCtx = document.getElementById('categoryTrendChart');
+            if (categoryTrendCtx) {
+                const categoryNames = (monthlyCategoryBreakdown[monthLabels[0]] || []).map(item => item.category);
+                const categoryPalette = {
+                    'Alimentación': '#2dd4bf',
+                    'Transportes': '#06b6d4',
+                    'Entretenimiento': '#f59e0b',
+                    'Servicios': '#a855f7',
+                    'Otros': '#ec4899'
+                };
+
+                const datasets = categoryNames.map((categoryName) => ({
+                    label: categoryName,
+                    data: monthLabels.map((month) => {
+                        const rows = monthlyCategoryBreakdown[month] || [];
+                        const found = rows.find(row => row.category === categoryName);
+                        return found ? found.amount : 0;
+                    }),
+                    borderColor: categoryPalette[categoryName] || '#2dd4bf',
+                    backgroundColor: 'transparent',
+                    borderWidth: 2,
+                    tension: 0.35,
+                    pointRadius: 3,
+                    pointHoverRadius: 5
+                }));
+
+                new Chart(categoryTrendCtx, {
+                    type: 'line',
+                    data: {
+                        labels: monthLabels,
+                        datasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { color: '#999999', font: { size: 11 }, padding: 10 }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                ticks: { color: '#999999' },
+                                grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                            },
+                            x: {
+                                ticks: { color: '#999999' },
+                                grid: { display: false }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Gastos inusuales: comparación entre gasto esperado y gasto detectado.
+            renderUnusualExpenses(unusualExpenses);
         });
+
+        function renderSummaryStats(monthlySpending, categories, unusualExpenses, highestExpense) {
+            if (typeof StatCardAdvanced === 'undefined') return;
+
+            const currentMonthAverage = monthlySpending[monthlySpending.length - 1];
+            const previousMonthAverage = monthlySpending[monthlySpending.length - 2] || currentMonthAverage;
+            const monthlyDelta = previousMonthAverage > 0
+                ? Math.abs(((currentMonthAverage - previousMonthAverage) / previousMonthAverage) * 100)
+                : 0;
+            const monthlyDirection = currentMonthAverage <= previousMonthAverage ? 'down' : 'up';
+
+            const topCategory = categories.reduce((max, category) => category.percentage > max.percentage ? category : max, categories[0]);
+
+            const summaryStats = [
+                {
+                    target: 'summaryStat1',
+                    options: {
+                        label: 'Promedio Mensual',
+                        value: formatCurrency(currentMonthAverage),
+                        icon: 'fas fa-calendar-days',
+                        emoji: '📅',
+                        colorStart: '#2dd4bf',
+                        colorEnd: '#0284c7',
+                        subtitle: 'Promedio mensual del mes actual',
+                        trend: { value: monthlyDelta.toFixed(1), direction: monthlyDirection, label: 'vs. mes anterior' }
+                    }
+                },
+                {
+                    target: 'summaryStat2',
+                    options: {
+                        label: 'Mayor Categoría',
+                        value: topCategory.name,
+                        unit: topCategory.percentage + '%',
+                        icon: 'fas fa-layer-group',
+                        emoji: '🏷️',
+                        colorStart: '#06b6d4',
+                        colorEnd: '#0ea5e9',
+                        subtitle: 'Categoría con mayor participación'
+                    }
+                },
+                {
+                    target: 'summaryStat3',
+                    options: {
+                        label: 'Mayor Gasto Realizado',
+                        value: formatCurrency(highestExpense.amount),
+                        icon: 'fas fa-receipt',
+                        emoji: '💻',
+                        colorStart: '#22c55e',
+                        colorEnd: '#14b8a6',
+                        subtitle: highestExpense.description,
+                        trend: { value: 1, direction: 'up', label: highestExpense.date }
+                    }
+                },
+                {
+                    target: 'summaryStat4',
+                    options: {
+                        label: 'Gastos Inusuales',
+                        value: String(unusualExpenses.length),
+                        unit: 'eventos',
+                        icon: 'fas fa-triangle-exclamation',
+                        emoji: '🚨',
+                        colorStart: '#ef4444',
+                        colorEnd: '#f97316',
+                        subtitle: 'Detectados en los últimos 30 días',
+                        trend: { value: 1, direction: 'up', label: 'requiere seguimiento' }
+                    }
+                }
+            ];
+
+            summaryStats.forEach((item) => {
+                const target = document.getElementById(item.target);
+                if (!target) return;
+
+                target.innerHTML = '';
+                target.appendChild(new StatCardAdvanced(item.options).render());
+            });
+        }
+
+        function renderInsightsCards() {
+            const container = document.getElementById('insightsContainer');
+            if (!container) return;
+
+            const insights = [
+                {
+                    emoji: '📈',
+                    title: 'Tendencia Positiva',
+                    message: 'Tus gastos bajaron 12% respecto al mes anterior. ¡Buen trabajo!',
+                    titleColor: '#22c55e',
+                    background: 'rgba(34, 197, 94, 0.1)',
+                    border: '1px solid rgba(34, 197, 94, 0.3)'
+                },
+                {
+                    emoji: '⚠️',
+                    title: 'Área de Atención',
+                    message: 'Los gastos hormiga representan $3,450. Podrías ahorrar hasta $500/mes.',
+                    titleColor: '#f59e0b',
+                    background: 'rgba(245, 158, 11, 0.1)',
+                    border: '1px solid rgba(245, 158, 11, 0.3)'
+                }
+            ];
+
+            container.innerHTML = '';
+            insights.forEach((item) => {
+                const col = document.createElement('div');
+                col.className = 'col-md-6';
+
+                if (typeof NotificationCard === 'undefined') return;
+                const card = new NotificationCard(item).render();
+                col.appendChild(card);
+                container.appendChild(col);
+            });
+        }
+
+        function renderUnusualExpenses(unusualExpenses) {
+            const listContainer = document.getElementById('unusualExpensesList');
+            if (listContainer) {
+                listContainer.innerHTML = '';
+
+                unusualExpenses.forEach((expense) => {
+                    if (typeof UnusualExpenseCard === 'undefined') return;
+                    const card = new UnusualExpenseCard(expense);
+                    listContainer.appendChild(card.render());
+                });
+            }
+
+            const unusualCtx = document.getElementById('unusualChart');
+            if (unusualCtx) {
+                new Chart(unusualCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: unusualExpenses.map(expense => expense.category),
+                        datasets: [
+                            {
+                                label: 'Promedio Esperado',
+                                data: unusualExpenses.map(expense => expense.expected),
+                                backgroundColor: 'rgba(148, 163, 184, 0.35)',
+                                borderColor: 'rgba(148, 163, 184, 0.8)',
+                                borderWidth: 1,
+                                borderRadius: 4
+                            },
+                            {
+                                label: 'Gasto Detectado',
+                                data: unusualExpenses.map(expense => expense.detected),
+                                backgroundColor: 'rgba(239, 68, 68, 0.35)',
+                                borderColor: '#ef4444',
+                                borderWidth: 1,
+                                borderRadius: 4
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: { color: '#999999', font: { size: 11 } }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                ticks: { color: '#999999' },
+                                grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                            },
+                            x: {
+                                ticks: { color: '#999999' },
+                                grid: { display: false }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('es-AR', {
+                style: 'currency',
+                currency: 'ARS',
+                maximumFractionDigits: 0
+            }).format(value);
+        }
     </script>
 </body>
 </html>
