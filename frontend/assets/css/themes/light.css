@@ -1,0 +1,11 @@
+[data-theme="light"] {
+  --theme-bg-main: #f5f7fb;
+  --theme-bg-surface: #ffffff;
+  --theme-text-main: #0f172a;
+  --theme-text-secondary: #475569;
+}
+
+[data-theme="light"] body {
+  background: linear-gradient(180deg, #f5f7fb 0%, #eef2f7 100%);
+  color: #0f172a;
+}

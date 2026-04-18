@@ -1,0 +1,6 @@
+[data-theme="dark"] {
+  --theme-bg-main: var(--bg-900);
+  --theme-bg-surface: var(--bg-800);
+  --theme-text-main: var(--text-100);
+  --theme-text-secondary: var(--text-300);
+}

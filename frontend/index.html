@@ -1,723 +1,310 @@
 <!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FinTrack - Domina tu dinero</title>
+<html lang="es" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FinTrack - Gestion Inteligente de Gastos</title>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
-    
-    <link rel="stylesheet" href="./assets/css/estilos.css">
-    
-    <!-- 📦 Importar Componentes -->
-    <script src="./components/Button.js"></script>
-    <script src="./components/FeatureCard.js"></script>
-    <script src="./components/PricingCard.js"></script>
-    <script src="./components/SectionHeader.js"></script>
-    <script src="./components/TestimonialCard.js"></script>
-    <script src="./components/SocialButtons.js"></script>
-    <script src="./components/Modal.js"></script>
-    <script src="./components/FormInput.js"></script>
-</head>
-<body>
-    <!-- ============================================
-         🧭 NAVBAR
-         ============================================ -->
-    <nav class="navbar navbar-expand-lg navbar-dark shadow-sm sticky-top">
-        <div class="container-fluid px-4">
-            <a class="navbar-brand fw-bold text-white" href="#home">
-                <i class="fas fa-chart-pie text-accent"></i> FinTrack
-            </a>
-            
-            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap"
+    />
+
+    <link rel="stylesheet" href="./assets/css/global.css" />
+    <link rel="stylesheet" href="./assets/css/layouts.css" />
+    <link rel="stylesheet" href="./assets/css/themes/dark.css" />
+    <link rel="stylesheet" href="./assets/css/themes/light.css" />
+    <link rel="stylesheet" href="./assets/css/components/page-shell.css" />
+    <link rel="stylesheet" href="./assets/css/components/landing.css" />
+    <link rel="stylesheet" href="./assets/css/components/dashboard-usuario.css" />
+    <link rel="stylesheet" href="./assets/css/components/dashboard-asesor.css" />
+    <link rel="stylesheet" href="./assets/css/components/perfiles.css" />
+    <link rel="stylesheet" href="./assets/css/components/recomendaciones.css" />
+    <link rel="stylesheet" href="./assets/css/components/placeholder.css" />
+  </head>
+
+  <body>
+    <div id="landingPage" class="landing-page">
+      <nav class="landing-navbar">
+        <div class="landing-navbar__content">
+          <a class="app-brand" href="#/">
+            <i class="fa-solid fa-chart-pie"></i>
+            <span>FinTrack</span>
+          </a>
+
+          <div class="landing-nav-links" id="landingNavLinks"></div>
+
+          <div class="landing-actions">
+            <button class="action-btn action-btn--ghost" type="button" data-auth-open="login">
+              Ingresar
             </button>
-            
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center">
-                    <li class="nav-item"><a class="nav-link" href="#como-funciona">Cómo Funciona</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#ventajas">Ventajas</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#precios">Planes</a></li>
-                    
-                    <li class="nav-item ms-lg-3 mt-2 mt-lg-0" id="navbar-login"></li>
-                    <li class="nav-item mt-2 mt-lg-0" id="navbar-register"></li>
-                </ul>
-            </div>
+            <button class="action-btn action-btn--primary" type="button" data-auth-open="register">
+              Registrarse
+            </button>
+          </div>
         </div>
-    </nav>
+      </nav>
 
-    <!-- ============================================
-         🎯 HERO SECTION
-         ============================================ -->
-    <section id="home" class="hero-section py-5 bg-brand-gradient">
-        <div class="container">
-            <div class="row align-items-center">
-                <div class="col-lg-6 mb-5 mb-lg-0">
-                    <h1 class="display-4 fw-bold mb-3 text-white">
-                        Convierte el caos de tus gastos en <span class="text-gradient">paz financiera.</span>
-                    </h1>
-                    <p class="lead mb-4 text-light-gray">
-                        Registra lo que gastas en segundos, entiende tus números sin marearte y recibe consejos de expertos que te ayudan a tomar decisiones inteligentes con tu plata.
-                    </p>
-                    <div id="hero-cta"></div>
-                </div>
-                <div class="col-lg-6">
-                    <div class="hero-video-placeholder rounded-4 shadow-lg d-flex align-items-center justify-content-center flex-column text-white p-5 text-center">
-                        <div class="video-placeholder-icon mb-4">
-                            <i class="fas fa-play-circle fa-5x"></i>
-                        </div>
-                        <h3 class="fw-bold">Demo en video</h3>
-                        <p class="opacity-75 mb-3">Aquí irá un video corto que muestra cómo funciona la app.</p>
-                        <span class="badge bg-secondary text-white px-3 py-2">Próximamente</span>
-                    </div>
-                </div>
+      <main class="landing-main">
+        <section id="inicio" class="landing-hero">
+          <div>
+            <h1 class="landing-hero__title text-gradient">
+              Controla tus finanzas personales con una plataforma inteligente.
+            </h1>
+            <p class="landing-hero__subtitle">
+              FinTrack combina registro de gastos, analisis de habitos y recomendaciones accionables para ayudarte a ahorrar con foco.
+            </p>
+            <div class="d-flex flex-wrap gap-2">
+              <button class="action-btn action-btn--primary" type="button" data-auth-open="register">
+                <i class="fa-solid fa-rocket"></i>
+                Comenzar Gratis
+              </button>
+              <button class="action-btn action-btn--ghost" type="button" data-scroll-target="caracteristicas">
+                <i class="fa-solid fa-arrow-down"></i>
+                Ver Caracteristicas
+              </button>
             </div>
+            <div class="landing-hero__chips">
+              <span class="landing-chip">OCR de tickets</span>
+              <span class="landing-chip">Dashboard por rol</span>
+              <span class="landing-chip">Recomendaciones personalizadas</span>
+            </div>
+          </div>
+
+          <article class="landing-hero__panel">
+            <h3 class="section-title">
+              <i class="fa-solid fa-sparkles accent"></i>
+              Hoy en FinTrack
+            </h3>
+            <div class="info-list">
+              <div class="info-list__item">
+                <span>Usuarios activos</span>
+                <strong>12.4k</strong>
+              </div>
+              <div class="info-list__item">
+                <span>Ahorro promedio</span>
+                <strong>+18%</strong>
+              </div>
+              <div class="info-list__item">
+                <span>Recomendaciones implementadas</span>
+                <strong>87%</strong>
+              </div>
+              <div class="info-list__item">
+                <span>Asesores disponibles</span>
+                <strong>152</strong>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <section>
+          <h2 class="section-title" id="confianEnFinTrack">
+            <i class="fa-solid fa-handshake angle"></i>
+            Confian en FinTrack
+          </h2>
+          <div class="landing-logos" id="landingBrandsTrack"></div>
+        </section>
+
+        <section id="caracteristicas">
+          <h2 class="section-title">
+            <i class="fa-solid fa-shapes accent"></i>
+            Caracteristicas Principales
+          </h2>
+          <div class="landing-grid-3" id="landingFeaturesGrid"></div>
+        </section>
+
+        <section id="ventajas">
+          <h2 class="section-title">
+            <i class="fa-solid fa-shield-halved accent"></i>
+            Por que elegir FinTrack
+          </h2>
+          <div class="landing-advantages" id="landingAdvantagesGrid"></div>
+        </section>
+
+        <section id="testimonios">
+          <h2 class="section-title">
+            <i class="fa-solid fa-comments accent"></i>
+            Lo que dicen nuestros usuarios
+          </h2>
+          <div class="landing-testimonials" id="landingTestimonialsGrid"></div>
+        </section>
+
+        <section id="planes">
+          <h2 class="section-title">
+            <i class="fa-solid fa-tags accent"></i>
+            Planes y Precios
+          </h2>
+          <div class="landing-plans" id="landingPlansGrid"></div>
+        </section>
+
+        <section class="landing-cta">
+          <h2 class="text-gradient mb-2">Listo para ordenar tus finanzas?</h2>
+          <p class="text-muted mb-3">
+            Crea tu cuenta en minutos y empieza a tomar decisiones con datos reales.
+          </p>
+          <div class="d-flex flex-wrap justify-content-center gap-2">
+            <button class="action-btn action-btn--primary" type="button" data-auth-open="register">
+              Registrarse Ahora
+            </button>
+            <button class="action-btn action-btn--ghost" type="button" data-auth-open="login">
+              Ya tengo cuenta
+            </button>
+          </div>
+        </section>
+
+        <footer class="landing-footer">
+          <div class="landing-footer__grid">
+            <div>
+              <h3 class="landing-footer__title">FinTrack</h3>
+              <p class="text-muted">
+                Plataforma inteligente de gestion de gastos personales y acompanamiento financiero.
+              </p>
+            </div>
+            <div>
+              <h3 class="landing-footer__title">Producto</h3>
+              <a class="landing-footer__link" href="#caracteristicas">Caracteristicas</a>
+              <a class="landing-footer__link" href="#planes">Pricing</a>
+              <a class="landing-footer__link" href="#testimonios">Testimonios</a>
+            </div>
+            <div>
+              <h3 class="landing-footer__title">Empresa</h3>
+              <a class="landing-footer__link" href="#/utils/placeholder?title=Sobre%20Nosotros">Sobre Nosotros</a>
+              <a class="landing-footer__link" href="#/utils/placeholder?title=Blog">Blog</a>
+              <a class="landing-footer__link" href="#/utils/placeholder?title=Carreras">Carreras</a>
+            </div>
+            <div>
+              <h3 class="landing-footer__title">Legal</h3>
+              <a class="landing-footer__link" href="#/utils/placeholder?title=Privacidad">Privacidad</a>
+              <a class="landing-footer__link" href="#/utils/placeholder?title=Terminos">Terminos</a>
+              <a class="landing-footer__link" href="#/utils/placeholder?title=Soporte">Soporte</a>
+            </div>
+          </div>
+          <p class="app-footer mt-3">© <span id="landingYear"></span> FinTrack. Todos los derechos reservados.</p>
+        </footer>
+      </main>
+    </div>
+
+    <div id="appRouteContainer" class="app-route-container app-hidden">
+      <div id="route-view" class="route-view"></div>
+    </div>
+
+    <div id="globalToastContainer" class="global-toast-container" aria-live="polite"></div>
+
+    <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark border border-info">
+          <div class="modal-header border-secondary">
+            <h5 class="modal-title" id="loginModalLabel">Iniciar Sesion</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <form class="modal-body" id="loginForm" novalidate>
+            <div class="mb-3">
+              <label for="loginEmail" class="form-label">Email</label>
+              <input id="loginEmail" name="email" type="email" class="form-control" required />
+            </div>
+            <div class="mb-3">
+              <label for="loginPassword" class="form-label">Contrasena</label>
+              <input id="loginPassword" name="password" type="password" class="form-control" required />
+            </div>
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" value="1" id="loginRemember" />
+              <label class="form-check-label" for="loginRemember">Recordar mis datos</label>
+            </div>
+            <p class="text-danger small mb-2 app-hidden" id="loginError"></p>
+            <button type="submit" class="btn btn-info w-100">Ingresar</button>
+          </form>
+          <div class="modal-footer border-secondary d-flex justify-content-between">
+            <button type="button" class="btn btn-outline-light btn-sm" id="switchToRegister">No tienes cuenta?</button>
+            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+          </div>
         </div>
-    </section>
+      </div>
+    </div>
 
-    <!-- Sección de marcas asociadas: carrusel de logos para mostrar confianza y colaboraciones -->
-    <hr class="elegant-divider">
-
-    <section id="colaboraciones" class="py-4">
-        <div class="container">
-            <div class="text-center mb-4">
-                <p class="text-light-gray small fw-bold text-uppercase tracking-widest mb-0">Tecnología y seguridad respaldada por</p>
+    <div class="modal fade" id="registerModal" tabindex="-1" aria-labelledby="registerModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content bg-dark border border-info">
+          <div class="modal-header border-secondary">
+            <h5 class="modal-title" id="registerModalLabel">Crear Cuenta</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <form class="modal-body" id="registerForm" novalidate>
+            <div class="mb-3">
+              <label class="form-label d-block">Tipo de cuenta</label>
+              <div class="d-flex gap-3 flex-wrap">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="registerRole" id="registerRoleUser" value="usuario" checked />
+                  <label class="form-check-label" for="registerRoleUser">Usuario regular</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="registerRole" id="registerRoleAdvisor" value="asesor" />
+                  <label class="form-check-label" for="registerRoleAdvisor">Asesor financiero</label>
+                </div>
+              </div>
             </div>
 
-            <div id="brandCarousel" class="carousel slide" data-bs-ride="carousel">
-                <div class="carousel-inner">
-                    <div class="carousel-item active">
-                        <div class="row g-4 justify-content-center text-center align-items-center">
-                            <div class="col-6 col-md-3">
-                                <span class="brand-logo text-white opacity-75"><i class="fab fa-cc-visa fa-2x me-2"></i> Visa</span>
-                            </div>
-                            <div class="col-6 col-md-3">
-                                <span class="brand-logo text-white opacity-75"><i class="fab fa-cc-mastercard fa-2x me-2"></i> Mastercard</span>
-                            </div>
-                            <div class="col-6 col-md-3">
-                                <span class="brand-logo text-white opacity-75"><i class="fab fa-paypal fa-2x me-2"></i> PayPal</span>
-                            </div>
-                            <div class="col-6 col-md-3">
-                                <span class="brand-logo text-white opacity-75"><i class="fab fa-stripe fa-2x me-2"></i> Stripe</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="carousel-item">
-                        <div class="row g-4 justify-content-center text-center align-items-center">
-                            <div class="col-6 col-md-3">
-                                <span class="brand-logo text-white opacity-75"><i class="fab fa-aws fa-2x me-2"></i> AWS Cloud</span>
-                            </div>
-                            <div class="col-6 col-md-3">
-                                <span class="brand-logo text-white opacity-75"><i class="fas fa-robot fa-2x me-2"></i> OpenAI</span>
-                            </div>
-                            <div class="col-6 col-md-3">
-                                <span class="brand-logo text-white opacity-75"><i class="fab fa-google-pay fa-2x me-2"></i> Google Pay</span>
-                            </div>
-                            <div class="col-6 col-md-3">
-                                <span class="brand-logo text-white opacity-75"><i class="fas fa-building-columns fa-2x me-2"></i> Bank Sync</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <button class="carousel-control-prev" type="button" data-bs-target="#brandCarousel" data-bs-slide="prev">
-                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                    <span class="visually-hidden">Anterior</span>
-                </button>
-                <button class="carousel-control-next" type="button" data-bs-target="#brandCarousel" data-bs-slide="next">
-                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                    <span class="visually-hidden">Siguiente</span>
-                </button>
-            </div>
-        </div>
-    </section>
-
-    <!-- ============================================
-         ✨ SECCIÓN: CÓMO FUNCIONA
-         ============================================ -->
-    <hr class="elegant-divider">
-    <section id="como-funciona" class="py-5">
-        <div class="container py-5">
-            <div id="como-funciona-header"></div>
-            <div class="row g-4 position-relative" id="features-row"></div>
-        </div>
-    </section>
-
-    <!-- ============================================
-         💎 SECCIÓN: VENTAJAS
-         ============================================ -->
-    <hr class="elegant-divider">
-    <section id="ventajas" class="py-5">
-        <div class="container py-5">
-            <div class="row align-items-center">
-                <div class="col-lg-5 mb-4 mb-lg-0" id="ventajas-container"></div>
-                <div class="col-lg-6 offset-lg-1" id="testimonials-container"></div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ============================================
-         💰 SECCIÓN: PRECIOS
-         ============================================ -->
-    <hr class="elegant-divider">
-    <section id="precios" class="py-5">
-        <div class="container py-5">
-            <div id="precios-header"></div>
-            <div class="row g-4 justify-content-center" id="pricing-row"></div>
-        </div>
-    </section>
-
-    <!-- Footer: enlaces secundarios, información legal y datos de contacto -->
-    <footer class="footer-section pt-5 pb-3 bg-brand-gradient">
-        <div class="container">
-            <div class="row mb-4">
-                <div class="col-lg-4 mb-4 mb-lg-0">
-                    <a class="navbar-brand fw-bold text-white d-block mb-3" href="#home">
-                        <i class="fas fa-chart-pie text-accent"></i> FinTrack
-                    </a>
-                    <p class="text-light-gray pe-lg-4">
-                        Desarrollado por <strong>DevSolutions Studio</strong>.<br>
-                        Proyecto universitario para la cátedra de Ingeniería Web II, Universidad de la Defensa Nacional (UNDEF). Construyendo el futuro financiero.
-                    </p>
-                </div>
-                
-                <div class="col-lg-2 col-md-4 mb-4 mb-md-0">
-                    <h5 class="text-white fw-bold mb-3">Plataforma</h5>
-                    <ul class="list-unstyled">
-                        <li class="mb-2"><a href="#como-funciona" class="text-light-gray text-decoration-none hover-accent">Cómo funciona</a></li>
-                        <li class="mb-2"><a href="#ventajas" class="text-light-gray text-decoration-none hover-accent">Ventajas</a></li>
-                        <li class="mb-2"><a href="#precios" class="text-light-gray text-decoration-none hover-accent">Planes y Precios</a></li>
-                    </ul>
-                </div>
-
-                <div class="col-lg-3 col-md-4 mb-4 mb-md-0">
-                    <h5 class="text-white fw-bold mb-3">Legal</h5>
-                    <ul class="list-unstyled">
-                        <li class="mb-2"><a href="#" class="text-light-gray text-decoration-none hover-accent">Términos y Condiciones</a></li>
-                        <li class="mb-2"><a href="#" class="text-light-gray text-decoration-none hover-accent">Políticas de Privacidad</a></li>
-                    </ul>
-                </div>
-
-                <div class="col-lg-3 col-md-4">
-                    <h5 class="text-white fw-bold mb-3">Conéctate</h5>
-                    <div id="social-icons"></div>
-                </div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="registerFullName" class="form-label">Nombre completo</label>
+                <input id="registerFullName" name="fullName" type="text" class="form-control" required />
+              </div>
+              <div class="col-md-6">
+                <label for="registerEmail" class="form-label">Email</label>
+                <input id="registerEmail" name="email" type="email" class="form-control" required />
+              </div>
+              <div class="col-md-6">
+                <label for="registerPassword" class="form-label">Contrasena</label>
+                <input id="registerPassword" name="password" type="password" class="form-control" required />
+              </div>
+              <div class="col-md-6">
+                <label for="registerConfirmPassword" class="form-label">Confirmar contrasena</label>
+                <input id="registerConfirmPassword" name="confirmPassword" type="password" class="form-control" required />
+              </div>
             </div>
 
-            <hr class="border-secondary mb-3 opacity-25">
-            
-            <div class="row align-items-center">
-                <div class="col-md-6 text-center text-md-start">
-                    <p class="mb-0 text-light-gray small">&copy; 2026 FinTrack Inc. Todos los derechos reservados.</p>
-                </div>
-                <div class="col-md-6 text-center text-md-end mt-2 mt-md-0">
-                    <p class="mb-0 text-light-gray small">Diseñado en Córdoba, Argentina.</p>
-                </div>
+            <div id="registerAdvisorFields" class="row g-3 mt-1 app-hidden">
+              <div class="col-md-6">
+                <label for="registerLicenseNumber" class="form-label">Cedula profesional</label>
+                <input id="registerLicenseNumber" name="licenseNumber" type="text" class="form-control" />
+              </div>
+              <div class="col-md-6">
+                <label for="registerSpecialty" class="form-label">Especialidad</label>
+                <select id="registerSpecialty" name="specialty" class="form-select">
+                  <option value="">Seleccionar</option>
+                  <option value="Ahorro e Inversion">Ahorro e Inversion</option>
+                  <option value="Planificacion Patrimonial">Planificacion Patrimonial</option>
+                  <option value="Deuda y Presupuesto">Deuda y Presupuesto</option>
+                </select>
+              </div>
             </div>
-        </div>
-    </footer>
 
-    <!-- ============================================
-         📜 SCRIPTS
-         ============================================ -->
+            <div class="form-check mt-3">
+              <input class="form-check-input" type="checkbox" id="registerTerms" required />
+              <label class="form-check-label" for="registerTerms">Acepto terminos y condiciones</label>
+            </div>
+
+            <p class="text-danger small mt-2 app-hidden" id="registerError"></p>
+
+            <button type="submit" class="btn btn-info w-100 mt-3">Registrarme</button>
+          </form>
+          <div class="modal-footer border-secondary d-flex justify-content-between">
+            <button type="button" class="btn btn-outline-light btn-sm" id="switchToLogin">Ya tienes cuenta?</button>
+            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {            try {
-                console.log('✅ DOMContentLoaded iniciado');
-            // ========== � MODALES (PRIMERO) ==========
-            console.log('Creando modales...');
-            const loginModal = new Modal('login-modal', {
-                title: 'Bienvenido de nuevo',
-                size: 'md',
-                centered: true,
-                content: '<div id="login-email"></div><div id="login-password" style="margin-top: 1rem;"></div><div style="text-align: center; margin-top: 1rem;"><a href="#" style="color: var(--accent); text-decoration: none; font-size: 0.9rem;">¿Olvidaste tu contraseña?</a></div>',
-                buttons: [
-                    {
-                        text: 'Ingresar',
-                        variant: 'accent',
-                        onClick: () => {
-                            alert('¡Inicio de sesión exitoso!');
-                            loginModal.hide();
-                        }
-                    }
-                ]
-            });
-
-            const registerModal = new Modal('register-modal', {
-                title: 'Crea tu cuenta gratis',
-                size: 'md',
-                centered: true,
-                content: '<div id="reg-name"></div><div id="reg-email" style="margin-top: 1rem;"></div><div id="reg-password" style="margin-top: 1rem;"></div><div class="mt-3" id="reg-role"><div class="form-group" style="margin-bottom: 0;"><label class="form-label">Quiero usar FinTrack como</label><div class="d-flex gap-3"><label class="form-check" style="margin:0;"><input class="form-check-input" type="radio" name="reg-role" id="reg-role-cliente" value="cliente" checked><span class="form-check-label" style="margin-left:.35rem;">Cliente</span></label><label class="form-check" style="margin:0;"><input class="form-check-input" type="radio" name="reg-role" id="reg-role-asesor" value="asesor"><span class="form-check-label" style="margin-left:.35rem;">Asesor</span></label></div></div></div><div id="advisor-auth-extra" style="display:none; margin-top: 1rem;"><div class="small" style="color: var(--text-muted); margin-bottom: .75rem;">Autenticación de asesor (paso extra)</div><div id="advisor-matricula"></div><div id="advisor-especialidad" style="margin-top: 1rem;"></div></div>',
-                buttons: [
-                    {
-                        text: 'Comenzar mi prueba',
-                        variant: 'accent',
-                        onClick: () => {
-                            const modalRoot = registerModal.modal;
-                            const rol = modalRoot?.querySelector('input[name="reg-role"]:checked')?.value;
-
-                            const nombre = modalRoot?.querySelector('#reg-name-input')?.value?.trim() || '';
-                            const email = modalRoot?.querySelector('#reg-email-input')?.value?.trim() || '';
-                            const password = modalRoot?.querySelector('#reg-password-input')?.value || '';
-
-                            if (!nombre || !email || !password) {
-                                alert('Completá nombre, email y contraseña.');
-                                return;
-                            }
-
-                            if (rol === 'asesor') {
-                                const matricula = modalRoot?.querySelector('#advisor-matricula-input')?.value?.trim() || '';
-                                const especialidad = modalRoot?.querySelector('#advisor-especialidad-input')?.value?.trim() || '';
-                                if (!matricula || !especialidad) {
-                                    alert('Para asesor, completá matrícula y especialidad.');
-                                    return;
-                                }
-                                localStorage.setItem('usuarioActual', JSON.stringify({
-                                    id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
-                                    nombre_completo: nombre,
-                                    email,
-                                    rol: 'asesor',
-                                    matricula,
-                                    especialidad
-                                }));
-                                registerModal.hide();
-                                window.location.href = './pages/asesor/dashboard.html';
-                                return;
-                            }
-
-                            // Cliente
-                            localStorage.setItem('usuarioActual', JSON.stringify({
-                                id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
-                                nombre_completo: nombre,
-                                email,
-                                rol: 'cliente'
-                            }));
-                            alert('¡Cuenta creada con éxito!');
-                            registerModal.hide();
-                            window.location.href = './pages/usuario/dashboard.html';
-                        }
-                    }
-                ]
-            });
-            console.log('✅ Modales creados');
-
-            // ========== 🔵 NAVBAR BUTTONS ==========
-            console.log('Creando botones navbar...');
-            
-            // Banderas para controlar la creación de inputs
-            let loginInputsCreados = false;
-            let registerInputsCreados = false;
-            let advisorInputsCreados = false;
-
-            const ensureLoginInputs = () => {
-                if (loginInputsCreados) return;
-                const emailHost = loginModal.modal?.querySelector('#login-email');
-                const passHost = loginModal.modal?.querySelector('#login-password');
-                new FormInput(emailHost, {
-                    type: 'email',
-                    label: 'Correo Electrónico',
-                    placeholder: 'tu@email.com',
-                    icon: 'fas fa-envelope',
-                    id: 'login-email-input',
-                    name: 'email'
-                });
-                new FormInput(passHost, {
-                    type: 'password',
-                    label: 'Contraseña',
-                    placeholder: '••••••••',
-                    icon: 'fas fa-lock',
-                    id: 'login-password-input',
-                    name: 'password'
-                });
-                loginInputsCreados = true;
-                console.log('✅ Campos de login creados');
-            };
-
-            const ensureRegisterInputs = () => {
-                if (registerInputsCreados) return;
-                const nameHost = registerModal.modal?.querySelector('#reg-name');
-                const emailHost = registerModal.modal?.querySelector('#reg-email');
-                const passHost = registerModal.modal?.querySelector('#reg-password');
-                new FormInput(nameHost, {
-                    type: 'text',
-                    label: 'Nombre Completo',
-                    placeholder: 'Juan Pérez',
-                    icon: 'fas fa-user',
-                    id: 'reg-name-input',
-                    name: 'name'
-                });
-                new FormInput(emailHost, {
-                    type: 'email',
-                    label: 'Correo Electrónico',
-                    placeholder: 'tu@email.com',
-                    icon: 'fas fa-envelope',
-                    id: 'reg-email-input',
-                    name: 'email'
-                });
-                new FormInput(passHost, {
-                    type: 'password',
-                    label: 'Crea una Contraseña',
-                    placeholder: 'Mínimo 8 caracteres',
-                    icon: 'fas fa-lock',
-                    id: 'reg-password-input',
-                    name: 'password'
-                });
-
-                const ensureAdvisorInputs = () => {
-                    if (advisorInputsCreados) return;
-                    const matriculaHost = registerModal.modal?.querySelector('#advisor-matricula');
-                    const especialidadHost = registerModal.modal?.querySelector('#advisor-especialidad');
-                    new FormInput(matriculaHost, {
-                        type: 'text',
-                        label: 'Matrícula',
-                        placeholder: 'Ej: A-12345',
-                        icon: 'fas fa-id-card',
-                        id: 'advisor-matricula-input',
-                        name: 'matricula',
-                        required: true,
-                        errorMessage: 'La matrícula es obligatoria'
-                    });
-                    new FormInput(especialidadHost, {
-                        type: 'text',
-                        label: 'Especialidad',
-                        placeholder: 'Ej: Finanzas personales',
-                        icon: 'fas fa-briefcase',
-                        id: 'advisor-especialidad-input',
-                        name: 'especialidad',
-                        required: true,
-                        errorMessage: 'La especialidad es obligatoria'
-                    });
-                    advisorInputsCreados = true;
-                    console.log('✅ Campos de autenticación de asesor creados');
-                };
-
-                const extra = registerModal.modal?.querySelector('#advisor-auth-extra');
-                const toggleExtra = () => {
-                    const rol = registerModal.modal?.querySelector('input[name="reg-role"]:checked')?.value;
-                    if (!extra) return;
-                    if (rol === 'asesor') {
-                        extra.style.display = 'block';
-                        ensureAdvisorInputs();
-                    } else {
-                        extra.style.display = 'none';
-                    }
-                };
-
-                registerModal.modal?.querySelectorAll('input[name="reg-role"]').forEach(r => {
-                    r.addEventListener('change', toggleExtra);
-                });
-                toggleExtra();
-
-                registerInputsCreados = true;
-                console.log('✅ Campos de registro creados');
-            };
-
-            new Button('#navbar-login', {
-                text: 'Iniciar Sesión',
-                variant: 'outline-accent',
-                size: 'sm',
-                onClick: () => {
-                    loginModal.show();
-                    // Crear los inputs solo la primera vez que se abre el modal
-                    requestAnimationFrame(() => {
-                        try {
-                            ensureLoginInputs();
-                        } catch (e) {
-                            console.error('❌ Error creando campos de login:', e);
-                        }
-                    });
-                }
-            });
-
-            new Button('#navbar-register', {
-                text: 'Empezar Gratis',
-                variant: 'accent',
-                size: 'sm',
-                onClick: () => {
-                    registerModal.show();
-                    // Crear los inputs solo la primera vez que se abre el modal
-                    requestAnimationFrame(() => {
-                        try {
-                            ensureRegisterInputs();
-                        } catch (e) {
-                            console.error('❌ Error creando campos de registro:', e);
-                        }
-                    });
-                }
-            });
-
-            // ========== 🎯 HERO CTA ==========
-            new Button('#hero-cta', {
-                text: 'Tomar el control hoy',
-                variant: 'accent',
-                size: 'lg',
-                onClick: () => {
-                    registerModal.show();
-                    // Reutilizamos la misma lógica para el botón principal
-                    requestAnimationFrame(() => {
-                        try {
-                            ensureRegisterInputs();
-                        } catch (e) {
-                            console.error('❌ Error creando campos de registro:', e);
-                        }
-                    });
-                }
-            });
-
-            // ========== ✨ SECCIÓN: CÓMO FUNCIONA ==========
-            new SectionHeader('#como-funciona-header', {
-                title: 'Un equipo trabajando para tu bolsillo',
-                subtitle: 'El proceso es simple: tú subes la info, nosotros te ayudamos a entenderla.',
-                centered: true
-            });
-
-            const features = [
-                {
-                    icon: 'fas fa-receipt',
-                    step: '1',
-                    title: 'Registra al instante',
-                    description: 'Sube tus gastos como prefieras: tómale una foto a tu ticket o cárgalo a mano en segundos.'
-                },
-                {
-                    icon: 'fas fa-eye',
-                    step: '2',
-                    title: 'Alguien vigila por ti',
-                    description: 'Un asesor revisa tu actividad para detectar gastos hormiga, fugas de dinero y patrones extraños.'
-                },
-                {
-                    icon: 'fas fa-comments-dollar',
-                    step: '3',
-                    title: 'Interactúa y mejora',
-                    description: 'Analiza tus gráficos de manera simple y lee los consejos de tu asesor para tomar decisiones inteligentes.'
-                }
-            ];
-
-            const featuresRow = document.getElementById('features-row');
-            features.forEach((feature, i) => {
-                const col = document.createElement('div');
-                col.className = 'col-md-4';
-                col.id = `feature-${i}`;
-                featuresRow.appendChild(col);
-                new FeatureCard(`#feature-${i}`, feature);
-            });
-
-            // ========== 💎 SECCIÓN: VENTAJAS ==========
-            const ventajasHTML = '<h2 class="fw-bold text-white mb-4">¿Por qué usar <span class="text-gradient">FinTrack?</span></h2><p class="text-light-gray mb-4">Menos explicación larga, más claridad visual. Todo lo que necesitas para sentir tu dinero bajo control.</p><div class="d-grid gap-3"><div class="adv-item d-flex align-items-start mb-3"><div class="adv-icon me-3 mt-1"><i class="fas fa-robot text-accent fa-lg"></i></div><div><h5 class="text-white mb-1">Carga automatizada con IA</h5><p class="mb-0 text-light-gray small">Nuestra Inteligencia Artificial extrae los datos al instante de tus fotos.</p></div></div><div class="adv-item d-flex align-items-start mb-3"><div class="adv-icon me-3 mt-1"><i class="fas fa-user-check text-accent fa-lg"></i></div><div><h5 class="text-white mb-1">Asesor real</h5><p class="mb-0 text-light-gray small">Feedback humano y profesional cuando más lo necesitas.</p></div></div><div class="adv-item d-flex align-items-start mb-3"><div class="adv-icon me-3 mt-1"><i class="fas fa-bell text-accent fa-lg"></i></div><div><h5 class="text-white mb-1">Alertas Inteligentes</h5><p class="mb-0 text-light-gray small">Notificaciones automáticas si tus gastos se salen de presupuesto.</p></div></div><div class="adv-item d-flex align-items-start mb-3"><div class="adv-icon me-3 mt-1"><i class="fas fa-shield-alt text-accent fa-lg"></i></div><div><h5 class="text-white mb-1">Seguridad Bancaria</h5><p class="mb-0 text-light-gray small">Tus datos financieros viajan encriptados y protegidos al máximo nivel.</p></div></div></div>';
-            document.getElementById('ventajas-container').innerHTML = ventajasHTML;
-
-            // ========== 💬 SECCIÓN: TESTIMONIOS ==========
-            const testimonialsHTML = `
-                <div id="testimonials-wrapper" style="position: relative; display: flex; align-items: center; gap: 1rem;">
-                    <div id="testimonial-btn-prev" style="display: inline-block; opacity: 0; transition: opacity 0.3s ease;"></div>
-                    
-                    <div id="userTestimonialsCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="5000" style="flex: 1; position: relative;">
-                        <div class="carousel-inner rounded-4 overflow-hidden border border-secondary" style="background-color: rgba(255,255,255,0.02);">
-                            <div class="carousel-item active p-4" id="testimonial-0"></div>
-                            <div class="carousel-item p-4" id="testimonial-1"></div>
-                        </div>
-                    </div>
-                    
-                    <div id="testimonial-btn-next" style="display: inline-block; opacity: 0; transition: opacity 0.3s ease;"></div>
-                </div>
-            `;
-            document.getElementById('testimonials-container').innerHTML = testimonialsHTML;
-
-            // Usar un delay pequeño para asegurar que el DOM está listo
-            setTimeout(() => {
-                // Crear TestimonialCards
-                new TestimonialCard('#testimonial-0', {
-                    quote: 'En menos de una semana dejé de gastar en cosas que no necesitaba. La app me mostró dónde estaba perdiendo plata.',
-                    author: 'María',
-                    role: 'Emprendedora',
-                    rating: 5
-                });
-
-                new TestimonialCard('#testimonial-1', {
-                    quote: 'Ya no siento que mi cajero hable solo. Con FinTrack veo justo lo que debo pagar y cuánto puedo ahorrar.',
-                    author: 'Lucas',
-                    role: 'Freelancer',
-                    rating: 5
-                });
-
-                // Crear botones de navegación con componente Button
-                new Button('#testimonial-btn-prev', {
-                    icon: 'fas fa-chevron-left',
-                    variant: 'outline-accent',
-                    size: 'icon',
-                    iconOnly: true,
-                    rounded: true,
-                    onClick: () => {
-                        const carouselElement = document.getElementById('userTestimonialsCarousel');
-                        const carousel = bootstrap.Carousel.getInstance(carouselElement);
-                        if (carousel) {
-                            carousel.prev();
-                        }
-                    }
-                });
-
-                new Button('#testimonial-btn-next', {
-                    icon: 'fas fa-chevron-right',
-                    variant: 'outline-accent',
-                    size: 'icon',
-                    iconOnly: true,
-                    rounded: true,
-                    onClick: () => {
-                        const carouselElement = document.getElementById('userTestimonialsCarousel');
-                        const carousel = bootstrap.Carousel.getInstance(carouselElement);
-                        if (carousel) {
-                            carousel.next();
-                        }
-                    }
-                });
-
-                // Agregar evento de hover para mostrar/ocultar botones
-                const wrapper = document.getElementById('testimonials-wrapper');
-                const btnPrev = document.getElementById('testimonial-btn-prev');
-                const btnNext = document.getElementById('testimonial-btn-next');
-
-                if (wrapper && btnPrev && btnNext) {
-                    wrapper.addEventListener('mouseenter', () => {
-                        btnPrev.style.opacity = '1';
-                        btnNext.style.opacity = '1';
-                    });
-
-                    wrapper.addEventListener('mouseleave', () => {
-                        btnPrev.style.opacity = '0';
-                        btnNext.style.opacity = '0';
-                    });
-                }
-
-                console.log('✅ Testimonios creados con componentes (TestimonialCard + Button)');
-            }, 50);
-
-            // ========== 💰 SECCIÓN: PRECIOS ==========
-            new SectionHeader('#precios-header', {
-                title: 'Elige el plan ideal para ti',
-                subtitle: 'Comienza gratis y mejora cuando estés listo para llevar tus finanzas al siguiente nivel.',
-                accentWord: 'plan',
-                centered: true
-            });
-
-            const plans = [
-                {
-                    name: 'Plan Básico',
-                    price: '0',
-                    period: '/mes',
-                    description: 'Perfecto para empezar a organizarte.',
-                    features: [
-                        'Carga de tickets con IA (limitado)',
-                        'Registro manual ilimitado',
-                        'Gráficos de gastos básicos',
-                        'Asesor virtual incluido'
-                    ],
-                    buttonText: 'Comenzar Gratis',
-                    buttonColor: 'outline-accent',
-                    highlight: false
-                },
-                {
-                    name: 'Plan Pro',
-                    price: '4.99',
-                    period: '/mes',
-                    description: 'Tus finanzas supervisadas por expertos.',
-                    features: [
-                        'Asesor Financiero asignado',
-                        'Recomendaciones mensuales',
-                        'Detección de gastos hormiga',
-                        'Carga con IA ilimitada'
-                    ],
-                    buttonText: 'Elegir Pro',
-                    buttonColor: 'accent',
-                    highlight: true,
-                    badge: 'MÁS POPULAR'
-                },
-                {
-                    name: 'Plan Premium',
-                    price: '12.99',
-                    period: '/mes',
-                    description: 'Comunicación directa y prioritaria.',
-                    features: [
-                        'Todo lo del Plan Pro',
-                        'Chat directo con tu asesor',
-                        'Alertas de desvío en tiempo real',
-                        'Análisis de inversiones y ahorros'
-                    ],
-                    buttonText: 'Elegir Premium',
-                    buttonColor: 'outline-accent',
-                    highlight: false
-                }
-            ];
-
-            const pricingRow = document.getElementById('pricing-row');
-            plans.forEach((plan, i) => {
-                const col = document.createElement('div');
-                col.className = 'col-lg-4 col-md-6';
-                col.id = 'pricing-' + i;
-                pricingRow.appendChild(col);
-                new PricingCard('#pricing-' + i, {
-                    ...plan,
-                    onButtonClick: () => registerModal.show()
-                });
-            });
-
-            // ========== 📱 FOOTER: SOCIAL BUTTONS ==========
-            new SocialButtons('#social-icons', {
-                platforms: ['twitter', 'instagram', 'linkedin'],
-                variant: 'outline',
-                size: 'md',
-                urls: {
-                    twitter: '#',
-                    instagram: '#',
-                    linkedin: '#'
-                }
-            });
-
-            // Esperar a que los modales carguen sus formularios
-            setTimeout(() => {
-                new FormInput('#login-email', {
-                    type: 'email',
-                    label: 'Correo Electrónico',
-                    placeholder: 'tu@email.com',
-                    icon: 'fas fa-envelope'
-                });
-                new FormInput('#login-password', {
-                    type: 'password',
-                    label: 'Contraseña',
-                    placeholder: '••••••••',
-                    icon: 'fas fa-lock'
-                });
-                console.log('✅ Modal de login creado');
-            }, 100);
-
-            setTimeout(() => {
-                new FormInput('#reg-name', {
-                    type: 'text',
-                    label: 'Nombre Completo',
-                    placeholder: 'Juan Pérez',
-                    icon: 'fas fa-user'
-                });
-                new FormInput('#reg-email', {
-                    type: 'email',
-                    label: 'Correo Electrónico',
-                    placeholder: 'tu@email.com',
-                    icon: 'fas fa-envelope'
-                });
-                new FormInput('#reg-password', {
-                    type: 'password',
-                    label: 'Crea una Contraseña',
-                    placeholder: 'Mínimo 8 caracteres',
-                    icon: 'fas fa-lock'
-                });
-                console.log('✅ Modal de registro creado');
-            }, 100);
-
-            console.log('✅✅✅ Todos los componentes cargados correctamente');
-
-            } catch (error) {
-                console.error('❌ Error en la carga de componentes:', error);
-                console.error('Stack:', error.stack);
-            }
-        });
-    </script>
-</body>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script type="module" src="./app.js"></script>
+  </body>
 </html>

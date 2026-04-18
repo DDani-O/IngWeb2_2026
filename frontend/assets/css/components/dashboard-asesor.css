@@ -1,0 +1,146 @@
+.advisor-client-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.advisor-client-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 12px;
+}
+
+.advisor-client-card {
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.02);
+  transition: 180ms ease;
+}
+
+.advisor-client-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-accent);
+}
+
+.advisor-client-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.avatar-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(45, 212, 191, 0.16);
+  color: var(--color-primary);
+  font-weight: 700;
+  font-size: 0.82rem;
+}
+
+.advisor-client-name {
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.advisor-client-mail {
+  color: var(--text-300);
+  font-size: 0.75rem;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.status-pill--activo {
+  color: #bbf7d0;
+  background: rgba(34, 197, 94, 0.2);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.status-pill--inactivo {
+  color: #fed7aa;
+  background: rgba(249, 115, 22, 0.2);
+  border: 1px solid rgba(249, 115, 22, 0.35);
+}
+
+.advisor-client-meta {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-300);
+  font-size: 0.76rem;
+  margin-bottom: 10px;
+}
+
+.advisor-client-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.advisor-client-actions .action-btn {
+  flex: 1;
+  justify-content: center;
+}
+
+.inbox-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.inbox-item {
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 10px;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.inbox-item--unread {
+  border-color: rgba(45, 212, 191, 0.35);
+}
+
+.inbox-title {
+  font-size: 0.84rem;
+  margin-bottom: 2px;
+}
+
+.inbox-sub {
+  font-size: 0.74rem;
+  color: var(--text-300);
+}
+
+.advisor-recommendation-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.advisor-rec-card {
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.advisor-rec-card__head {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 0.76rem;
+}

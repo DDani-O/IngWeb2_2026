@@ -1,0 +1,141 @@
+.dashboard-calendar {
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  text-align: center;
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(45, 212, 191, 0.14), rgba(2, 132, 199, 0.08));
+}
+
+.dashboard-calendar__day {
+  font-family: var(--font-display);
+  font-size: 2.5rem;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.dashboard-calendar__month {
+  color: var(--color-primary);
+  font-weight: 700;
+  margin-top: 6px;
+}
+
+.dashboard-calendar__meta {
+  color: var(--text-300);
+  font-size: 0.72rem;
+  margin-top: 4px;
+}
+
+.profile-highlight {
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(145deg, rgba(45, 212, 191, 0.16), rgba(2, 132, 199, 0.06));
+  padding: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.profile-highlight__tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.profile-tag {
+  font-size: 0.72rem;
+  padding: 4px 8px;
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  color: var(--text-200);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.summary-card {
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.summary-card__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+
+.summary-card__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.summary-card__row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: var(--text-300);
+}
+
+.merchant-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.merchant-item {
+  border-radius: 10px;
+  padding: 10px 12px;
+  border-left: 3px solid var(--color-primary);
+  background: rgba(255, 255, 255, 0.03);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.merchant-item__left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.advisor-panel {
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(45, 212, 191, 0.18), rgba(2, 132, 199, 0.08));
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.chat-messages {
+  max-height: 280px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.chat-message {
+  max-width: 86%;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 0.82rem;
+}
+
+.chat-message--advisor {
+  align-self: flex-start;
+  background: rgba(45, 212, 191, 0.1);
+  border: 1px solid var(--border-soft);
+}
+
+.chat-message--user {
+  align-self: flex-end;
+  background: rgba(45, 212, 191, 0.22);
+  border: 1px solid var(--border-strong);
+}

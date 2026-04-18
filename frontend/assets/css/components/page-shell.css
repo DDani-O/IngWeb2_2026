@@ -1,0 +1,218 @@
+.kpi-card {
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  background: linear-gradient(145deg, rgba(45, 212, 191, 0.14), rgba(2, 132, 199, 0.05));
+  padding: 16px;
+  transition: 180ms ease;
+}
+
+.kpi-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-accent);
+}
+
+.kpi-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.kpi-card__label {
+  color: var(--text-300);
+  font-size: 0.8rem;
+}
+
+.kpi-card__value {
+  font-family: var(--font-display);
+  font-size: clamp(1.2rem, 2.4vw, 1.55rem);
+  font-weight: 700;
+}
+
+.kpi-card__sub {
+  color: var(--text-300);
+  font-size: 0.78rem;
+  margin-top: 8px;
+}
+
+.kpi-card__trend {
+  margin-top: 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.kpi-card__trend--up {
+  color: var(--color-success);
+}
+
+.kpi-card__trend--down {
+  color: var(--color-danger);
+}
+
+.alert-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.alert-card {
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 12px;
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 10px;
+  align-items: start;
+}
+
+.alert-card--danger {
+  background: linear-gradient(120deg, rgba(239, 68, 68, 0.12), rgba(239, 68, 68, 0.04));
+  border-color: rgba(239, 68, 68, 0.34);
+}
+
+.alert-card--warning {
+  background: linear-gradient(120deg, rgba(245, 158, 11, 0.12), rgba(245, 158, 11, 0.04));
+  border-color: rgba(245, 158, 11, 0.34);
+}
+
+.alert-card--success {
+  background: linear-gradient(120deg, rgba(34, 197, 94, 0.12), rgba(34, 197, 94, 0.04));
+  border-color: rgba(34, 197, 94, 0.34);
+}
+
+.alert-card__title {
+  font-size: 0.84rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.alert-card__description {
+  color: var(--text-300);
+  font-size: 0.76rem;
+}
+
+.info-card {
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.info-card__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.92rem;
+  margin-bottom: 10px;
+}
+
+.info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.info-list__item {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--text-300);
+  font-size: 0.78rem;
+}
+
+.chart-card {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-soft);
+  padding: 14px;
+  background: linear-gradient(145deg, rgba(45, 212, 191, 0.1), rgba(2, 132, 199, 0.03));
+}
+
+.chart-card canvas {
+  width: 100%;
+  min-height: 240px;
+}
+
+.badge-soft {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.badge-soft--danger {
+  color: #fecaca;
+  background: rgba(239, 68, 68, 0.18);
+  border: 1px solid rgba(239, 68, 68, 0.36);
+}
+
+.badge-soft--warning {
+  color: #fde68a;
+  background: rgba(245, 158, 11, 0.18);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.badge-soft--success {
+  color: #bbf7d0;
+  background: rgba(34, 197, 94, 0.18);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-weight: 600;
+  font-size: 0.84rem;
+  cursor: pointer;
+  transition: 180ms ease;
+}
+
+.action-btn--primary {
+  background: linear-gradient(125deg, var(--color-primary), var(--color-secondary));
+  color: #ffffff;
+}
+
+.action-btn--primary:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-accent);
+}
+
+.action-btn--ghost {
+  border-color: var(--border-strong);
+  color: var(--color-primary);
+  background: rgba(45, 212, 191, 0.1);
+}
+
+.action-btn--ghost:hover {
+  background: rgba(45, 212, 191, 0.18);
+}
+
+.table-shell {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table-shell thead th {
+  text-align: left;
+  font-size: 0.76rem;
+  color: var(--color-primary);
+  border-bottom: 1px solid var(--border-strong);
+  padding: 9px 10px;
+}
+
+.table-shell tbody td {
+  padding: 9px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 0.82rem;
+  color: var(--text-200);
+}
+
+.table-shell tbody tr:hover td {
+  background: rgba(45, 212, 191, 0.06);
+}
