@@ -1,0 +1,93 @@
+<div class="app-page page-asesor-clientes">
+  <div id="advisorTopbarSlot"></div>
+
+  <main class="app-main app-main--wide advisor-clientes-main">
+    <section class="hero-panel advisor-clientes-hero">
+      <h1 class="text-gradient">Gestion de Clientes</h1>
+      <p class="text-muted mt-2">
+        Administra tu cartera, revisa riesgo por cliente y abre el detalle para tomar acciones.
+      </p>
+      <div class="d-flex flex-wrap gap-2 mt-3">
+        <a class="action-btn action-btn--ghost" href="#/asesor/inbox">
+          <i class="fa-solid fa-inbox"></i>
+          Ir a inbox
+        </a>
+        <button class="action-btn action-btn--primary" id="backToAdvisorDashboardButton" type="button">
+          <i class="fa-solid fa-arrow-left"></i>
+          Volver al panel
+        </button>
+      </div>
+    </section>
+
+    <section class="section-block">
+      <div class="advisor-clients-toolbar">
+        <div class="advisor-clients-toolbar__search">
+          <label class="form-label" for="clientsSearchInput">Buscar cliente</label>
+          <input id="clientsSearchInput" class="form-control" placeholder="Nombre o perfil" />
+        </div>
+
+        <div>
+          <label class="form-label" for="clientsRiskFilter">Riesgo</label>
+          <select id="clientsRiskFilter" class="form-select">
+            <option value="Todos">Todos</option>
+            <option value="low">Bajo</option>
+            <option value="medium">Medio</option>
+            <option value="high">Alto</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="form-label" for="clientsStatusFilter">Estado</label>
+          <select id="clientsStatusFilter" class="form-select">
+            <option value="Todos">Todos</option>
+            <option value="activo">Activo</option>
+          </select>
+        </div>
+
+        <div class="d-flex align-items-end">
+          <button class="action-btn action-btn--ghost" id="clientsViewToggle" type="button">
+            <i class="fa-solid fa-table"></i>
+            Ver como tabla
+          </button>
+        </div>
+      </div>
+
+      <p class="text-muted mt-3" id="clientsCountLabel">0 clientes</p>
+
+      <div id="clientsCards" class="advisor-client-grid"></div>
+
+      <div id="clientsTableWrap" class="table-responsive app-hidden mt-2">
+        <table class="table-shell advisor-client-table">
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>Perfil</th>
+              <th>Ultimo gasto</th>
+              <th>Promedio</th>
+              <th>Cambio</th>
+              <th>Riesgo</th>
+              <th>Accion</th>
+            </tr>
+          </thead>
+          <tbody id="clientsTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <div id="appFooterSlot"></div>
+  </main>
+
+  <div id="advisorSidebarSlot"></div>
+
+  <div class="modal fade" id="advisorClientDetailModal" tabindex="-1" aria-labelledby="advisorClientDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content app-modal-surface">
+        <div class="modal-header">
+          <h5 class="modal-title" id="advisorClientDetailModalLabel">Detalle de cliente</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body" id="advisorClientDetailContent"></div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,110 @@
+<div class="app-page page-asesor-perfil">
+  <div id="advisorTopbarSlot"></div>
+
+  <main class="app-main app-main--wide advisor-perfil-main">
+    <section class="hero-panel advisor-perfil-hero">
+      <h1 class="text-gradient">Perfil del Asesor</h1>
+      <p class="text-muted mt-2">
+        Actualiza tus datos profesionales para mantener la configuracion de cartera y reportes al dia.
+      </p>
+    </section>
+
+    <section class="advisor-profile-grid">
+      <article class="section-block advisor-profile-summary">
+        <div class="user-profile-avatar" id="advisorProfileAvatarInitials">MR</div>
+        <h2 id="advisorProfileSummaryName">Maria Rodriguez</h2>
+        <p class="text-muted" id="advisorProfileSummaryEmail">asesor@fintrack.local</p>
+
+        <div class="profile-meta-list mt-3" id="advisorProfileMetaList"></div>
+
+        <div class="d-flex flex-wrap gap-2 mt-3">
+          <a class="action-btn action-btn--ghost" href="#/asesor/reportes?section=comisiones">
+            <i class="fa-solid fa-file-invoice-dollar"></i>
+            Ver comisiones
+          </a>
+          <a class="action-btn action-btn--ghost" href="#/asesor/clientes">
+            <i class="fa-solid fa-users"></i>
+            Gestionar clientes
+          </a>
+        </div>
+      </article>
+
+      <article class="section-block">
+        <h2 class="section-title">
+          <i class="fa-solid fa-id-badge accent"></i>
+          Informacion profesional
+        </h2>
+
+        <form id="advisorProfileForm" class="advisor-profile-form" novalidate>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label" for="advisorProfileFullName">Nombre completo</label>
+              <input id="advisorProfileFullName" class="form-control" required />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="advisorProfileEmail">Email</label>
+              <input id="advisorProfileEmail" type="email" class="form-control" required />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="advisorProfilePhone">Telefono</label>
+              <input id="advisorProfilePhone" class="form-control" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="advisorProfileCity">Ciudad</label>
+              <input id="advisorProfileCity" class="form-control" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="advisorProfileSpecialty">Especialidad</label>
+              <input id="advisorProfileSpecialty" class="form-control" required />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="advisorProfileLicense">Matricula</label>
+              <input id="advisorProfileLicense" class="form-control" required />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="advisorProfileExperience">Anos de experiencia</label>
+              <input id="advisorProfileExperience" type="number" min="0" class="form-control" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="advisorProfileActiveClients">Clientes activos</label>
+              <input id="advisorProfileActiveClients" type="number" min="0" class="form-control" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="advisorProfileMaxClients">Capacidad maxima</label>
+              <input id="advisorProfileMaxClients" type="number" min="1" class="form-control" />
+            </div>
+            <div class="col-12 d-flex flex-column gap-2">
+              <label class="form-check-label">
+                <input class="form-check-input me-2" id="advisorProfileNotifyEmail" type="checkbox" />
+                Recibir alertas por email
+              </label>
+              <label class="form-check-label">
+                <input class="form-check-input me-2" id="advisorProfileNotifyPush" type="checkbox" />
+                Recibir recordatorios en tiempo real
+              </label>
+            </div>
+          </div>
+
+          <div class="d-flex flex-wrap gap-2 mt-3">
+            <button class="action-btn action-btn--primary" type="submit">
+              <i class="fa-solid fa-floppy-disk"></i>
+              Guardar cambios
+            </button>
+            <button class="action-btn action-btn--ghost" id="resetAdvisorProfileButton" type="button">
+              <i class="fa-solid fa-rotate-left"></i>
+              Restaurar datos
+            </button>
+            <button class="action-btn action-btn--ghost" id="backToAdvisorDashboardFromProfile" type="button">
+              <i class="fa-solid fa-arrow-left"></i>
+              Volver al panel
+            </button>
+          </div>
+        </form>
+      </article>
+    </section>
+
+    <div id="appFooterSlot"></div>
+  </main>
+
+  <div id="advisorSidebarSlot"></div>
+</div>

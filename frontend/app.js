@@ -106,6 +106,72 @@ function configureRouter() {
       },
     },
     {
+      path: ROUTES.USER_CARGAR_GASTO,
+      templateUrl: "./pages/usuario/cargar-gasto.html",
+      beforeEnter: requireRole("usuario"),
+      onEnter: async (context) => {
+        await mountUserShell(context.mountNode, {
+          userName: authManager.getCurrentUser()?.fullName || "Juan Perez",
+          activeRoute: ROUTES.USER_CARGAR_GASTO,
+          footerText: "FinTrack 2026 · Carga de gastos",
+        });
+
+        const module = await import("./pages/usuario/CargarGastoPage.js");
+        const page = new module.CargarGastoPage(context.mountNode, {
+          router,
+          authManager,
+          showToast,
+          hasRouteOpenInOtherTab,
+        });
+        page.mount();
+        return () => page.destroy();
+      },
+    },
+    {
+      path: ROUTES.USER_HISTORIAL,
+      templateUrl: "./pages/usuario/historial.html",
+      beforeEnter: requireRole("usuario"),
+      onEnter: async (context) => {
+        await mountUserShell(context.mountNode, {
+          userName: authManager.getCurrentUser()?.fullName || "Juan Perez",
+          activeRoute: ROUTES.USER_HISTORIAL,
+          footerText: "FinTrack 2026 · Historial de gastos",
+        });
+
+        const module = await import("./pages/usuario/HistorialPage.js");
+        const page = new module.HistorialPage(context.mountNode, {
+          router,
+          authManager,
+          showToast,
+          hasRouteOpenInOtherTab,
+        });
+        page.mount();
+        return () => page.destroy();
+      },
+    },
+    {
+      path: ROUTES.USER_PERFIL,
+      templateUrl: "./pages/usuario/perfil.html",
+      beforeEnter: requireRole("usuario"),
+      onEnter: async (context) => {
+        await mountUserShell(context.mountNode, {
+          userName: authManager.getCurrentUser()?.fullName || "Juan Perez",
+          activeRoute: ROUTES.USER_PERFIL,
+          footerText: "FinTrack 2026 · Perfil de usuario",
+        });
+
+        const module = await import("./pages/usuario/PerfilPage.js");
+        const page = new module.PerfilPage(context.mountNode, {
+          router,
+          authManager,
+          showToast,
+          hasRouteOpenInOtherTab,
+        });
+        page.mount();
+        return () => page.destroy();
+      },
+    },
+    {
       path: ROUTES.USER_PATRONES,
       templateUrl: "./pages/usuario/patrones.html",
       beforeEnter: requireRole("usuario"),
@@ -178,11 +244,98 @@ function configureRouter() {
       onEnter: async (context) => {
         await mountAdvisorShell(context.mountNode, {
           advisorName: authManager.getCurrentUser()?.fullName || "Maria Rodriguez",
+          activeRoute: ROUTES.ADVISOR_DASHBOARD,
           footerText: "FinTrack 2026 · Panel asesor",
         });
 
         const module = await import("./pages/asesor/AsesorDashboardPage.js");
         const page = new module.AsesorDashboardPage(context.mountNode, {
+          router,
+          authManager,
+          showToast,
+        });
+        page.mount();
+        return () => page.destroy();
+      },
+    },
+    {
+      path: ROUTES.ADVISOR_CLIENTES,
+      templateUrl: "./pages/asesor/clientes.html",
+      beforeEnter: requireRole("asesor"),
+      onEnter: async (context) => {
+        await mountAdvisorShell(context.mountNode, {
+          advisorName: authManager.getCurrentUser()?.fullName || "Maria Rodriguez",
+          activeRoute: ROUTES.ADVISOR_CLIENTES,
+          footerText: "FinTrack 2026 · Gestion de clientes",
+        });
+
+        const module = await import("./pages/asesor/AsesorClientesPage.js");
+        const page = new module.AsesorClientesPage(context.mountNode, {
+          router,
+          authManager,
+          showToast,
+        });
+        page.mount();
+        return () => page.destroy();
+      },
+    },
+    {
+      path: ROUTES.ADVISOR_INBOX,
+      templateUrl: "./pages/asesor/inbox.html",
+      beforeEnter: requireRole("asesor"),
+      onEnter: async (context) => {
+        await mountAdvisorShell(context.mountNode, {
+          advisorName: authManager.getCurrentUser()?.fullName || "Maria Rodriguez",
+          activeRoute: ROUTES.ADVISOR_INBOX,
+          footerText: "FinTrack 2026 · Bandeja del asesor",
+        });
+
+        const module = await import("./pages/asesor/AsesorInboxPage.js");
+        const page = new module.AsesorInboxPage(context.mountNode, {
+          router,
+          authManager,
+          showToast,
+        });
+        page.mount();
+        return () => page.destroy();
+      },
+    },
+    {
+      path: ROUTES.ADVISOR_REPORTES,
+      templateUrl: "./pages/asesor/reportes.html",
+      beforeEnter: requireRole("asesor"),
+      onEnter: async (context) => {
+        await mountAdvisorShell(context.mountNode, {
+          advisorName: authManager.getCurrentUser()?.fullName || "Maria Rodriguez",
+          activeRoute: ROUTES.ADVISOR_REPORTES,
+          activeSection: context.query.section || "comisiones",
+          footerText: "FinTrack 2026 · Reportes del asesor",
+        });
+
+        const module = await import("./pages/asesor/AsesorReportesPage.js");
+        const page = new module.AsesorReportesPage(context.mountNode, {
+          router,
+          authManager,
+          showToast,
+          query: context.query,
+        });
+        page.mount();
+        return () => page.destroy();
+      },
+    },
+    {
+      path: ROUTES.ADVISOR_PERFIL,
+      templateUrl: "./pages/asesor/perfil.html",
+      beforeEnter: requireRole("asesor"),
+      onEnter: async (context) => {
+        await mountAdvisorShell(context.mountNode, {
+          advisorName: authManager.getCurrentUser()?.fullName || "Maria Rodriguez",
+          activeRoute: ROUTES.ADVISOR_PERFIL,
+          footerText: "FinTrack 2026 · Perfil del asesor",
+        });
+
+        const module = await import("./pages/asesor/AsesorPerfilPage.js");
+        const page = new module.AsesorPerfilPage(context.mountNode, {
           router,
           authManager,
           showToast,

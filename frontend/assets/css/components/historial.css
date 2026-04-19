@@ -1,0 +1,66 @@
+.history-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) repeat(3, minmax(0, 0.7fr));
+  gap: 10px;
+}
+
+.history-toolbar__search {
+  min-width: 0;
+}
+
+.user-history-table th,
+.user-history-table td {
+  white-space: nowrap;
+}
+
+.history-row-actions {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.history-row-actions .action-btn {
+  padding: 6px 10px;
+  font-size: 0.8rem;
+}
+
+.history-empty {
+  border: 1px dashed var(--border-soft);
+  border-radius: var(--radius-md);
+  text-align: center;
+  background: var(--surface-1);
+  padding: 18px;
+  margin-top: 10px;
+}
+
+.history-empty i {
+  color: var(--color-primary);
+  margin-bottom: 8px;
+}
+
+.history-detail-card {
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+  padding: 12px;
+}
+
+.history-detail-card p {
+  margin-bottom: 8px;
+  color: var(--text-muted);
+}
+
+.history-detail-card strong {
+  color: var(--text-primary);
+}
+
+@media (max-width: 991px) {
+  .history-toolbar {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 575px) {
+  .history-toolbar {
+    grid-template-columns: 1fr;
+  }
+}

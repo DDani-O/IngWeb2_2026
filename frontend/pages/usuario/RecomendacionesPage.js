@@ -1,7 +1,7 @@
 import { Component } from "../../core/Component.js";
 import { MOCK_RECOMMENDATIONS, ROUTES } from "../../utils/constants.js";
 import { formatCurrency } from "../../utils/formatters.js";
-import { buildPlaceholderHashFromPreset, getInitials } from "../../utils/helpers.js";
+import { getInitials } from "../../utils/helpers.js";
 
 export class RecomendacionesPage extends Component {
   constructor(element, options = {}) {
@@ -23,7 +23,6 @@ export class RecomendacionesPage extends Component {
     this._setText("#userSidebarName", userName);
     this._setText("#userSidebarInitials", getInitials(userName) || "JP");
 
-    this._renderPlaceholderLinks();
     this._renderSummary();
     this._applyFilters();
   }
@@ -65,13 +64,6 @@ export class RecomendacionesPage extends Component {
       this.options.showToast?.("Mensaje enviado a tu asesor.", "success");
       this.contactModal?.hide();
       contactForm.reset();
-    });
-  }
-
-  _renderPlaceholderLinks() {
-    this.element.querySelectorAll(".js-placeholder-link").forEach((anchor) => {
-      const preset = anchor.dataset.preset;
-      anchor.setAttribute("href", buildPlaceholderHashFromPreset(preset));
     });
   }
 

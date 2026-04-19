@@ -2,9 +2,7 @@ import { Component } from "../../core/Component.js";
 import { ROUTES, MOCK_USER_DASHBOARD } from "../../utils/constants.js";
 import {
   buildHash,
-  buildPlaceholderHashFromPreset,
   getChartThemeColors,
-  getInitials,
 } from "../../utils/helpers.js";
 import { formatCurrency, formatTrendLabel } from "../../utils/formatters.js";
 
@@ -34,7 +32,6 @@ export class DashboardPage extends Component {
         "Tu resumen financiero esta listo. Explora tus patrones de gasto y descubre como mejorar tu economia personal.";
     }
 
-    this._renderPlaceholderLinks();
     this._renderCalendar();
     this._renderAlerts();
     this._renderStats();
@@ -80,13 +77,6 @@ export class DashboardPage extends Component {
     ["#userLogoutButton", "#userLogoutButtonMobile"].forEach((selector) => {
       const button = this.element.querySelector(selector);
       this.listen(button, "click", () => this._handleLogout());
-    });
-  }
-
-  _renderPlaceholderLinks() {
-    this.element.querySelectorAll(".js-placeholder-link").forEach((anchor) => {
-      const preset = anchor.dataset.preset;
-      anchor.setAttribute("href", buildPlaceholderHashFromPreset(preset));
     });
   }
 
@@ -188,9 +178,7 @@ export class DashboardPage extends Component {
 
     container.innerHTML = this.data.summaryCards
       .map((card) => {
-        const link = card.queryPreset
-          ? buildPlaceholderHashFromPreset(card.queryPreset)
-          : buildHash(card.route);
+        const link = buildHash(card.route);
         const openInNewTab = this._isSecondaryPageRoute(card.route);
 
         return `
@@ -218,7 +206,9 @@ export class DashboardPage extends Component {
 
   _isSecondaryPageRoute(route) {
     return [
+      ROUTES.USER_HISTORIAL,
       ROUTES.USER_PATRONES,
+      ROUTES.USER_PERFIL,
       ROUTES.USER_PERFILES,
       ROUTES.USER_RECOMENDACIONES,
     ].includes(route);

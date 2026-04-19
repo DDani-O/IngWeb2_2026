@@ -1,0 +1,68 @@
+<div class="app-page page-asesor-inbox">
+  <div id="advisorTopbarSlot"></div>
+
+  <main class="app-main app-main--wide advisor-inbox-main">
+    <section class="hero-panel advisor-inbox-hero">
+      <h1 class="text-gradient">Bandeja de Entrada</h1>
+      <p class="text-muted mt-2">
+        Gestiona mensajes y tickets de tus clientes desde una vista centralizada.
+      </p>
+    </section>
+
+    <section class="advisor-inbox-layout">
+      <article class="section-block">
+        <div class="advisor-inbox-toolbar">
+          <input id="advisorInboxSearch" class="form-control" placeholder="Buscar por cliente o asunto" />
+          <select id="advisorInboxFilter" class="form-select">
+            <option value="Todos">Todos</option>
+            <option value="No leidos">No leidos</option>
+            <option value="Tickets">Tickets</option>
+            <option value="Mensajes">Mensajes</option>
+          </select>
+        </div>
+
+        <p class="text-muted mt-3" id="advisorInboxCount">0 conversaciones</p>
+        <div class="advisor-inbox-list-page" id="advisorInboxListPage"></div>
+      </article>
+
+      <article class="section-block advisor-inbox-detail">
+        <h2 class="section-title">
+          <i class="fa-solid fa-message accent"></i>
+          Conversacion seleccionada
+        </h2>
+
+        <div class="advisor-inbox-detail__meta">
+          <p><strong>Cliente:</strong> <span id="advisorInboxDetailFrom">-</span></p>
+          <p><strong>Asunto:</strong> <span id="advisorInboxDetailSubject">-</span></p>
+          <p><strong>Fecha:</strong> <span id="advisorInboxDetailDate">-</span></p>
+        </div>
+
+        <article class="advisor-inbox-detail__body" id="advisorInboxDetailBody"></article>
+
+        <div class="d-flex flex-wrap gap-2 mt-3">
+          <button class="action-btn action-btn--ghost" id="markInboxReadButton" type="button">
+            <i class="fa-solid fa-envelope-open"></i>
+            Marcar como leido
+          </button>
+          <a class="action-btn action-btn--ghost" href="#/asesor/clientes">
+            <i class="fa-solid fa-users"></i>
+            Ver clientes
+          </a>
+        </div>
+
+        <form id="advisorInboxReplyForm" class="mt-3" novalidate>
+          <label class="form-label" for="advisorInboxReplyMessage">Responder</label>
+          <textarea id="advisorInboxReplyMessage" class="form-control" rows="4" required></textarea>
+          <button class="action-btn action-btn--primary mt-3" type="submit">
+            <i class="fa-solid fa-paper-plane"></i>
+            Enviar respuesta
+          </button>
+        </form>
+      </article>
+    </section>
+
+    <div id="appFooterSlot"></div>
+  </main>
+
+  <div id="advisorSidebarSlot"></div>
+</div>

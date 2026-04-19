@@ -1,0 +1,96 @@
+.user-cargar-hero {
+  border-color: var(--border-strong);
+}
+
+.user-cargar-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+  gap: 14px;
+}
+
+.ticket-dropzone {
+  min-height: 9.5rem;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  display: grid;
+  place-content: center;
+  gap: 8px;
+  text-align: center;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 12px;
+}
+
+.ticket-dropzone i {
+  color: var(--color-primary);
+  font-size: 1.3rem;
+}
+
+.user-ocr-panel {
+  height: fit-content;
+}
+
+.ocr-result {
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+  padding: 12px;
+}
+
+.ocr-result__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ocr-result__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  border-bottom: 1px solid var(--border-soft);
+  padding-bottom: 6px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.ocr-result__row strong {
+  color: var(--text-primary);
+}
+
+.recent-expense-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.recent-expense-item {
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  padding: 12px;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.recent-expense-item__title {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.recent-expense-item__meta {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.recent-expense-item__amount {
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+@media (max-width: 991px) {
+  .user-cargar-grid {
+    grid-template-columns: 1fr;
+  }
+}

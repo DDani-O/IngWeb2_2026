@@ -8,20 +8,15 @@
       <span class="sidebar-user-card__avatar">{{advisorInitials}}</span>
       <div>
         <p class="sidebar-user-card__name">{{advisorName}}</p>
-        <p class="sidebar-user-card__meta">Editar Perfil</p>
+        <p class="sidebar-user-card__meta">Panel profesional</p>
       </div>
     </div>
 
     <p class="sidebar-section-title mt-2">Navegacion</p>
-    <a class="sidebar-link active" href="#/asesor/dashboard"><i class="fa-solid fa-house"></i>Dashboard</a>
-    <a class="sidebar-link js-placeholder-link" data-preset="advisorClientes" href="#/utils/placeholder"><i class="fa-solid fa-users"></i>Mis Clientes</a>
-    <a class="sidebar-link js-placeholder-link" data-preset="advisorInbox" href="#/utils/placeholder"><i class="fa-solid fa-inbox"></i>Bandeja de Entrada</a>
-    <a class="sidebar-link js-placeholder-link" data-preset="advisorReportes" href="#/utils/placeholder"><i class="fa-solid fa-file-lines"></i>Mis Comisiones</a>
-    <a class="sidebar-link js-placeholder-link" data-preset="advisorReportes" href="#/utils/placeholder"><i class="fa-solid fa-list-check"></i>Tareas Pendientes</a>
+    {{navigationLinks}}
 
     <p class="sidebar-section-title mt-2">Acciones</p>
-    <a class="sidebar-link js-placeholder-link" data-preset="advisorReportes" href="#/utils/placeholder"><i class="fa-solid fa-user-pen"></i>Editar Perfil</a>
-    <a class="sidebar-link js-placeholder-link" data-preset="advisorReportes" href="#/utils/placeholder"><i class="fa-solid fa-download"></i>Descargar Reportes</a>
+    {{actionLinks}}
 
     <div class="sidebar-spacer"></div>
     <button class="sidebar-link sidebar-logout" id="advisorLogoutButtonMobile" type="button">

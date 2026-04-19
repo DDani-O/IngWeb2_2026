@@ -1,6 +1,6 @@
 import { Component } from "../../core/Component.js";
 import { MOCK_ADVISOR_DASHBOARD, ROUTES } from "../../utils/constants.js";
-import { buildPlaceholderHashFromPreset, getInitials } from "../../utils/helpers.js";
+import { getInitials } from "../../utils/helpers.js";
 import { formatCurrency, formatTrendLabel } from "../../utils/formatters.js";
 
 export class AsesorDashboardPage extends Component {
@@ -19,7 +19,6 @@ export class AsesorDashboardPage extends Component {
     this._setText("#advisorTopbarName", fullName);
     this._setText("#advisorWelcomeTitle", `Hola, ${firstName}!`);
 
-    this._renderPlaceholderLinks();
     this._renderCalendar();
     this._renderAlerts();
     this._renderStats();
@@ -49,13 +48,6 @@ export class AsesorDashboardPage extends Component {
     ["#advisorLogoutButton", "#advisorLogoutButtonMobile"].forEach((selector) => {
       const button = this.element.querySelector(selector);
       this.listen(button, "click", () => this._handleLogout());
-    });
-  }
-
-  _renderPlaceholderLinks() {
-    this.element.querySelectorAll(".js-placeholder-link").forEach((anchor) => {
-      const preset = anchor.dataset.preset;
-      anchor.setAttribute("href", buildPlaceholderHashFromPreset(preset));
     });
   }
 

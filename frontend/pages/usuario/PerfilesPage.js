@@ -4,7 +4,7 @@ import {
   ROUTES,
   STORAGE_KEYS,
 } from "../../utils/constants.js";
-import { buildPlaceholderHashFromPreset, getInitials } from "../../utils/helpers.js";
+import { getInitials } from "../../utils/helpers.js";
 
 export class PerfilesPage extends Component {
   constructor(element, options = {}) {
@@ -23,7 +23,6 @@ export class PerfilesPage extends Component {
     this._setText("#userSidebarName", userName);
     this._setText("#userSidebarInitials", getInitials(userName) || "JP");
 
-    this._renderPlaceholderLinks();
     this._renderProfiles();
     this._renderComparison();
   }
@@ -38,13 +37,6 @@ export class PerfilesPage extends Component {
     ["#userLogoutButton", "#userLogoutButtonMobile"].forEach((selector) => {
       const button = this.element.querySelector(selector);
       this.listen(button, "click", () => this._handleLogout());
-    });
-  }
-
-  _renderPlaceholderLinks() {
-    this.element.querySelectorAll(".js-placeholder-link").forEach((anchor) => {
-      const preset = anchor.dataset.preset;
-      anchor.setAttribute("href", buildPlaceholderHashFromPreset(preset));
     });
   }
 

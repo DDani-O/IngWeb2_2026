@@ -1,11 +1,7 @@
 import { Component } from "../../core/Component.js";
 import { MOCK_CONSUMPTION_PATTERNS, ROUTES } from "../../utils/constants.js";
 import { formatCurrency } from "../../utils/formatters.js";
-import {
-  buildPlaceholderHashFromPreset,
-  getChartThemeColors,
-  getInitials,
-} from "../../utils/helpers.js";
+import { getChartThemeColors, getInitials } from "../../utils/helpers.js";
 
 export class PatronesPage extends Component {
   constructor(element, options = {}) {
@@ -26,7 +22,6 @@ export class PatronesPage extends Component {
     this._setText("#userSidebarName", userName);
     this._setText("#userSidebarInitials", getInitials(userName) || "JP");
 
-    this._renderPlaceholderLinks();
     this._renderHighlights();
     this._renderStats();
     this._renderCategoryList();
@@ -42,13 +37,6 @@ export class PatronesPage extends Component {
     ["#userLogoutButton", "#userLogoutButtonMobile"].forEach((selector) => {
       const button = this.element.querySelector(selector);
       this.listen(button, "click", () => this._handleLogout());
-    });
-  }
-
-  _renderPlaceholderLinks() {
-    this.element.querySelectorAll(".js-placeholder-link").forEach((anchor) => {
-      const preset = anchor.dataset.preset;
-      anchor.setAttribute("href", buildPlaceholderHashFromPreset(preset));
     });
   }
 

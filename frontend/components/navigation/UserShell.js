@@ -6,12 +6,11 @@ const USER_TOPBAR_TEMPLATE = "./components/layout/user-topbar.html";
 const USER_SIDEBAR_TEMPLATE = "./components/navigation/user-sidebar.html";
 const FOOTER_TEMPLATE = "./components/layout/app-footer-mini.html";
 
-function buildLink({ href, icon, label, classes = "", targetBlank = false, dataPreset = "" }) {
+function buildLink({ href, icon, label, classes = "", targetBlank = false }) {
   const className = ["sidebar-link", classes].filter(Boolean).join(" ");
   const targetAttr = targetBlank ? ' target="_blank"' : "";
-  const presetAttr = dataPreset ? ` data-preset="${dataPreset}"` : "";
 
-  return `<a class="${className}" href="${href}"${targetAttr}${presetAttr}><i class="fa-solid ${icon}"></i>${label}</a>`;
+  return `<a class="${className}" href="${href}"${targetAttr}><i class="fa-solid ${icon}"></i>${label}</a>`;
 }
 
 function buildNavigationLinks(activeRoute) {
@@ -21,6 +20,18 @@ function buildNavigationLinks(activeRoute) {
       icon: "fa-house",
       label: "Dashboard",
       classes: activeRoute === ROUTES.USER_DASHBOARD ? "active" : "js-dashboard-back",
+    },
+    {
+      href: "#/usuario/cargar-gasto",
+      icon: "fa-circle-plus",
+      label: "Cargar Gasto",
+      classes: activeRoute === ROUTES.USER_CARGAR_GASTO ? "active" : "",
+    },
+    {
+      href: "#/usuario/historial",
+      icon: "fa-clock-rotate-left",
+      label: "Historial de Gastos",
+      classes: activeRoute === ROUTES.USER_HISTORIAL ? "active" : "",
     },
     {
       href: "#/usuario/patrones",
@@ -34,13 +45,6 @@ function buildNavigationLinks(activeRoute) {
       label: "Recomendaciones",
       classes: activeRoute === ROUTES.USER_RECOMENDACIONES ? "active" : "",
     },
-    {
-      href: "#/utils/placeholder",
-      icon: "fa-clock-rotate-left",
-      label: "Historial de Gastos",
-      classes: "js-placeholder-link",
-      dataPreset: "historial",
-    },
   ];
 
   return links.map((link) => buildLink(link)).join("\n");
@@ -49,16 +53,15 @@ function buildNavigationLinks(activeRoute) {
 function buildActionLinks(activeRoute) {
   const links = [
     {
-      href: "#/utils/placeholder",
-      icon: "fa-circle-plus",
-      label: "Cargar Gasto",
-      classes: "js-placeholder-link",
-      dataPreset: "cargarGasto",
+      href: "#/usuario/perfil",
+      icon: "fa-id-card",
+      label: "Perfil de Cuenta",
+      classes: activeRoute === ROUTES.USER_PERFIL ? "active" : "",
     },
     {
       href: "#/usuario/perfiles",
       icon: "fa-user-pen",
-      label: "Editar Perfil",
+      label: "Perfiles de Gasto",
       classes: activeRoute === ROUTES.USER_PERFILES ? "active" : "",
     },
   ];

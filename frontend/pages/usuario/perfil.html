@@ -1,0 +1,123 @@
+<div class="app-page page-user-perfil">
+  <div id="userTopbarSlot"></div>
+
+  <main class="app-main app-main--wide user-perfil-main">
+    <section class="hero-panel user-perfil-hero">
+      <h1 class="text-gradient">Perfil de Cuenta</h1>
+      <p class="text-muted mt-2">
+        Administra tus datos personales y preferencias financieras para recibir recomendaciones mas precisas.
+      </p>
+    </section>
+
+    <section class="user-profile-grid">
+      <article class="section-block user-profile-summary">
+        <div class="user-profile-avatar" id="profileAvatarInitials">JP</div>
+        <h2 id="profileSummaryName">Juan Perez</h2>
+        <p class="text-muted" id="profileSummaryEmail">usuario@fintrack.local</p>
+
+        <div class="profile-meta-list mt-3" id="profileMetaList"></div>
+
+        <div class="d-flex flex-wrap gap-2 mt-3">
+          <a class="action-btn action-btn--ghost" href="#/usuario/perfiles">
+            <i class="fa-solid fa-user-shield"></i>
+            Ver perfiles de gasto
+          </a>
+          <a class="action-btn action-btn--ghost" href="#/usuario/recomendaciones">
+            <i class="fa-solid fa-lightbulb"></i>
+            Revisar recomendaciones
+          </a>
+        </div>
+      </article>
+
+      <article class="section-block">
+        <h2 class="section-title">
+          <i class="fa-solid fa-id-card accent"></i>
+          Datos personales y preferencias
+        </h2>
+
+        <form id="userProfileForm" class="user-profile-form" novalidate>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label" for="profileFullName">Nombre completo</label>
+              <input id="profileFullName" name="fullName" class="form-control" required />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="profileEmail">Email</label>
+              <input id="profileEmail" name="email" type="email" class="form-control" required />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="profilePhone">Telefono</label>
+              <input id="profilePhone" name="phone" class="form-control" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="profileCity">Ciudad</label>
+              <input id="profileCity" name="city" class="form-control" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="profileOccupation">Ocupacion</label>
+              <input id="profileOccupation" name="occupation" class="form-control" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="profileCurrency">Moneda base</label>
+              <select id="profileCurrency" name="currency" class="form-select">
+                <option value="ARS">ARS</option>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="profileMonthlyIncome">Ingreso mensual</label>
+              <input id="profileMonthlyIncome" name="monthlyIncome" type="number" min="0" class="form-control" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="profileSavingsGoal">Meta de ahorro</label>
+              <input id="profileSavingsGoal" name="savingsGoal" type="number" min="0" class="form-control" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="profileAlertThreshold">Alerta de presupuesto (%)</label>
+              <input id="profileAlertThreshold" name="alertThreshold" type="number" min="10" max="100" class="form-control" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="profileTheme">Tema visual</label>
+              <select id="profileTheme" name="theme" class="form-select">
+                <option value="dark">Oscuro</option>
+                <option value="light">Claro</option>
+              </select>
+            </div>
+            <div class="col-md-6 d-flex align-items-end">
+              <div class="d-flex flex-column gap-2">
+                <label class="form-check-label">
+                  <input class="form-check-input me-2" id="profileNotifyEmail" type="checkbox" />
+                  Notificaciones por email
+                </label>
+                <label class="form-check-label">
+                  <input class="form-check-input me-2" id="profileNotifyPush" type="checkbox" />
+                  Alertas en tiempo real
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex flex-wrap gap-2 mt-3">
+            <button class="action-btn action-btn--primary" type="submit">
+              <i class="fa-solid fa-floppy-disk"></i>
+              Guardar cambios
+            </button>
+            <button class="action-btn action-btn--ghost" id="resetUserProfileButton" type="button">
+              <i class="fa-solid fa-rotate-left"></i>
+              Restaurar valores
+            </button>
+            <button class="action-btn action-btn--ghost js-dashboard-back" type="button">
+              <i class="fa-solid fa-arrow-left"></i>
+              Volver al Dashboard
+            </button>
+          </div>
+        </form>
+      </article>
+    </section>
+
+    <div id="appFooterSlot"></div>
+  </main>
+
+  <div id="userSidebarSlot"></div>
+</div>

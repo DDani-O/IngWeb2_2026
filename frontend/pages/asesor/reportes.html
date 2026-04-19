@@ -1,0 +1,83 @@
+<div class="app-page page-asesor-reportes">
+  <div id="advisorTopbarSlot"></div>
+
+  <main class="app-main app-main--wide advisor-reportes-main">
+    <section class="hero-panel advisor-reportes-hero">
+      <h1 class="text-gradient">Reportes Operativos</h1>
+      <p class="text-muted mt-2">
+        Consolida comisiones, tareas y descargas desde un unico tablero de seguimiento.
+      </p>
+    </section>
+
+    <section class="section-block">
+      <div class="advisor-reports-tabs" id="advisorReportsTabs">
+        <button class="action-btn action-btn--ghost report-tab-btn" data-section="comisiones" type="button">
+          <i class="fa-solid fa-file-invoice-dollar"></i>
+          Comisiones
+        </button>
+        <button class="action-btn action-btn--ghost report-tab-btn" data-section="tareas" type="button">
+          <i class="fa-solid fa-list-check"></i>
+          Tareas
+        </button>
+        <button class="action-btn action-btn--ghost report-tab-btn" data-section="descargas" type="button">
+          <i class="fa-solid fa-download"></i>
+          Descargas
+        </button>
+      </div>
+
+      <div class="advisor-reports-summary" id="advisorReportsSummary"></div>
+    </section>
+
+    <section class="section-block report-section" id="reportSectionComisiones">
+      <h2 class="section-title">
+        <i class="fa-solid fa-chart-line accent"></i>
+        Comisiones por mes
+      </h2>
+      <div class="table-responsive">
+        <table class="table-shell advisor-commissions-table">
+          <thead>
+            <tr>
+              <th>Mes</th>
+              <th>Clientes</th>
+              <th>Recomendaciones</th>
+              <th>Comision</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody id="advisorCommissionsBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="section-block report-section app-hidden" id="reportSectionTareas">
+      <h2 class="section-title">
+        <i class="fa-solid fa-list-check accent"></i>
+        Tareas pendientes
+      </h2>
+      <div class="advisor-task-list" id="advisorTaskList"></div>
+    </section>
+
+    <section class="section-block report-section app-hidden" id="reportSectionDescargas">
+      <h2 class="section-title">
+        <i class="fa-solid fa-download accent"></i>
+        Reportes disponibles para descarga
+      </h2>
+      <div class="advisor-download-list" id="advisorDownloadList"></div>
+    </section>
+
+    <div class="d-flex flex-wrap gap-2">
+      <a class="action-btn action-btn--ghost" href="#/asesor/perfil">
+        <i class="fa-solid fa-user-pen"></i>
+        Ver perfil del asesor
+      </a>
+      <button class="action-btn action-btn--primary" id="backToAdvisorDashboardFromReports" type="button">
+        <i class="fa-solid fa-arrow-left"></i>
+        Volver al panel
+      </button>
+    </div>
+
+    <div id="appFooterSlot"></div>
+  </main>
+
+  <div id="advisorSidebarSlot"></div>
+</div>
