@@ -113,7 +113,7 @@
 
 .chart-card canvas {
   width: 100%;
-  min-height: 260px;
+  min-height: var(--chart-canvas-min-height);
 }
 
 .chart-card__link {
@@ -166,8 +166,8 @@
 }
 
 .action-btn--primary {
-  background: linear-gradient(125deg, #38dcca, #24b7e0);
-  color: #042337;
+  background: linear-gradient(125deg, #46e3c8, #2dcfb7);
+  color: #03231f;
 }
 
 .action-btn--primary:hover {
@@ -178,11 +178,11 @@
 .action-btn--ghost {
   border-color: var(--border-strong);
   color: var(--color-primary);
-  background: rgba(45, 212, 191, 0.08);
+  background: rgba(57, 223, 191, 0.06);
 }
 
 .action-btn--ghost:hover {
-  background: rgba(45, 212, 191, 0.18);
+  background: rgba(57, 223, 191, 0.16);
 }
 
 .table-shell {

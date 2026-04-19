@@ -1,5 +1,5 @@
 .recommendations-main {
-  padding-top: 98px;
+  padding-top: var(--app-shell-top-offset);
 }
 
 .recommendation-toolbar {
@@ -10,7 +10,7 @@
 }
 
 .recommendation-toolbar select {
-  min-width: 170px;
+  min-inline-size: clamp(9.5rem, 24vw, 10.625rem);
 }
 
 .recommendations-group--high {
@@ -155,6 +155,10 @@
 }
 
 @media (max-width: 575px) {
+  .recommendation-toolbar select {
+    width: 100%;
+  }
+
   .summary-strip {
     grid-template-columns: 1fr;
   }

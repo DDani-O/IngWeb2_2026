@@ -913,6 +913,9 @@ stateManager.set('user', {
 
 ## 9. ESTILOS Y CSS
 
+Fuente normativa complementaria: `ReglasCSS` (raíz del repositorio). Si hay conflicto entre
+ejemplos antiguos y reglas operativas vigentes, prevalece `ReglasCSS`.
+
 ### 9.1 Desacoplamiento HTML/CSS
 
 ```javascript
@@ -1013,6 +1016,34 @@ render() {
   }
 }
 ```
+
+### 9.5 Reglas operativas obligatorias (ReglasCSS)
+
+1. **No usar compensaciones top fijas por página**
+   - Evitar `padding-top` hardcodeado para compensar navbar en cada vista.
+   - Usar tokens globales de shell para mantener consistencia entre rutas.
+
+2. **Tokenizar valores repetidos de layout**
+   - Si un valor de spacing, offset, ancho/alto o timing se repite 2+ veces,
+     debe convertirse en variable CSS o constante JS centralizada.
+
+3. **Elementos flotantes con safe-area**
+   - Para FAB, teaser, banners flotantes o paneles anclados al borde,
+     combinar tokens de separación con `env(safe-area-inset-bottom)`.
+
+4. **Alturas fluidas en paneles de contenido**
+   - En charts, cards de KPI y paneles de chat, preferir `clamp(...)` para
+     definir mínimos/máximos y evitar clipping en viewport bajo.
+
+5. **Viewport dinámico**
+   - En contenedores críticos de alto de pantalla, usar fallback `vh` + `dvh`.
+
+6. **Offsets y timing sin números mágicos inline**
+   - Offsets de scroll y timeouts visuales deben declararse en `utils/constants.js`.
+
+7. **Anchors y navegación interna**
+   - Definir `scroll-margin-top` mediante variables compartidas, evitando valores
+     aislados por sección.
 
 ---
 
@@ -1256,6 +1287,35 @@ if (amount > HIGH_EXPENSE_THRESHOLD) { /* */ }
 const timeout = API_TIMEOUT_MS;
 ```
 
+### ❌ Evitar: Offsets y overlays rígidos
+
+```css
+/* ❌ MALO */
+.page-main { padding-top: 98px; }
+.floating-fab { right: 24px; bottom: 24px; width: 56px; height: 56px; }
+.chat-panel { max-height: 300px; }
+
+/* ✅ BIEN */
+.page-main { padding-top: var(--app-shell-top-offset); }
+.floating-fab {
+  right: var(--floating-edge-gap);
+  bottom: var(--floating-bottom-gap);
+  width: var(--chat-fab-size);
+  height: var(--chat-fab-size);
+}
+.chat-panel { max-height: var(--chat-panel-max-height); }
+```
+
+### ❌ Evitar: Timing UI hardcodeado en módulos
+
+```javascript
+// ❌ MALO
+window.setTimeout(() => toast.remove(), 3200);
+
+// ✅ BIEN
+window.setTimeout(() => toast.remove(), UI_TIMING.TOAST_DISMISS_MS);
+```
+
 ### ❌ Evitar: Funciones Demasiado Largas
 
 ```javascript
@@ -1354,6 +1414,7 @@ class StateManager {
 - [ ] JSDoc en funciones públicas
 - [ ] Sin inline styles, estilos en archivos CSS
 - [ ] CSS usa variables y BEM naming
+- [ ] Reglas de `ReglasCSS` aplicadas (tokenización, safe-area, vh+dvh, anchors)
 - [ ] Manejo de errores con try-catch
 - [ ] Sin console.log() innecesarios en producción
 - [ ] Estado centralizado en StateManager

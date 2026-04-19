@@ -1,5 +1,5 @@
 .perfiles-main {
-  padding-top: 98px;
+  padding-top: var(--app-shell-top-offset);
 }
 
 .perfiles-stack {

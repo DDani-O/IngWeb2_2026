@@ -67,6 +67,8 @@ Este documento detalla la **arquitectura, estructura y principios del frontend**
 
 Consultar documento dedicado: **`frontend/PrincipiosDesarrollo.md`**
 
+Documento complementario obligatorio para estilos y responsive: **`ReglasCSS`**
+
 ### Resumen Ejecutivo de Principios
 
 1. **Desacoplamiento Total** - Cada archivo JS, CSS e HTML independiente
@@ -135,6 +137,7 @@ Consultar documento dedicado: **`frontend/PrincipiosDesarrollo.md`**
 frontend/
 │
 ├── PrincipiosDesarrollo.md          # Guía de principios (LEER PRIMERO)
+├── ReglasCSS (en raíz del repo)     # Reglas operativas CSS/responsive vigentes
 ├── index.html                       # HTML principal - entry point
 ├── app.js                           # JavaScript entry point - inicialización
 │
@@ -671,6 +674,38 @@ Archivo: `assets/css/themes/dark.css`
 ✅ **Mobile First** - Media queries `@media (min-width: ...)` ascendente  
 ✅ **Desacoplado** - Estilos nunca inline, siempre en archivos CSS separados  
 
+### Reglas Operativas Responsive (alineadas con ReglasCSS)
+
+Estas reglas son de cumplimiento obligatorio y complementan la estrategia general de estilos.
+
+1. **Tokenización obligatoria de layout**
+  - Cualquier valor repetido en offsets, spacing o alturas debe vivir en variables globales.
+  - En la implementación actual, los tokens base viven en `assets/css/global.css`.
+
+2. **Prohibido compensar navbar con valores fijos por página**
+  - No usar `padding-top` hardcodeado por vista como estrategia principal.
+  - Usar un offset compartido de shell (`--app-shell-top-offset`) y derivados.
+
+3. **Elementos flotantes con safe-area**
+  - CTA flotantes, FABs, teasers y paneles deben usar tokens + `env(safe-area-inset-bottom)`.
+  - Evitar valores absolutos fijos de `right/bottom/width/height` para overlays críticos.
+
+4. **Alturas fluidas para paneles y gráficos**
+  - Preferir `clamp(...)` para `min-height` y `max-height` en cards, charts y chats.
+  - Evitar alturas rígidas que generen clipping en pantallas bajas o zoom alto.
+
+5. **Viewport moderno con fallback**
+  - Para contenedores dependientes del alto de pantalla, usar `vh` + `dvh`.
+  - Objetivo: reducir saltos visuales por barras dinámicas en mobile.
+
+6. **Navegación por anchors sin números mágicos locales**
+  - `scroll-margin-top` y offsets de scroll deben depender de tokens compartidos,
+    no de números hardcodeados aislados.
+
+7. **Sincronización CSS/JS para UX timing y offsets**
+  - Cualquier timeout UI o offset de interacción debe centralizarse en constantes
+    (`utils/constants.js`) y no quedar inline en módulos.
+
 ---
 
 ## 9. SISTEMA DE EVENTOS
@@ -1091,7 +1126,7 @@ Response (4xx/5xx):
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                   LANDING PAGE                           │
-│        (index.html, login/registro por modales)          │
+│   (pages/public/landing.html + LandingPage.js + modales) │
 └─────────────────┬───────────────────────────────────────┘
                   │
           ┌───────┴────────┐
@@ -1118,10 +1153,9 @@ DASHBOARD    DASHBOARD
 
 ### 11.1 Página Pública - Landing Page
 
-**Archivo:** `frontend/index.html` + `frontend/app.js`
+**Archivo:** `frontend/pages/public/landing.html` + `frontend/pages/public/LandingPage.js`
 
-**Nota técnica (implementación actual):** La landing vive en `index.html` y no existe carpeta
-`pages/public`.
+**Orquestación de ruta:** `frontend/app.js` (ruta `#/` con `templateUrl` + `onEnter`).
 
 **Propósito:** Presentar la aplicación, atraer usuarios
 
@@ -1146,9 +1180,10 @@ DASHBOARD    DASHBOARD
 
 ### 11.2 Flujo de Autenticación
 
-#### 11.2.1 Login (Modal en Landing)
+#### 11.2.1 Login (Modal en plantilla de Landing)
 
-**Archivo:** `frontend/index.html` (estructura/modal) + `frontend/app.js` (orquestación de eventos)
+**Archivo:** `frontend/pages/public/landing.html` (estructura/modal) +
+`frontend/pages/public/LandingPage.js` (orquestación de eventos)
 
 **Formulario:**
 - Email (texto, required, validación)
@@ -1172,9 +1207,10 @@ DASHBOARD    DASHBOARD
 
 ---
 
-#### 11.2.2 Registro Usuario (Modal en Landing)
+#### 11.2.2 Registro Usuario (Modal en plantilla de Landing)
 
-**Archivo:** `frontend/index.html` (estructura/modal) + `frontend/app.js` (orquestación de eventos)
+**Archivo:** `frontend/pages/public/landing.html` (estructura/modal) +
+`frontend/pages/public/LandingPage.js` (orquestación de eventos)
 
 **Formulario:**
 - Email (validación)
@@ -1625,6 +1661,12 @@ const searchInput = debounce((query) => {
 - lg: ≥ 992px
 - xl: ≥ 1200px
 
+**Política adicional vigente:**
+- Para estructura principal y vistas internas, usar offsets compartidos de shell.
+- Para overlays y elementos flotantes, usar tokens con safe-area.
+- Para secciones ancladas, usar compensación dinámica basada en variables.
+- Para paneles/charts/chat, evitar alturas fijas no tokenizadas.
+
 ---
 
 ### 12.8 Navegadores Soportados
@@ -1663,12 +1705,15 @@ Antes de comenzar la implementación, verificar:
 
 - [ ] Estructura de carpetas creada
 - [ ] `PrincipiosDesarrollo.md` leído y comprendido
+- [ ] `ReglasCSS` leído y aplicado en decisiones de estilos/layout
 - [ ] Variables CSS definidas en `global.css`
+- [ ] Tokens de layout/offset/altura definidos y reutilizados (sin duplicar hardcodes)
 - [ ] Clases core entendidas (Component, EventBus, Router, etc.)
 - [ ] Patrones de diseño claros
 - [ ] Endpoints del backend clarificados con equipo backend
 - [ ] Paleta de colores acordada con UI/UX
 - [ ] Responsive breakpoints definidos
+- [ ] Strategy `vh + dvh` validada para pantallas con viewport dinámico
 - [ ] Sistema de autenticación claro
 
 ---

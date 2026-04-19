@@ -1,40 +1,57 @@
 :root {
-  --color-primary: #31d8c7;
-  --color-primary-strong: #16b8aa;
-  --color-secondary: #22b7e0;
+  --color-primary: #39dfbf;
+  --color-primary-strong: #22bea1;
+  --color-secondary: #2fd6c4;
   --color-success: #31d17d;
   --color-warning: #f6b437;
   --color-danger: #ff5d66;
-  --color-info: #25c9e6;
+  --color-info: #31d4c7;
 
-  --bg-950: #010817;
-  --bg-900: #04112a;
-  --bg-850: #071832;
-  --bg-800: #0a1f3e;
-  --bg-750: #10294f;
-  --bg-overlay: rgba(4, 17, 42, 0.88);
+  --bg-950: #021312;
+  --bg-900: #031a1b;
+  --bg-850: #072324;
+  --bg-800: #0a2d2f;
+  --bg-750: #124141;
+  --bg-overlay: rgba(3, 26, 27, 0.88);
 
-  --text-100: #f5fbff;
-  --text-200: #d2e4f6;
-  --text-300: #95adc8;
-  --text-400: #6b86a4;
+  --text-100: #f2fffc;
+  --text-200: #d3ebe6;
+  --text-300: #a5c6c0;
+  --text-400: #7f9f99;
 
-  --border-soft: rgba(57, 211, 227, 0.16);
-  --border-strong: rgba(57, 211, 227, 0.38);
+  --border-soft: rgba(66, 230, 202, 0.18);
+  --border-strong: rgba(66, 230, 202, 0.4);
 
   --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.32);
-  --shadow-accent: 0 18px 36px rgba(31, 202, 222, 0.18);
+  --shadow-accent: 0 18px 36px rgba(29, 189, 160, 0.2);
 
   --radius-sm: 10px;
   --radius-md: 14px;
   --radius-lg: 20px;
   --radius-xl: 28px;
 
-  --font-display: "Sora", "Segoe UI", sans-serif;
-  --font-body: "Manrope", "Segoe UI", sans-serif;
+  --font-display: "Outfit", "Segoe UI", sans-serif;
+  --font-body: "Nunito Sans", "Segoe UI", sans-serif;
 
   --container-max: 1280px;
   --nav-height: 74px;
+
+  --app-shell-top-offset: calc(var(--nav-height) + clamp(0.75rem, 1.8vw, 1.5rem));
+  --page-inline-padding: clamp(0.875rem, 2vw, 1.125rem);
+  --page-block-end: clamp(1.75rem, 2.7vw, 2.125rem);
+  --anchor-extra-offset: clamp(0.5rem, 1.2vw, 0.75rem);
+
+  --floating-edge-gap: clamp(0.75rem, 1.8vw, 1.5rem);
+  --floating-bottom-gap: calc(clamp(0.75rem, 2.8vh, 1.5rem) + env(safe-area-inset-bottom, 0px));
+  --chat-fab-size: clamp(3.1rem, 6.6vw, 3.5rem);
+  --floating-teaser-bottom-gap: calc(
+    var(--floating-bottom-gap) + var(--chat-fab-size) + clamp(0.5rem, 1.4vw, 0.9rem)
+  );
+
+  --chat-panel-max-height: clamp(15rem, 38vh, 20rem);
+  --chart-canvas-min-height: clamp(14rem, 31vh, 16.75rem);
+  --chart-canvas-min-height-compact: clamp(13.5rem, 30vh, 16.25rem);
+  --kpi-card-min-height: clamp(11.5rem, 27vh, 13.125rem);
 }
 
 * {
@@ -51,8 +68,8 @@ body {
 body {
   font-family: var(--font-body);
   background:
-    radial-gradient(circle at 10% 0%, rgba(29, 112, 140, 0.3), transparent 32%),
-    radial-gradient(circle at 86% 3%, rgba(12, 90, 120, 0.3), transparent 34%),
+    radial-gradient(circle at 8% 0%, rgba(50, 170, 145, 0.3), transparent 34%),
+    radial-gradient(circle at 84% 4%, rgba(22, 126, 116, 0.28), transparent 36%),
     linear-gradient(180deg, var(--bg-900) 0%, var(--bg-950) 100%);
   color: var(--text-100);
   line-height: 1.5;
@@ -118,7 +135,7 @@ textarea:focus {
 }
 
 .text-gradient {
-  background: linear-gradient(120deg, #f8fbff 0%, #4de7d7 45%, #23bce3 100%);
+  background: linear-gradient(120deg, #effff8 0%, #65efcf 44%, #2ecfb8 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

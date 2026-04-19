@@ -91,7 +91,7 @@
 }
 
 .user-chart-grid .chart-card canvas {
-  min-height: 270px;
+  min-height: var(--chart-canvas-min-height-compact);
 }
 
 .merchant-list {
@@ -118,10 +118,10 @@
 
 .advisor-teaser {
   position: fixed;
-  right: 18px;
-  bottom: 92px;
+  right: var(--floating-edge-gap);
+  bottom: var(--floating-teaser-bottom-gap);
   z-index: 1055;
-  width: min(320px, calc(100vw - 32px));
+  width: min(20rem, calc(100vw - (var(--floating-edge-gap) * 2)));
   border: 1px solid var(--border-strong);
   border-radius: 18px;
   background: linear-gradient(140deg, rgba(16, 45, 77, 0.92), rgba(9, 31, 60, 0.86));
@@ -156,10 +156,10 @@
 
 .user-chat-fab {
   position: fixed;
-  right: 24px;
-  bottom: 24px;
-  width: 56px;
-  height: 56px;
+  right: var(--floating-edge-gap);
+  bottom: var(--floating-bottom-gap);
+  width: var(--chat-fab-size);
+  height: var(--chat-fab-size);
   border: 1px solid rgba(49, 216, 199, 0.48);
   border-radius: 50%;
   background: linear-gradient(130deg, rgba(15, 72, 93, 0.92), rgba(10, 45, 74, 0.9));
@@ -169,7 +169,7 @@
 }
 
 .chat-messages {
-  max-height: 300px;
+  max-height: var(--chat-panel-max-height);
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -202,12 +202,6 @@
 }
 
 @media (max-width: 575px) {
-  .advisor-teaser {
-    right: 12px;
-    bottom: 84px;
-    width: calc(100vw - 24px);
-  }
-
   .dashboard-calendar__day {
     font-size: 2.6rem;
   }

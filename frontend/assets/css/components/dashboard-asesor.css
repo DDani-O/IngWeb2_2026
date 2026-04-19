@@ -1,5 +1,5 @@
 .advisor-main {
-  padding-top: 98px;
+  padding-top: var(--app-shell-top-offset);
 }
 
 .advisor-hero-grid {

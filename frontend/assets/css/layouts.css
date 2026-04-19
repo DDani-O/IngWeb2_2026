@@ -1,10 +1,12 @@
 .app-route-container,
 .route-view {
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .app-page {
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .app-navbar {
@@ -91,7 +93,7 @@
 .app-main--wide {
   max-width: var(--container-max);
   margin: 0 auto;
-  padding: 98px 18px 34px;
+  padding: var(--app-shell-top-offset) var(--page-inline-padding) var(--page-block-end);
 }
 
 .section-block {
@@ -234,10 +236,6 @@
 }
 
 @media (max-width: 991px) {
-  .app-main--wide {
-    padding: 90px 14px 28px;
-  }
-
   .chart-grid-2,
   .chart-grid-3 {
     grid-template-columns: 1fr;

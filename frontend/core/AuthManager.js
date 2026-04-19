@@ -3,6 +3,7 @@ import {
   MOCK_AUTH_USERS,
   ROUTES,
   STORAGE_KEYS,
+  UI_TIMING,
 } from "../utils/constants.js";
 import { sleep } from "../utils/helpers.js";
 import { stateManager } from "./StateManager.js";
@@ -44,7 +45,7 @@ export class AuthManager {
   }
 
   async login(credentials) {
-    await sleep(220);
+    await sleep(UI_TIMING.AUTH_LOGIN_DELAY_MS);
 
     const match = MOCK_AUTH_USERS.find((user) => {
       return (
@@ -73,7 +74,7 @@ export class AuthManager {
   }
 
   async register(payload) {
-    await sleep(260);
+    await sleep(UI_TIMING.AUTH_REGISTER_DELAY_MS);
 
     const existing = MOCK_AUTH_USERS.find((user) => {
       return user.email.toLowerCase() === String(payload.email).toLowerCase();

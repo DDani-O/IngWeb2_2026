@@ -118,6 +118,18 @@ export const PLACEHOLDER_PRESETS = {
   },
 };
 
+export const TESTIMONIAL_AUTO_MS = 5000;
+
+export const UI_LAYOUT = {
+  LANDING_SCROLL_OFFSET: 12,
+};
+
+export const UI_TIMING = {
+  TOAST_DISMISS_MS: 3200,
+  AUTH_LOGIN_DELAY_MS: 220,
+  AUTH_REGISTER_DELAY_MS: 260,
+};
+
 export const LANDING_CONTENT = {
   nav: [
     { id: "como-funciona", label: "Como Funciona" },
@@ -125,10 +137,10 @@ export const LANDING_CONTENT = {
     { id: "planes", label: "Planes" },
   ],
   brands: [
-    { name: "Visa" },
-    { name: "Mastercard" },
-    { name: "PayPal" },
-    { name: "Stripe" },
+    { name: "Visa", icon: "fa-cc-visa" },
+    { name: "Mastercard", icon: "fa-cc-mastercard" },
+    { name: "PayPal", icon: "fa-cc-paypal" },
+    { name: "Stripe", icon: "fa-cc-stripe" },
   ],
   features: [
     {
@@ -154,41 +166,21 @@ export const LANDING_CONTENT = {
     {
       title: "Carga automatizada con IA",
       text: "Nuestra Inteligencia Artificial extrae los datos al instante de tus fotos.",
-      points: [
-        "Sin planillas eternas",
-        "Sin procesos manuales",
-        "Datos listos en segundos",
-      ],
       icon: "fa-robot",
     },
     {
       title: "Asesor real",
       text: "Feedback humano y profesional justo cuando mas lo necesitas.",
-      points: [
-        "Contexto personalizado",
-        "Recomendaciones accionables",
-        "Seguimiento de impacto",
-      ],
       icon: "fa-user-tie",
     },
     {
       title: "Alertas inteligentes",
       text: "Recibe avisos automaticos si tus gastos se salen de presupuesto.",
-      points: [
-        "Deteccion temprana",
-        "Prioridades claras",
-        "Riesgos visibles",
-      ],
       icon: "fa-bell",
     },
     {
       title: "Seguridad bancaria",
       text: "Tus datos financieros viajan encriptados y protegidos al maximo nivel.",
-      points: [
-        "Sesion segura",
-        "Permisos por rol",
-        "Arquitectura preparada para escalar",
-      ],
       icon: "fa-shield-halved",
     },
   ],
@@ -198,6 +190,18 @@ export const LANDING_CONTENT = {
       role: "Freelancer",
       rating: 5,
       text: "Ya no siento que mi cajero hable solo. Con FinTrack veo justo lo que debo pagar y cuanto puedo ahorrar.",
+    },
+    {
+      name: "Camila",
+      role: "Disenadora UX",
+      rating: 5,
+      text: "En dos semanas deje de improvisar. Ahora entiendo en que se me va la plata y que puedo ajustar sin sufrir.",
+    },
+    {
+      name: "Nicolas",
+      role: "Emprendedor",
+      rating: 4,
+      text: "Lo mejor fue tener una vista clara por categorias. Con eso pude recortar gastos invisibles y ordenar mis metas.",
     },
   ],
   plans: [
