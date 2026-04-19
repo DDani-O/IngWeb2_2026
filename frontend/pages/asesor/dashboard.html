@@ -61,6 +61,7 @@
               <th>Cambio</th>
               <th>Mensajes</th>
               <th>Riesgo</th>
+              <th>Accion</th>
             </tr>
           </thead>
           <tbody id="advisorClientsTableBody"></tbody>
@@ -89,8 +90,8 @@
 
   <div id="advisorSidebarSlot"></div>
 
-  <div class="modal fade" id="advisorRecommendationModal" tabindex="-1" aria-labelledby="advisorRecommendationModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+  <div class="modal fade advisor-recommendation-modal" id="advisorRecommendationModal" tabindex="-1" aria-labelledby="advisorRecommendationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable advisor-recommendation-dialog">
       <div class="modal-content app-modal-surface">
         <div class="modal-header">
           <h5 class="modal-title" id="advisorRecommendationModalLabel">Crear Nueva Recomendacion</h5>
@@ -112,7 +113,7 @@
           </div>
           <div class="mb-3">
             <label for="advisorRecommendationDescription" class="form-label">Descripcion</label>
-            <textarea id="advisorRecommendationDescription" class="form-control" rows="4" required></textarea>
+            <textarea id="advisorRecommendationDescription" class="form-control" rows="3" required></textarea>
           </div>
           <div class="mb-3">
             <label for="advisorRecommendationSavings" class="form-label">Ahorro estimado</label>

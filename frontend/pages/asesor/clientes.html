@@ -12,7 +12,11 @@
           <i class="fa-solid fa-inbox"></i>
           Ir a inbox
         </a>
-        <button class="action-btn action-btn--primary" id="backToAdvisorDashboardButton" type="button">
+        <button class="action-btn action-btn--primary" id="openClientRecommendationButton" type="button">
+          <i class="fa-solid fa-pen"></i>
+          Enviar recomendacion
+        </button>
+        <button class="action-btn action-btn--ghost" id="backToAdvisorDashboardButton" type="button">
           <i class="fa-solid fa-arrow-left"></i>
           Volver al panel
         </button>
@@ -87,6 +91,41 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
         </div>
         <div class="modal-body" id="advisorClientDetailContent"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade advisor-recommendation-modal" id="advisorClientRecommendationModal" tabindex="-1" aria-labelledby="advisorClientRecommendationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable advisor-recommendation-dialog">
+      <div class="modal-content app-modal-surface">
+        <div class="modal-header">
+          <h5 class="modal-title" id="advisorClientRecommendationModalLabel">Crear Nueva Recomendacion</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <form class="modal-body" id="advisorClientRecommendationForm">
+          <div class="mb-3">
+            <label for="advisorClientRecommendationClient" class="form-label">Cliente</label>
+            <select id="advisorClientRecommendationClient" class="form-select" required></select>
+          </div>
+          <div class="mb-3">
+            <label for="advisorClientRecommendationType" class="form-label">Tipo</label>
+            <select id="advisorClientRecommendationType" class="form-select" required>
+              <option value="">Seleccionar tipo</option>
+              <option value="Ahorro">Ahorro</option>
+              <option value="Presupuesto">Presupuesto</option>
+              <option value="Habito">Habito de consumo</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="advisorClientRecommendationDescription" class="form-label">Descripcion</label>
+            <textarea id="advisorClientRecommendationDescription" class="form-control" rows="3" required></textarea>
+          </div>
+          <div class="mb-3">
+            <label for="advisorClientRecommendationSavings" class="form-label">Ahorro estimado</label>
+            <input type="number" min="0" id="advisorClientRecommendationSavings" class="form-control" required />
+          </div>
+          <button class="action-btn action-btn--primary" type="submit">Guardar y Enviar</button>
+        </form>
       </div>
     </div>
   </div>

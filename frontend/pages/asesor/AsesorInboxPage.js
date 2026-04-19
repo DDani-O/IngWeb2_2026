@@ -15,7 +15,10 @@ export class AsesorInboxPage extends Component {
       })
     );
     this.filteredMessages = [...this.messages];
-    this.selectedMessageId = this.messages[0]?.id || null;
+    const initialMessageId = options.query?.messageId || null;
+    this.selectedMessageId = this.messages.some((message) => message.id === initialMessageId)
+      ? initialMessageId
+      : this.messages[0]?.id || null;
   }
 
   render() {

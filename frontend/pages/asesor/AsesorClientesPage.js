@@ -10,6 +10,7 @@ export class AsesorClientesPage extends Component {
     this.filteredClients = [...this.clients];
     this.viewMode = "cards";
     this.detailModal = null;
+    this.recommendationModal = null;
   }
 
   render() {
@@ -19,6 +20,7 @@ export class AsesorClientesPage extends Component {
     const advisorName = currentAdvisor?.fullName || "Maria Rodriguez";
     this._setText("#advisorTopbarName", advisorName);
 
+    this._renderRecommendationClientOptions();
     this._applyFilters();
     this._syncView();
   }
@@ -31,6 +33,8 @@ export class AsesorClientesPage extends Component {
     const cards = this.element.querySelector("#clientsCards");
     const tableBody = this.element.querySelector("#clientsTableBody");
     const backButton = this.element.querySelector("#backToAdvisorDashboardButton");
+    const openRecommendationButton = this.element.querySelector("#openClientRecommendationButton");
+    const recommendationForm = this.element.querySelector("#advisorClientRecommendationForm");
 
     this.listen(searchInput, "input", () => this._applyFilters());
     this.listen(riskFilter, "change", () => this._applyFilters());
@@ -43,6 +47,12 @@ export class AsesorClientesPage extends Component {
 
     this.listen(cards, "click", (event) => this._handleAction(event));
     this.listen(tableBody, "click", (event) => this._handleAction(event));
+
+    this.listen(openRecommendationButton, "click", () => this._openRecommendationModal());
+    this.listen(recommendationForm, "submit", (event) => {
+      event.preventDefault();
+      this._handleCreateRecommendation();
+    });
 
     this.listen(backButton, "click", () => {
       this.options.router?.navigate(ROUTES.ADVISOR_DASHBOARD);
@@ -122,9 +132,14 @@ export class AsesorClientesPage extends Component {
             }">
               ${client.changePercent >= 0 ? "+" : ""}${client.changePercent}%
             </p>
-            <button class="action-btn action-btn--ghost mt-2" data-action="detail" data-id="${
-              client.id
-            }" type="button">Ver detalle</button>
+            <div class="d-flex flex-wrap gap-2 mt-2">
+              <button class="action-btn action-btn--ghost" data-action="detail" data-id="${
+                client.id
+              }" type="button">Ver detalle</button>
+              <button class="action-btn action-btn--primary" data-action="recommend" data-id="${
+                client.id
+              }" type="button">Enviar recomendacion</button>
+            </div>
           </article>
         `;
       })
@@ -148,9 +163,14 @@ export class AsesorClientesPage extends Component {
             }">${client.changePercent >= 0 ? "+" : ""}${client.changePercent}%</td>
             <td><span class="risk-pill risk-pill--${client.riskLevel}">${client.risk}</span></td>
             <td>
-              <button class="action-btn action-btn--ghost" data-action="detail" data-id="${
-                client.id
-              }" type="button">Detalle</button>
+              <div class="d-flex flex-wrap gap-2">
+                <button class="action-btn action-btn--ghost" data-action="detail" data-id="${
+                  client.id
+                }" type="button">Detalle</button>
+                <button class="action-btn action-btn--primary" data-action="recommend" data-id="${
+                  client.id
+                }" type="button">Recomendar</button>
+              </div>
             </td>
           </tr>
         `;
@@ -182,6 +202,8 @@ export class AsesorClientesPage extends Component {
       return;
     }
 
+    const action = button.dataset.action;
+
     const clientId = button.dataset.id;
     const client = this.clients.find((item) => item.id === clientId);
 
@@ -189,7 +211,24 @@ export class AsesorClientesPage extends Component {
       return;
     }
 
+    if (action === "recommend") {
+      this._openRecommendationModal(client.id);
+      return;
+    }
+
     this._openClientModal(client);
+  }
+
+  _renderRecommendationClientOptions() {
+    const select = this.element.querySelector("#advisorClientRecommendationClient");
+    if (!select) {
+      return;
+    }
+
+    select.innerHTML = `
+      <option value="">Seleccionar cliente</option>
+      ${this.clients.map((client) => `<option value="${client.id}">${client.name}</option>`).join("")}
+    `;
   }
 
   _openClientModal(client) {
@@ -220,6 +259,37 @@ export class AsesorClientesPage extends Component {
 
     this.detailModal = window.bootstrap.Modal.getOrCreateInstance(modalElement);
     this.detailModal.show();
+  }
+
+  _openRecommendationModal(clientId = "") {
+    if (!window.bootstrap) {
+      return;
+    }
+
+    const modalElement = this.element.querySelector("#advisorClientRecommendationModal");
+    const clientSelect = this.element.querySelector("#advisorClientRecommendationClient");
+
+    if (!modalElement || !clientSelect) {
+      return;
+    }
+
+    this._renderRecommendationClientOptions();
+    clientSelect.value = clientId;
+
+    this.recommendationModal = window.bootstrap.Modal.getOrCreateInstance(modalElement);
+    this.recommendationModal.show();
+  }
+
+  _handleCreateRecommendation() {
+    const form = this.element.querySelector("#advisorClientRecommendationForm");
+    if (!form || !form.checkValidity()) {
+      form?.reportValidity();
+      return;
+    }
+
+    this.options.showToast?.("Recomendacion creada y enviada al cliente.", "success");
+    this.recommendationModal?.hide();
+    form.reset();
   }
 
   _handleLogout() {

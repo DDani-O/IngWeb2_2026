@@ -18,7 +18,7 @@
   background: var(--navbar-bg-solid);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border-soft);
-  z-index: 1060;
+  z-index: 1030;
 }
 
 .app-navbar__content {

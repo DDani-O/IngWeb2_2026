@@ -157,10 +157,19 @@
   gap: 10px;
   align-items: center;
   background: var(--surface-2);
+  cursor: pointer;
+  transition: 180ms ease;
 }
 
 .inbox-item--unread {
   border-color: var(--border-strong);
+}
+
+.inbox-item:hover,
+.inbox-item:focus-visible {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-accent);
+  outline: none;
 }
 
 .inbox-title {
@@ -235,6 +244,23 @@
 
 .advisor-rec-column__list strong {
   color: var(--color-primary);
+}
+
+.advisor-recommendation-modal {
+  --bs-modal-zindex: 1120;
+}
+
+.advisor-recommendation-dialog {
+  max-width: min(32rem, calc(100vw - 1.25rem));
+  margin-top: clamp(4.2rem, 10vh, 5.75rem);
+}
+
+.advisor-recommendation-dialog .modal-body {
+  padding-top: 0.9rem;
+}
+
+.advisor-recommendation-dialog textarea {
+  min-height: 5.4rem;
 }
 
 @media (max-width: 1199px) {

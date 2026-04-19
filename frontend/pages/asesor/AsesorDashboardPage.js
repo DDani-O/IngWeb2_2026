@@ -45,6 +45,16 @@ export class AsesorDashboardPage extends Component {
       this._handleCreateRecommendation();
     });
 
+    const inboxList = this.element.querySelector("#advisorInboxList");
+    this.listen(inboxList, "click", (event) => this._handleInboxNavigation(event));
+    this.listen(inboxList, "keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") {
+        return;
+      }
+
+      this._handleInboxNavigation(event);
+    });
+
     ["#advisorLogoutButton", "#advisorLogoutButtonMobile"].forEach((selector) => {
       const button = this.element.querySelector(selector);
       this.listen(button, "click", () => this._handleLogout());
@@ -153,6 +163,10 @@ export class AsesorDashboardPage extends Component {
             }">
               ${client.changePercent >= 0 ? "+" : ""}${client.changePercent}%
             </p>
+            <a class="action-btn action-btn--ghost mt-2" href="#/asesor/clientes">
+              <i class="fa-solid fa-arrow-up-right-from-square"></i>
+              Gestionar cliente
+            </a>
           </article>
         `;
       })
@@ -176,6 +190,11 @@ export class AsesorDashboardPage extends Component {
             }">${client.changePercent >= 0 ? "+" : ""}${client.changePercent}%</td>
             <td>${client.unreadMessages > 0 ? client.unreadMessages : "-"}</td>
             <td><span class="risk-pill risk-pill--${client.riskLevel}">${client.risk}</span></td>
+            <td>
+              <a class="action-btn action-btn--ghost" href="#/asesor/clientes">
+                Gestionar
+              </a>
+            </td>
           </tr>
         `;
       })
@@ -192,7 +211,13 @@ export class AsesorDashboardPage extends Component {
       .map((message) => {
         const badge = message.type === "ticket" ? "TICKET" : "MENSAJE";
         return `
-          <article class="inbox-item ${message.unread ? "inbox-item--unread" : ""}">
+          <article
+            class="inbox-item ${message.unread ? "inbox-item--unread" : ""}"
+            data-message-id="${message.id}"
+            tabindex="0"
+            role="button"
+            aria-label="Abrir mensaje de ${message.from}"
+          >
             <span class="avatar-badge">${getInitials(message.from)}</span>
             <div>
               <p class="inbox-title">
@@ -291,6 +316,18 @@ export class AsesorDashboardPage extends Component {
     this.options.showToast?.("Recomendacion creada y enviada al cliente.", "success");
     this.recommendationModal?.hide();
     form.reset();
+  }
+
+  _handleInboxNavigation(event) {
+    const target = event.target.closest("[data-message-id]");
+    if (!target) {
+      return;
+    }
+
+    event.preventDefault();
+    this.options.router?.navigate(ROUTES.ADVISOR_INBOX, {
+      messageId: target.dataset.messageId,
+    });
   }
 
   _handleLogout() {

@@ -295,6 +295,7 @@ function configureRouter() {
           router,
           authManager,
           showToast,
+          query: context.query,
         });
         page.mount();
         return () => page.destroy();
