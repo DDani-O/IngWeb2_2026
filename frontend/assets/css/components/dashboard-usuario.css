@@ -1,70 +1,80 @@
+.dashboard-main {
+  position: relative;
+}
+
+.user-hero-grid {
+  grid-template-columns: 1.1fr 0.42fr 1fr;
+}
+
 .dashboard-calendar {
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-lg);
   text-align: center;
   padding: 16px;
-  background: linear-gradient(135deg, rgba(45, 212, 191, 0.14), rgba(2, 132, 199, 0.08));
+  background: linear-gradient(135deg, rgba(33, 134, 162, 0.35), rgba(15, 62, 90, 0.22));
 }
 
 .dashboard-calendar__day {
   font-family: var(--font-display);
-  font-size: 2.5rem;
+  font-size: 3.4rem;
   line-height: 1;
   font-weight: 700;
+  color: var(--color-info);
 }
 
 .dashboard-calendar__month {
   color: var(--color-primary);
   font-weight: 700;
-  margin-top: 6px;
+  font-size: 2rem;
+  margin-top: 8px;
 }
 
 .dashboard-calendar__meta {
   color: var(--text-300);
-  font-size: 0.72rem;
-  margin-top: 4px;
+  font-size: 0.97rem;
+  margin-top: 7px;
 }
 
 .profile-highlight {
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-lg);
-  background: linear-gradient(145deg, rgba(45, 212, 191, 0.16), rgba(2, 132, 199, 0.06));
-  padding: 16px;
+  background: linear-gradient(145deg, rgba(10, 52, 78, 0.66), rgba(7, 33, 63, 0.5));
+  padding: 20px;
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
 }
 
 .profile-highlight__tags {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-  margin-top: 8px;
+  margin-top: 10px;
 }
 
 .profile-tag {
-  font-size: 0.72rem;
-  padding: 4px 8px;
-  border: 1px solid var(--border-soft);
+  font-size: 0.76rem;
+  padding: 5px 10px;
+  border: 1px solid rgba(133, 166, 194, 0.3);
   border-radius: 999px;
   color: var(--text-200);
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(8, 32, 60, 0.5);
 }
 
 .summary-card {
-  border: 1px solid var(--border-soft);
+  border: 1px solid rgba(119, 152, 181, 0.24);
   border-radius: var(--radius-md);
-  padding: 14px;
-  background: rgba(255, 255, 255, 0.02);
+  padding: 15px;
+  background: rgba(8, 31, 59, 0.58);
 }
 
 .summary-card__title {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 8px;
-  font-size: 0.9rem;
+  margin-bottom: 9px;
+  font-size: 1.08rem;
 }
 
 .summary-card__list {
@@ -76,21 +86,25 @@
 .summary-card__row {
   display: flex;
   justify-content: space-between;
-  font-size: 0.78rem;
+  font-size: 0.87rem;
   color: var(--text-300);
+}
+
+.user-chart-grid .chart-card canvas {
+  min-height: 270px;
 }
 
 .merchant-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .merchant-item {
-  border-radius: 10px;
-  padding: 10px 12px;
+  border-radius: 11px;
+  padding: 13px;
   border-left: 3px solid var(--color-primary);
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(9, 37, 65, 0.62);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -102,19 +116,60 @@
   gap: 10px;
 }
 
-.advisor-panel {
+.advisor-teaser {
+  position: fixed;
+  right: 18px;
+  bottom: 92px;
+  z-index: 1055;
+  width: min(320px, calc(100vw - 32px));
   border: 1px solid var(--border-strong);
-  border-radius: var(--radius-lg);
-  padding: 16px;
-  background: linear-gradient(135deg, rgba(45, 212, 191, 0.18), rgba(2, 132, 199, 0.08));
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
+  border-radius: 18px;
+  background: linear-gradient(140deg, rgba(16, 45, 77, 0.92), rgba(9, 31, 60, 0.86));
+  padding: 14px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   gap: 10px;
+  align-items: start;
+}
+
+.advisor-teaser__avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(49, 216, 199, 0.2);
+  font-size: 1.6rem;
+}
+
+.advisor-teaser h3 {
+  font-size: 1rem;
+  margin-bottom: 4px;
+}
+
+.advisor-teaser__close {
+  border: 0;
+  background: transparent;
+  color: var(--text-300);
+}
+
+.user-chat-fab {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  width: 56px;
+  height: 56px;
+  border: 1px solid rgba(49, 216, 199, 0.48);
+  border-radius: 50%;
+  background: linear-gradient(130deg, rgba(15, 72, 93, 0.92), rgba(10, 45, 74, 0.9));
+  color: #bff9f0;
+  z-index: 1056;
+  box-shadow: var(--shadow-accent);
 }
 
 .chat-messages {
-  max-height: 280px;
+  max-height: 300px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -123,9 +178,9 @@
 
 .chat-message {
   max-width: 86%;
-  border-radius: 10px;
-  padding: 8px 10px;
-  font-size: 0.82rem;
+  border-radius: 12px;
+  padding: 9px 11px;
+  font-size: 0.86rem;
 }
 
 .chat-message--advisor {
@@ -136,6 +191,24 @@
 
 .chat-message--user {
   align-self: flex-end;
-  background: rgba(45, 212, 191, 0.22);
+  background: rgba(45, 212, 191, 0.24);
   border: 1px solid var(--border-strong);
+}
+
+@media (max-width: 1199px) {
+  .user-hero-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 575px) {
+  .advisor-teaser {
+    right: 12px;
+    bottom: 84px;
+    width: calc(100vw - 24px);
+  }
+
+  .dashboard-calendar__day {
+    font-size: 2.6rem;
+  }
 }

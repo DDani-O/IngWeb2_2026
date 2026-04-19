@@ -1,38 +1,40 @@
 :root {
-  --color-primary: #2dd4bf;
-  --color-primary-strong: #14b8a6;
-  --color-secondary: #0284c7;
-  --color-success: #22c55e;
-  --color-warning: #f59e0b;
-  --color-danger: #ef4444;
-  --color-info: #06b6d4;
+  --color-primary: #31d8c7;
+  --color-primary-strong: #16b8aa;
+  --color-secondary: #22b7e0;
+  --color-success: #31d17d;
+  --color-warning: #f6b437;
+  --color-danger: #ff5d66;
+  --color-info: #25c9e6;
 
-  --bg-900: #0b1120;
-  --bg-800: #111a2e;
-  --bg-700: #1a2742;
-  --bg-overlay: rgba(11, 17, 32, 0.85);
+  --bg-950: #010817;
+  --bg-900: #04112a;
+  --bg-850: #071832;
+  --bg-800: #0a1f3e;
+  --bg-750: #10294f;
+  --bg-overlay: rgba(4, 17, 42, 0.88);
 
-  --text-100: #f8fafc;
-  --text-200: #d9e2ef;
-  --text-300: #94a3b8;
-  --text-400: #64748b;
+  --text-100: #f5fbff;
+  --text-200: #d2e4f6;
+  --text-300: #95adc8;
+  --text-400: #6b86a4;
 
-  --border-soft: rgba(45, 212, 191, 0.16);
-  --border-strong: rgba(45, 212, 191, 0.32);
+  --border-soft: rgba(57, 211, 227, 0.16);
+  --border-strong: rgba(57, 211, 227, 0.38);
 
-  --shadow-soft: 0 6px 20px rgba(0, 0, 0, 0.3);
-  --shadow-accent: 0 14px 34px rgba(45, 212, 191, 0.15);
+  --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.32);
+  --shadow-accent: 0 18px 36px rgba(31, 202, 222, 0.18);
 
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 18px;
-  --radius-xl: 24px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
 
-  --font-display: "Poppins", "Segoe UI", sans-serif;
-  --font-body: "Inter", "Segoe UI", sans-serif;
+  --font-display: "Sora", "Segoe UI", sans-serif;
+  --font-body: "Manrope", "Segoe UI", sans-serif;
 
-  --container-max: 1240px;
-  --nav-height: 72px;
+  --container-max: 1280px;
+  --nav-height: 74px;
 }
 
 * {
@@ -48,11 +50,12 @@ body {
 
 body {
   font-family: var(--font-body);
-  background: radial-gradient(circle at 5% 5%, #1f3056 0%, var(--bg-900) 45%),
-    radial-gradient(circle at 90% 10%, #18334f 0%, transparent 30%),
-    var(--bg-900);
+  background:
+    radial-gradient(circle at 10% 0%, rgba(29, 112, 140, 0.3), transparent 32%),
+    radial-gradient(circle at 86% 3%, rgba(12, 90, 120, 0.3), transparent 34%),
+    linear-gradient(180deg, var(--bg-900) 0%, var(--bg-950) 100%);
   color: var(--text-100);
-  line-height: 1.45;
+  line-height: 1.5;
 }
 
 h1,
@@ -93,7 +96,7 @@ input,
 select,
 textarea {
   background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(138, 168, 199, 0.26);
   border-radius: var(--radius-sm);
   padding: 10px 12px;
 }
@@ -101,7 +104,7 @@ textarea {
 input:focus,
 select:focus,
 textarea:focus {
-  outline: 2px solid rgba(45, 212, 191, 0.35);
+  outline: 2px solid rgba(57, 211, 227, 0.35);
   border-color: var(--border-strong);
 }
 
@@ -110,12 +113,12 @@ textarea:focus {
   align-items: center;
   gap: 10px;
   margin-bottom: 16px;
-  font-size: clamp(1.05rem, 2.1vw, 1.25rem);
+  font-size: clamp(1.06rem, 2.1vw, 1.34rem);
   font-weight: 700;
 }
 
 .text-gradient {
-  background: linear-gradient(120deg, var(--text-100), var(--color-primary));
+  background: linear-gradient(120deg, #f8fbff 0%, #4de7d7 45%, #23bce3 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -135,8 +138,8 @@ textarea:focus {
 
 .global-toast-container {
   position: fixed;
-  right: 20px;
-  bottom: 24px;
+  right: 18px;
+  bottom: 20px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -145,8 +148,8 @@ textarea:focus {
 
 .app-toast {
   min-width: 250px;
-  max-width: 360px;
-  background: rgba(15, 23, 42, 0.96);
+  max-width: 370px;
+  background: rgba(7, 18, 41, 0.96);
   border: 1px solid var(--border-soft);
   border-left: 4px solid var(--color-primary);
   border-radius: var(--radius-md);

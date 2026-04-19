@@ -69,10 +69,16 @@ export class RecomendacionesPage extends Component {
   }
 
   _renderSummary() {
-    this._setText("#summarySavingsValue", formatCurrency(this.data.stats.totalSavingsPotential));
+    this._setText(
+      "#summarySavingsValue",
+      `+${formatCurrency(this.data.stats.totalSavingsPotential)}/mes`
+    );
     this._setText("#summaryActiveValue", String(this.data.stats.activeRecommendations));
     this._setText("#summaryCompletedValue", String(this.data.stats.completedThisMonth));
-    this._setText("#summaryImpactValue", this.data.stats.estimatedImpact);
+    this._setText(
+      "#summaryImpactValue",
+      `${formatCurrency(this.data.stats.totalSavingsPotential * 12)} anuales`
+    );
   }
 
   _applyFilters() {

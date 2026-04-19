@@ -85,7 +85,14 @@ function renderLandingBrands() {
   }
 
   container.innerHTML = LANDING_CONTENT.brands
-    .map((brand) => `<article class="landing-logo-item">${brand.name}</article>`)
+    .map((brand) => {
+      return `
+        <article class="landing-logo-item">
+          <span class="landing-logo-item__dot"></span>
+          <span>${brand.name}</span>
+        </article>
+      `;
+    })
     .join("");
 }
 
@@ -96,9 +103,10 @@ function renderLandingFeatures() {
   }
 
   container.innerHTML = LANDING_CONTENT.features
-    .map((feature) => {
+    .map((feature, index) => {
       return `
         <article class="landing-card">
+          <span class="landing-step-index">${index + 1}</span>
           <span class="landing-card__icon"><i class="fa-solid ${feature.icon}"></i></span>
           <h3 class="landing-card__title">${feature.title}</h3>
           <p class="landing-card__text">${feature.description}</p>
@@ -133,18 +141,20 @@ function renderLandingTestimonials() {
     return;
   }
 
-  container.innerHTML = LANDING_CONTENT.testimonials
-    .map((testimonial) => {
-      return `
-        <article class="landing-testimonial">
-          <div class="landing-testimonial__stars">${renderStars(testimonial.rating)}</div>
-          <p class="landing-card__text">"${testimonial.text}"</p>
-          <p class="mt-2"><strong>${testimonial.name}</strong></p>
-          <p class="text-muted">${testimonial.role}</p>
-        </article>
-      `;
-    })
-    .join("");
+  const featured = LANDING_CONTENT.testimonials[0];
+  if (!featured) {
+    container.innerHTML = "";
+    return;
+  }
+
+  container.innerHTML = `
+    <article class="landing-testimonial landing-testimonial--quote">
+      <div class="landing-testimonial__stars">${renderStars(featured.rating)}</div>
+      <p class="landing-testimonial__quote">"${featured.text}"</p>
+      <p class="mt-2"><strong>${featured.name}</strong></p>
+      <p class="text-muted">${featured.role}</p>
+    </article>
+  `;
 }
 
 function renderLandingPlans() {
@@ -157,13 +167,18 @@ function renderLandingPlans() {
     .map((plan) => {
       return `
         <article class="landing-plan ${plan.highlighted ? "landing-plan--highlight" : ""}">
+          ${
+            plan.highlighted
+              ? '<span class="landing-plan__badge">MAS POPULAR</span>'
+              : ""
+          }
           <h3 class="landing-card__title">${plan.name}</h3>
-          <p class="landing-plan__price">${plan.price}</p>
+          <p class="landing-plan__price">${plan.price}<span>/mes</span></p>
           <p class="landing-card__text">${plan.subtitle}</p>
           <ul>${plan.features.map((feature) => `<li>${feature}</li>`).join("")}</ul>
           <button class="action-btn action-btn--${
             plan.highlighted ? "primary" : "ghost"
-          } mt-3 w-100" type="button" data-auth-open="register">Elegir plan</button>
+          } mt-3 w-100 justify-content-center" type="button" data-auth-open="register">${plan.cta || "Empezar"}</button>
         </article>
       `;
     })
@@ -313,6 +328,22 @@ function configureRouter() {
         showRoutedPage();
         const module = await import("./pages/usuario/DashboardPage.js");
         const page = new module.DashboardPage(context.mountNode, {
+          router,
+          authManager,
+          showToast,
+        });
+        page.mount();
+        return () => page.destroy();
+      },
+    },
+    {
+      path: ROUTES.USER_PATRONES,
+      templateUrl: "./pages/usuario/patrones.html",
+      beforeEnter: requireRole("usuario"),
+      onEnter: async (context) => {
+        showRoutedPage();
+        const module = await import("./pages/usuario/PatronesPage.js");
+        const page = new module.PatronesPage(context.mountNode, {
           router,
           authManager,
           showToast,

@@ -6,167 +6,149 @@
         <span>FinTrack</span>
       </a>
 
-      <div class="d-flex align-items-center gap-2">
-        <span class="navbar-pill d-none d-md-inline-flex">
-          <i class="fa-solid fa-house"></i>
-          <span>Dashboard Usuario</span>
-        </span>
-        <button class="navbar-icon-btn" type="button" id="userNotificationsButton" aria-label="Notificaciones">
-          <i class="fa-regular fa-bell"></i>
-        </button>
-        <div class="dropdown">
-          <button class="navbar-icon-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Menu usuario">
-            <i class="fa-regular fa-circle-user"></i>
-          </button>
-          <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
-            <li><button class="dropdown-item js-placeholder-link" data-preset="perfil" type="button">Ver Perfil</button></li>
-            <li><button class="dropdown-item js-placeholder-link" data-preset="perfil" type="button">Configuracion</button></li>
-            <li><hr class="dropdown-divider" /></li>
-            <li><button class="dropdown-item text-danger" id="userLogoutButton" type="button">Cerrar Sesion</button></li>
-          </ul>
-        </div>
-        <button class="navbar-icon-btn d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#userSidebarOffcanvas" aria-controls="userSidebarOffcanvas" aria-label="Abrir navegacion">
+      <div class="dashboard-topbar-user">
+        <span class="dashboard-topbar-user__name" id="userTopbarName">Juan Perez</span>
+        <button class="navbar-icon-btn" type="button" data-bs-toggle="offcanvas" data-bs-target="#userSidebarOffcanvas" aria-controls="userSidebarOffcanvas" aria-label="Abrir navegacion">
           <i class="fa-solid fa-bars"></i>
         </button>
       </div>
     </div>
   </header>
 
-  <div class="app-layout">
-    <aside class="app-sidebar d-none d-lg-flex" aria-label="Navegacion usuario">
-      <div>
-        <p class="sidebar-section-title">Navegacion</p>
-        <a class="sidebar-link active" href="#/usuario/dashboard"><i class="fa-solid fa-house"></i>Dashboard</a>
-        <a class="sidebar-link js-placeholder-link" data-preset="cargarGasto" href="#/utils/placeholder"><i class="fa-solid fa-receipt"></i>Cargar Gasto</a>
-        <a class="sidebar-link js-placeholder-link" data-preset="historial" href="#/utils/placeholder"><i class="fa-solid fa-clock-rotate-left"></i>Historial</a>
-        <a class="sidebar-link js-placeholder-link" data-preset="patrones" href="#/utils/placeholder"><i class="fa-solid fa-chart-line"></i>Patrones</a>
-        <a class="sidebar-link" href="#/usuario/perfiles"><i class="fa-solid fa-user-group"></i>Perfiles</a>
-        <a class="sidebar-link" href="#/usuario/recomendaciones"><i class="fa-solid fa-lightbulb"></i>Recomendaciones</a>
-      </div>
-
-      <div class="sidebar-spacer"></div>
-      <button class="sidebar-link sidebar-logout" id="userLogoutButtonSidebar" type="button">
-        <i class="fa-solid fa-right-from-bracket"></i>Cerrar Sesion
-      </button>
-    </aside>
-
-    <main class="app-main">
-      <section class="hero-panel">
-        <div class="hero-grid">
-          <div>
-            <h1 class="text-gradient" id="userWelcomeTitle">Hola, Usuario</h1>
-            <p class="text-muted mt-2" id="userWelcomeSubtitle">
-              Tu resumen financiero esta listo para hoy.
-            </p>
-            <div class="d-flex flex-wrap gap-2 mt-3">
-              <a class="action-btn action-btn--primary js-placeholder-link" data-preset="cargarGasto" href="#/utils/placeholder">
-                <i class="fa-solid fa-plus"></i>
-                Cargar nuevo gasto
-              </a>
-              <a class="action-btn action-btn--ghost" href="#/usuario/recomendaciones">
-                <i class="fa-solid fa-lightbulb"></i>
-                Ver recomendaciones
-              </a>
-            </div>
-          </div>
-
-          <div class="dashboard-calendar">
-            <div class="dashboard-calendar__day" id="userCalendarDay">14</div>
-            <div class="dashboard-calendar__month" id="userCalendarMonth">Abril</div>
-            <div class="dashboard-calendar__meta" id="userCalendarYear">2026</div>
-            <div class="dashboard-calendar__meta" id="userCalendarDayName">Lunes</div>
-          </div>
-
-          <div class="alert-stack" id="userAlertsList"></div>
-        </div>
-      </section>
-
-      <section class="section-block">
-        <h2 class="section-title">
-          <i class="fa-solid fa-chart-column accent"></i>
-          Tus Estadisticas de Consumo
-        </h2>
-        <div class="stat-grid" id="userStatsGrid"></div>
-      </section>
-
-      <section class="profile-highlight" id="userProfileCard"></section>
-
-      <section class="section-block">
-        <h2 class="section-title">
-          <i class="fa-solid fa-layer-group accent"></i>
-          Resumenes Rapidos
-        </h2>
-        <div class="card-grid-3" id="userSummaryGrid"></div>
-      </section>
-
-      <section class="section-block">
-        <h2 class="section-title">
-          <i class="fa-solid fa-chart-line accent"></i>
-          Visualizaciones
-        </h2>
-        <div class="chart-grid-3">
-          <article class="chart-card">
-            <h3 class="info-card__title"><i class="fa-solid fa-chart-pie accent"></i>Gastos por categoria</h3>
-            <canvas id="userCategoryChart" aria-label="Grafico de gastos por categoria"></canvas>
-          </article>
-          <article class="chart-card">
-            <h3 class="info-card__title"><i class="fa-solid fa-chart-bar accent"></i>Gasto mensual</h3>
-            <canvas id="userMonthlyChart" aria-label="Grafico mensual"></canvas>
-          </article>
-          <article class="chart-card">
-            <h3 class="info-card__title"><i class="fa-solid fa-wave-square accent"></i>Gasto diario</h3>
-            <canvas id="userDailyChart" aria-label="Grafico diario"></canvas>
-          </article>
-        </div>
-      </section>
-
-      <section class="section-block">
-        <h2 class="section-title">
-          <i class="fa-solid fa-store accent"></i>
-          Comercios Frecuentes
-        </h2>
-        <div class="merchant-list" id="userMerchantsList"></div>
-      </section>
-
-      <section class="advisor-panel">
+  <main class="app-main app-main--wide dashboard-main">
+    <section class="hero-panel user-hero-panel">
+      <div class="hero-grid user-hero-grid">
         <div>
-          <h3>Conexion con Asesor</h3>
-          <p class="text-muted" id="advisorPanelMessage">Tu asesor esta disponible para ayudarte hoy.</p>
+          <h1 class="text-gradient" id="userWelcomeTitle">Hola, Juan</h1>
+          <p class="text-muted mt-2" id="userWelcomeSubtitle">
+            Tu resumen financiero esta listo.
+          </p>
+          <div class="d-flex flex-wrap gap-2 mt-3">
+            <a class="action-btn action-btn--primary js-placeholder-link" data-preset="cargarGasto" href="#/utils/placeholder">
+              <i class="fa-solid fa-receipt"></i>
+              Cargar Gasto
+            </a>
+            <a class="action-btn action-btn--ghost js-placeholder-link" data-preset="historial" href="#/utils/placeholder">
+              <i class="fa-solid fa-clock-rotate-left"></i>
+              Ver Historial
+            </a>
+          </div>
         </div>
-        <button class="action-btn action-btn--primary" id="openAdvisorChatButton" type="button">
-          <i class="fa-solid fa-comments"></i>
-          Contactar Asesor
-        </button>
-      </section>
 
-      <footer class="app-footer">
-        FinTrack 2026 · Dashboard de usuario
-      </footer>
-    </main>
-  </div>
+        <div class="dashboard-calendar">
+          <div class="dashboard-calendar__day" id="userCalendarDay">14</div>
+          <div class="dashboard-calendar__month" id="userCalendarMonth">Abril</div>
+          <div class="dashboard-calendar__meta" id="userCalendarYear">2026</div>
+          <div class="dashboard-calendar__meta" id="userCalendarDayName">Martes</div>
+        </div>
+
+        <div class="alert-stack" id="userAlertsList"></div>
+      </div>
+    </section>
+
+    <section class="section-block">
+      <h2 class="section-title">
+        <i class="fa-solid fa-chart-column accent"></i>
+        Tus Estadisticas de Consumo
+      </h2>
+      <div class="stat-grid" id="userStatsGrid"></div>
+    </section>
+
+    <section class="profile-highlight" id="userProfileCard"></section>
+
+    <section class="section-block">
+      <h2 class="section-title">
+        <i class="fa-solid fa-eye accent"></i>
+        Resumenes Rapidos
+      </h2>
+      <div class="card-grid-3" id="userSummaryGrid"></div>
+    </section>
+
+    <section class="section-block">
+      <h2 class="section-title">
+        <i class="fa-solid fa-chart-line accent"></i>
+        Visualizaciones
+      </h2>
+      <div class="chart-grid-2 user-chart-grid">
+        <article class="chart-card">
+          <h3 class="info-card__title"><i class="fa-solid fa-chart-pie accent"></i>Gastos por Categoria</h3>
+          <canvas id="userCategoryChart" aria-label="Grafico de gastos por categoria"></canvas>
+          <a class="chart-card__link" href="#/usuario/patrones">Ver mas detalles en Patrones de Consumo</a>
+        </article>
+        <article class="chart-card">
+          <h3 class="info-card__title"><i class="fa-solid fa-chart-bar accent"></i>Gasto Mensual</h3>
+          <canvas id="userMonthlyChart" aria-label="Grafico mensual"></canvas>
+          <p class="text-muted mt-2">Ultimos 6 meses</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section-block">
+      <h2 class="section-title">
+        <i class="fa-solid fa-store accent"></i>
+        Comercios Mas Frecuentes
+      </h2>
+      <div class="merchant-list" id="userMerchantsList"></div>
+    </section>
+
+    <footer class="app-footer">FinTrack 2026 · Dashboard usuario</footer>
+  </main>
 
   <aside class="offcanvas offcanvas-start app-offcanvas" tabindex="-1" id="userSidebarOffcanvas" aria-labelledby="userSidebarOffcanvasLabel">
     <div class="offcanvas-header">
-      <h5 class="offcanvas-title" id="userSidebarOffcanvasLabel">Navegacion</h5>
+      <h5 class="offcanvas-title" id="userSidebarOffcanvasLabel">Panel</h5>
       <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
     </div>
     <div class="offcanvas-body d-flex flex-column gap-2">
-      <a class="sidebar-link active" href="#/usuario/dashboard">Dashboard</a>
-      <a class="sidebar-link js-placeholder-link" data-preset="cargarGasto" href="#/utils/placeholder">Cargar Gasto</a>
-      <a class="sidebar-link js-placeholder-link" data-preset="historial" href="#/utils/placeholder">Historial</a>
-      <a class="sidebar-link js-placeholder-link" data-preset="patrones" href="#/utils/placeholder">Patrones</a>
-      <a class="sidebar-link" href="#/usuario/perfiles">Perfiles</a>
-      <a class="sidebar-link" href="#/usuario/recomendaciones">Recomendaciones</a>
+      <div class="sidebar-user-card">
+        <span class="sidebar-user-card__avatar">JP</span>
+        <div>
+          <p class="sidebar-user-card__name">Juan Perez</p>
+          <p class="sidebar-user-card__meta">Editar Perfil</p>
+        </div>
+      </div>
+
+      <p class="sidebar-section-title mt-2">Navegacion</p>
+      <a class="sidebar-link active" href="#/usuario/dashboard"><i class="fa-solid fa-house"></i>Dashboard</a>
+      <a class="sidebar-link" href="#/usuario/patrones"><i class="fa-solid fa-chart-line"></i>Patrones de Consumo</a>
+      <a class="sidebar-link" href="#/usuario/recomendaciones"><i class="fa-solid fa-lightbulb"></i>Recomendaciones</a>
+      <a class="sidebar-link js-placeholder-link" data-preset="historial" href="#/utils/placeholder"><i class="fa-solid fa-clock-rotate-left"></i>Historial de Gastos</a>
+
+      <p class="sidebar-section-title mt-2">Acciones</p>
+      <a class="sidebar-link js-placeholder-link" data-preset="cargarGasto" href="#/utils/placeholder"><i class="fa-solid fa-circle-plus"></i>Cargar Gasto</a>
+      <a class="sidebar-link" href="#/usuario/perfiles"><i class="fa-solid fa-user-pen"></i>Editar Perfil</a>
+
       <div class="sidebar-spacer"></div>
-      <button class="sidebar-link sidebar-logout" id="userLogoutButtonMobile" type="button">Cerrar Sesion</button>
+      <button class="sidebar-link sidebar-logout" id="userLogoutButtonMobile" type="button">
+        <i class="fa-solid fa-right-from-bracket"></i>Salir
+      </button>
     </div>
   </aside>
+
+  <article class="advisor-teaser" id="advisorTeaserCard">
+    <div class="advisor-teaser__avatar">👩‍💼</div>
+    <div>
+      <h3>Tu Asesor Financiero</h3>
+      <p class="text-muted" id="advisorPanelMessage">Maria Rodriguez esta disponible ahora.</p>
+      <button class="action-btn action-btn--ghost mt-2" id="openAdvisorChatButton" type="button">
+        <i class="fa-solid fa-comment-dots"></i>
+        Iniciar Chat
+      </button>
+    </div>
+    <button class="advisor-teaser__close" id="advisorTeaserClose" type="button" aria-label="Cerrar">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </article>
+
+  <button class="user-chat-fab" id="openAdvisorChatBubble" type="button" aria-label="Abrir chat">
+    <i class="fa-solid fa-comments"></i>
+  </button>
 
   <div class="modal fade" id="advisorChatModal" tabindex="-1" aria-labelledby="advisorChatModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content bg-dark border border-info">
         <div class="modal-header border-secondary">
-          <h5 class="modal-title" id="advisorChatModalLabel">Chat con Asesor</h5>
+          <h5 class="modal-title" id="advisorChatModalLabel">Maria Rodriguez · Asesor Financiero</h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
         </div>
         <div class="modal-body">

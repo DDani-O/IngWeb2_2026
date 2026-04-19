@@ -1,26 +1,24 @@
 import { Component } from "../../core/Component.js";
 import { MOCK_ADVISOR_DASHBOARD, ROUTES } from "../../utils/constants.js";
-import {
-  buildPlaceholderHashFromPreset,
-  debounce,
-  getInitials,
-} from "../../utils/helpers.js";
+import { buildPlaceholderHashFromPreset, getInitials } from "../../utils/helpers.js";
 import { formatCurrency, formatTrendLabel } from "../../utils/formatters.js";
 
 export class AsesorDashboardPage extends Component {
   constructor(element, options = {}) {
     super(element, options);
     this.data = JSON.parse(JSON.stringify(MOCK_ADVISOR_DASHBOARD));
-    this.filteredClients = [...this.data.clients];
+    this.clientsViewMode = "cards";
     this.recommendationModal = null;
-    this.charts = [];
   }
 
   render() {
     const currentUser = this.options.authManager?.getCurrentUser();
-    const name = currentUser?.fullName || this.data.advisor.name;
+    const fullName = currentUser?.fullName || this.data.advisor.name;
+    const firstName = fullName.split(" ")[0] || fullName;
 
-    this._setText("#advisorWelcomeTitle", `Hola, ${name.split(" ")[0]}`);
+    this._setText("#advisorTopbarName", fullName);
+    this._setText("#advisorWelcomeTitle", `Hola, ${firstName}!`);
+
     this._renderPlaceholderLinks();
     this._renderCalendar();
     this._renderAlerts();
@@ -29,23 +27,14 @@ export class AsesorDashboardPage extends Component {
     this._renderInbox();
     this._renderRecommendations();
     this._renderRecommendationClientOptions();
-    this._initCharts();
+    this._syncClientsView();
   }
 
   attachEvents() {
-    const searchInput = this.element.querySelector("#advisorClientSearch");
-    const statusFilter = this.element.querySelector("#advisorClientStatusFilter");
-
-    this.listen(
-      searchInput,
-      "input",
-      debounce(() => {
-        this._applyClientFilters();
-      }, 220)
-    );
-
-    this.listen(statusFilter, "change", () => {
-      this._applyClientFilters();
+    const toggleViewButton = this.element.querySelector("#advisorClientsViewToggle");
+    this.listen(toggleViewButton, "click", () => {
+      this.clientsViewMode = this.clientsViewMode === "cards" ? "table" : "cards";
+      this._syncClientsView();
     });
 
     const recommendationButton = this.element.querySelector("#openCreateRecommendationButton");
@@ -57,19 +46,10 @@ export class AsesorDashboardPage extends Component {
       this._handleCreateRecommendation();
     });
 
-    const inboxButton = this.element.querySelector("#advisorInboxIconButton");
-    this.listen(inboxButton, "click", () => {
-      this.options.router?.navigate(ROUTES.PLACEHOLDER, {
-        title: "Inbox de Asesor",
-        description: "La bandeja completa estara disponible en la siguiente fase.",
-        icon: "fa-inbox",
-        ctaText: "Volver al Dashboard",
-        ctaUrl: ROUTES.ADVISOR_DASHBOARD,
-      });
+    ["#advisorLogoutButton", "#advisorLogoutButtonMobile"].forEach((selector) => {
+      const button = this.element.querySelector(selector);
+      this.listen(button, "click", () => this._handleLogout());
     });
-
-    const logoutButton = this.element.querySelector("#advisorLogoutButton");
-    this.listen(logoutButton, "click", () => this._handleLogout());
   }
 
   _renderPlaceholderLinks() {
@@ -115,21 +95,13 @@ export class AsesorDashboardPage extends Component {
 
     container.innerHTML = this.data.stats
       .map((stat) => {
-        const isPercentage = stat.suffix === "%";
-        const isCurrency = String(stat.label).toLowerCase().includes("gasto");
-        const value = isPercentage
-          ? `${stat.value}${stat.suffix}`
-          : isCurrency
-            ? formatCurrency(stat.value)
-            : String(stat.value);
-
         return `
           <article class="kpi-card">
             <div class="kpi-card__head">
               <p class="kpi-card__label">${stat.label}</p>
               <span>${stat.emoji}</span>
             </div>
-            <p class="kpi-card__value">${value}</p>
+            <p class="kpi-card__value">${this._formatStatValue(stat)}</p>
             <p class="kpi-card__trend ${
               stat.trendDirection === "up" ? "kpi-card__trend--up" : "kpi-card__trend--down"
             }">${formatTrendLabel(stat.trendDirection, stat.trendValue, stat.trendLabel)}</p>
@@ -140,45 +112,79 @@ export class AsesorDashboardPage extends Component {
   }
 
   _renderClients() {
-    const container = this.element.querySelector("#advisorClientsList");
-    if (!container) {
+    const cardsContainer = this.element.querySelector("#advisorClientsCards");
+    const tableBody = this.element.querySelector("#advisorClientsTableBody");
+    const count = this.element.querySelector("#advisorClientsCount");
+
+    if (!cardsContainer || !tableBody) {
       return;
     }
 
-    if (!this.filteredClients.length) {
-      container.innerHTML =
-        '<p class="text-muted">No hay clientes que coincidan con los filtros seleccionados.</p>';
-      return;
+    if (count) {
+      count.textContent = String(this.data.clients.length);
     }
 
-    container.innerHTML = this.filteredClients
+    cardsContainer.innerHTML = this.data.clients
       .map((client) => {
         return `
           <article class="advisor-client-card">
             <div class="advisor-client-head">
-              <div class="d-flex gap-2">
+              <div class="d-flex gap-2 align-items-start">
                 <span class="avatar-badge">${getInitials(client.name)}</span>
                 <div>
                   <p class="advisor-client-name">${client.name}</p>
-                  <p class="advisor-client-mail">${client.email}</p>
+                  <p class="advisor-client-mail">${client.profile}</p>
                 </div>
               </div>
-              <span class="status-pill status-pill--${client.status}">${client.status}</span>
+              <span class="risk-pill risk-pill--${client.riskLevel}">${client.risk}</span>
             </div>
-            <div class="advisor-client-meta">
-              <span>${client.profile}</span>
-              <strong>${formatCurrency(client.totalSpent)}</strong>
+
+            ${
+              client.unreadMessages
+                ? `<p class="advisor-client-unread"><i class="fa-solid fa-envelope"></i> ${client.unreadMessages} mensaje(s) sin leer</p>`
+                : ""
+            }
+
+            <div class="advisor-client-metrics">
+              <div>
+                <p>ULTIMO GASTO</p>
+                <strong>${client.lastExpense}</strong>
+              </div>
+              <div>
+                <p>GASTO PROMEDIO</p>
+                <strong>${formatCurrency(client.averageSpend)}</strong>
+              </div>
             </div>
-            <div class="advisor-client-actions">
-              <a class="action-btn action-btn--ghost" href="${buildPlaceholderHashFromPreset(
-                "advisorClientes",
-                { title: `Detalle de ${client.name}` }
-              )}">Ver Detalle</a>
-              <a class="action-btn action-btn--primary" href="${buildPlaceholderHashFromPreset(
-                "advisorInbox"
-              )}">Mensaje</a>
-            </div>
+
+            <p class="advisor-client-change advisor-client-change--${
+              client.changePercent >= 0 ? "up" : "down"
+            }">
+              ${client.changePercent >= 0 ? "+" : ""}${client.changePercent}%
+            </p>
           </article>
+        `;
+      })
+      .join("");
+
+    tableBody.innerHTML = this.data.clients
+      .map((client) => {
+        return `
+          <tr>
+            <td>
+              <div class="advisor-table-client">
+                <span class="avatar-badge">${getInitials(client.name)}</span>
+                <strong>${client.name}</strong>
+              </div>
+            </td>
+            <td>${client.profile}</td>
+            <td>${client.lastExpense}</td>
+            <td>${formatCurrency(client.averageSpend)}</td>
+            <td class="advisor-client-change advisor-client-change--${
+              client.changePercent >= 0 ? "up" : "down"
+            }">${client.changePercent >= 0 ? "+" : ""}${client.changePercent}%</td>
+            <td>${client.unreadMessages > 0 ? client.unreadMessages : "-"}</td>
+            <td><span class="risk-pill risk-pill--${client.riskLevel}">${client.risk}</span></td>
+          </tr>
         `;
       })
       .join("");
@@ -192,11 +198,15 @@ export class AsesorDashboardPage extends Component {
 
     container.innerHTML = this.data.inbox
       .map((message) => {
+        const badge = message.type === "ticket" ? "TICKET" : "MENSAJE";
         return `
           <article class="inbox-item ${message.unread ? "inbox-item--unread" : ""}">
             <span class="avatar-badge">${getInitials(message.from)}</span>
             <div>
-              <p class="inbox-title">${message.from}</p>
+              <p class="inbox-title">
+                ${message.from}
+                <span class="inbox-badge">${badge}</span>
+              </p>
               <p class="inbox-sub">${message.subject}</p>
             </div>
             <div class="text-end">
@@ -216,16 +226,21 @@ export class AsesorDashboardPage extends Component {
     }
 
     container.innerHTML = this.data.recommendations
-      .map((item) => {
+      .map((column) => {
         return `
-          <article class="advisor-rec-card">
-            <div class="advisor-rec-card__head">
-              <span>${item.clientName}</span>
-              <span class="badge-soft badge-soft--warning">${item.status}</span>
+          <article class="advisor-rec-column">
+            <div class="advisor-rec-column__head">
+              <span>${column.icon}</span>
+              <div>
+                <h3>${column.title}</h3>
+                <p>${column.count} recomendaciones</p>
+              </div>
             </div>
-            <p><strong>${item.type}</strong></p>
-            <p class="text-muted">Ahorro estimado: ${formatCurrency(item.savingsAmount)}</p>
-            <p class="text-muted">Enviado: ${item.dateSent}</p>
+            <div class="advisor-rec-column__list">
+              ${column.items
+                .map((item) => `<p><span>${item.clientName}</span><strong>${item.action}</strong></p>`)
+                .join("")}
+            </div>
           </article>
         `;
       })
@@ -246,21 +261,22 @@ export class AsesorDashboardPage extends Component {
     `;
   }
 
-  _applyClientFilters() {
-    const search = this.element.querySelector("#advisorClientSearch")?.value?.trim().toLowerCase() || "";
-    const status = this.element.querySelector("#advisorClientStatusFilter")?.value || "todos";
+  _syncClientsView() {
+    const cards = this.element.querySelector("#advisorClientsCards");
+    const tableWrap = this.element.querySelector("#advisorClientsTableWrap");
+    const toggle = this.element.querySelector("#advisorClientsViewToggle");
 
-    this.filteredClients = this.data.clients.filter((client) => {
-      const matchesSearch =
-        client.name.toLowerCase().includes(search) ||
-        client.email.toLowerCase().includes(search);
+    if (!cards || !tableWrap || !toggle) {
+      return;
+    }
 
-      const matchesStatus = status === "todos" ? true : client.status === status;
+    const showTable = this.clientsViewMode === "table";
+    cards.classList.toggle("app-hidden", showTable);
+    tableWrap.classList.toggle("app-hidden", !showTable);
 
-      return matchesSearch && matchesStatus;
-    });
-
-    this._renderClients();
+    toggle.innerHTML = showTable
+      ? '<i class="fa-solid fa-border-all"></i> Ver como Cards'
+      : '<i class="fa-solid fa-table"></i> Ver como Tabla';
   }
 
   _openRecommendationModal() {
@@ -285,108 +301,22 @@ export class AsesorDashboardPage extends Component {
     form.reset();
   }
 
-  _initCharts() {
-    if (!window.Chart) {
-      return;
-    }
-
-    this._destroyCharts();
-
-    const profileCtx = this.element.querySelector("#advisorProfileDistributionChart");
-    const spendCtx = this.element.querySelector("#advisorSpendByProfileChart");
-    const activityCtx = this.element.querySelector("#advisorActivityChart");
-
-    if (profileCtx) {
-      this.charts.push(
-        new window.Chart(profileCtx, {
-          type: "doughnut",
-          data: {
-            labels: this.data.charts.profileDistribution.map((item) => item.label),
-            datasets: [
-              {
-                data: this.data.charts.profileDistribution.map((item) => item.value),
-                backgroundColor: this.data.charts.profileDistribution.map((item) => item.color),
-              },
-            ],
-          },
-          options: {
-            plugins: {
-              legend: {
-                labels: { color: "#94a3b8" },
-              },
-            },
-          },
-        })
-      );
-    }
-
-    if (spendCtx) {
-      this.charts.push(
-        new window.Chart(spendCtx, {
-          type: "bar",
-          data: {
-            labels: this.data.charts.spendByProfile.map((item) => item.label),
-            datasets: [
-              {
-                label: "Gasto",
-                data: this.data.charts.spendByProfile.map((item) => item.value),
-                backgroundColor: "rgba(45, 212, 191, 0.4)",
-                borderColor: "#2dd4bf",
-              },
-            ],
-          },
-          options: {
-            scales: {
-              x: { ticks: { color: "#94a3b8" } },
-              y: { ticks: { color: "#94a3b8" } },
-            },
-            plugins: {
-              legend: {
-                labels: { color: "#94a3b8" },
-              },
-            },
-          },
-        })
-      );
-    }
-
-    if (activityCtx) {
-      this.charts.push(
-        new window.Chart(activityCtx, {
-          type: "line",
-          data: {
-            labels: this.data.charts.dailyActivityLabels,
-            datasets: [
-              {
-                label: "Clientes Activos",
-                data: this.data.charts.dailyActivityValues,
-                borderColor: "#06b6d4",
-                backgroundColor: "rgba(6, 182, 212, 0.2)",
-                fill: true,
-                tension: 0.3,
-              },
-            ],
-          },
-          options: {
-            scales: {
-              x: { ticks: { color: "#94a3b8" } },
-              y: { ticks: { color: "#94a3b8" } },
-            },
-            plugins: {
-              legend: {
-                labels: { color: "#94a3b8" },
-              },
-            },
-          },
-        })
-      );
-    }
-  }
-
   _handleLogout() {
     this.options.authManager?.logout();
     this.options.showToast?.("Sesion de asesor finalizada.", "success");
     this.options.router?.navigate(ROUTES.HOME, { modal: "login" });
+  }
+
+  _formatStatValue(stat) {
+    if (stat.format === "percent") {
+      return `${stat.value}${stat.suffix || "%"}`;
+    }
+
+    if (String(stat.label).toLowerCase().includes("gasto")) {
+      return formatCurrency(stat.value);
+    }
+
+    return String(stat.value);
   }
 
   _setText(selector, value) {
@@ -394,15 +324,5 @@ export class AsesorDashboardPage extends Component {
     if (target) {
       target.textContent = value;
     }
-  }
-
-  _destroyCharts() {
-    this.charts.forEach((chart) => chart.destroy());
-    this.charts = [];
-  }
-
-  destroy() {
-    this._destroyCharts();
-    super.destroy();
   }
 }

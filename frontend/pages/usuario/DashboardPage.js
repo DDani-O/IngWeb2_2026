@@ -18,16 +18,19 @@ export class DashboardPage extends Component {
   render() {
     const currentUser = this.options.authManager?.getCurrentUser();
     const userName = currentUser?.fullName || this.data.user.name;
+    const shortName = userName.split(" ")[0] || userName;
 
     const titleElement = this.element.querySelector("#userWelcomeTitle");
     if (titleElement) {
-      titleElement.textContent = `Hola, ${userName.split(" ")[0]}`;
+      titleElement.textContent = `Hola, ${shortName}!`;
     }
+
+    this._setText("#userTopbarName", userName);
 
     const subtitleElement = this.element.querySelector("#userWelcomeSubtitle");
     if (subtitleElement) {
       subtitleElement.textContent =
-        "Tu resumen financiero esta listo. Revisa metricas, alertas y proximas acciones.";
+        "Tu resumen financiero esta listo. Explora tus patrones de gasto y descubre como mejorar tu economia personal.";
     }
 
     this._renderPlaceholderLinks();
@@ -44,11 +47,22 @@ export class DashboardPage extends Component {
 
   attachEvents() {
     const openChatButton = this.element.querySelector("#openAdvisorChatButton");
+    const openChatBubble = this.element.querySelector("#openAdvisorChatBubble");
+    const closeTeaser = this.element.querySelector("#advisorTeaserClose");
     const sendButton = this.element.querySelector("#advisorChatSendButton");
     const input = this.element.querySelector("#advisorChatInput");
 
     this.listen(openChatButton, "click", () => {
       this._openChatModal();
+    });
+
+    this.listen(openChatBubble, "click", () => {
+      this._openChatModal();
+    });
+
+    this.listen(closeTeaser, "click", () => {
+      const teaser = this.element.querySelector("#advisorTeaserCard");
+      teaser?.classList.add("app-hidden");
     });
 
     this.listen(sendButton, "click", () => {
@@ -62,11 +76,7 @@ export class DashboardPage extends Component {
       }
     });
 
-    [
-      "#userLogoutButton",
-      "#userLogoutButtonSidebar",
-      "#userLogoutButtonMobile",
-    ].forEach((selector) => {
+    ["#userLogoutButton", "#userLogoutButtonMobile"].forEach((selector) => {
       const button = this.element.querySelector(selector);
       this.listen(button, "click", () => this._handleLogout());
     });
@@ -126,7 +136,7 @@ export class DashboardPage extends Component {
               <p class="kpi-card__label">${stat.label}</p>
               <span>${stat.emoji}</span>
             </div>
-            <p class="kpi-card__value">${formatCurrency(stat.value)}${stat.suffix || ""}</p>
+            <p class="kpi-card__value">${this._formatStatValue(stat)}</p>
             <p class="kpi-card__sub">${stat.subtitle}</p>
             <p class="kpi-card__trend ${trendClass}">${formatTrendLabel(
               stat.trendDirection,
@@ -230,7 +240,7 @@ export class DashboardPage extends Component {
     }
 
     const { advisor } = this.data;
-    container.textContent = `${advisor.name}: ${advisor.message}`;
+    container.textContent = `${advisor.name} esta disponible ahora. Puedes pedir una guia rapida para optimizar tus gastos.`;
   }
 
   _renderChatSeed() {
@@ -241,7 +251,7 @@ export class DashboardPage extends Component {
 
     messages.innerHTML = `
       <div class="chat-message chat-message--advisor">
-        Hola, soy ${this.data.advisor.name}. Puedo ayudarte a priorizar las recomendaciones de esta semana.
+        Hola, soy ${this.data.advisor.name}. Estoy aqui para ayudarte a priorizar tus recomendaciones de esta semana.
       </div>
     `;
   }
@@ -388,7 +398,7 @@ export class DashboardPage extends Component {
     const answerBubble = document.createElement("div");
     answerBubble.className = "chat-message chat-message--advisor";
     answerBubble.textContent =
-      "Gracias por tu mensaje. Revisare tus datos y te comparto una recomendacion concreta.";
+      "Muy buena observacion. Te preparo una recomendacion puntual en base a tus datos recientes.";
     messages.appendChild(answerBubble);
 
     input.value = "";
@@ -411,6 +421,22 @@ export class DashboardPage extends Component {
   _destroyCharts() {
     this.charts.forEach((chart) => chart.destroy());
     this.charts = [];
+  }
+
+  _formatStatValue(stat) {
+    if (stat.format === "percent") {
+      return `${stat.value}${stat.suffix || "%"}`;
+    }
+
+    if (stat.format === "text") {
+      return `${stat.value}${stat.suffix ? ` ${stat.suffix}` : ""}`;
+    }
+
+    if (stat.format === "number") {
+      return `${stat.value}${stat.suffix || ""}`;
+    }
+
+    return `${formatCurrency(stat.value)}${stat.suffix || ""}`;
   }
 
   destroy() {

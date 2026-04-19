@@ -6,140 +6,130 @@
         <span>FinTrack</span>
       </a>
 
-      <div class="d-flex align-items-center gap-2">
-        <span class="navbar-pill d-none d-md-inline-flex">
-          <i class="fa-solid fa-briefcase"></i>
-          <span>Dashboard Asesor</span>
-        </span>
-        <button class="navbar-icon-btn" type="button" id="advisorInboxIconButton" aria-label="Mensajes">
-          <i class="fa-regular fa-envelope"></i>
-        </button>
-        <button class="navbar-icon-btn d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#advisorSidebarOffcanvas" aria-controls="advisorSidebarOffcanvas" aria-label="Abrir navegacion">
+      <div class="dashboard-topbar-user">
+        <span class="dashboard-topbar-user__name" id="advisorTopbarName">Maria Rodriguez</span>
+        <button class="navbar-icon-btn" type="button" data-bs-toggle="offcanvas" data-bs-target="#advisorSidebarOffcanvas" aria-controls="advisorSidebarOffcanvas" aria-label="Abrir navegacion">
           <i class="fa-solid fa-bars"></i>
         </button>
       </div>
     </div>
   </header>
 
-  <div class="app-layout">
-    <aside class="app-sidebar d-none d-lg-flex" aria-label="Navegacion asesor">
-      <div>
-        <p class="sidebar-section-title">Navegacion</p>
-        <a class="sidebar-link active" href="#/asesor/dashboard"><i class="fa-solid fa-house"></i>Dashboard</a>
-        <a class="sidebar-link js-placeholder-link" data-preset="advisorClientes" href="#/utils/placeholder"><i class="fa-solid fa-users"></i>Mis Clientes</a>
-        <a class="sidebar-link js-placeholder-link" data-preset="advisorInbox" href="#/utils/placeholder"><i class="fa-solid fa-inbox"></i>Inbox</a>
-        <a class="sidebar-link js-placeholder-link" data-preset="advisorReportes" href="#/utils/placeholder"><i class="fa-solid fa-chart-line"></i>Reportes</a>
+  <main class="app-main app-main--wide advisor-main">
+    <section class="hero-panel advisor-hero-panel">
+      <div class="hero-grid advisor-hero-grid">
+        <div>
+          <h1 class="text-gradient" id="advisorWelcomeTitle">Hola, Maria!</h1>
+          <p class="text-muted mt-2">Tu panel de asesor esta listo. Gestiona tus clientes y envia recomendaciones personalizadas.</p>
+          <div class="d-flex flex-wrap gap-2 mt-3">
+            <a class="action-btn action-btn--primary js-placeholder-link" data-preset="advisorClientes" href="#/utils/placeholder">
+              <i class="fa-solid fa-users"></i>
+              Ver Mis Clientes
+            </a>
+            <button class="action-btn action-btn--ghost" id="openCreateRecommendationButton" type="button">
+              <i class="fa-solid fa-pen"></i>
+              Enviar Recomendacion
+            </button>
+          </div>
+        </div>
+
+        <div class="dashboard-calendar">
+          <div class="dashboard-calendar__day" id="advisorCalendarDay">15</div>
+          <div class="dashboard-calendar__month" id="advisorCalendarMonth">Abril</div>
+          <div class="dashboard-calendar__meta" id="advisorCalendarYear">2026</div>
+          <div class="dashboard-calendar__meta" id="advisorCalendarDayName">Miercoles</div>
+        </div>
+
+        <div class="alert-stack" id="advisorAlertsList"></div>
       </div>
-      <div class="sidebar-spacer"></div>
-      <button class="sidebar-link sidebar-logout" id="advisorLogoutButton" type="button">
-        <i class="fa-solid fa-right-from-bracket"></i>Cerrar Sesion
+    </section>
+
+    <section class="section-block">
+      <h2 class="section-title">
+        <i class="fa-solid fa-chart-column accent"></i>
+        Tus Estadisticas
+      </h2>
+      <div class="stat-grid" id="advisorStatsGrid"></div>
+    </section>
+
+    <section class="section-block">
+      <h2 class="section-title">
+        <i class="fa-solid fa-users accent"></i>
+        Mis Clientes (<span id="advisorClientsCount">0</span> asignados)
+      </h2>
+      <button class="action-btn action-btn--ghost mb-3" id="advisorClientsViewToggle" type="button">
+        <i class="fa-solid fa-table"></i>
+        Ver como Tabla
       </button>
-    </aside>
 
-    <main class="app-main">
-      <section class="hero-panel">
-        <div class="hero-grid">
-          <div>
-            <h1 class="text-gradient" id="advisorWelcomeTitle">Hola, Asesor</h1>
-            <p class="text-muted mt-2">Gestiona clientes, mensajes y recomendaciones desde un solo lugar.</p>
-            <div class="d-flex flex-wrap gap-2 mt-3">
-              <button class="action-btn action-btn--primary" id="openCreateRecommendationButton" type="button">
-                <i class="fa-solid fa-plus"></i>
-                Crear Recomendacion
-              </button>
-              <a class="action-btn action-btn--ghost js-placeholder-link" data-preset="advisorClientes" href="#/utils/placeholder">
-                <i class="fa-solid fa-users"></i>
-                Ver clientes
-              </a>
-            </div>
-          </div>
+      <div id="advisorClientsCards" class="advisor-client-grid"></div>
 
-          <div class="dashboard-calendar">
-            <div class="dashboard-calendar__day" id="advisorCalendarDay">15</div>
-            <div class="dashboard-calendar__month" id="advisorCalendarMonth">Abril</div>
-            <div class="dashboard-calendar__meta" id="advisorCalendarYear">2026</div>
-            <div class="dashboard-calendar__meta" id="advisorCalendarDayName">Martes</div>
-          </div>
+      <div id="advisorClientsTableWrap" class="table-responsive app-hidden">
+        <table class="table-shell advisor-client-table">
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>Perfil</th>
+              <th>Ultimo Gasto</th>
+              <th>Gasto Promedio</th>
+              <th>Cambio</th>
+              <th>Mensajes</th>
+              <th>Riesgo</th>
+            </tr>
+          </thead>
+          <tbody id="advisorClientsTableBody"></tbody>
+        </table>
+      </div>
+    </section>
 
-          <div class="alert-stack" id="advisorAlertsList"></div>
-        </div>
-      </section>
+    <section class="section-block">
+      <h2 class="section-title">
+        <i class="fa-solid fa-inbox accent"></i>
+        Bandeja de Entrada
+      </h2>
+      <div class="inbox-list" id="advisorInboxList"></div>
+    </section>
 
-      <section class="section-block">
-        <h2 class="section-title">
-          <i class="fa-solid fa-chart-column accent"></i>
-          Estadisticas Generales
-        </h2>
-        <div class="stat-grid" id="advisorStatsGrid"></div>
-      </section>
+    <section class="section-block">
+      <h2 class="section-title">
+        <i class="fa-solid fa-lightbulb accent"></i>
+        Ultimas Recomendaciones Enviadas
+      </h2>
+      <div class="advisor-recommendation-board" id="advisorRecommendationsList"></div>
+    </section>
 
-      <section class="section-block">
-        <h2 class="section-title">
-          <i class="fa-solid fa-users accent"></i>
-          Mis Clientes
-        </h2>
-        <div class="advisor-client-toolbar">
-          <input type="search" id="advisorClientSearch" class="form-control form-control-sm" placeholder="Buscar por nombre o email" />
-          <select id="advisorClientStatusFilter" class="form-select form-select-sm">
-            <option value="todos">Todos los estados</option>
-            <option value="activo">Activos</option>
-            <option value="inactivo">Inactivos</option>
-          </select>
-        </div>
-        <div class="advisor-client-list" id="advisorClientsList"></div>
-      </section>
-
-      <section class="section-block">
-        <h2 class="section-title">
-          <i class="fa-solid fa-inbox accent"></i>
-          Mensajes Recientes
-        </h2>
-        <div class="inbox-list" id="advisorInboxList"></div>
-      </section>
-
-      <section class="section-block">
-        <h2 class="section-title">
-          <i class="fa-solid fa-lightbulb accent"></i>
-          Recomendaciones Recientes
-        </h2>
-        <div class="advisor-recommendation-list" id="advisorRecommendationsList"></div>
-      </section>
-
-      <section class="section-block">
-        <h2 class="section-title">
-          <i class="fa-solid fa-chart-pie accent"></i>
-          Analisis de Cartera
-        </h2>
-        <div class="chart-grid-3">
-          <article class="chart-card">
-            <h3 class="info-card__title"><i class="fa-solid fa-chart-pie accent"></i>Clientes por perfil</h3>
-            <canvas id="advisorProfileDistributionChart" aria-label="Distribucion por perfil"></canvas>
-          </article>
-          <article class="chart-card">
-            <h3 class="info-card__title"><i class="fa-solid fa-chart-bar accent"></i>Gasto por perfil</h3>
-            <canvas id="advisorSpendByProfileChart" aria-label="Gasto por perfil"></canvas>
-          </article>
-          <article class="chart-card">
-            <h3 class="info-card__title"><i class="fa-solid fa-chart-line accent"></i>Actividad 30 dias</h3>
-            <canvas id="advisorActivityChart" aria-label="Actividad de clientes"></canvas>
-          </article>
-        </div>
-      </section>
-
-      <footer class="app-footer">FinTrack 2026 · Dashboard asesor</footer>
-    </main>
-  </div>
+    <footer class="app-footer">FinTrack 2026 · Panel asesor</footer>
+  </main>
 
   <aside class="offcanvas offcanvas-start app-offcanvas" tabindex="-1" id="advisorSidebarOffcanvas" aria-labelledby="advisorSidebarOffcanvasLabel">
     <div class="offcanvas-header">
-      <h5 class="offcanvas-title" id="advisorSidebarOffcanvasLabel">Navegacion</h5>
+      <h5 class="offcanvas-title" id="advisorSidebarOffcanvasLabel">Asesor</h5>
       <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
     </div>
     <div class="offcanvas-body d-flex flex-column gap-2">
-      <a class="sidebar-link active" href="#/asesor/dashboard">Dashboard</a>
-      <a class="sidebar-link js-placeholder-link" data-preset="advisorClientes" href="#/utils/placeholder">Mis Clientes</a>
-      <a class="sidebar-link js-placeholder-link" data-preset="advisorInbox" href="#/utils/placeholder">Inbox</a>
-      <a class="sidebar-link js-placeholder-link" data-preset="advisorReportes" href="#/utils/placeholder">Reportes</a>
+      <div class="sidebar-user-card">
+        <span class="sidebar-user-card__avatar">MR</span>
+        <div>
+          <p class="sidebar-user-card__name">Maria Rodriguez</p>
+          <p class="sidebar-user-card__meta">Editar Perfil</p>
+        </div>
+      </div>
+
+      <p class="sidebar-section-title mt-2">Navegacion</p>
+      <a class="sidebar-link active" href="#/asesor/dashboard"><i class="fa-solid fa-house"></i>Dashboard</a>
+      <a class="sidebar-link js-placeholder-link" data-preset="advisorClientes" href="#/utils/placeholder"><i class="fa-solid fa-users"></i>Mis Clientes</a>
+      <a class="sidebar-link js-placeholder-link" data-preset="advisorInbox" href="#/utils/placeholder"><i class="fa-solid fa-inbox"></i>Bandeja de Entrada</a>
+      <a class="sidebar-link js-placeholder-link" data-preset="advisorReportes" href="#/utils/placeholder"><i class="fa-solid fa-file-lines"></i>Mis Comisiones</a>
+      <a class="sidebar-link js-placeholder-link" data-preset="advisorReportes" href="#/utils/placeholder"><i class="fa-solid fa-list-check"></i>Tareas Pendientes</a>
+
+      <p class="sidebar-section-title mt-2">Acciones</p>
+      <a class="sidebar-link js-placeholder-link" data-preset="advisorReportes" href="#/utils/placeholder"><i class="fa-solid fa-user-pen"></i>Editar Perfil</a>
+      <a class="sidebar-link js-placeholder-link" data-preset="advisorReportes" href="#/utils/placeholder"><i class="fa-solid fa-download"></i>Descargar Reportes</a>
+
+      <div class="sidebar-spacer"></div>
+      <button class="sidebar-link sidebar-logout" id="advisorLogoutButtonMobile" type="button">
+        <i class="fa-solid fa-right-from-bracket"></i>Salir
+      </button>
     </div>
   </aside>
 

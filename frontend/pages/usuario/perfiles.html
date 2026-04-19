@@ -5,112 +5,63 @@
         <i class="fa-solid fa-chart-pie"></i>
         <span>FinTrack</span>
       </a>
-
-      <div class="d-flex align-items-center gap-2">
-        <span class="navbar-pill d-none d-md-inline-flex">
-          <i class="fa-solid fa-users"></i>
-          <span>Perfiles de Gasto</span>
-        </span>
-        <button class="navbar-icon-btn d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#profilesSidebarOffcanvas" aria-controls="profilesSidebarOffcanvas" aria-label="Abrir navegacion">
-          <i class="fa-solid fa-bars"></i>
-        </button>
-      </div>
+      <a class="navbar-pill" href="#/usuario/dashboard">
+        <i class="fa-solid fa-arrow-left"></i>
+        <span>Volver al Dashboard</span>
+      </a>
     </div>
   </header>
 
-  <div class="app-layout">
-    <aside class="app-sidebar d-none d-lg-flex" aria-label="Navegacion usuario">
-      <div>
-        <p class="sidebar-section-title">Navegacion</p>
-        <a class="sidebar-link" href="#/usuario/dashboard"><i class="fa-solid fa-house"></i>Dashboard</a>
-        <a class="sidebar-link js-placeholder-link" data-preset="cargarGasto" href="#/utils/placeholder"><i class="fa-solid fa-receipt"></i>Cargar Gasto</a>
-        <a class="sidebar-link js-placeholder-link" data-preset="historial" href="#/utils/placeholder"><i class="fa-solid fa-clock-rotate-left"></i>Historial</a>
-        <a class="sidebar-link active" href="#/usuario/perfiles"><i class="fa-solid fa-user-group"></i>Perfiles</a>
-        <a class="sidebar-link" href="#/usuario/recomendaciones"><i class="fa-solid fa-lightbulb"></i>Recomendaciones</a>
+  <main class="app-main app-main--wide perfiles-main">
+    <section class="section-block perfiles-hero">
+      <h1 class="text-gradient">Conoce tus Perfiles</h1>
+      <p class="text-muted mt-2">
+        Descubre los 3 tipos de consumidores y como puedes transitar entre ellos segun tus habitos de gasto.
+      </p>
+    </section>
+
+    <section class="perfiles-stack" id="profilesGrid"></section>
+
+    <section class="section-block">
+      <h2 class="section-title">
+        <i class="fa-solid fa-table-list accent"></i>
+        Comparativa Rapida
+      </h2>
+      <div class="table-responsive">
+        <table class="table-shell" id="profilesComparisonTable">
+          <thead>
+            <tr>
+              <th>Metrica</th>
+              <th>Dracula</th>
+              <th>Equilibrista</th>
+              <th>Espiritu Libre</th>
+            </tr>
+          </thead>
+          <tbody id="profilesComparisonBody"></tbody>
+        </table>
       </div>
-      <div class="sidebar-spacer"></div>
-      <a class="sidebar-link" href="#/usuario/dashboard"><i class="fa-solid fa-arrow-left"></i>Volver al Dashboard</a>
-    </aside>
+    </section>
 
-    <main class="app-main">
-      <section class="section-block">
-        <h1 class="text-gradient">Perfiles de Gasto</h1>
-        <p class="text-muted mt-2">
-          Descubre cual es tu perfil de consumo y recibe recomendaciones personalizadas para mejorar tus finanzas.
-        </p>
-      </section>
+    <section class="section-block perfiles-cta">
+      <h2 class="section-title">
+        <i class="fa-solid fa-rocket accent"></i>
+        Quieres cambiar de perfil?
+      </h2>
+      <p class="text-muted mb-3">
+        Tu perfil se actualiza automaticamente segun tus habitos de consumo. Sigue los consejos anteriores para llegar al perfil que deseas.
+      </p>
+      <div class="d-flex flex-wrap gap-2">
+        <a class="action-btn action-btn--primary" href="#/usuario/dashboard">
+          <i class="fa-solid fa-arrow-left"></i>
+          Volver a mi Dashboard
+        </a>
+        <a class="action-btn action-btn--ghost" href="#/usuario/recomendaciones">
+          <i class="fa-solid fa-lightbulb"></i>
+          Ver Recomendaciones
+        </a>
+      </div>
+    </section>
 
-      <section class="section-block">
-        <h2 class="section-title">
-          <i class="fa-solid fa-id-card accent"></i>
-          Tus Perfiles Disponibles
-        </h2>
-        <div class="profiles-grid" id="profilesGrid"></div>
-      </section>
-
-      <section class="section-block">
-        <h2 class="section-title">
-          <i class="fa-solid fa-list-check accent"></i>
-          Tips para Cada Perfil
-        </h2>
-        <div class="tips-accordion" id="profilesTipsAccordion"></div>
-      </section>
-
-      <section class="section-block">
-        <h2 class="section-title">
-          <i class="fa-solid fa-table accent"></i>
-          Comparacion de Perfiles
-        </h2>
-        <div class="table-responsive">
-          <table class="table-shell" id="profilesComparisonTable">
-            <thead>
-              <tr>
-                <th>Metrica</th>
-                <th>Dracula</th>
-                <th>Equilibrista</th>
-                <th>Espiritu Libre</th>
-              </tr>
-            </thead>
-            <tbody id="profilesComparisonBody"></tbody>
-          </table>
-        </div>
-      </section>
-
-      <section class="section-block">
-        <h2 class="section-title">
-          <i class="fa-solid fa-rocket accent"></i>
-          Listo para Comenzar
-        </h2>
-        <p class="text-muted mb-3">
-          Selecciona tu perfil para personalizar recomendaciones y prioridades.
-        </p>
-        <div class="d-flex flex-wrap gap-2">
-          <a class="action-btn action-btn--primary" href="#/usuario/dashboard">
-            <i class="fa-solid fa-house"></i>
-            Ir a mi Dashboard
-          </a>
-          <a class="action-btn action-btn--ghost" href="#/usuario/recomendaciones">
-            <i class="fa-solid fa-lightbulb"></i>
-            Ver Recomendaciones
-          </a>
-        </div>
-      </section>
-
-      <footer class="app-footer">FinTrack 2026 · Perfiles de gasto</footer>
-    </main>
-  </div>
-
-  <aside class="offcanvas offcanvas-start app-offcanvas" tabindex="-1" id="profilesSidebarOffcanvas" aria-labelledby="profilesSidebarOffcanvasLabel">
-    <div class="offcanvas-header">
-      <h5 class="offcanvas-title" id="profilesSidebarOffcanvasLabel">Navegacion</h5>
-      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
-    </div>
-    <div class="offcanvas-body d-flex flex-column gap-2">
-      <a class="sidebar-link" href="#/usuario/dashboard">Dashboard</a>
-      <a class="sidebar-link js-placeholder-link" data-preset="cargarGasto" href="#/utils/placeholder">Cargar Gasto</a>
-      <a class="sidebar-link js-placeholder-link" data-preset="historial" href="#/utils/placeholder">Historial</a>
-      <a class="sidebar-link active" href="#/usuario/perfiles">Perfiles</a>
-      <a class="sidebar-link" href="#/usuario/recomendaciones">Recomendaciones</a>
-    </div>
-  </aside>
+    <footer class="app-footer">FinTrack 2026 · Perfiles de gasto</footer>
+  </main>
 </div>

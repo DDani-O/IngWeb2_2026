@@ -5,140 +5,98 @@
         <i class="fa-solid fa-chart-pie"></i>
         <span>FinTrack</span>
       </a>
-      <div class="d-flex align-items-center gap-2">
-        <span class="navbar-pill d-none d-md-inline-flex">
-          <i class="fa-solid fa-lightbulb"></i>
-          <span>Recomendaciones</span>
-        </span>
-        <button class="navbar-icon-btn d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#recommendationsSidebarOffcanvas" aria-controls="recommendationsSidebarOffcanvas" aria-label="Abrir navegacion">
-          <i class="fa-solid fa-bars"></i>
-        </button>
-      </div>
+      <a class="navbar-pill" href="#/usuario/dashboard">
+        <i class="fa-solid fa-arrow-left"></i>
+        <span>Volver al Dashboard</span>
+      </a>
     </div>
   </header>
 
-  <div class="app-layout">
-    <aside class="app-sidebar d-none d-lg-flex" aria-label="Navegacion usuario">
-      <div>
-        <p class="sidebar-section-title">Navegacion</p>
-        <a class="sidebar-link" href="#/usuario/dashboard"><i class="fa-solid fa-house"></i>Dashboard</a>
-        <a class="sidebar-link js-placeholder-link" data-preset="cargarGasto" href="#/utils/placeholder"><i class="fa-solid fa-receipt"></i>Cargar Gasto</a>
-        <a class="sidebar-link js-placeholder-link" data-preset="historial" href="#/utils/placeholder"><i class="fa-solid fa-clock-rotate-left"></i>Historial</a>
-        <a class="sidebar-link" href="#/usuario/perfiles"><i class="fa-solid fa-user-group"></i>Perfiles</a>
-        <a class="sidebar-link active" href="#/usuario/recomendaciones"><i class="fa-solid fa-lightbulb"></i>Recomendaciones</a>
+  <main class="app-main app-main--wide recommendations-main">
+    <section class="section-block recommendations-hero">
+      <h1 class="text-gradient">Recomendaciones Financieras</h1>
+      <p class="text-muted mt-2">
+        Personalizadas segun tu perfil y habitos. Acciones que puedes tomar hoy para mejorar tu situacion financiera.
+      </p>
+    </section>
+
+    <section class="section-block">
+      <div class="recommendation-toolbar">
+        <label class="text-muted" for="recommendationPriorityFilter">Prioridad</label>
+        <select id="recommendationPriorityFilter" class="form-select form-select-sm">
+          <option value="Todas">Todas</option>
+          <option value="Alta">Alta</option>
+          <option value="Media">Media</option>
+        </select>
+
+        <label class="text-muted" for="recommendationStatusFilter">Estado</label>
+        <select id="recommendationStatusFilter" class="form-select form-select-sm">
+          <option value="Todas">Todas</option>
+          <option value="Pendiente">Pendiente</option>
+          <option value="En Progreso">En Progreso</option>
+          <option value="Completada">Completada</option>
+          <option value="Descartada">Descartada</option>
+        </select>
+
+        <label class="text-muted" for="recommendationSortFilter">Ordenar</label>
+        <select id="recommendationSortFilter" class="form-select form-select-sm">
+          <option value="reciente">Mas Reciente</option>
+          <option value="ahorro">Mayor Ahorro</option>
+          <option value="prioridad">Por Prioridad</option>
+        </select>
+
+        <span class="ms-auto text-muted" id="recommendationCount">0 recomendaciones</span>
       </div>
-      <div class="sidebar-spacer"></div>
-      <a class="sidebar-link" href="#/usuario/dashboard"><i class="fa-solid fa-arrow-left"></i>Volver al Dashboard</a>
-    </aside>
+    </section>
 
-    <main class="app-main">
-      <section class="section-block">
-        <h1 class="text-gradient">Mis Recomendaciones Financieras</h1>
-        <p class="text-muted mt-2">
-          Sugerencias personalizadas de tu asesor para mejorar tus finanzas.
-        </p>
-      </section>
+    <section class="section-block recommendations-group recommendations-group--high">
+      <h2 class="section-title recommendations-group__title">
+        <i class="fa-solid fa-circle-exclamation accent"></i>
+        Prioridad Alta
+      </h2>
+      <div class="recommendation-group" id="recommendationsHighPriority"></div>
+    </section>
 
-      <section class="section-block">
-        <div class="recommendation-toolbar">
-          <label class="text-muted" for="recommendationPriorityFilter">Prioridad</label>
-          <select id="recommendationPriorityFilter" class="form-select form-select-sm">
-            <option value="Todas">Todas</option>
-            <option value="Alta">Alta</option>
-            <option value="Media">Media</option>
-          </select>
+    <section class="section-block recommendations-group recommendations-group--medium">
+      <h2 class="section-title recommendations-group__title">
+        <i class="fa-solid fa-circle-info accent"></i>
+        Prioridad Media
+      </h2>
+      <div class="recommendation-group" id="recommendationsMediumPriority"></div>
+    </section>
 
-          <label class="text-muted" for="recommendationStatusFilter">Estado</label>
-          <select id="recommendationStatusFilter" class="form-select form-select-sm">
-            <option value="Todas">Todas</option>
-            <option value="Pendiente">Pendiente</option>
-            <option value="En Progreso">En Progreso</option>
-            <option value="Completada">Completada</option>
-            <option value="Descartada">Descartada</option>
-          </select>
+    <section class="section-block recommendations-group recommendations-group--completed">
+      <h2 class="section-title recommendations-group__title">
+        <i class="fa-solid fa-circle-check accent"></i>
+        Recomendaciones Completadas
+      </h2>
+      <div class="recommendation-group" id="recommendationsCompleted"></div>
+    </section>
 
-          <label class="text-muted" for="recommendationSortFilter">Ordenar</label>
-          <select id="recommendationSortFilter" class="form-select form-select-sm">
-            <option value="reciente">Mas Reciente</option>
-            <option value="ahorro">Mayor Ahorro</option>
-            <option value="prioridad">Por Prioridad</option>
-          </select>
+    <section class="section-block recommendations-total">
+      <p class="recommendations-total__label">💡 Total de Ahorro Potencial</p>
+      <p class="recommendations-total__value" id="summarySavingsValue">$0/mes</p>
+      <p class="text-muted">
+        Si implementas todas las recomendaciones activas, podrias ahorrar hasta <strong id="summaryImpactValue">0%</strong> de tu gasto mensual.
+      </p>
+      <div class="summary-strip app-hidden" id="recommendationsSummaryStrip">
+        <article class="summary-strip__item">
+          <p class="summary-strip__label">Recomendaciones activas</p>
+          <p class="summary-strip__value" id="summaryActiveValue">0</p>
+        </article>
+        <article class="summary-strip__item">
+          <p class="summary-strip__label">Completadas este mes</p>
+          <p class="summary-strip__value" id="summaryCompletedValue">0</p>
+        </article>
+      </div>
+      <a class="action-btn action-btn--primary mt-3" href="#/usuario/dashboard">
+        <i class="fa-solid fa-arrow-left"></i>
+        Volver al Dashboard
+      </a>
+    </section>
 
-          <span class="ms-auto text-muted" id="recommendationCount">0 recomendaciones</span>
-        </div>
-
-        <div class="summary-strip" id="recommendationsSummaryStrip">
-          <article class="summary-strip__item">
-            <p class="summary-strip__label">Ahorro potencial total</p>
-            <p class="summary-strip__value" id="summarySavingsValue">$0</p>
-          </article>
-          <article class="summary-strip__item">
-            <p class="summary-strip__label">Recomendaciones activas</p>
-            <p class="summary-strip__value" id="summaryActiveValue">0</p>
-          </article>
-          <article class="summary-strip__item">
-            <p class="summary-strip__label">Completadas este mes</p>
-            <p class="summary-strip__value" id="summaryCompletedValue">0</p>
-          </article>
-          <article class="summary-strip__item">
-            <p class="summary-strip__label">Impacto estimado</p>
-            <p class="summary-strip__value" id="summaryImpactValue">0%</p>
-          </article>
-        </div>
-      </section>
-
-      <section class="section-block">
-        <h2 class="section-title">
-          <i class="fa-solid fa-fire accent"></i>
-          Prioridad Alta
-        </h2>
-        <div class="recommendation-group" id="recommendationsHighPriority"></div>
-      </section>
-
-      <section class="section-block">
-        <h2 class="section-title">
-          <i class="fa-solid fa-circle-info accent"></i>
-          Prioridad Media
-        </h2>
-        <div class="recommendation-group" id="recommendationsMediumPriority"></div>
-      </section>
-
-      <section class="section-block">
-        <h2 class="section-title">
-          <i class="fa-solid fa-circle-check accent"></i>
-          Recomendaciones Completadas
-        </h2>
-        <div class="recommendation-group" id="recommendationsCompleted"></div>
-      </section>
-
-      <section class="recommendation-contact">
-        <div>
-          <h3>Preguntas sobre estas recomendaciones?</h3>
-          <p class="text-muted">Tu asesor puede ayudarte a priorizar acciones esta semana.</p>
-        </div>
-        <button class="action-btn action-btn--primary" id="openRecommendationContactButton" type="button">
-          <i class="fa-solid fa-comments"></i>
-          Contactar a tu Asesor
-        </button>
-      </section>
-
-      <footer class="app-footer">FinTrack 2026 · Recomendaciones financieras</footer>
-    </main>
-  </div>
-
-  <aside class="offcanvas offcanvas-start app-offcanvas" tabindex="-1" id="recommendationsSidebarOffcanvas" aria-labelledby="recommendationsSidebarOffcanvasLabel">
-    <div class="offcanvas-header">
-      <h5 class="offcanvas-title" id="recommendationsSidebarOffcanvasLabel">Navegacion</h5>
-      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
-    </div>
-    <div class="offcanvas-body d-flex flex-column gap-2">
-      <a class="sidebar-link" href="#/usuario/dashboard">Dashboard</a>
-      <a class="sidebar-link js-placeholder-link" data-preset="cargarGasto" href="#/utils/placeholder">Cargar Gasto</a>
-      <a class="sidebar-link js-placeholder-link" data-preset="historial" href="#/utils/placeholder">Historial</a>
-      <a class="sidebar-link" href="#/usuario/perfiles">Perfiles</a>
-      <a class="sidebar-link active" href="#/usuario/recomendaciones">Recomendaciones</a>
-    </div>
-  </aside>
+    <footer class="app-footer">FinTrack 2026 · Recomendaciones financieras</footer>
+  </main>
 
   <div class="modal fade" id="recommendationDetailModal" tabindex="-1" aria-labelledby="recommendationDetailModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
