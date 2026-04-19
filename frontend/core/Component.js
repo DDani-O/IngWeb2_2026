@@ -3,6 +3,9 @@ import { eventBus } from "./EventBus.js";
 export class Component {
   static DEFAULTS = {};
 
+  /**
+   * Inicializa componente base resolviendo nodo raiz y opciones.
+   */
   constructor(elementOrSelector, options = {}) {
     this.element =
       typeof elementOrSelector === "string"
@@ -20,16 +23,25 @@ export class Component {
     this._mounted = false;
   }
 
+  /**
+   * Punto de extension obligatorio: debe renderizar el contenido del componente.
+   */
   render() {
     throw new Error(
       `${this.constructor.name} debe implementar el metodo render().`
     );
   }
 
+  /**
+   * Punto de extension opcional para registrar eventos DOM.
+   */
   attachEvents() {
     // Metodo opcional para subclases.
   }
 
+  /**
+   * Monta el componente ejecutando render y luego el binding de eventos.
+   */
   mount() {
     if (!this.element) {
       throw new Error(
@@ -43,6 +55,9 @@ export class Component {
     return this;
   }
 
+  /**
+   * Reemplaza el HTML del nodo raiz del componente.
+   */
   setHTML(html = "") {
     if (!this.element) {
       return;
@@ -51,6 +66,9 @@ export class Component {
     this.element.innerHTML = html;
   }
 
+  /**
+   * Registra listener DOM y lo guarda para cleanup automatico.
+   */
   listen(target, eventName, handler, options) {
     if (!target) {
       return;
@@ -60,22 +78,34 @@ export class Component {
     this._domListeners.push({ target, eventName, handler, options });
   }
 
+  /**
+   * Suscribe el componente al EventBus y guarda la desuscripcion.
+   */
   on(eventName, callback) {
     const unsubscribe = eventBus.on(eventName, callback);
     this._busListeners.push(unsubscribe);
     return unsubscribe;
   }
 
+  /**
+   * Emite un evento global desde el componente actual.
+   */
   emit(eventName, payload = {}) {
     eventBus.emit(eventName, payload);
   }
 
+  /**
+   * Registra un componente hijo para destruirlo en cascada.
+   */
   registerChild(component) {
     if (component) {
       this._children.push(component);
     }
   }
 
+  /**
+   * Libera listeners y destruye hijos para evitar fugas de memoria.
+   */
   destroy() {
     this._domListeners.forEach(({ target, eventName, handler, options }) => {
       target.removeEventListener(eventName, handler, options);

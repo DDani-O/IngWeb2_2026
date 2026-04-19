@@ -1,7 +1,11 @@
 import { Component } from "../../core/Component.js";
-import { MOCK_CONSUMPTION_PATTERNS } from "../../utils/constants.js";
+import { MOCK_CONSUMPTION_PATTERNS, ROUTES } from "../../utils/constants.js";
 import { formatCurrency } from "../../utils/formatters.js";
-import { getChartThemeColors } from "../../utils/helpers.js";
+import {
+  buildPlaceholderHashFromPreset,
+  getChartThemeColors,
+  getInitials,
+} from "../../utils/helpers.js";
 
 export class PatronesPage extends Component {
   constructor(element, options = {}) {
@@ -11,16 +15,41 @@ export class PatronesPage extends Component {
   }
 
   render() {
+    this._resetViewPosition();
+
     const currentUser = this.options.authManager?.getCurrentUser();
     const fallbackName = this.data.user.name;
     const userName = currentUser?.fullName || fallbackName;
 
     this._setText("#patternsUserName", userName);
+    this._setText("#userTopbarName", userName);
+    this._setText("#userSidebarName", userName);
+    this._setText("#userSidebarInitials", getInitials(userName) || "JP");
+
+    this._renderPlaceholderLinks();
     this._renderHighlights();
     this._renderStats();
     this._renderCategoryList();
     this._renderUnusualAlerts();
     this._initCharts();
+  }
+
+  attachEvents() {
+    this.element.querySelectorAll(".js-dashboard-back").forEach((button) => {
+      this.listen(button, "click", (event) => this._handleBackToDashboard(event));
+    });
+
+    ["#userLogoutButton", "#userLogoutButtonMobile"].forEach((selector) => {
+      const button = this.element.querySelector(selector);
+      this.listen(button, "click", () => this._handleLogout());
+    });
+  }
+
+  _renderPlaceholderLinks() {
+    this.element.querySelectorAll(".js-placeholder-link").forEach((anchor) => {
+      const preset = anchor.dataset.preset;
+      anchor.setAttribute("href", buildPlaceholderHashFromPreset(preset));
+    });
   }
 
   _renderHighlights() {
@@ -340,6 +369,42 @@ export class PatronesPage extends Component {
   _destroyCharts() {
     this.charts.forEach((chart) => chart.destroy());
     this.charts = [];
+  }
+
+  _handleBackToDashboard(event) {
+    event.preventDefault();
+
+    const isDashboardOpenInAnotherTab =
+      this.options.hasRouteOpenInOtherTab?.(ROUTES.USER_DASHBOARD) ||
+      (window.opener && !window.opener.closed);
+
+    if (isDashboardOpenInAnotherTab) {
+      window.close();
+
+      window.setTimeout(() => {
+        if (!window.closed) {
+          this.options.router?.navigate(ROUTES.USER_DASHBOARD);
+        }
+      }, 120);
+      return;
+    }
+
+    this.options.router?.navigate(ROUTES.USER_DASHBOARD);
+  }
+
+  _handleLogout() {
+    this.options.authManager?.logout();
+    this.options.showToast?.("Sesion finalizada correctamente.", "success");
+    this.options.router?.navigate(ROUTES.HOME, { modal: "login" });
+  }
+
+  _resetViewPosition() {
+    window.scrollTo(0, 0);
+
+    const routeContainer = document.querySelector("#appRouteContainer");
+    if (routeContainer) {
+      routeContainer.scrollTop = 0;
+    }
   }
 
   destroy() {

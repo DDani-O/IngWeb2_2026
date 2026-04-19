@@ -1,23 +1,5 @@
 <div class="app-page page-asesor-dashboard">
-  <header class="app-navbar">
-    <div class="app-navbar__content">
-      <a class="app-brand" href="#/">
-        <i class="fa-solid fa-chart-pie"></i>
-        <span>FinTrack</span>
-      </a>
-
-      <div class="dashboard-topbar-user">
-        <span class="dashboard-topbar-user__name" id="advisorTopbarName">Maria Rodriguez</span>
-        <button class="action-btn action-btn--ghost d-none d-md-inline-flex" id="advisorLogoutButton" type="button">
-          <i class="fa-solid fa-right-from-bracket"></i>
-          Salir
-        </button>
-        <button class="navbar-icon-btn" type="button" data-bs-toggle="offcanvas" data-bs-target="#advisorSidebarOffcanvas" aria-controls="advisorSidebarOffcanvas" aria-label="Abrir navegacion">
-          <i class="fa-solid fa-bars"></i>
-        </button>
-      </div>
-    </div>
-  </header>
+  <div id="advisorTopbarSlot"></div>
 
   <main class="app-main app-main--wide advisor-main">
     <section class="hero-panel advisor-hero-panel">
@@ -102,40 +84,10 @@
       <div class="advisor-recommendation-board" id="advisorRecommendationsList"></div>
     </section>
 
-    <footer class="app-footer">FinTrack 2026 · Panel asesor</footer>
+    <div id="appFooterSlot"></div>
   </main>
 
-  <aside class="offcanvas offcanvas-start app-offcanvas" tabindex="-1" id="advisorSidebarOffcanvas" aria-labelledby="advisorSidebarOffcanvasLabel">
-    <div class="offcanvas-header">
-      <h5 class="offcanvas-title" id="advisorSidebarOffcanvasLabel">Asesor</h5>
-      <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
-    </div>
-    <div class="offcanvas-body d-flex flex-column gap-2">
-      <div class="sidebar-user-card">
-        <span class="sidebar-user-card__avatar">MR</span>
-        <div>
-          <p class="sidebar-user-card__name">Maria Rodriguez</p>
-          <p class="sidebar-user-card__meta">Editar Perfil</p>
-        </div>
-      </div>
-
-      <p class="sidebar-section-title mt-2">Navegacion</p>
-      <a class="sidebar-link active" href="#/asesor/dashboard"><i class="fa-solid fa-house"></i>Dashboard</a>
-      <a class="sidebar-link js-placeholder-link" data-preset="advisorClientes" href="#/utils/placeholder"><i class="fa-solid fa-users"></i>Mis Clientes</a>
-      <a class="sidebar-link js-placeholder-link" data-preset="advisorInbox" href="#/utils/placeholder"><i class="fa-solid fa-inbox"></i>Bandeja de Entrada</a>
-      <a class="sidebar-link js-placeholder-link" data-preset="advisorReportes" href="#/utils/placeholder"><i class="fa-solid fa-file-lines"></i>Mis Comisiones</a>
-      <a class="sidebar-link js-placeholder-link" data-preset="advisorReportes" href="#/utils/placeholder"><i class="fa-solid fa-list-check"></i>Tareas Pendientes</a>
-
-      <p class="sidebar-section-title mt-2">Acciones</p>
-      <a class="sidebar-link js-placeholder-link" data-preset="advisorReportes" href="#/utils/placeholder"><i class="fa-solid fa-user-pen"></i>Editar Perfil</a>
-      <a class="sidebar-link js-placeholder-link" data-preset="advisorReportes" href="#/utils/placeholder"><i class="fa-solid fa-download"></i>Descargar Reportes</a>
-
-      <div class="sidebar-spacer"></div>
-      <button class="sidebar-link sidebar-logout" id="advisorLogoutButtonMobile" type="button">
-        <i class="fa-solid fa-right-from-bracket"></i>Salir
-      </button>
-    </div>
-  </aside>
+  <div id="advisorSidebarSlot"></div>
 
   <div class="modal fade" id="advisorRecommendationModal" tabindex="-1" aria-labelledby="advisorRecommendationModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">

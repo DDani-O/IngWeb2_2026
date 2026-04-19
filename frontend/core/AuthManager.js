@@ -10,6 +10,9 @@ import { stateManager } from "./StateManager.js";
 import { eventBus } from "./EventBus.js";
 
 export class AuthManager {
+  /**
+   * Inicializa el gestor de autenticacion como singleton.
+   */
   constructor() {
     if (AuthManager.instance) {
       return AuthManager.instance;
@@ -21,6 +24,9 @@ export class AuthManager {
     AuthManager.instance = this;
   }
 
+  /**
+   * Carga sesion persistida desde localStorage al arrancar la app.
+   */
   init() {
     const storedUser = localStorage.getItem(STORAGE_KEYS.AUTH_USER);
     const storedToken = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
@@ -44,6 +50,10 @@ export class AuthManager {
     }
   }
 
+  /**
+   * Valida credenciales contra datos mock y crea sesion activa.
+   * Puede reemplazarse por llamada real a backend sin cambiar consumidores.
+   */
   async login(credentials) {
     await sleep(UI_TIMING.AUTH_LOGIN_DELAY_MS);
 
@@ -73,6 +83,9 @@ export class AuthManager {
     return user;
   }
 
+  /**
+   * Registra un usuario nuevo en flujo mock y lo autentica automaticamente.
+   */
   async register(payload) {
     await sleep(UI_TIMING.AUTH_REGISTER_DELAY_MS);
 
@@ -100,6 +113,9 @@ export class AuthManager {
     return user;
   }
 
+  /**
+   * Cierra sesion, limpia almacenamiento y opcionalmente emite evento.
+   */
   logout({ emitEvent = true } = {}) {
     this.currentUser = null;
     this.token = null;
@@ -118,26 +134,44 @@ export class AuthManager {
     }
   }
 
+  /**
+   * Indica si existe una sesion activa valida en memoria.
+   */
   isAuthenticated() {
     return Boolean(this.currentUser && this.token);
   }
 
+  /**
+   * Verifica si el usuario actual coincide con un rol esperado.
+   */
   hasRole(role) {
     return this.currentUser?.role === role;
   }
 
+  /**
+   * Retorna el usuario actual autenticado.
+   */
   getCurrentUser() {
     return this.currentUser;
   }
 
+  /**
+   * Retorna el rol actual o null si no hay sesion.
+   */
   getCurrentRole() {
     return this.currentUser?.role || null;
   }
 
+  /**
+   * Devuelve ruta inicial recomendada segun rol.
+   */
   getDefaultRouteForRole(role) {
     return role === "asesor" ? ROUTES.ADVISOR_DASHBOARD : ROUTES.USER_DASHBOARD;
   }
 
+  /**
+   * Persiste token/usuario y sincroniza estado global autenticado.
+   */
   _persistSession(user, token) {
     this.currentUser = user;
     this.token = token;
@@ -152,6 +186,9 @@ export class AuthManager {
     });
   }
 
+  /**
+   * Devuelve la instancia unica global del AuthManager.
+   */
   static getInstance() {
     if (!AuthManager.instance) {
       AuthManager.instance = new AuthManager();

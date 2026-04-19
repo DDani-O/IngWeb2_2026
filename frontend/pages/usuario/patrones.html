@@ -1,16 +1,5 @@
 <div class="app-page page-user-patterns">
-  <header class="app-navbar">
-    <div class="app-navbar__content">
-      <a class="app-brand" href="#/">
-        <i class="fa-solid fa-chart-pie"></i>
-        <span>FinTrack</span>
-      </a>
-      <a class="navbar-pill" href="#/usuario/dashboard">
-        <i class="fa-solid fa-arrow-left"></i>
-        <span>Volver al Dashboard</span>
-      </a>
-    </div>
-  </header>
+  <div id="userTopbarSlot"></div>
 
   <main class="app-main app-main--wide patterns-main">
     <section class="section-block patterns-hero">
@@ -75,12 +64,14 @@
         </article>
         <div class="patterns-unusual-list" id="patternsUnusualList"></div>
       </div>
-      <a class="action-btn action-btn--primary mt-3" href="#/usuario/dashboard">
+      <button class="action-btn action-btn--primary mt-3 js-dashboard-back" type="button">
         <i class="fa-solid fa-arrow-left"></i>
         Volver al Dashboard
-      </a>
+      </button>
     </section>
 
-    <footer class="app-footer">FinTrack 2026 · Patrones de consumo</footer>
+    <div id="appFooterSlot"></div>
   </main>
+
+  <div id="userSidebarSlot"></div>
 </div>

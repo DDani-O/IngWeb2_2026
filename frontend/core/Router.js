@@ -3,6 +3,9 @@ import { eventBus } from "./EventBus.js";
 import { buildHash, parseQueryString } from "../utils/helpers.js";
 
 export class Router {
+  /**
+   * Inicializa el router hash-based con contenedor de render y caches.
+   */
   constructor({ viewSelector = "#route-view" } = {}) {
     this.routes = new Map();
     this.notFoundRoute = null;
@@ -16,21 +19,33 @@ export class Router {
     this._handleHashChange = this._handleHashChange.bind(this);
   }
 
+  /**
+   * Registra una ruta individual en el mapa interno.
+   */
   register(route) {
     this.routes.set(route.path, route);
     return this;
   }
 
+  /**
+   * Registra multiples rutas de una sola vez.
+   */
   registerMany(routes = []) {
     routes.forEach((route) => this.register(route));
     return this;
   }
 
+  /**
+   * Define la ruta fallback para paths no reconocidos.
+   */
   setNotFoundRoute(route) {
     this.notFoundRoute = route;
     return this;
   }
 
+  /**
+   * Inicia escucha de cambios de hash y activa ruta actual.
+   */
   start() {
     if (this.started) {
       return;
@@ -41,11 +56,17 @@ export class Router {
     this._handleHashChange();
   }
 
+  /**
+   * Detiene la escucha de eventos de navegacion por hash.
+   */
   stop() {
     window.removeEventListener("hashchange", this._handleHashChange);
     this.started = false;
   }
 
+  /**
+   * Parsea el hash actual y devuelve path, query y ruta completa.
+   */
   parseHash(hashValue = window.location.hash) {
     const hash = String(hashValue || "").replace(/^#/, "");
     const normalized = hash || "/";
@@ -60,6 +81,9 @@ export class Router {
     };
   }
 
+  /**
+   * Navega hacia una ruta hash, con opcion de reemplazar historial.
+   */
   navigate(path, query = {}, { replace = false } = {}) {
     const nextHash = buildHash(path, query);
 
@@ -71,11 +95,17 @@ export class Router {
     window.location.hash = nextHash;
   }
 
+  /**
+   * Handler principal de cambio de hash que dispara activacion de ruta.
+   */
   async _handleHashChange() {
     const payload = this.parseHash();
     await this._activate(payload);
   }
 
+  /**
+   * Activa una ruta: valida permisos, limpia vista previa y renderiza.
+   */
   async _activate(payload) {
     const route = this.routes.get(payload.path) || this.notFoundRoute;
 
@@ -119,6 +149,9 @@ export class Router {
     });
   }
 
+  /**
+   * Limpia backdrops/overlays residuales para evitar bloqueos de scroll.
+   */
   _cleanupOverlayArtifacts() {
     if (typeof document === "undefined") {
       return;
@@ -150,6 +183,9 @@ export class Router {
     }
   }
 
+  /**
+   * Ejecuta guard de entrada de ruta y normaliza respuesta de autorizacion.
+   */
   async _canEnter(route, context) {
     if (typeof route.beforeEnter !== "function") {
       return { allowed: true };
@@ -180,6 +216,9 @@ export class Router {
     return { allowed: false, redirectPath: "/" };
   }
 
+  /**
+   * Ejecuta cleanup de la ruta anterior (si existe).
+   */
   async _cleanupCurrent() {
     if (typeof this.currentCleanup === "function") {
       await this.currentCleanup();
@@ -188,6 +227,9 @@ export class Router {
     this.currentCleanup = null;
   }
 
+  /**
+   * Carga plantilla remota y la cachea para navegacion mas rapida.
+   */
   async _loadTemplate(templateUrl) {
     if (this.templateCache.has(templateUrl)) {
       return this.templateCache.get(templateUrl);

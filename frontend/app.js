@@ -3,12 +3,17 @@ import { eventBus } from "./core/EventBus.js";
 import { Router } from "./core/Router.js";
 import { stateManager } from "./core/StateManager.js";
 import { themeManager } from "./core/ThemeManager.js";
+import { mountAdvisorShell } from "./components/navigation/AdvisorShell.js";
+import { mountUserShell } from "./components/navigation/UserShell.js";
 import { EVENTS, ROUTES, UI_TIMING } from "./utils/constants.js";
 
 const toastContainer = document.querySelector("#globalToastContainer");
+const TAB_REGISTRY_STORAGE_KEY = "fintrack.openTabs.v1";
+const TAB_ID_STORAGE_KEY = "fintrack.tabId";
 
 const router = new Router({ viewSelector: "#route-view" });
 let activeLandingPage = null;
+const currentTabId = getOrCreateTabId();
 
 initializeApplication();
 
@@ -23,8 +28,14 @@ function initializeApplication() {
   configureRouter();
   router.start();
 
+  window.addEventListener("beforeunload", unregisterCurrentTab);
+
   eventBus.on(EVENTS.ROUTER.NAVIGATE, ({ path, query }) => {
     router.navigate(path, query);
+  });
+
+  eventBus.on(EVENTS.ROUTER.CHANGED, ({ path }) => {
+    registerCurrentTabRoute(path);
   });
 }
 
@@ -77,11 +88,18 @@ function configureRouter() {
       templateUrl: "./pages/usuario/dashboard.html",
       beforeEnter: requireRole("usuario"),
       onEnter: async (context) => {
+        await mountUserShell(context.mountNode, {
+          userName: authManager.getCurrentUser()?.fullName || "Juan Perez",
+          activeRoute: ROUTES.USER_DASHBOARD,
+          footerText: "FinTrack 2026 · Dashboard usuario",
+        });
+
         const module = await import("./pages/usuario/DashboardPage.js");
         const page = new module.DashboardPage(context.mountNode, {
           router,
           authManager,
           showToast,
+          hasRouteOpenInOtherTab,
         });
         page.mount();
         return () => page.destroy();
@@ -92,11 +110,18 @@ function configureRouter() {
       templateUrl: "./pages/usuario/patrones.html",
       beforeEnter: requireRole("usuario"),
       onEnter: async (context) => {
+        await mountUserShell(context.mountNode, {
+          userName: authManager.getCurrentUser()?.fullName || "Juan Perez",
+          activeRoute: ROUTES.USER_PATRONES,
+          footerText: "FinTrack 2026 · Patrones de consumo",
+        });
+
         const module = await import("./pages/usuario/PatronesPage.js");
         const page = new module.PatronesPage(context.mountNode, {
           router,
           authManager,
           showToast,
+          hasRouteOpenInOtherTab,
         });
         page.mount();
         return () => page.destroy();
@@ -107,10 +132,18 @@ function configureRouter() {
       templateUrl: "./pages/usuario/perfiles.html",
       beforeEnter: requireRole("usuario"),
       onEnter: async (context) => {
+        await mountUserShell(context.mountNode, {
+          userName: authManager.getCurrentUser()?.fullName || "Juan Perez",
+          activeRoute: ROUTES.USER_PERFILES,
+          footerText: "FinTrack 2026 · Perfiles de gasto",
+        });
+
         const module = await import("./pages/usuario/PerfilesPage.js");
         const page = new module.PerfilesPage(context.mountNode, {
           router,
+          authManager,
           showToast,
+          hasRouteOpenInOtherTab,
         });
         page.mount();
         return () => page.destroy();
@@ -121,10 +154,18 @@ function configureRouter() {
       templateUrl: "./pages/usuario/recomendaciones.html",
       beforeEnter: requireRole("usuario"),
       onEnter: async (context) => {
+        await mountUserShell(context.mountNode, {
+          userName: authManager.getCurrentUser()?.fullName || "Juan Perez",
+          activeRoute: ROUTES.USER_RECOMENDACIONES,
+          footerText: "FinTrack 2026 · Recomendaciones financieras",
+        });
+
         const module = await import("./pages/usuario/RecomendacionesPage.js");
         const page = new module.RecomendacionesPage(context.mountNode, {
           router,
+          authManager,
           showToast,
+          hasRouteOpenInOtherTab,
         });
         page.mount();
         return () => page.destroy();
@@ -135,6 +176,11 @@ function configureRouter() {
       templateUrl: "./pages/asesor/dashboard.html",
       beforeEnter: requireRole("asesor"),
       onEnter: async (context) => {
+        await mountAdvisorShell(context.mountNode, {
+          advisorName: authManager.getCurrentUser()?.fullName || "Maria Rodriguez",
+          footerText: "FinTrack 2026 · Panel asesor",
+        });
+
         const module = await import("./pages/asesor/AsesorDashboardPage.js");
         const page = new module.AsesorDashboardPage(context.mountNode, {
           router,
@@ -206,3 +252,58 @@ window.fintrackOpenModal = (mode = "login") => {
 
   router.navigate(ROUTES.HOME, { modal: normalizedMode });
 };
+
+function getOrCreateTabId() {
+  const existing = sessionStorage.getItem(TAB_ID_STORAGE_KEY);
+  if (existing) {
+    return existing;
+  }
+
+  const generated = `tab-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  sessionStorage.setItem(TAB_ID_STORAGE_KEY, generated);
+  return generated;
+}
+
+function readTabRegistry() {
+  const raw = localStorage.getItem(TAB_REGISTRY_STORAGE_KEY);
+  if (!raw) {
+    return {};
+  }
+
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch (_error) {
+    return {};
+  }
+}
+
+function writeTabRegistry(registry) {
+  localStorage.setItem(TAB_REGISTRY_STORAGE_KEY, JSON.stringify(registry));
+}
+
+function registerCurrentTabRoute(path = "/") {
+  const registry = readTabRegistry();
+  registry[currentTabId] = {
+    path,
+    updatedAt: Date.now(),
+  };
+  writeTabRegistry(registry);
+}
+
+function unregisterCurrentTab() {
+  const registry = readTabRegistry();
+  delete registry[currentTabId];
+  writeTabRegistry(registry);
+}
+
+function hasRouteOpenInOtherTab(routePath) {
+  const registry = readTabRegistry();
+  return Object.entries(registry).some(([tabId, tabData]) => {
+    if (tabId === currentTabId) {
+      return false;
+    }
+
+    return tabData?.path === routePath;
+  });
+}

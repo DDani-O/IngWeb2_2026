@@ -1,0 +1,19 @@
+<header class="app-navbar">
+  <div class="app-navbar__content">
+    <a class="app-brand" href="#/">
+      <i class="fa-solid fa-chart-pie"></i>
+      <span>FinTrack</span>
+    </a>
+
+    <div class="dashboard-topbar-user">
+      <span class="dashboard-topbar-user__name" id="advisorTopbarName">{{advisorName}}</span>
+      <button class="action-btn action-btn--ghost d-none d-md-inline-flex" id="advisorLogoutButton" type="button">
+        <i class="fa-solid fa-right-from-bracket"></i>
+        Salir
+      </button>
+      <button class="navbar-icon-btn" type="button" data-bs-toggle="offcanvas" data-bs-target="#advisorSidebarOffcanvas" aria-controls="advisorSidebarOffcanvas" aria-label="Abrir navegacion">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+    </div>
+  </div>
+</header>

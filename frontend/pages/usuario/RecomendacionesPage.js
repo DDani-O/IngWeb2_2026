@@ -1,6 +1,7 @@
 import { Component } from "../../core/Component.js";
-import { MOCK_RECOMMENDATIONS } from "../../utils/constants.js";
+import { MOCK_RECOMMENDATIONS, ROUTES } from "../../utils/constants.js";
 import { formatCurrency } from "../../utils/formatters.js";
+import { buildPlaceholderHashFromPreset, getInitials } from "../../utils/helpers.js";
 
 export class RecomendacionesPage extends Component {
   constructor(element, options = {}) {
@@ -13,6 +14,15 @@ export class RecomendacionesPage extends Component {
   }
 
   render() {
+    this._resetViewPosition();
+
+    const currentUser = this.options.authManager?.getCurrentUser();
+    const userName = currentUser?.fullName || "Juan Perez";
+
+    this._setText("#userTopbarName", userName);
+    this._setText("#userSidebarName", userName);
+    this._setText("#userSidebarInitials", getInitials(userName) || "JP");
+
     this._renderPlaceholderLinks();
     this._renderSummary();
     this._applyFilters();
@@ -40,6 +50,15 @@ export class RecomendacionesPage extends Component {
     const openContact = this.element.querySelector("#openRecommendationContactButton");
     this.listen(openContact, "click", () => this._openContactModal());
 
+    this.element.querySelectorAll(".js-dashboard-back").forEach((button) => {
+      this.listen(button, "click", (event) => this._handleBackToDashboard(event));
+    });
+
+    ["#userLogoutButton", "#userLogoutButtonMobile"].forEach((selector) => {
+      const button = this.element.querySelector(selector);
+      this.listen(button, "click", () => this._handleLogout());
+    });
+
     const contactForm = this.element.querySelector("#recommendationContactForm");
     this.listen(contactForm, "submit", (event) => {
       event.preventDefault();
@@ -52,19 +71,7 @@ export class RecomendacionesPage extends Component {
   _renderPlaceholderLinks() {
     this.element.querySelectorAll(".js-placeholder-link").forEach((anchor) => {
       const preset = anchor.dataset.preset;
-      if (preset === "cargarGasto") {
-        anchor.setAttribute(
-          "href",
-          "#/utils/placeholder?title=Cargar%20Gasto&description=Estamos%20preparando%20esta%20seccion&icon=fa-receipt"
-        );
-      }
-
-      if (preset === "historial") {
-        anchor.setAttribute(
-          "href",
-          "#/utils/placeholder?title=Historial%20de%20Gastos&description=Pronto%20podras%20filtrar%20y%20editar%20movimientos&icon=fa-clock-rotate-left"
-        );
-      }
+      anchor.setAttribute("href", buildPlaceholderHashFromPreset(preset));
     });
   }
 
@@ -280,6 +287,42 @@ export class RecomendacionesPage extends Component {
     const target = this.element.querySelector(selector);
     if (target) {
       target.textContent = value;
+    }
+  }
+
+  _handleBackToDashboard(event) {
+    event.preventDefault();
+
+    const isDashboardOpenInAnotherTab =
+      this.options.hasRouteOpenInOtherTab?.(ROUTES.USER_DASHBOARD) ||
+      (window.opener && !window.opener.closed);
+
+    if (isDashboardOpenInAnotherTab) {
+      window.close();
+
+      window.setTimeout(() => {
+        if (!window.closed) {
+          this.options.router?.navigate(ROUTES.USER_DASHBOARD);
+        }
+      }, 120);
+      return;
+    }
+
+    this.options.router?.navigate(ROUTES.USER_DASHBOARD);
+  }
+
+  _handleLogout() {
+    this.options.authManager?.logout();
+    this.options.showToast?.("Sesion finalizada correctamente.", "success");
+    this.options.router?.navigate(ROUTES.HOME, { modal: "login" });
+  }
+
+  _resetViewPosition() {
+    window.scrollTo(0, 0);
+
+    const routeContainer = document.querySelector("#appRouteContainer");
+    if (routeContainer) {
+      routeContainer.scrollTop = 0;
     }
   }
 }

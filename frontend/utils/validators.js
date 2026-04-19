@@ -1,12 +1,21 @@
+/**
+ * Valida que un campo tenga contenido util (no null, undefined o vacio).
+ */
 export function isRequired(value) {
   return value !== undefined && value !== null && String(value).trim() !== "";
 }
 
+/**
+ * Verifica formato basico de email para formularios de autenticacion o perfil.
+ */
 export function isValidEmail(email) {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(String(email).trim().toLowerCase());
 }
 
+/**
+ * Evalua fortaleza minima de contrasena para flujos de registro y seguridad.
+ */
 export function isStrongPassword(password) {
   const value = String(password);
   const hasMinLength = value.length >= 8;
@@ -15,6 +24,10 @@ export function isStrongPassword(password) {
   return hasMinLength && hasUpper && hasNumber;
 }
 
+/**
+ * Agrupa validaciones del login y devuelve un resultado uniforme con errores.
+ * Tambien puede usarse en pruebas unitarias del formulario.
+ */
 export function validateLoginForm(formData) {
   const errors = [];
 
@@ -32,6 +45,10 @@ export function validateLoginForm(formData) {
   };
 }
 
+/**
+ * Ejecuta validaciones completas del registro segun rol y reglas de negocio.
+ * Deja lista la salida para UI (mensajes) o validaciones backend simuladas.
+ */
 export function validateRegisterForm(formData) {
   const errors = [];
 

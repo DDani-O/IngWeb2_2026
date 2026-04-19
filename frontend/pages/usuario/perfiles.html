@@ -1,16 +1,5 @@
 <div class="app-page page-user-perfiles">
-  <header class="app-navbar">
-    <div class="app-navbar__content">
-      <a class="app-brand" href="#/">
-        <i class="fa-solid fa-chart-pie"></i>
-        <span>FinTrack</span>
-      </a>
-      <a class="navbar-pill" href="#/usuario/dashboard">
-        <i class="fa-solid fa-arrow-left"></i>
-        <span>Volver al Dashboard</span>
-      </a>
-    </div>
-  </header>
+  <div id="userTopbarSlot"></div>
 
   <main class="app-main app-main--wide perfiles-main">
     <section class="section-block perfiles-hero">
@@ -51,17 +40,19 @@
         Tu perfil se actualiza automaticamente segun tus habitos de consumo. Sigue los consejos anteriores para llegar al perfil que deseas.
       </p>
       <div class="d-flex flex-wrap gap-2">
-        <a class="action-btn action-btn--primary" href="#/usuario/dashboard">
+        <button class="action-btn action-btn--primary js-dashboard-back" type="button">
           <i class="fa-solid fa-arrow-left"></i>
           Volver a mi Dashboard
-        </a>
-        <a class="action-btn action-btn--ghost" href="#/usuario/recomendaciones">
+        </button>
+        <a class="action-btn action-btn--ghost" href="#/usuario/recomendaciones" target="_blank">
           <i class="fa-solid fa-lightbulb"></i>
           Ver Recomendaciones
         </a>
       </div>
     </section>
 
-    <footer class="app-footer">FinTrack 2026 · Perfiles de gasto</footer>
+    <div id="appFooterSlot"></div>
   </main>
+
+  <div id="userSidebarSlot"></div>
 </div>

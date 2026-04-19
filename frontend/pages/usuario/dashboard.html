@@ -1,23 +1,5 @@
 <div class="app-page page-user-dashboard">
-  <header class="app-navbar">
-    <div class="app-navbar__content">
-      <a class="app-brand" href="#/">
-        <i class="fa-solid fa-chart-pie"></i>
-        <span>FinTrack</span>
-      </a>
-
-      <div class="dashboard-topbar-user">
-        <span class="dashboard-topbar-user__name" id="userTopbarName">Juan Perez</span>
-        <button class="action-btn action-btn--ghost d-none d-md-inline-flex" id="userLogoutButton" type="button">
-          <i class="fa-solid fa-right-from-bracket"></i>
-          Salir
-        </button>
-        <button class="navbar-icon-btn" type="button" data-bs-toggle="offcanvas" data-bs-target="#userSidebarOffcanvas" aria-controls="userSidebarOffcanvas" aria-label="Abrir navegacion">
-          <i class="fa-solid fa-bars"></i>
-        </button>
-      </div>
-    </div>
-  </header>
+  <div id="userTopbarSlot"></div>
 
   <main class="app-main app-main--wide dashboard-main">
     <section class="hero-panel user-hero-panel">
@@ -77,7 +59,7 @@
         <article class="chart-card">
           <h3 class="info-card__title"><i class="fa-solid fa-chart-pie accent"></i>Gastos por Categoria</h3>
           <canvas id="userCategoryChart" aria-label="Grafico de gastos por categoria"></canvas>
-          <a class="chart-card__link" href="#/usuario/patrones">Ver mas detalles en Patrones de Consumo</a>
+          <a class="chart-card__link" href="#/usuario/patrones" target="_blank">Ver mas detalles en Patrones de Consumo</a>
         </article>
         <article class="chart-card">
           <h3 class="info-card__title"><i class="fa-solid fa-chart-bar accent"></i>Gasto Mensual</h3>
@@ -95,39 +77,10 @@
       <div class="merchant-list" id="userMerchantsList"></div>
     </section>
 
-    <footer class="app-footer">FinTrack 2026 · Dashboard usuario</footer>
+    <div id="appFooterSlot"></div>
   </main>
 
-  <aside class="offcanvas offcanvas-start app-offcanvas" tabindex="-1" id="userSidebarOffcanvas" aria-labelledby="userSidebarOffcanvasLabel">
-    <div class="offcanvas-header">
-      <h5 class="offcanvas-title" id="userSidebarOffcanvasLabel">Panel</h5>
-      <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
-    </div>
-    <div class="offcanvas-body d-flex flex-column gap-2">
-      <div class="sidebar-user-card">
-        <span class="sidebar-user-card__avatar">JP</span>
-        <div>
-          <p class="sidebar-user-card__name">Juan Perez</p>
-          <p class="sidebar-user-card__meta">Editar Perfil</p>
-        </div>
-      </div>
-
-      <p class="sidebar-section-title mt-2">Navegacion</p>
-      <a class="sidebar-link active" href="#/usuario/dashboard"><i class="fa-solid fa-house"></i>Dashboard</a>
-      <a class="sidebar-link" href="#/usuario/patrones"><i class="fa-solid fa-chart-line"></i>Patrones de Consumo</a>
-      <a class="sidebar-link" href="#/usuario/recomendaciones"><i class="fa-solid fa-lightbulb"></i>Recomendaciones</a>
-      <a class="sidebar-link js-placeholder-link" data-preset="historial" href="#/utils/placeholder"><i class="fa-solid fa-clock-rotate-left"></i>Historial de Gastos</a>
-
-      <p class="sidebar-section-title mt-2">Acciones</p>
-      <a class="sidebar-link js-placeholder-link" data-preset="cargarGasto" href="#/utils/placeholder"><i class="fa-solid fa-circle-plus"></i>Cargar Gasto</a>
-      <a class="sidebar-link" href="#/usuario/perfiles"><i class="fa-solid fa-user-pen"></i>Editar Perfil</a>
-
-      <div class="sidebar-spacer"></div>
-      <button class="sidebar-link sidebar-logout" id="userLogoutButtonMobile" type="button">
-        <i class="fa-solid fa-right-from-bracket"></i>Salir
-      </button>
-    </div>
-  </aside>
+  <div id="userSidebarSlot"></div>
 
   <article class="advisor-teaser" id="advisorTeaserCard">
     <div class="advisor-teaser__avatar">👩‍💼</div>

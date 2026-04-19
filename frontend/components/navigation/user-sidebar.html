@@ -1,0 +1,26 @@
+<aside class="offcanvas offcanvas-start app-offcanvas" tabindex="-1" id="userSidebarOffcanvas" aria-labelledby="userSidebarOffcanvasLabel">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title" id="userSidebarOffcanvasLabel">Panel</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
+  </div>
+  <div class="offcanvas-body d-flex flex-column gap-2">
+    <div class="sidebar-user-card">
+      <span class="sidebar-user-card__avatar" id="userSidebarInitials">{{userInitials}}</span>
+      <div>
+        <p class="sidebar-user-card__name" id="userSidebarName">{{userName}}</p>
+        <p class="sidebar-user-card__meta">Editar Perfil</p>
+      </div>
+    </div>
+
+    <p class="sidebar-section-title mt-2">Navegacion</p>
+    {{navigationLinks}}
+
+    <p class="sidebar-section-title mt-2">Acciones</p>
+    {{actionLinks}}
+
+    <div class="sidebar-spacer"></div>
+    <button class="sidebar-link sidebar-logout" id="userLogoutButtonMobile" type="button">
+      <i class="fa-solid fa-right-from-bracket"></i>Salir
+    </button>
+  </div>
+</aside>

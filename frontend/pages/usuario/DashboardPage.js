@@ -171,7 +171,9 @@ export class DashboardPage extends Component {
             .join("")}
         </div>
       </div>
-      <a class="action-btn action-btn--ghost" href="${buildHash(ROUTES.USER_PERFILES)}">
+      <a class="action-btn action-btn--ghost" href="${buildHash(
+        ROUTES.USER_PERFILES
+      )}" target="_blank">
         <i class="fa-solid fa-rotate"></i>
         Cambiar perfil
       </a>
@@ -189,6 +191,7 @@ export class DashboardPage extends Component {
         const link = card.queryPreset
           ? buildPlaceholderHashFromPreset(card.queryPreset)
           : buildHash(card.route);
+        const openInNewTab = this._isSecondaryPageRoute(card.route);
 
         return `
           <article class="summary-card">
@@ -204,11 +207,21 @@ export class DashboardPage extends Component {
                 })
                 .join("")}
             </div>
-            <a class="action-btn action-btn--ghost mt-2" href="${link}">Ver detalle</a>
+            <a class="action-btn action-btn--ghost mt-2" href="${link}" ${
+              openInNewTab ? 'target="_blank"' : ""
+            }>Ver detalle</a>
           </article>
         `;
       })
       .join("");
+  }
+
+  _isSecondaryPageRoute(route) {
+    return [
+      ROUTES.USER_PATRONES,
+      ROUTES.USER_PERFILES,
+      ROUTES.USER_RECOMENDACIONES,
+    ].includes(route);
   }
 
   _renderMerchants() {

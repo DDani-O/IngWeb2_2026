@@ -1,16 +1,5 @@
 <div class="app-page page-user-recomendaciones">
-  <header class="app-navbar">
-    <div class="app-navbar__content">
-      <a class="app-brand" href="#/">
-        <i class="fa-solid fa-chart-pie"></i>
-        <span>FinTrack</span>
-      </a>
-      <a class="navbar-pill" href="#/usuario/dashboard">
-        <i class="fa-solid fa-arrow-left"></i>
-        <span>Volver al Dashboard</span>
-      </a>
-    </div>
-  </header>
+  <div id="userTopbarSlot"></div>
 
   <main class="app-main app-main--wide recommendations-main">
     <section class="section-block recommendations-hero">
@@ -89,18 +78,20 @@
           <p class="summary-strip__value" id="summaryCompletedValue">0</p>
         </article>
       </div>
-      <a class="action-btn action-btn--primary mt-3" href="#/usuario/dashboard">
+      <button class="action-btn action-btn--primary mt-3 js-dashboard-back" type="button">
         <i class="fa-solid fa-arrow-left"></i>
         Volver al Dashboard
-      </a>
+      </button>
       <button class="action-btn action-btn--ghost mt-3" id="openRecommendationContactButton" type="button">
         <i class="fa-solid fa-paper-plane"></i>
         Contactar a mi asesor
       </button>
     </section>
 
-    <footer class="app-footer">FinTrack 2026 · Recomendaciones financieras</footer>
+    <div id="appFooterSlot"></div>
   </main>
+
+  <div id="userSidebarSlot"></div>
 
   <div class="modal fade" id="recommendationDetailModal" tabindex="-1" aria-labelledby="recommendationDetailModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">

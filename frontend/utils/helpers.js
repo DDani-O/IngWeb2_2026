@@ -1,5 +1,8 @@
 import { PLACEHOLDER_PRESETS, ROUTES } from "./constants.js";
 
+/**
+ * Convierte una query string en objeto para simplificar lectura de parametros.
+ */
 export function parseQueryString(queryString = "") {
   const search = queryString.startsWith("?")
     ? queryString.slice(1)
@@ -15,6 +18,10 @@ export function parseQueryString(queryString = "") {
   return result;
 }
 
+/**
+ * Convierte un objeto en query string, omitiendo valores vacios.
+ * Es util para construir URLs limpias en navegacion y filtros.
+ */
 export function stringifyQuery(params = {}) {
   const searchParams = new URLSearchParams();
 
@@ -29,6 +36,9 @@ export function stringifyQuery(params = {}) {
   return searchParams.toString();
 }
 
+/**
+ * Construye un hash route consistente a partir de path y query.
+ */
 export function buildHash(path, query = {}) {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
   const queryString = stringifyQuery(query);
@@ -40,6 +50,9 @@ export function buildHash(path, query = {}) {
   return `#${normalizedPath}?${queryString}`;
 }
 
+/**
+ * Escapa caracteres HTML para prevenir inyecciones al renderizar texto dinamico.
+ */
 export function sanitizeText(value = "") {
   return String(value)
     .replace(/&/g, "&amp;")
@@ -49,10 +62,17 @@ export function sanitizeText(value = "") {
     .replace(/'/g, "&#039;");
 }
 
+/**
+ * Limita un valor numerico a un rango minimo y maximo.
+ */
 export function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
 
+/**
+ * Retrasa ejecucion de una funcion para evitar llamadas excesivas.
+ * Se puede usar en buscadores, resize o inputs reactivos.
+ */
 export function debounce(fn, delay = 250) {
   let timeoutId;
 
@@ -62,18 +82,28 @@ export function debounce(fn, delay = 250) {
   };
 }
 
+/**
+ * Pausa asincrona util para simular latencia o encadenar transiciones.
+ */
 export function sleep(ms = 200) {
   return new Promise((resolve) => {
     window.setTimeout(resolve, ms);
   });
 }
 
+/**
+ * Crea un nodo DOM desde un string HTML.
+ * Puede aprovecharse para plantillas pequenas o componentes dinamicos.
+ */
 export function createElementFromHTML(htmlString) {
   const template = document.createElement("template");
   template.innerHTML = htmlString.trim();
   return template.content.firstElementChild;
 }
 
+/**
+ * Valida que una URL sea relativa y segura para navegacion interna.
+ */
 export function isSafeRelativeUrl(url = "") {
   if (!url || typeof url !== "string") {
     return false;
@@ -90,10 +120,18 @@ export function isSafeRelativeUrl(url = "") {
   return url.startsWith("/");
 }
 
+/**
+ * Obtiene un preset de placeholder por nombre.
+ * Sirve para centralizar textos/iconos de paginas no implementadas.
+ */
 export function getPlaceholderPreset(presetName = "") {
   return PLACEHOLDER_PRESETS[presetName] || null;
 }
 
+/**
+ * Construye el hash de placeholder usando preset y overrides opcionales.
+ * Si no existe preset, aplica una configuracion por defecto.
+ */
 export function buildPlaceholderHashFromPreset(presetName, override = {}) {
   const preset = getPlaceholderPreset(presetName);
 
@@ -113,6 +151,9 @@ export function buildPlaceholderHashFromPreset(presetName, override = {}) {
   });
 }
 
+/**
+ * Renderiza estrellas HTML segun rating limitado entre 1 y 5.
+ */
 export function renderStars(rating = 5) {
   const stars = clamp(rating, 1, 5);
   return Array.from({ length: stars })
@@ -120,6 +161,9 @@ export function renderStars(rating = 5) {
     .join("");
 }
 
+/**
+ * Genera iniciales de un nombre para avatares o chips de usuario.
+ */
 export function getInitials(fullName = "") {
   return fullName
     .split(" ")
@@ -129,6 +173,9 @@ export function getInitials(fullName = "") {
     .join("");
 }
 
+/**
+ * Lee una variable CSS global con fallback para estilos dinamicos.
+ */
 export function getCssVar(name, fallback = "") {
   const value = window
     .getComputedStyle(document.documentElement)
@@ -138,6 +185,10 @@ export function getCssVar(name, fallback = "") {
   return value || fallback;
 }
 
+/**
+ * Devuelve una paleta de colores basada en variables del tema actual.
+ * Pensada para unificar colores de graficos entre paginas.
+ */
 export function getChartThemeColors() {
   return {
     label: getCssVar("--text-muted", "#94a3b8"),

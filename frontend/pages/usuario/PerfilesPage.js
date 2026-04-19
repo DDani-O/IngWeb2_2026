@@ -1,5 +1,10 @@
 import { Component } from "../../core/Component.js";
-import { MOCK_SPENDING_PROFILES, STORAGE_KEYS } from "../../utils/constants.js";
+import {
+  MOCK_SPENDING_PROFILES,
+  ROUTES,
+  STORAGE_KEYS,
+} from "../../utils/constants.js";
+import { buildPlaceholderHashFromPreset, getInitials } from "../../utils/helpers.js";
 
 export class PerfilesPage extends Component {
   constructor(element, options = {}) {
@@ -9,12 +14,38 @@ export class PerfilesPage extends Component {
   }
 
   render() {
+    this._resetViewPosition();
+
+    const currentUser = this.options.authManager?.getCurrentUser();
+    const userName = currentUser?.fullName || this.data.user.name;
+
+    this._setText("#userTopbarName", userName);
+    this._setText("#userSidebarName", userName);
+    this._setText("#userSidebarInitials", getInitials(userName) || "JP");
+
+    this._renderPlaceholderLinks();
     this._renderProfiles();
     this._renderComparison();
   }
 
   attachEvents() {
     this._bindProfileButtons();
+
+    this.element.querySelectorAll(".js-dashboard-back").forEach((button) => {
+      this.listen(button, "click", (event) => this._handleBackToDashboard(event));
+    });
+
+    ["#userLogoutButton", "#userLogoutButtonMobile"].forEach((selector) => {
+      const button = this.element.querySelector(selector);
+      this.listen(button, "click", () => this._handleLogout());
+    });
+  }
+
+  _renderPlaceholderLinks() {
+    this.element.querySelectorAll(".js-placeholder-link").forEach((anchor) => {
+      const preset = anchor.dataset.preset;
+      anchor.setAttribute("href", buildPlaceholderHashFromPreset(preset));
+    });
   }
 
   _renderProfiles() {
@@ -138,5 +169,48 @@ export class PerfilesPage extends Component {
     }
 
     return "⚠️ Como mejorar tu situacion financiera";
+  }
+
+  _handleBackToDashboard(event) {
+    event.preventDefault();
+
+    const isDashboardOpenInAnotherTab =
+      this.options.hasRouteOpenInOtherTab?.(ROUTES.USER_DASHBOARD) ||
+      (window.opener && !window.opener.closed);
+
+    if (isDashboardOpenInAnotherTab) {
+      window.close();
+
+      window.setTimeout(() => {
+        if (!window.closed) {
+          this.options.router?.navigate(ROUTES.USER_DASHBOARD);
+        }
+      }, 120);
+      return;
+    }
+
+    this.options.router?.navigate(ROUTES.USER_DASHBOARD);
+  }
+
+  _handleLogout() {
+    this.options.authManager?.logout();
+    this.options.showToast?.("Sesion finalizada correctamente.", "success");
+    this.options.router?.navigate(ROUTES.HOME, { modal: "login" });
+  }
+
+  _resetViewPosition() {
+    window.scrollTo(0, 0);
+
+    const routeContainer = document.querySelector("#appRouteContainer");
+    if (routeContainer) {
+      routeContainer.scrollTop = 0;
+    }
+  }
+
+  _setText(selector, value) {
+    const target = this.element.querySelector(selector);
+    if (target) {
+      target.textContent = value;
+    }
   }
 }
