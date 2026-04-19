@@ -1,7 +1,3 @@
-.advisor-main {
-  padding-top: var(--app-shell-top-offset);
-}
-
 .advisor-hero-grid {
   grid-template-columns: 1.1fr 0.42fr 1fr;
 }
@@ -13,10 +9,10 @@
 }
 
 .advisor-client-card {
-  border: 1px solid rgba(112, 154, 183, 0.24);
+  border: 1px solid var(--border-soft);
   border-radius: var(--radius-md);
   padding: 14px;
-  background: rgba(8, 32, 62, 0.58);
+  background: var(--surface-card);
   transition: 180ms ease;
 }
 
@@ -39,7 +35,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: rgba(45, 212, 191, 0.16);
+  background: color-mix(in srgb, var(--color-primary) 18%, transparent);
   color: var(--color-primary);
   font-weight: 700;
   font-size: 0.86rem;
@@ -51,7 +47,7 @@
 }
 
 .advisor-client-mail {
-  color: var(--text-300);
+  color: var(--text-muted);
   font-size: 0.93rem;
 }
 
@@ -66,21 +62,21 @@
 }
 
 .risk-pill--low {
-  color: #a7f3d0;
-  background: rgba(34, 197, 94, 0.2);
-  border: 1px solid rgba(34, 197, 94, 0.35);
+  color: color-mix(in srgb, var(--color-success) 72%, #ffffff 28%);
+  background: color-mix(in srgb, var(--color-success) 20%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-success) 36%, transparent);
 }
 
 .risk-pill--medium {
-  color: #fde68a;
-  background: rgba(245, 158, 11, 0.2);
-  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: color-mix(in srgb, var(--color-warning) 72%, #ffffff 28%);
+  background: color-mix(in srgb, var(--color-warning) 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-warning) 34%, transparent);
 }
 
 .risk-pill--high {
-  color: #fecaca;
-  background: rgba(239, 68, 68, 0.2);
-  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: color-mix(in srgb, var(--color-danger) 74%, #ffffff 26%);
+  background: color-mix(in srgb, var(--color-danger) 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-danger) 34%, transparent);
 }
 
 .advisor-client-unread {
@@ -88,9 +84,9 @@
   align-items: center;
   gap: 6px;
   border-radius: 9px;
-  border: 1px solid rgba(239, 68, 68, 0.35);
-  background: rgba(239, 68, 68, 0.16);
-  color: #fca5a5;
+  border: 1px solid color-mix(in srgb, var(--color-danger) 34%, transparent);
+  background: color-mix(in srgb, var(--color-danger) 16%, transparent);
+  color: color-mix(in srgb, var(--color-danger) 72%, #ffffff 28%);
   font-size: 0.83rem;
   font-weight: 700;
   padding: 5px 9px;
@@ -105,15 +101,15 @@
 }
 
 .advisor-client-metrics div {
-  border: 1px solid rgba(116, 152, 182, 0.24);
+  border: 1px solid var(--border-soft);
   border-radius: 10px;
-  background: rgba(9, 36, 65, 0.56);
+  background: var(--surface-1);
   padding: 9px;
 }
 
 .advisor-client-metrics p {
   font-size: 0.74rem;
-  color: var(--text-400);
+  color: var(--text-faint);
   font-weight: 700;
   text-transform: uppercase;
 }
@@ -128,11 +124,11 @@
 }
 
 .advisor-client-change--up {
-  color: #fb7373;
+  color: var(--color-danger);
 }
 
 .advisor-client-change--down {
-  color: #40e49d;
+  color: var(--color-success);
 }
 
 .advisor-table-client {
@@ -153,18 +149,18 @@
 }
 
 .inbox-item {
-  border: 1px solid rgba(116, 152, 182, 0.24);
+  border: 1px solid var(--border-soft);
   border-radius: var(--radius-sm);
   padding: 12px;
   display: grid;
   grid-template-columns: auto 1fr auto;
   gap: 10px;
   align-items: center;
-  background: rgba(8, 32, 62, 0.52);
+  background: var(--surface-2);
 }
 
 .inbox-item--unread {
-  border-color: rgba(45, 212, 191, 0.4);
+  border-color: var(--border-strong);
 }
 
 .inbox-title {
@@ -174,7 +170,7 @@
 
 .inbox-sub {
   font-size: 0.9rem;
-  color: var(--text-300);
+  color: var(--text-muted);
 }
 
 .inbox-badge {
@@ -185,9 +181,9 @@
   letter-spacing: 0.05em;
   padding: 3px 6px;
   border-radius: 999px;
-  color: #3ce2d2;
-  border: 1px solid rgba(45, 212, 191, 0.32);
-  background: rgba(45, 212, 191, 0.14);
+  color: var(--color-primary);
+  border: 1px solid var(--border-strong);
+  background: var(--action-ghost-bg);
 }
 
 .advisor-recommendation-board {
@@ -197,9 +193,9 @@
 }
 
 .advisor-rec-column {
-  border: 1px solid rgba(116, 152, 182, 0.24);
+  border: 1px solid var(--border-soft);
   border-radius: var(--radius-md);
-  background: rgba(8, 32, 62, 0.58);
+  background: var(--surface-card);
   padding: 14px;
 }
 
@@ -217,7 +213,7 @@
 
 .advisor-rec-column__head p {
   font-size: 0.86rem;
-  color: var(--text-300);
+  color: var(--text-muted);
 }
 
 .advisor-rec-column__list {
@@ -234,11 +230,11 @@
 }
 
 .advisor-rec-column__list span {
-  color: var(--text-300);
+  color: var(--text-muted);
 }
 
 .advisor-rec-column__list strong {
-  color: #3be6d6;
+  color: var(--color-primary);
 }
 
 @media (max-width: 1199px) {

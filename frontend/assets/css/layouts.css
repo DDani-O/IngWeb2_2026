@@ -15,7 +15,7 @@
   left: 0;
   right: 0;
   height: var(--nav-height);
-  background: rgba(2, 12, 31, 0.94);
+  background: var(--navbar-bg-solid);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border-soft);
   z-index: 1060;
@@ -39,7 +39,7 @@
   font-size: 2rem;
   font-weight: 800;
   letter-spacing: -0.01em;
-  color: var(--text-100);
+  color: var(--text-primary);
 }
 
 .app-brand i {
@@ -53,9 +53,9 @@
   gap: 8px;
   padding: 8px 13px;
   border-radius: 999px;
-  background: rgba(45, 212, 191, 0.08);
+  background: var(--action-ghost-bg);
   border: 1px solid var(--border-soft);
-  color: var(--text-200);
+  color: var(--text-secondary);
   font-size: 0.84rem;
   font-weight: 600;
 }
@@ -68,7 +68,7 @@
   justify-content: center;
   border-radius: 11px;
   border: 1px solid var(--border-soft);
-  background: rgba(45, 212, 191, 0.08);
+  background: var(--action-ghost-bg);
   color: var(--color-primary);
 }
 
@@ -79,7 +79,7 @@
 }
 
 .dashboard-topbar-user__name {
-  color: var(--text-300);
+  color: var(--text-muted);
   font-size: 0.96rem;
   font-weight: 600;
 }
@@ -99,7 +99,7 @@
 .section-block {
   border: 1px solid var(--border-soft);
   border-radius: var(--radius-lg);
-  background: linear-gradient(145deg, rgba(11, 35, 69, 0.92), rgba(8, 28, 56, 0.72));
+  background: var(--surface-panel);
   padding: 22px;
   box-shadow: var(--shadow-soft);
 }
@@ -107,7 +107,7 @@
 .hero-panel {
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-xl);
-  background: linear-gradient(130deg, rgba(21, 60, 94, 0.92), rgba(12, 37, 73, 0.78) 45%, rgba(16, 60, 72, 0.62));
+  background: var(--surface-hero);
   padding: 26px;
 }
 
@@ -143,13 +143,16 @@
 
 .app-footer {
   margin-top: 6px;
-  color: var(--text-400);
+  color: var(--text-faint);
   font-size: 0.79rem;
   text-align: center;
 }
 
 .app-offcanvas {
-  background: linear-gradient(180deg, rgba(2, 13, 33, 0.98), rgba(6, 24, 52, 0.96));
+  --bs-offcanvas-bg: var(--app-bg-start);
+  --bs-offcanvas-color: var(--text-primary);
+  background-color: var(--app-bg-start);
+  background-image: none;
   border-right: 1px solid var(--border-soft);
 }
 
@@ -162,7 +165,7 @@
   font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.08em;
-  color: var(--text-400);
+  color: var(--text-faint);
   margin-bottom: 8px;
 }
 
@@ -172,7 +175,7 @@
   gap: 10px;
   border-left: 3px solid transparent;
   border-radius: 10px;
-  color: var(--text-300);
+  color: var(--text-muted);
   padding: 10px 12px;
   transition: 160ms ease;
 }
@@ -181,7 +184,7 @@
 .sidebar-link.active {
   color: var(--color-primary);
   border-left-color: var(--color-primary);
-  background: rgba(45, 212, 191, 0.08);
+  background: var(--action-ghost-bg);
 }
 
 .sidebar-link i {
@@ -194,13 +197,13 @@
 }
 
 .sidebar-logout {
-  border: 1px solid rgba(239, 68, 68, 0.28);
-  color: #f87171;
-  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid color-mix(in srgb, var(--color-danger) 40%, transparent);
+  color: color-mix(in srgb, var(--color-danger) 72%, #ffffff 28%);
+  background: color-mix(in srgb, var(--color-danger) 14%, transparent);
 }
 
 .sidebar-logout:hover {
-  background: rgba(239, 68, 68, 0.2);
+  background: color-mix(in srgb, var(--color-danger) 22%, transparent);
   border-left-color: transparent;
 }
 
@@ -211,7 +214,7 @@
   border: 1px solid var(--border-strong);
   border-radius: 12px;
   padding: 12px;
-  background: rgba(18, 54, 85, 0.4);
+  background: var(--surface-1);
 }
 
 .sidebar-user-card__avatar {
@@ -222,8 +225,8 @@
   align-items: center;
   justify-content: center;
   font-weight: 800;
-  color: #08354a;
-  background: linear-gradient(135deg, #32dccb, #1bbbe4);
+  color: var(--action-primary-text);
+  background: var(--action-primary-bg);
 }
 
 .sidebar-user-card__name {

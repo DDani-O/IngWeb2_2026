@@ -3,6 +3,7 @@ import { ROUTES, MOCK_USER_DASHBOARD } from "../../utils/constants.js";
 import {
   buildHash,
   buildPlaceholderHashFromPreset,
+  getChartThemeColors,
   getInitials,
 } from "../../utils/helpers.js";
 import { formatCurrency, formatTrendLabel } from "../../utils/formatters.js";
@@ -262,6 +263,7 @@ export class DashboardPage extends Component {
     }
 
     this._destroyCharts();
+    const chartColors = getChartThemeColors();
 
     const categoryCtx = this.element.querySelector("#userCategoryChart");
     const monthlyCtx = this.element.querySelector("#userMonthlyChart");
@@ -279,7 +281,7 @@ export class DashboardPage extends Component {
                 backgroundColor: this.data.charts.categoryDistribution.map(
                   (item) => item.color
                 ),
-                borderColor: "#0b1120",
+                borderColor: chartColors.border,
                 borderWidth: 2,
               },
             ],
@@ -287,7 +289,7 @@ export class DashboardPage extends Component {
           options: {
             plugins: {
               legend: {
-                labels: { color: "#94a3b8" },
+                labels: { color: chartColors.label },
               },
             },
           },
@@ -314,15 +316,17 @@ export class DashboardPage extends Component {
           options: {
             scales: {
               x: {
-                ticks: { color: "#94a3b8" },
+                ticks: { color: chartColors.label },
+                grid: { color: chartColors.grid },
               },
               y: {
-                ticks: { color: "#94a3b8" },
+                ticks: { color: chartColors.label },
+                grid: { color: chartColors.grid },
               },
             },
             plugins: {
               legend: {
-                labels: { color: "#94a3b8" },
+                labels: { color: chartColors.label },
               },
             },
           },
@@ -340,7 +344,7 @@ export class DashboardPage extends Component {
               {
                 label: "Gasto Diario",
                 data: this.data.charts.dailySeries,
-                borderColor: "#06b6d4",
+                borderColor: chartColors.info,
                 backgroundColor: "rgba(6, 182, 212, 0.2)",
                 fill: true,
                 tension: 0.35,
@@ -350,15 +354,17 @@ export class DashboardPage extends Component {
           options: {
             scales: {
               x: {
-                ticks: { color: "#94a3b8" },
+                ticks: { color: chartColors.label },
+                grid: { color: chartColors.grid },
               },
               y: {
-                ticks: { color: "#94a3b8" },
+                ticks: { color: chartColors.label },
+                grid: { color: chartColors.grid },
               },
             },
             plugins: {
               legend: {
-                labels: { color: "#94a3b8" },
+                labels: { color: chartColors.label },
               },
             },
           },

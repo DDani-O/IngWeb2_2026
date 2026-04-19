@@ -1,12 +1,14 @@
 .placeholder-page {
   min-height: 100vh;
-  padding-top: var(--nav-height);
+  min-height: 100dvh;
+  padding-top: var(--app-shell-top-offset);
 }
 
 .placeholder-main {
   max-width: 840px;
   margin: 0 auto;
-  min-height: calc(100vh - var(--nav-height));
+  min-height: calc(100vh - var(--app-shell-top-offset));
+  min-height: calc(100dvh - var(--app-shell-top-offset));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -17,7 +19,7 @@
   width: 100%;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-xl);
-  background: linear-gradient(150deg, rgba(45, 212, 191, 0.12), rgba(2, 132, 199, 0.06));
+  background: linear-gradient(150deg, color-mix(in srgb, var(--color-primary) 14%, transparent), var(--surface-card));
   padding: 26px;
   text-align: center;
 }
@@ -36,7 +38,7 @@
 .placeholder-description {
   max-width: 620px;
   margin: 0 auto;
-  color: var(--text-300);
+  color: var(--text-muted);
   font-size: 0.94rem;
 }
 

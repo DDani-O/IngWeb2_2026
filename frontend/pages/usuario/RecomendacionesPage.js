@@ -77,7 +77,7 @@ export class RecomendacionesPage extends Component {
     this._setText("#summaryCompletedValue", String(this.data.stats.completedThisMonth));
     this._setText(
       "#summaryImpactValue",
-      `${formatCurrency(this.data.stats.totalSavingsPotential * 12)} anuales`
+      formatCurrency(this.data.stats.totalSavingsPotential * 12)
     );
   }
 

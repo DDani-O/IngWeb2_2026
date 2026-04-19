@@ -1,7 +1,3 @@
-.recommendations-main {
-  padding-top: var(--app-shell-top-offset);
-}
-
 .recommendation-toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -14,15 +10,15 @@
 }
 
 .recommendations-group--high {
-  border-color: rgba(239, 68, 68, 0.4);
+  border-color: color-mix(in srgb, var(--color-danger) 40%, transparent);
 }
 
 .recommendations-group--medium {
-  border-color: rgba(34, 197, 94, 0.4);
+  border-color: color-mix(in srgb, var(--color-success) 38%, transparent);
 }
 
 .recommendations-group--completed {
-  border-color: rgba(45, 212, 191, 0.4);
+  border-color: var(--border-strong);
 }
 
 .recommendation-group {
@@ -33,21 +29,21 @@
 
 .recommendation-card {
   border-left: 3px solid var(--color-warning);
-  border: 1px solid rgba(122, 154, 184, 0.3);
+  border: 1px solid var(--border-soft);
   border-left-color: var(--color-warning);
   border-radius: var(--radius-md);
-  background: linear-gradient(145deg, rgba(22, 27, 50, 0.84), rgba(10, 25, 51, 0.76));
+  background: var(--surface-card);
   padding: 16px;
 }
 
 .recommendation-card--alta {
   border-left-color: var(--color-danger);
-  border-color: rgba(239, 68, 68, 0.38);
+  border-color: color-mix(in srgb, var(--color-danger) 38%, transparent);
 }
 
 .recommendation-card--media {
   border-left-color: var(--color-success);
-  border-color: rgba(34, 197, 94, 0.33);
+  border-color: color-mix(in srgb, var(--color-success) 34%, transparent);
 }
 
 .recommendation-card--completada {
@@ -69,7 +65,7 @@
 
 .recommendation-card__text {
   font-size: 1.07rem;
-  color: var(--text-300);
+  color: var(--text-muted);
   margin-bottom: 10px;
 }
 
@@ -78,9 +74,9 @@
   gap: 6px;
   padding: 6px 12px;
   border-radius: 999px;
-  background: rgba(34, 197, 94, 0.2);
-  border: 1px solid rgba(34, 197, 94, 0.34);
-  color: #bbf7d0;
+  background: color-mix(in srgb, var(--color-success) 20%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-success) 34%, transparent);
+  color: color-mix(in srgb, var(--color-success) 74%, #ffffff 26%);
   font-size: 1rem;
   font-weight: 700;
 }
@@ -88,8 +84,8 @@
 .recommendation-steps {
   margin: 12px 0;
   padding: 10px 0 0 18px;
-  border-left: 3px solid rgba(49, 216, 199, 0.6);
-  color: #d8edff;
+  border-left: 3px solid var(--border-strong);
+  color: var(--text-secondary);
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -105,7 +101,7 @@
 
 .recommendations-total {
   text-align: center;
-  border-color: rgba(49, 216, 199, 0.48);
+  border-color: var(--border-strong);
 }
 
 .recommendations-total__label {
@@ -130,14 +126,14 @@
 }
 
 .summary-strip__item {
-  border: 1px solid rgba(92, 138, 172, 0.24);
+  border: 1px solid var(--border-soft);
   border-radius: var(--radius-md);
   padding: 12px;
-  background: rgba(12, 36, 68, 0.55);
+  background: var(--surface-1);
 }
 
 .summary-strip__label {
-  color: var(--text-300);
+  color: var(--text-muted);
   font-size: 0.82rem;
   margin-bottom: 4px;
 }

@@ -8,6 +8,10 @@
 
       <div class="dashboard-topbar-user">
         <span class="dashboard-topbar-user__name" id="userTopbarName">Juan Perez</span>
+        <button class="action-btn action-btn--ghost d-none d-md-inline-flex" id="userLogoutButton" type="button">
+          <i class="fa-solid fa-right-from-bracket"></i>
+          Salir
+        </button>
         <button class="navbar-icon-btn" type="button" data-bs-toggle="offcanvas" data-bs-target="#userSidebarOffcanvas" aria-controls="userSidebarOffcanvas" aria-label="Abrir navegacion">
           <i class="fa-solid fa-bars"></i>
         </button>
@@ -97,7 +101,7 @@
   <aside class="offcanvas offcanvas-start app-offcanvas" tabindex="-1" id="userSidebarOffcanvas" aria-labelledby="userSidebarOffcanvasLabel">
     <div class="offcanvas-header">
       <h5 class="offcanvas-title" id="userSidebarOffcanvasLabel">Panel</h5>
-      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
+      <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
     </div>
     <div class="offcanvas-body d-flex flex-column gap-2">
       <div class="sidebar-user-card">
@@ -146,16 +150,16 @@
 
   <div class="modal fade" id="advisorChatModal" tabindex="-1" aria-labelledby="advisorChatModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content bg-dark border border-info">
-        <div class="modal-header border-secondary">
+      <div class="modal-content app-modal-surface">
+        <div class="modal-header">
           <h5 class="modal-title" id="advisorChatModalLabel">Maria Rodriguez · Asesor Financiero</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
         </div>
         <div class="modal-body">
           <div class="chat-messages" id="advisorChatMessages"></div>
           <div class="mt-2 d-flex gap-2">
             <input type="text" id="advisorChatInput" class="form-control form-control-sm" placeholder="Escribe tu mensaje" />
-            <button class="btn btn-info btn-sm" id="advisorChatSendButton" type="button">Enviar</button>
+            <button class="action-btn action-btn--primary" id="advisorChatSendButton" type="button">Enviar</button>
           </div>
         </div>
       </div>

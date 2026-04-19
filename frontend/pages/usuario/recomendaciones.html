@@ -77,7 +77,7 @@
       <p class="recommendations-total__label">💡 Total de Ahorro Potencial</p>
       <p class="recommendations-total__value" id="summarySavingsValue">$0/mes</p>
       <p class="text-muted">
-        Si implementas todas las recomendaciones activas, podrias ahorrar hasta <strong id="summaryImpactValue">0%</strong> de tu gasto mensual.
+        Si implementas todas las recomendaciones activas, podrias ahorrar hasta <strong id="summaryImpactValue">$0</strong> al ano.
       </p>
       <div class="summary-strip app-hidden" id="recommendationsSummaryStrip">
         <article class="summary-strip__item">
@@ -93,6 +93,10 @@
         <i class="fa-solid fa-arrow-left"></i>
         Volver al Dashboard
       </a>
+      <button class="action-btn action-btn--ghost mt-3" id="openRecommendationContactButton" type="button">
+        <i class="fa-solid fa-paper-plane"></i>
+        Contactar a mi asesor
+      </button>
     </section>
 
     <footer class="app-footer">FinTrack 2026 · Recomendaciones financieras</footer>
@@ -100,10 +104,10 @@
 
   <div class="modal fade" id="recommendationDetailModal" tabindex="-1" aria-labelledby="recommendationDetailModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
-      <div class="modal-content bg-dark border border-info">
-        <div class="modal-header border-secondary">
+      <div class="modal-content app-modal-surface">
+        <div class="modal-header">
           <h5 class="modal-title" id="recommendationDetailModalLabel">Detalle de Recomendacion</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
         </div>
         <div class="modal-body" id="recommendationDetailContent"></div>
       </div>
@@ -112,10 +116,10 @@
 
   <div class="modal fade" id="recommendationContactModal" tabindex="-1" aria-labelledby="recommendationContactModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content bg-dark border border-info">
-        <div class="modal-header border-secondary">
+      <div class="modal-content app-modal-surface">
+        <div class="modal-header">
           <h5 class="modal-title" id="recommendationContactModalLabel">Contactar a tu Asesor</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
         </div>
         <form class="modal-body" id="recommendationContactForm">
           <div class="mb-3">
@@ -126,7 +130,7 @@
             <label for="recommendationContactMessage" class="form-label">Mensaje</label>
             <textarea id="recommendationContactMessage" class="form-control" rows="4" required></textarea>
           </div>
-          <button class="btn btn-info" type="submit">Enviar</button>
+          <button class="action-btn action-btn--primary" type="submit">Enviar</button>
         </form>
       </div>
     </div>

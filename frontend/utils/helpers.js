@@ -128,3 +128,23 @@ export function getInitials(fullName = "") {
     .map((part) => part[0].toUpperCase())
     .join("");
 }
+
+export function getCssVar(name, fallback = "") {
+  const value = window
+    .getComputedStyle(document.documentElement)
+    .getPropertyValue(name)
+    .trim();
+
+  return value || fallback;
+}
+
+export function getChartThemeColors() {
+  return {
+    label: getCssVar("--text-muted", "#94a3b8"),
+    grid: getCssVar("--border-soft", "rgba(148, 163, 184, 0.2)"),
+    border: getCssVar("--app-bg-end", "#021312"),
+    primary: getCssVar("--color-primary", "#39dfbf"),
+    info: getCssVar("--color-info", "#31d4c7"),
+    danger: getCssVar("--color-danger", "#ff5d66"),
+  };
+}

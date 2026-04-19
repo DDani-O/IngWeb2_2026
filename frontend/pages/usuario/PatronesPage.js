@@ -1,6 +1,7 @@
 import { Component } from "../../core/Component.js";
 import { MOCK_CONSUMPTION_PATTERNS } from "../../utils/constants.js";
 import { formatCurrency } from "../../utils/formatters.js";
+import { getChartThemeColors } from "../../utils/helpers.js";
 
 export class PatronesPage extends Component {
   constructor(element, options = {}) {
@@ -117,6 +118,7 @@ export class PatronesPage extends Component {
     }
 
     this._destroyCharts();
+    this.chartColors = getChartThemeColors();
 
     this._initCategoryChart();
     this._initMonthlyEvolutionChart();
@@ -139,7 +141,7 @@ export class PatronesPage extends Component {
             {
               data: this.data.categories.map((item) => item.percentage),
               backgroundColor: this.data.categories.map((item) => item.color),
-              borderColor: "#04132f",
+              borderColor: this.chartColors.border,
               borderWidth: 3,
             },
           ],
@@ -149,7 +151,7 @@ export class PatronesPage extends Component {
           plugins: {
             legend: {
               labels: {
-                color: "#9bb7d6",
+                color: this.chartColors.label,
               },
             },
           },
@@ -183,17 +185,17 @@ export class PatronesPage extends Component {
         options: {
           scales: {
             x: {
-              ticks: { color: "#8fa8c7" },
-              grid: { color: "rgba(143, 168, 199, 0.12)" },
+              ticks: { color: this.chartColors.label },
+              grid: { color: this.chartColors.grid },
             },
             y: {
-              ticks: { color: "#8fa8c7" },
-              grid: { color: "rgba(143, 168, 199, 0.12)" },
+              ticks: { color: this.chartColors.label },
+              grid: { color: this.chartColors.grid },
             },
           },
           plugins: {
             legend: {
-              labels: { color: "#9bb7d6" },
+              labels: { color: this.chartColors.label },
             },
           },
         },
@@ -225,17 +227,17 @@ export class PatronesPage extends Component {
         options: {
           scales: {
             x: {
-              ticks: { color: "#8fa8c7" },
-              grid: { color: "rgba(143, 168, 199, 0.12)" },
+              ticks: { color: this.chartColors.label },
+              grid: { color: this.chartColors.grid },
             },
             y: {
-              ticks: { color: "#8fa8c7" },
-              grid: { color: "rgba(143, 168, 199, 0.12)" },
+              ticks: { color: this.chartColors.label },
+              grid: { color: this.chartColors.grid },
             },
           },
           plugins: {
             legend: {
-              labels: { color: "#9bb7d6" },
+              labels: { color: this.chartColors.label },
             },
           },
         },
@@ -274,17 +276,17 @@ export class PatronesPage extends Component {
         options: {
           scales: {
             x: {
-              ticks: { color: "#8fa8c7" },
-              grid: { color: "rgba(143, 168, 199, 0.12)" },
+              ticks: { color: this.chartColors.label },
+              grid: { color: this.chartColors.grid },
             },
             y: {
-              ticks: { color: "#8fa8c7" },
-              grid: { color: "rgba(143, 168, 199, 0.12)" },
+              ticks: { color: this.chartColors.label },
+              grid: { color: this.chartColors.grid },
             },
           },
           plugins: {
             legend: {
-              labels: { color: "#9bb7d6" },
+              labels: { color: this.chartColors.label },
             },
           },
         },

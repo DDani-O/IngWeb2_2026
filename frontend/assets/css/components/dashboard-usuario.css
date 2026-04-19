@@ -11,7 +11,7 @@
   border-radius: var(--radius-lg);
   text-align: center;
   padding: 16px;
-  background: linear-gradient(135deg, rgba(33, 134, 162, 0.35), rgba(15, 62, 90, 0.22));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-info) 18%, transparent), var(--surface-1));
 }
 
 .dashboard-calendar__day {
@@ -30,7 +30,7 @@
 }
 
 .dashboard-calendar__meta {
-  color: var(--text-300);
+  color: var(--text-muted);
   font-size: 0.97rem;
   margin-top: 7px;
 }
@@ -38,7 +38,7 @@
 .profile-highlight {
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-lg);
-  background: linear-gradient(145deg, rgba(10, 52, 78, 0.66), rgba(7, 33, 63, 0.5));
+  background: linear-gradient(145deg, color-mix(in srgb, var(--color-secondary) 12%, transparent), var(--surface-card));
   padding: 20px;
   display: flex;
   flex-wrap: wrap;
@@ -56,17 +56,17 @@
 .profile-tag {
   font-size: 0.76rem;
   padding: 5px 10px;
-  border: 1px solid rgba(133, 166, 194, 0.3);
+  border: 1px solid var(--border-soft);
   border-radius: 999px;
-  color: var(--text-200);
-  background: rgba(8, 32, 60, 0.5);
+  color: var(--text-secondary);
+  background: var(--surface-1);
 }
 
 .summary-card {
-  border: 1px solid rgba(119, 152, 181, 0.24);
+  border: 1px solid var(--border-soft);
   border-radius: var(--radius-md);
   padding: 15px;
-  background: rgba(8, 31, 59, 0.58);
+  background: var(--surface-card);
 }
 
 .summary-card__title {
@@ -87,7 +87,7 @@
   display: flex;
   justify-content: space-between;
   font-size: 0.87rem;
-  color: var(--text-300);
+  color: var(--text-muted);
 }
 
 .user-chart-grid .chart-card canvas {
@@ -104,7 +104,7 @@
   border-radius: 11px;
   padding: 13px;
   border-left: 3px solid var(--color-primary);
-  background: rgba(9, 37, 65, 0.62);
+  background: var(--surface-2);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -124,7 +124,7 @@
   width: min(20rem, calc(100vw - (var(--floating-edge-gap) * 2)));
   border: 1px solid var(--border-strong);
   border-radius: 18px;
-  background: linear-gradient(140deg, rgba(16, 45, 77, 0.92), rgba(9, 31, 60, 0.86));
+  background: linear-gradient(140deg, color-mix(in srgb, var(--color-secondary) 14%, transparent), var(--surface-2));
   padding: 14px;
   display: grid;
   grid-template-columns: auto 1fr auto;
@@ -139,7 +139,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: rgba(49, 216, 199, 0.2);
+  background: color-mix(in srgb, var(--color-primary) 18%, transparent);
   font-size: 1.6rem;
 }
 
@@ -151,7 +151,7 @@
 .advisor-teaser__close {
   border: 0;
   background: transparent;
-  color: var(--text-300);
+  color: var(--text-muted);
 }
 
 .user-chat-fab {
@@ -160,10 +160,10 @@
   bottom: var(--floating-bottom-gap);
   width: var(--chat-fab-size);
   height: var(--chat-fab-size);
-  border: 1px solid rgba(49, 216, 199, 0.48);
+  border: 1px solid var(--border-strong);
   border-radius: 50%;
-  background: linear-gradient(130deg, rgba(15, 72, 93, 0.92), rgba(10, 45, 74, 0.9));
-  color: #bff9f0;
+  background: linear-gradient(130deg, color-mix(in srgb, var(--color-primary) 18%, transparent), var(--surface-2));
+  color: var(--text-primary);
   z-index: 1056;
   box-shadow: var(--shadow-accent);
 }
@@ -185,13 +185,13 @@
 
 .chat-message--advisor {
   align-self: flex-start;
-  background: rgba(45, 212, 191, 0.1);
+  background: color-mix(in srgb, var(--color-primary) 10%, var(--surface-1));
   border: 1px solid var(--border-soft);
 }
 
 .chat-message--user {
   align-self: flex-end;
-  background: rgba(45, 212, 191, 0.24);
+  background: color-mix(in srgb, var(--color-primary) 24%, var(--surface-1));
   border: 1px solid var(--border-strong);
 }
 

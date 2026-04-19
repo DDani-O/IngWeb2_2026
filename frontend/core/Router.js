@@ -98,6 +98,7 @@ export class Router {
     }
 
     await this._cleanupCurrent();
+    this._cleanupOverlayArtifacts();
 
     if (typeof route.render === "function") {
       await route.render(context);
@@ -116,6 +117,37 @@ export class Router {
       path: payload.path,
       query: payload.query,
     });
+  }
+
+  _cleanupOverlayArtifacts() {
+    if (typeof document === "undefined") {
+      return;
+    }
+
+    document
+      .querySelectorAll(".offcanvas-backdrop, .modal-backdrop")
+      .forEach((backdrop) => backdrop.remove());
+
+    document.querySelectorAll(".offcanvas.show, .modal.show").forEach((overlay) => {
+      overlay.classList.remove("show");
+      overlay.setAttribute("aria-hidden", "true");
+      overlay.style.removeProperty("display");
+    });
+
+    const body = document.body;
+    if (body) {
+      body.classList.remove("modal-open");
+      body.style.removeProperty("overflow");
+      body.style.removeProperty("padding-right");
+      body.removeAttribute("data-bs-overflow");
+      body.removeAttribute("data-bs-padding-right");
+    }
+
+    const html = document.documentElement;
+    if (html) {
+      html.style.removeProperty("overflow");
+      html.style.removeProperty("padding-right");
+    }
   }
 
   async _canEnter(route, context) {
