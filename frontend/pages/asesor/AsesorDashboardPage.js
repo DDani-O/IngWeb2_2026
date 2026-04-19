@@ -1,9 +1,9 @@
-import { Component } from "../../core/Component.js";
+import { PageController } from "../../core/PageController.js";
 import { MOCK_ADVISOR_DASHBOARD, ROUTES } from "../../utils/constants.js";
 import { getInitials } from "../../utils/helpers.js";
 import { formatCurrency, formatTrendLabel } from "../../utils/formatters.js";
 
-export class AsesorDashboardPage extends Component {
+export class AsesorDashboardPage extends PageController {
   constructor(element, options = {}) {
     super(element, options);
     this.data = JSON.parse(JSON.stringify(MOCK_ADVISOR_DASHBOARD));
@@ -55,9 +55,9 @@ export class AsesorDashboardPage extends Component {
       this._handleInboxNavigation(event);
     });
 
-    ["#advisorLogoutButton", "#advisorLogoutButtonMobile"].forEach((selector) => {
-      const button = this.element.querySelector(selector);
-      this.listen(button, "click", () => this._handleLogout());
+    this._bindLogoutButtons({
+      role: "asesor",
+      toastMessage: "Sesion de asesor finalizada.",
     });
   }
 
@@ -297,13 +297,7 @@ export class AsesorDashboardPage extends Component {
   }
 
   _openRecommendationModal() {
-    if (!window.bootstrap) {
-      return;
-    }
-
-    const modalElement = this.element.querySelector("#advisorRecommendationModal");
-    this.recommendationModal = window.bootstrap.Modal.getOrCreateInstance(modalElement);
-    this.recommendationModal.show();
+    this.recommendationModal = this._showModal("#advisorRecommendationModal");
   }
 
   _handleCreateRecommendation() {
@@ -330,12 +324,6 @@ export class AsesorDashboardPage extends Component {
     });
   }
 
-  _handleLogout() {
-    this.options.authManager?.logout();
-    this.options.showToast?.("Sesion de asesor finalizada.", "success");
-    this.options.router?.navigate(ROUTES.HOME, { modal: "login" });
-  }
-
   _formatStatValue(stat) {
     if (stat.format === "percent") {
       return `${stat.value}${stat.suffix || "%"}`;
@@ -346,12 +334,5 @@ export class AsesorDashboardPage extends Component {
     }
 
     return String(stat.value);
-  }
-
-  _setText(selector, value) {
-    const target = this.element.querySelector(selector);
-    if (target) {
-      target.textContent = value;
-    }
   }
 }

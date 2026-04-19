@@ -90,38 +90,5 @@
 
   <div id="advisorSidebarSlot"></div>
 
-  <div class="modal fade advisor-recommendation-modal" id="advisorRecommendationModal" tabindex="-1" aria-labelledby="advisorRecommendationModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-scrollable advisor-recommendation-dialog">
-      <div class="modal-content app-modal-surface">
-        <div class="modal-header">
-          <h5 class="modal-title" id="advisorRecommendationModalLabel">Crear Nueva Recomendacion</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-        </div>
-        <form class="modal-body" id="advisorRecommendationForm">
-          <div class="mb-3">
-            <label for="advisorRecommendationClient" class="form-label">Cliente</label>
-            <select id="advisorRecommendationClient" class="form-select" required></select>
-          </div>
-          <div class="mb-3">
-            <label for="advisorRecommendationType" class="form-label">Tipo</label>
-            <select id="advisorRecommendationType" class="form-select" required>
-              <option value="">Seleccionar tipo</option>
-              <option value="Ahorro">Ahorro</option>
-              <option value="Presupuesto">Presupuesto</option>
-              <option value="Habito">Habito de consumo</option>
-            </select>
-          </div>
-          <div class="mb-3">
-            <label for="advisorRecommendationDescription" class="form-label">Descripcion</label>
-            <textarea id="advisorRecommendationDescription" class="form-control" rows="3" required></textarea>
-          </div>
-          <div class="mb-3">
-            <label for="advisorRecommendationSavings" class="form-label">Ahorro estimado</label>
-            <input type="number" min="0" id="advisorRecommendationSavings" class="form-control" required />
-          </div>
-          <button class="action-btn action-btn--primary" type="submit">Guardar y Enviar</button>
-        </form>
-      </div>
-    </div>
-  </div>
+  <div id="advisorRecommendationModalSlot"></div>
 </div>

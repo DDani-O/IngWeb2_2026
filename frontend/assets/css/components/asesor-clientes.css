@@ -4,22 +4,6 @@
   gap: 10px;
 }
 
-.advisor-clients-toolbar__search {
-  min-width: 0;
-}
-
 .page-asesor-clientes .advisor-client-card {
   min-height: 100%;
-}
-
-@media (max-width: 991px) {
-  .advisor-clients-toolbar {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-@media (max-width: 575px) {
-  .advisor-clients-toolbar {
-    grid-template-columns: 1fr;
-  }
 }

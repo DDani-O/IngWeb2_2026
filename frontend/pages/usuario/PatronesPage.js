@@ -1,9 +1,9 @@
-import { Component } from "../../core/Component.js";
-import { MOCK_CONSUMPTION_PATTERNS, ROUTES } from "../../utils/constants.js";
+import { PageController } from "../../core/PageController.js";
+import { MOCK_CONSUMPTION_PATTERNS } from "../../utils/constants.js";
 import { formatCurrency } from "../../utils/formatters.js";
 import { getChartThemeColors, getInitials } from "../../utils/helpers.js";
 
-export class PatronesPage extends Component {
+export class PatronesPage extends PageController {
   constructor(element, options = {}) {
     super(element, options);
     this.data = JSON.parse(JSON.stringify(MOCK_CONSUMPTION_PATTERNS));
@@ -30,14 +30,8 @@ export class PatronesPage extends Component {
   }
 
   attachEvents() {
-    this.element.querySelectorAll(".js-dashboard-back").forEach((button) => {
-      this.listen(button, "click", (event) => this._handleBackToDashboard(event));
-    });
-
-    ["#userLogoutButton", "#userLogoutButtonMobile"].forEach((selector) => {
-      const button = this.element.querySelector(selector);
-      this.listen(button, "click", () => this._handleLogout());
-    });
+    this._bindDashboardBackButtons();
+    this._bindLogoutButtons();
   }
 
   _renderHighlights() {
@@ -340,13 +334,6 @@ export class PatronesPage extends Component {
     return `${arrow} ${stat.trendValue}% ${stat.trendLabel || ""}`.trim();
   }
 
-  _setText(selector, value) {
-    const target = this.element.querySelector(selector);
-    if (target) {
-      target.textContent = value;
-    }
-  }
-
   _toToken(value) {
     return String(value || "")
       .toLowerCase()
@@ -357,42 +344,6 @@ export class PatronesPage extends Component {
   _destroyCharts() {
     this.charts.forEach((chart) => chart.destroy());
     this.charts = [];
-  }
-
-  _handleBackToDashboard(event) {
-    event.preventDefault();
-
-    const isDashboardOpenInAnotherTab =
-      this.options.hasRouteOpenInOtherTab?.(ROUTES.USER_DASHBOARD) ||
-      (window.opener && !window.opener.closed);
-
-    if (isDashboardOpenInAnotherTab) {
-      window.close();
-
-      window.setTimeout(() => {
-        if (!window.closed) {
-          this.options.router?.navigate(ROUTES.USER_DASHBOARD);
-        }
-      }, 120);
-      return;
-    }
-
-    this.options.router?.navigate(ROUTES.USER_DASHBOARD);
-  }
-
-  _handleLogout() {
-    this.options.authManager?.logout();
-    this.options.showToast?.("Sesion finalizada correctamente.", "success");
-    this.options.router?.navigate(ROUTES.HOME, { modal: "login" });
-  }
-
-  _resetViewPosition() {
-    window.scrollTo(0, 0);
-
-    const routeContainer = document.querySelector("#appRouteContainer");
-    if (routeContainer) {
-      routeContainer.scrollTop = 0;
-    }
   }
 
   destroy() {

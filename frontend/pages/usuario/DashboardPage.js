@@ -1,4 +1,4 @@
-import { Component } from "../../core/Component.js";
+import { PageController } from "../../core/PageController.js";
 import { ROUTES, MOCK_USER_DASHBOARD } from "../../utils/constants.js";
 import {
   buildHash,
@@ -6,7 +6,7 @@ import {
 } from "../../utils/helpers.js";
 import { formatCurrency, formatTrendLabel } from "../../utils/formatters.js";
 
-export class DashboardPage extends Component {
+export class DashboardPage extends PageController {
   constructor(element, options = {}) {
     super(element, options);
     this.data = JSON.parse(JSON.stringify(MOCK_USER_DASHBOARD));
@@ -74,10 +74,7 @@ export class DashboardPage extends Component {
       }
     });
 
-    ["#userLogoutButton", "#userLogoutButtonMobile"].forEach((selector) => {
-      const button = this.element.querySelector(selector);
-      this.listen(button, "click", () => this._handleLogout());
-    });
+    this._bindLogoutButtons();
   }
 
   _renderCalendar() {
@@ -377,13 +374,7 @@ export class DashboardPage extends Component {
   }
 
   _openChatModal() {
-    const modalElement = this.element.querySelector("#advisorChatModal");
-    if (!modalElement || !window.bootstrap) {
-      return;
-    }
-
-    this.chatModal = window.bootstrap.Modal.getOrCreateInstance(modalElement);
-    this.chatModal.show();
+    this.chatModal = this._showModal("#advisorChatModal");
   }
 
   _sendChatMessage() {
@@ -412,19 +403,6 @@ export class DashboardPage extends Component {
 
     input.value = "";
     messages.scrollTop = messages.scrollHeight;
-  }
-
-  _handleLogout() {
-    this.options.authManager?.logout();
-    this.options.showToast?.("Sesion finalizada correctamente.", "success");
-    this.options.router?.navigate(ROUTES.HOME, { modal: "login" });
-  }
-
-  _setText(selector, value) {
-    const element = this.element.querySelector(selector);
-    if (element) {
-      element.textContent = value;
-    }
   }
 
   _destroyCharts() {

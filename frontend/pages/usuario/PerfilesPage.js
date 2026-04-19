@@ -1,12 +1,11 @@
-import { Component } from "../../core/Component.js";
+import { PageController } from "../../core/PageController.js";
 import {
   MOCK_SPENDING_PROFILES,
-  ROUTES,
   STORAGE_KEYS,
 } from "../../utils/constants.js";
 import { getInitials } from "../../utils/helpers.js";
 
-export class PerfilesPage extends Component {
+export class PerfilesPage extends PageController {
   constructor(element, options = {}) {
     super(element, options);
     this.data = JSON.parse(JSON.stringify(MOCK_SPENDING_PROFILES));
@@ -29,15 +28,8 @@ export class PerfilesPage extends Component {
 
   attachEvents() {
     this._bindProfileButtons();
-
-    this.element.querySelectorAll(".js-dashboard-back").forEach((button) => {
-      this.listen(button, "click", (event) => this._handleBackToDashboard(event));
-    });
-
-    ["#userLogoutButton", "#userLogoutButtonMobile"].forEach((selector) => {
-      const button = this.element.querySelector(selector);
-      this.listen(button, "click", () => this._handleLogout());
-    });
+    this._bindDashboardBackButtons();
+    this._bindLogoutButtons();
   }
 
   _renderProfiles() {
@@ -161,48 +153,5 @@ export class PerfilesPage extends Component {
     }
 
     return "⚠️ Como mejorar tu situacion financiera";
-  }
-
-  _handleBackToDashboard(event) {
-    event.preventDefault();
-
-    const isDashboardOpenInAnotherTab =
-      this.options.hasRouteOpenInOtherTab?.(ROUTES.USER_DASHBOARD) ||
-      (window.opener && !window.opener.closed);
-
-    if (isDashboardOpenInAnotherTab) {
-      window.close();
-
-      window.setTimeout(() => {
-        if (!window.closed) {
-          this.options.router?.navigate(ROUTES.USER_DASHBOARD);
-        }
-      }, 120);
-      return;
-    }
-
-    this.options.router?.navigate(ROUTES.USER_DASHBOARD);
-  }
-
-  _handleLogout() {
-    this.options.authManager?.logout();
-    this.options.showToast?.("Sesion finalizada correctamente.", "success");
-    this.options.router?.navigate(ROUTES.HOME, { modal: "login" });
-  }
-
-  _resetViewPosition() {
-    window.scrollTo(0, 0);
-
-    const routeContainer = document.querySelector("#appRouteContainer");
-    if (routeContainer) {
-      routeContainer.scrollTop = 0;
-    }
-  }
-
-  _setText(selector, value) {
-    const target = this.element.querySelector(selector);
-    if (target) {
-      target.textContent = value;
-    }
   }
 }

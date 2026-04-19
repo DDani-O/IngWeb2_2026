@@ -1,8 +1,8 @@
-import { Component } from "../../core/Component.js";
-import { MOCK_ADVISOR_DASHBOARD, ROUTES } from "../../utils/constants.js";
+import { PageController } from "../../core/PageController.js";
+import { MOCK_ADVISOR_DASHBOARD } from "../../utils/constants.js";
 import { getInitials } from "../../utils/helpers.js";
 
-export class AsesorInboxPage extends Component {
+export class AsesorInboxPage extends PageController {
   constructor(element, options = {}) {
     super(element, options);
     this.messages = JSON.parse(JSON.stringify(MOCK_ADVISOR_DASHBOARD.inbox)).map(
@@ -69,9 +69,9 @@ export class AsesorInboxPage extends Component {
       this._markCurrentAsRead();
     });
 
-    ["#advisorLogoutButton", "#advisorLogoutButtonMobile"].forEach((selector) => {
-      const button = this.element.querySelector(selector);
-      this.listen(button, "click", () => this._handleLogout());
+    this._bindLogoutButtons({
+      role: "asesor",
+      toastMessage: "Sesion de asesor finalizada.",
     });
   }
 
@@ -186,29 +186,4 @@ export class AsesorInboxPage extends Component {
     this._applyFilters();
   }
 
-  _handleLogout() {
-    this.options.authManager?.logout();
-    this.options.showToast?.("Sesion de asesor finalizada.", "success");
-    this.options.router?.navigate(ROUTES.HOME, { modal: "login" });
-  }
-
-  _resetViewPosition() {
-    window.scrollTo(0, 0);
-
-    const routeContainer = document.querySelector("#appRouteContainer");
-    if (routeContainer) {
-      routeContainer.scrollTop = 0;
-    }
-  }
-
-  _getValue(selector) {
-    return this.element.querySelector(selector)?.value?.trim() || "";
-  }
-
-  _setText(selector, value) {
-    const target = this.element.querySelector(selector);
-    if (target) {
-      target.textContent = value;
-    }
-  }
 }

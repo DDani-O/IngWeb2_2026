@@ -1,10 +1,10 @@
-import { Component } from "../../core/Component.js";
+import { PageController } from "../../core/PageController.js";
 import { MOCK_ADVISOR_REPORTS, ROUTES } from "../../utils/constants.js";
 import { formatCurrency } from "../../utils/formatters.js";
 
 const VALID_SECTIONS = ["comisiones", "tareas", "descargas"];
 
-export class AsesorReportesPage extends Component {
+export class AsesorReportesPage extends PageController {
   constructor(element, options = {}) {
     super(element, options);
     this.data = JSON.parse(JSON.stringify(MOCK_ADVISOR_REPORTS));
@@ -44,9 +44,9 @@ export class AsesorReportesPage extends Component {
       this.options.router?.navigate(ROUTES.ADVISOR_DASHBOARD);
     });
 
-    ["#advisorLogoutButton", "#advisorLogoutButtonMobile"].forEach((selector) => {
-      const button = this.element.querySelector(selector);
-      this.listen(button, "click", () => this._handleLogout());
+    this._bindLogoutButtons({
+      role: "asesor",
+      toastMessage: "Sesion de asesor finalizada.",
     });
   }
 
@@ -238,25 +238,4 @@ export class AsesorReportesPage extends Component {
     return "comisiones";
   }
 
-  _handleLogout() {
-    this.options.authManager?.logout();
-    this.options.showToast?.("Sesion de asesor finalizada.", "success");
-    this.options.router?.navigate(ROUTES.HOME, { modal: "login" });
-  }
-
-  _resetViewPosition() {
-    window.scrollTo(0, 0);
-
-    const routeContainer = document.querySelector("#appRouteContainer");
-    if (routeContainer) {
-      routeContainer.scrollTop = 0;
-    }
-  }
-
-  _setText(selector, value) {
-    const target = this.element.querySelector(selector);
-    if (target) {
-      target.textContent = value;
-    }
-  }
 }

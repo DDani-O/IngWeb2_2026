@@ -1,7 +1,6 @@
-import { Component } from "../../core/Component.js";
+import { PageController } from "../../core/PageController.js";
 import {
   MOCK_USER_PROFILE_DETAILS,
-  ROUTES,
   STORAGE_KEYS,
 } from "../../utils/constants.js";
 import { formatCurrency } from "../../utils/formatters.js";
@@ -9,7 +8,7 @@ import { getInitials } from "../../utils/helpers.js";
 
 const PROFILE_STORAGE_KEY = "fintrack.userProfileDetails.v1";
 
-export class PerfilPage extends Component {
+export class PerfilPage extends PageController {
   constructor(element, options = {}) {
     super(element, options);
     this.baseProfile = this._buildBaseProfile();
@@ -30,14 +29,8 @@ export class PerfilPage extends Component {
     this.listen(form, "submit", (event) => this._handleSave(event));
     this.listen(resetButton, "click", () => this._handleReset());
 
-    this.element.querySelectorAll(".js-dashboard-back").forEach((button) => {
-      this.listen(button, "click", (event) => this._handleBackToDashboard(event));
-    });
-
-    ["#userLogoutButton", "#userLogoutButtonMobile"].forEach((selector) => {
-      const button = this.element.querySelector(selector);
-      this.listen(button, "click", () => this._handleLogout());
-    });
+    this._bindDashboardBackButtons();
+    this._bindLogoutButtons();
   }
 
   _renderSummary() {
@@ -190,59 +183,5 @@ export class PerfilPage extends Component {
     this._setText("#userTopbarName", fullName);
     this._setText("#userSidebarName", fullName);
     this._setText("#userSidebarInitials", getInitials(fullName) || "JP");
-  }
-
-  _handleBackToDashboard(event) {
-    event.preventDefault();
-
-    const isDashboardOpenInAnotherTab =
-      this.options.hasRouteOpenInOtherTab?.(ROUTES.USER_DASHBOARD) ||
-      (window.opener && !window.opener.closed);
-
-    if (isDashboardOpenInAnotherTab) {
-      window.close();
-
-      window.setTimeout(() => {
-        if (!window.closed) {
-          this.options.router?.navigate(ROUTES.USER_DASHBOARD);
-        }
-      }, 120);
-      return;
-    }
-
-    this.options.router?.navigate(ROUTES.USER_DASHBOARD);
-  }
-
-  _handleLogout() {
-    this.options.authManager?.logout();
-    this.options.showToast?.("Sesion finalizada correctamente.", "success");
-    this.options.router?.navigate(ROUTES.HOME, { modal: "login" });
-  }
-
-  _resetViewPosition() {
-    window.scrollTo(0, 0);
-
-    const routeContainer = document.querySelector("#appRouteContainer");
-    if (routeContainer) {
-      routeContainer.scrollTop = 0;
-    }
-  }
-
-  _setInputValue(selector, value) {
-    const input = this.element.querySelector(selector);
-    if (input) {
-      input.value = value;
-    }
-  }
-
-  _getValue(selector) {
-    return this.element.querySelector(selector)?.value?.trim() || "";
-  }
-
-  _setText(selector, value) {
-    const target = this.element.querySelector(selector);
-    if (target) {
-      target.textContent = value;
-    }
   }
 }

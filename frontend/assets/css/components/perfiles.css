@@ -91,9 +91,6 @@
 }
 
 .profile-tip-box {
-  border: 1px solid var(--border-soft);
-  border-radius: var(--radius-md);
-  background: var(--surface-1);
   padding: 12px;
   margin-bottom: 12px;
 }

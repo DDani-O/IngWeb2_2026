@@ -1,9 +1,9 @@
-import { Component } from "../../core/Component.js";
-import { MOCK_RECOMMENDATIONS, ROUTES } from "../../utils/constants.js";
+import { PageController } from "../../core/PageController.js";
+import { MOCK_RECOMMENDATIONS } from "../../utils/constants.js";
 import { formatCurrency } from "../../utils/formatters.js";
 import { getInitials } from "../../utils/helpers.js";
 
-export class RecomendacionesPage extends Component {
+export class RecomendacionesPage extends PageController {
   constructor(element, options = {}) {
     super(element, options);
     this.data = JSON.parse(JSON.stringify(MOCK_RECOMMENDATIONS));
@@ -48,15 +48,8 @@ export class RecomendacionesPage extends Component {
 
     const openContact = this.element.querySelector("#openRecommendationContactButton");
     this.listen(openContact, "click", () => this._openContactModal());
-
-    this.element.querySelectorAll(".js-dashboard-back").forEach((button) => {
-      this.listen(button, "click", (event) => this._handleBackToDashboard(event));
-    });
-
-    ["#userLogoutButton", "#userLogoutButtonMobile"].forEach((selector) => {
-      const button = this.element.querySelector(selector);
-      this.listen(button, "click", () => this._handleLogout());
-    });
+    this._bindDashboardBackButtons();
+    this._bindLogoutButtons();
 
     const contactForm = this.element.querySelector("#recommendationContactForm");
     this.listen(contactForm, "submit", (event) => {
@@ -81,9 +74,9 @@ export class RecomendacionesPage extends Component {
   }
 
   _applyFilters() {
-    const priority = this._getSelectValue("#recommendationPriorityFilter");
-    const status = this._getSelectValue("#recommendationStatusFilter");
-    const sort = this._getSelectValue("#recommendationSortFilter");
+    const priority = this._getValue("#recommendationPriorityFilter");
+    const status = this._getValue("#recommendationStatusFilter");
+    const sort = this._getValue("#recommendationSortFilter");
 
     let recommendations = [...this.data.recommendations];
 
@@ -219,10 +212,6 @@ export class RecomendacionesPage extends Component {
   }
 
   _openDetailModal(recommendation) {
-    if (!window.bootstrap) {
-      return;
-    }
-
     this.activeRecommendation = recommendation;
 
     const content = this.element.querySelector("#recommendationDetailContent");
@@ -239,19 +228,11 @@ export class RecomendacionesPage extends Component {
       `;
     }
 
-    const modalElement = this.element.querySelector("#recommendationDetailModal");
-    this.detailModal = window.bootstrap.Modal.getOrCreateInstance(modalElement);
-    this.detailModal.show();
+    this.detailModal = this._showModal("#recommendationDetailModal");
   }
 
   _openContactModal() {
-    if (!window.bootstrap) {
-      return;
-    }
-
-    const modalElement = this.element.querySelector("#recommendationContactModal");
-    this.contactModal = window.bootstrap.Modal.getOrCreateInstance(modalElement);
-    this.contactModal.show();
+    this.contactModal = this._showModal("#recommendationContactModal");
   }
 
   _statusColor(status) {
@@ -268,53 +249,5 @@ export class RecomendacionesPage extends Component {
 
   _priorityWeight(priority) {
     return priority === "Alta" ? 2 : 1;
-  }
-
-  _getSelectValue(selector) {
-    const select = this.element.querySelector(selector);
-    return select ? select.value : "";
-  }
-
-  _setText(selector, value) {
-    const target = this.element.querySelector(selector);
-    if (target) {
-      target.textContent = value;
-    }
-  }
-
-  _handleBackToDashboard(event) {
-    event.preventDefault();
-
-    const isDashboardOpenInAnotherTab =
-      this.options.hasRouteOpenInOtherTab?.(ROUTES.USER_DASHBOARD) ||
-      (window.opener && !window.opener.closed);
-
-    if (isDashboardOpenInAnotherTab) {
-      window.close();
-
-      window.setTimeout(() => {
-        if (!window.closed) {
-          this.options.router?.navigate(ROUTES.USER_DASHBOARD);
-        }
-      }, 120);
-      return;
-    }
-
-    this.options.router?.navigate(ROUTES.USER_DASHBOARD);
-  }
-
-  _handleLogout() {
-    this.options.authManager?.logout();
-    this.options.showToast?.("Sesion finalizada correctamente.", "success");
-    this.options.router?.navigate(ROUTES.HOME, { modal: "login" });
-  }
-
-  _resetViewPosition() {
-    window.scrollTo(0, 0);
-
-    const routeContainer = document.querySelector("#appRouteContainer");
-    if (routeContainer) {
-      routeContainer.scrollTop = 0;
-    }
   }
 }

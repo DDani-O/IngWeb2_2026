@@ -216,6 +216,57 @@
   background: var(--table-row-hover);
 }
 
+.user-profile-grid,
+.advisor-profile-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  gap: 14px;
+}
+
+.user-profile-summary,
+.advisor-profile-summary {
+  text-align: center;
+}
+
+.user-profile-form .form-label,
+.advisor-profile-form .form-label {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.profile-meta-item,
+.history-detail-card,
+.summary-strip__item,
+.profile-tip-box {
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+}
+
+.history-toolbar__search,
+.advisor-clients-toolbar__search {
+  min-width: 0;
+}
+
+@media (max-width: 991px) {
+  .user-profile-grid,
+  .advisor-profile-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .history-toolbar,
+  .advisor-clients-toolbar {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 575px) {
+  .history-toolbar,
+  .advisor-clients-toolbar {
+    grid-template-columns: 1fr;
+  }
+}
+
 .app-modal-surface {
   background: var(--modal-surface);
   border: 1px solid var(--border-strong);

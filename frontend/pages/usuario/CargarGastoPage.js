@@ -1,15 +1,14 @@
-import { Component } from "../../core/Component.js";
+import { PageController } from "../../core/PageController.js";
 import {
   MOCK_USER_EXPENSE_FORM,
   MOCK_USER_EXPENSE_HISTORY,
-  ROUTES,
 } from "../../utils/constants.js";
 import { formatCurrency } from "../../utils/formatters.js";
 import { getInitials } from "../../utils/helpers.js";
 
 const DRAFT_STORAGE_KEY = "fintrack.userExpenseDraft.v1";
 
-export class CargarGastoPage extends Component {
+export class CargarGastoPage extends PageController {
   constructor(element, options = {}) {
     super(element, options);
     this.formData = JSON.parse(JSON.stringify(MOCK_USER_EXPENSE_FORM));
@@ -58,14 +57,8 @@ export class CargarGastoPage extends Component {
       );
     });
 
-    this.element.querySelectorAll(".js-dashboard-back").forEach((button) => {
-      this.listen(button, "click", (event) => this._handleBackToDashboard(event));
-    });
-
-    ["#userLogoutButton", "#userLogoutButtonMobile"].forEach((selector) => {
-      const button = this.element.querySelector(selector);
-      this.listen(button, "click", () => this._handleLogout());
-    });
+    this._bindDashboardBackButtons();
+    this._bindLogoutButtons();
   }
 
   _renderSelectOptions() {
@@ -264,55 +257,5 @@ export class CargarGastoPage extends Component {
         this.element.querySelector("#expenseDescription")?.value.trim() || "",
       note: this.element.querySelector("#expenseDescription")?.value.trim() || "",
     };
-  }
-
-  _handleBackToDashboard(event) {
-    event.preventDefault();
-
-    const isDashboardOpenInAnotherTab =
-      this.options.hasRouteOpenInOtherTab?.(ROUTES.USER_DASHBOARD) ||
-      (window.opener && !window.opener.closed);
-
-    if (isDashboardOpenInAnotherTab) {
-      window.close();
-
-      window.setTimeout(() => {
-        if (!window.closed) {
-          this.options.router?.navigate(ROUTES.USER_DASHBOARD);
-        }
-      }, 120);
-      return;
-    }
-
-    this.options.router?.navigate(ROUTES.USER_DASHBOARD);
-  }
-
-  _handleLogout() {
-    this.options.authManager?.logout();
-    this.options.showToast?.("Sesion finalizada correctamente.", "success");
-    this.options.router?.navigate(ROUTES.HOME, { modal: "login" });
-  }
-
-  _resetViewPosition() {
-    window.scrollTo(0, 0);
-
-    const routeContainer = document.querySelector("#appRouteContainer");
-    if (routeContainer) {
-      routeContainer.scrollTop = 0;
-    }
-  }
-
-  _setInputValue(selector, value) {
-    const input = this.element.querySelector(selector);
-    if (input) {
-      input.value = value;
-    }
-  }
-
-  _setText(selector, value) {
-    const target = this.element.querySelector(selector);
-    if (target) {
-      target.textContent = value;
-    }
   }
 }

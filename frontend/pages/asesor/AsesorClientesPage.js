@@ -1,9 +1,9 @@
-import { Component } from "../../core/Component.js";
+import { PageController } from "../../core/PageController.js";
 import { MOCK_ADVISOR_DASHBOARD, ROUTES } from "../../utils/constants.js";
 import { formatCurrency } from "../../utils/formatters.js";
 import { getInitials } from "../../utils/helpers.js";
 
-export class AsesorClientesPage extends Component {
+export class AsesorClientesPage extends PageController {
   constructor(element, options = {}) {
     super(element, options);
     this.clients = JSON.parse(JSON.stringify(MOCK_ADVISOR_DASHBOARD.clients));
@@ -58,9 +58,9 @@ export class AsesorClientesPage extends Component {
       this.options.router?.navigate(ROUTES.ADVISOR_DASHBOARD);
     });
 
-    ["#advisorLogoutButton", "#advisorLogoutButtonMobile"].forEach((selector) => {
-      const button = this.element.querySelector(selector);
-      this.listen(button, "click", () => this._handleLogout());
+    this._bindLogoutButtons({
+      role: "asesor",
+      toastMessage: "Sesion de asesor finalizada.",
     });
   }
 
@@ -232,14 +232,8 @@ export class AsesorClientesPage extends Component {
   }
 
   _openClientModal(client) {
-    if (!window.bootstrap) {
-      return;
-    }
-
     const content = this.element.querySelector("#advisorClientDetailContent");
-    const modalElement = this.element.querySelector("#advisorClientDetailModal");
-
-    if (!content || !modalElement) {
+    if (!content) {
       return;
     }
 
@@ -257,27 +251,20 @@ export class AsesorClientesPage extends Component {
       </article>
     `;
 
-    this.detailModal = window.bootstrap.Modal.getOrCreateInstance(modalElement);
-    this.detailModal.show();
+    this.detailModal = this._showModal("#advisorClientDetailModal");
   }
 
   _openRecommendationModal(clientId = "") {
-    if (!window.bootstrap) {
-      return;
-    }
-
-    const modalElement = this.element.querySelector("#advisorClientRecommendationModal");
     const clientSelect = this.element.querySelector("#advisorClientRecommendationClient");
 
-    if (!modalElement || !clientSelect) {
+    if (!clientSelect) {
       return;
     }
 
     this._renderRecommendationClientOptions();
     clientSelect.value = clientId;
 
-    this.recommendationModal = window.bootstrap.Modal.getOrCreateInstance(modalElement);
-    this.recommendationModal.show();
+    this.recommendationModal = this._showModal("#advisorClientRecommendationModal");
   }
 
   _handleCreateRecommendation() {
@@ -292,29 +279,4 @@ export class AsesorClientesPage extends Component {
     form.reset();
   }
 
-  _handleLogout() {
-    this.options.authManager?.logout();
-    this.options.showToast?.("Sesion de asesor finalizada.", "success");
-    this.options.router?.navigate(ROUTES.HOME, { modal: "login" });
-  }
-
-  _resetViewPosition() {
-    window.scrollTo(0, 0);
-
-    const routeContainer = document.querySelector("#appRouteContainer");
-    if (routeContainer) {
-      routeContainer.scrollTop = 0;
-    }
-  }
-
-  _getValue(selector) {
-    return this.element.querySelector(selector)?.value?.trim() || "";
-  }
-
-  _setText(selector, value) {
-    const target = this.element.querySelector(selector);
-    if (target) {
-      target.textContent = value;
-    }
-  }
 }

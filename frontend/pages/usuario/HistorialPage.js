@@ -1,9 +1,9 @@
-import { Component } from "../../core/Component.js";
-import { MOCK_USER_EXPENSE_HISTORY, ROUTES } from "../../utils/constants.js";
+import { PageController } from "../../core/PageController.js";
+import { MOCK_USER_EXPENSE_HISTORY } from "../../utils/constants.js";
 import { formatCurrency } from "../../utils/formatters.js";
 import { getInitials } from "../../utils/helpers.js";
 
-export class HistorialPage extends Component {
+export class HistorialPage extends PageController {
   constructor(element, options = {}) {
     super(element, options);
     this.expenses = JSON.parse(JSON.stringify(MOCK_USER_EXPENSE_HISTORY.expenses));
@@ -39,14 +39,8 @@ export class HistorialPage extends Component {
 
     this.listen(tableBody, "click", (event) => this._handleTableAction(event));
 
-    this.element.querySelectorAll(".js-dashboard-back").forEach((button) => {
-      this.listen(button, "click", (event) => this._handleBackToDashboard(event));
-    });
-
-    ["#userLogoutButton", "#userLogoutButtonMobile"].forEach((selector) => {
-      const button = this.element.querySelector(selector);
-      this.listen(button, "click", () => this._handleLogout());
-    });
+    this._bindDashboardBackButtons();
+    this._bindLogoutButtons();
   }
 
   _renderCategoryOptions() {
@@ -180,14 +174,8 @@ export class HistorialPage extends Component {
   }
 
   _openDetailModal(expense) {
-    if (!window.bootstrap) {
-      return;
-    }
-
     const content = this.element.querySelector("#historyDetailContent");
-    const modalElement = this.element.querySelector("#historyDetailModal");
-
-    if (!content || !modalElement) {
+    if (!content) {
       return;
     }
 
@@ -203,54 +191,6 @@ export class HistorialPage extends Component {
       </article>
     `;
 
-    this.detailModal = window.bootstrap.Modal.getOrCreateInstance(modalElement);
-    this.detailModal.show();
-  }
-
-  _handleBackToDashboard(event) {
-    event.preventDefault();
-
-    const isDashboardOpenInAnotherTab =
-      this.options.hasRouteOpenInOtherTab?.(ROUTES.USER_DASHBOARD) ||
-      (window.opener && !window.opener.closed);
-
-    if (isDashboardOpenInAnotherTab) {
-      window.close();
-
-      window.setTimeout(() => {
-        if (!window.closed) {
-          this.options.router?.navigate(ROUTES.USER_DASHBOARD);
-        }
-      }, 120);
-      return;
-    }
-
-    this.options.router?.navigate(ROUTES.USER_DASHBOARD);
-  }
-
-  _handleLogout() {
-    this.options.authManager?.logout();
-    this.options.showToast?.("Sesion finalizada correctamente.", "success");
-    this.options.router?.navigate(ROUTES.HOME, { modal: "login" });
-  }
-
-  _resetViewPosition() {
-    window.scrollTo(0, 0);
-
-    const routeContainer = document.querySelector("#appRouteContainer");
-    if (routeContainer) {
-      routeContainer.scrollTop = 0;
-    }
-  }
-
-  _getValue(selector) {
-    return this.element.querySelector(selector)?.value?.trim() || "";
-  }
-
-  _setText(selector, value) {
-    const target = this.element.querySelector(selector);
-    if (target) {
-      target.textContent = value;
-    }
+    this.detailModal = this._showModal("#historyDetailModal");
   }
 }

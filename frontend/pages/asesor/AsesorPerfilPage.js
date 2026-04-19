@@ -1,4 +1,4 @@
-import { Component } from "../../core/Component.js";
+import { PageController } from "../../core/PageController.js";
 import {
   MOCK_ADVISOR_PROFILE_DETAILS,
   ROUTES,
@@ -7,7 +7,7 @@ import { getInitials } from "../../utils/helpers.js";
 
 const ADVISOR_PROFILE_STORAGE_KEY = "fintrack.advisorProfileDetails.v1";
 
-export class AsesorPerfilPage extends Component {
+export class AsesorPerfilPage extends PageController {
   constructor(element, options = {}) {
     super(element, options);
     this.baseProfile = this._buildBaseProfile();
@@ -32,9 +32,9 @@ export class AsesorPerfilPage extends Component {
       this.options.router?.navigate(ROUTES.ADVISOR_DASHBOARD);
     });
 
-    ["#advisorLogoutButton", "#advisorLogoutButtonMobile"].forEach((selector) => {
-      const button = this.element.querySelector(selector);
-      this.listen(button, "click", () => this._handleLogout());
+    this._bindLogoutButtons({
+      role: "asesor",
+      toastMessage: "Sesion de asesor finalizada.",
     });
   }
 
@@ -174,38 +174,5 @@ export class AsesorPerfilPage extends Component {
       notifyEmail: Boolean(this.element.querySelector("#advisorProfileNotifyEmail")?.checked),
       notifyPush: Boolean(this.element.querySelector("#advisorProfileNotifyPush")?.checked),
     };
-  }
-
-  _handleLogout() {
-    this.options.authManager?.logout();
-    this.options.showToast?.("Sesion de asesor finalizada.", "success");
-    this.options.router?.navigate(ROUTES.HOME, { modal: "login" });
-  }
-
-  _resetViewPosition() {
-    window.scrollTo(0, 0);
-
-    const routeContainer = document.querySelector("#appRouteContainer");
-    if (routeContainer) {
-      routeContainer.scrollTop = 0;
-    }
-  }
-
-  _setInputValue(selector, value) {
-    const input = this.element.querySelector(selector);
-    if (input) {
-      input.value = value;
-    }
-  }
-
-  _getValue(selector) {
-    return this.element.querySelector(selector)?.value?.trim() || "";
-  }
-
-  _setText(selector, value) {
-    const target = this.element.querySelector(selector);
-    if (target) {
-      target.textContent = value;
-    }
   }
 }

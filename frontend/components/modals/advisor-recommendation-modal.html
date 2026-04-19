@@ -1,0 +1,34 @@
+<div class="modal fade advisor-recommendation-modal" id="{{modalId}}" tabindex="-1" aria-labelledby="{{labelId}}" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable advisor-recommendation-dialog">
+    <div class="modal-content app-modal-surface">
+      <div class="modal-header">
+        <h5 class="modal-title" id="{{labelId}}">{{title}}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <form class="modal-body" id="{{formId}}">
+        <div class="mb-3">
+          <label for="{{clientSelectId}}" class="form-label">Cliente</label>
+          <select id="{{clientSelectId}}" class="form-select" required></select>
+        </div>
+        <div class="mb-3">
+          <label for="{{typeSelectId}}" class="form-label">Tipo</label>
+          <select id="{{typeSelectId}}" class="form-select" required>
+            <option value="">Seleccionar tipo</option>
+            <option value="Ahorro">Ahorro</option>
+            <option value="Presupuesto">Presupuesto</option>
+            <option value="Habito">Habito de consumo</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label for="{{descriptionId}}" class="form-label">Descripcion</label>
+          <textarea id="{{descriptionId}}" class="form-control" rows="3" required></textarea>
+        </div>
+        <div class="mb-3">
+          <label for="{{savingsId}}" class="form-label">Ahorro estimado</label>
+          <input type="number" min="0" id="{{savingsId}}" class="form-control" required />
+        </div>
+        <button class="action-btn action-btn--primary" type="submit">{{submitText}}</button>
+      </form>
+    </div>
+  </div>
+</div>
