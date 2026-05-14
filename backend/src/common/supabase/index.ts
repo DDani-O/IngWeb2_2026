@@ -1,2 +1,2 @@
-export * from './supabase.module';
-export * from './supabase.provider';
+export * from "./supabase.module";
+export * from "./supabase.provider";

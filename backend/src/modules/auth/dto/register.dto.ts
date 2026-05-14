@@ -1,8 +1,8 @@
-import { IsEmail, IsEnum, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsEnum, IsString, MinLength } from "class-validator";
 
 export enum UserRoleEnum {
-  Cliente = 'cliente',
-  Asesor = 'asesor',
+  Cliente = "cliente",
+  Asesor = "asesor",
 }
 
 export class RegisterDto {

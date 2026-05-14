@@ -4,14 +4,14 @@ import {
   Injectable,
   InternalServerErrorException,
   UnauthorizedException,
-} from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { SupabaseClient } from '@supabase/supabase-js';
-import { SUPABASE_CLIENT } from '../../common/supabase/supabase.provider';
-import { RegisterDto } from './dto/register.dto';
-import { LoginDto } from './dto/login.dto';
+} from "@nestjs/common";
+import { JwtService } from "@nestjs/jwt";
+import { SupabaseClient } from "@supabase/supabase-js";
+import { SUPABASE_CLIENT } from "../../common/supabase/supabase.provider";
+import { RegisterDto } from "./dto/register.dto";
+import { LoginDto } from "./dto/login.dto";
 
-interface AuthUserResponse {
+export interface AuthUserResponse {
   id: string;
   email: string;
   fullName: string;
@@ -20,7 +20,7 @@ interface AuthUserResponse {
   createdAt: string;
 }
 
-interface AuthResponse {
+export interface AuthResponse {
   access_token: string;
   user: AuthUserResponse;
 }
@@ -52,24 +52,24 @@ export class AuthService {
 
     if (createError || !created?.user) {
       if (this.isDuplicateEmail(createError)) {
-        throw new ConflictException('El email ya esta registrado');
+        throw new ConflictException("El email ya esta registrado");
       }
-      throw new InternalServerErrorException('No se pudo crear el usuario');
+      throw new InternalServerErrorException("No se pudo crear el usuario");
     }
 
     const { data: profile, error: profileError } = await this.supabase
-      .from('usuarios')
+      .from("usuarios")
       .insert({
         id: created.user.id,
         rol: role,
         nombre_completo: fullName,
       })
-      .select('id, nombre_completo, rol, foto_perfil_url, creado_en')
+      .select("id, nombre_completo, rol, foto_perfil_url, creado_en")
       .single();
 
     if (profileError || !profile) {
       await this.tryDeleteAuthUser(created.user.id);
-      throw new InternalServerErrorException('No se pudo crear el perfil');
+      throw new InternalServerErrorException("No se pudo crear el perfil");
     }
 
     const token = this.jwtService.sign({
@@ -93,17 +93,17 @@ export class AuthService {
     });
 
     if (error || !data?.user) {
-      throw new UnauthorizedException('Credenciales invalidas');
+      throw new UnauthorizedException("Credenciales invalidas");
     }
 
     const { data: profile, error: profileError } = await this.supabase
-      .from('usuarios')
-      .select('id, nombre_completo, rol, foto_perfil_url, creado_en')
-      .eq('id', data.user.id)
+      .from("usuarios")
+      .select("id, nombre_completo, rol, foto_perfil_url, creado_en")
+      .eq("id", data.user.id)
       .single();
 
     if (profileError || !profile) {
-      throw new UnauthorizedException('Credenciales invalidas');
+      throw new UnauthorizedException("Credenciales invalidas");
     }
 
     const token = this.jwtService.sign({
@@ -140,11 +140,11 @@ export class AuthService {
       return true;
     }
 
-    const message = (error.message || '').toLowerCase();
+    const message = (error.message || "").toLowerCase();
     return (
-      message.includes('already') ||
-      message.includes('duplicate') ||
-      message.includes('registered')
+      message.includes("already") ||
+      message.includes("duplicate") ||
+      message.includes("registered")
     );
   }
 

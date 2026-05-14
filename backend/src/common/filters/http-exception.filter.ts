@@ -4,8 +4,8 @@ import {
   ExceptionFilter,
   HttpException,
   HttpStatus,
-} from '@nestjs/common';
-import { Request, Response } from 'express';
+} from "@nestjs/common";
+import { Request, Response } from "express";
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -15,19 +15,19 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request>();
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
-    let message = 'Error inesperado';
+    let message = "Error inesperado";
 
     if (exception instanceof HttpException) {
       status = exception.getStatus();
       const body = exception.getResponse();
 
-      if (typeof body === 'string') {
+      if (typeof body === "string") {
         message = body;
-      } else if (body && typeof body === 'object' && 'message' in body) {
+      } else if (body && typeof body === "object" && "message" in body) {
         const value = (body as { message?: string | string[] }).message;
         if (Array.isArray(value)) {
-          message = value.join('; ');
-        } else if (typeof value === 'string') {
+          message = value.join("; ");
+        } else if (typeof value === "string") {
           message = value;
         }
       }
