@@ -1,4 +1,5 @@
-import { PLACEHOLDER_PRESETS, ROUTES } from "./constants.js";
+import { ROUTES } from "./constants.js";
+import { TEXTS } from "./i18n.js";
 
 /**
  * Convierte una query string en objeto para simplificar lectura de parametros.
@@ -121,19 +122,42 @@ export function isSafeRelativeUrl(url = "") {
 }
 
 /**
- * Obtiene un preset de placeholder por nombre.
+ * Obtiene un preset de placeholder por nombre desde i18n.
  * Sirve para centralizar textos/iconos de paginas no implementadas.
+ * Los textos se cargan desde TEXTS.placeholders en utils/i18n.js
+ *
+ * @param {string} presetName - Nombre del preset (ej: 'cargarGasto', 'historial')
+ * @returns {object|null} Objeto con title, description, icon, ctaText
  */
 export function getPlaceholderPreset(presetName = "") {
-  return PLACEHOLDER_PRESETS[presetName] || null;
+  const preset = TEXTS.placeholders ? TEXTS.placeholders[presetName] : null;
+  return preset || null;
 }
 
 /**
  * Construye el hash de placeholder usando preset y overrides opcionales.
- * Si no existe preset, aplica una configuracion por defecto.
+ * Si no existe preset, aplica una configuracion por defecto desde i18n.
+ * Asegura que ciertos parámetros técnicos (como ctaUrl) estén presentes.
  */
 export function buildPlaceholderHashFromPreset(presetName, override = {}) {
   const preset = getPlaceholderPreset(presetName);
+
+  // Determina la ruta de destino del CTA según el preset
+  const defaultCtaUrl = (() => {
+    switch (presetName) {
+      case "cargarGasto":
+      case "historial":
+      case "patrones":
+      case "perfil":
+        return ROUTES.USER_DASHBOARD;
+      case "advisorClientes":
+      case "advisorInbox":
+      case "advisorReportes":
+        return ROUTES.ADVISOR_DASHBOARD;
+      default:
+        return ROUTES.HOME;
+    }
+  })();
 
   if (!preset) {
     return buildHash(ROUTES.PLACEHOLDER, {
@@ -147,6 +171,7 @@ export function buildPlaceholderHashFromPreset(presetName, override = {}) {
 
   return buildHash(ROUTES.PLACEHOLDER, {
     ...preset,
+    ctaUrl: defaultCtaUrl,
     ...override,
   });
 }

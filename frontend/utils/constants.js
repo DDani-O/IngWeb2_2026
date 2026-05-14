@@ -66,193 +66,22 @@ export const EVENTS = {
   },
 };
 
-export const PLACEHOLDER_PRESETS = {
-  cargarGasto: {
-    title: "Cargar Gasto",
-    description:
-      "Esta seccion estara disponible en la proxima fase. Mientras tanto, usa el dashboard para explorar tus metricas.",
-    icon: "fa-receipt",
-    ctaText: "Ir al Dashboard",
-    ctaUrl: ROUTES.USER_DASHBOARD,
-  },
-  historial: {
-    title: "Historial de Gastos",
-    description:
-      "Estamos trabajando en tu historial completo con filtros avanzados y exportacion.",
-    icon: "fa-clock-rotate-left",
-    ctaText: "Ir al Dashboard",
-    ctaUrl: ROUTES.USER_DASHBOARD,
-  },
-  patrones: {
-    title: "Patrones de Consumo",
-    description:
-      "Estamos ajustando comparativas historicas avanzadas y deteccion de anomalias.",
-    icon: "fa-chart-pie",
-    ctaText: "Ver Patrones",
-    ctaUrl: ROUTES.USER_PATRONES,
-  },
-  perfil: {
-    title: "Perfil de Usuario",
-    description:
-      "Muy pronto podras editar tus datos y preferencias de cuenta desde esta seccion.",
-    icon: "fa-user-gear",
-    ctaText: "Ir al Dashboard",
-    ctaUrl: ROUTES.USER_DASHBOARD,
-  },
-  advisorClientes: {
-    title: "Mis Clientes",
-    description:
-      "Estamos preparando la gestion completa de cartera con vista detallada por cliente.",
-    icon: "fa-users",
-    ctaText: "Volver al Panel",
-    ctaUrl: ROUTES.ADVISOR_DASHBOARD,
-  },
-  advisorInbox: {
-    title: "Inbox de Asesor",
-    description:
-      "La bandeja completa de conversaciones estara disponible en la siguiente iteracion.",
-    icon: "fa-inbox",
-    ctaText: "Volver al Panel",
-    ctaUrl: ROUTES.ADVISOR_DASHBOARD,
-  },
-  advisorReportes: {
-    title: "Reportes de Asesor",
-    description:
-      "Estamos armando reportes descargables y paneles de seguimiento avanzado.",
-    icon: "fa-chart-column",
-    ctaText: "Volver al Panel",
-    ctaUrl: ROUTES.ADVISOR_DASHBOARD,
-  },
-};
-
-export const TESTIMONIAL_AUTO_MS = 5000;
-
-export const UI_LAYOUT = {
-  LANDING_SCROLL_OFFSET: 12,
-};
+// NOTA: Los textos de placeholders han sido movidos a utils/i18n.js
+// PLACEHOLDER_PRESETS antes contenía textos visibles - ahora se usan con TEXTS.placeholders
 
 export const UI_TIMING = {
+  TESTIMONIAL_AUTO_MS: 5000,
   TOAST_DISMISS_MS: 3200,
   AUTH_LOGIN_DELAY_MS: 220,
   AUTH_REGISTER_DELAY_MS: 260,
 };
 
-export const LANDING_CONTENT = {
-  nav: [
-    { id: "como-funciona", label: "Como Funciona" },
-    { id: "ventajas", label: "Ventajas" },
-    { id: "planes", label: "Planes" },
-  ],
-  brands: [
-    { name: "Visa", icon: "fa-cc-visa" },
-    { name: "Mastercard", icon: "fa-cc-mastercard" },
-    { name: "PayPal", icon: "fa-cc-paypal" },
-    { name: "Stripe", icon: "fa-cc-stripe" },
-  ],
-  features: [
-    {
-      icon: "fa-receipt",
-      title: "Registra al instante",
-      description:
-        "Sube gastos como prefieras: tomale una foto a tu ticket o cargalo a mano en segundos.",
-    },
-    {
-      icon: "fa-eye",
-      title: "Alguien vigila por ti",
-      description:
-        "Tu asesor revisa tu actividad para detectar gastos hormiga, fugas y patrones extranos.",
-    },
-    {
-      icon: "fa-comments-dollar",
-      title: "Interactua y mejora",
-      description:
-        "Analiza tus graficos de manera simple y lee los consejos de tu asesor para decidir mejor.",
-    },
-  ],
-  advantages: [
-    {
-      title: "Carga automatizada con IA",
-      text: "Nuestra Inteligencia Artificial extrae los datos al instante de tus fotos.",
-      icon: "fa-robot",
-    },
-    {
-      title: "Asesor real",
-      text: "Feedback humano y profesional justo cuando mas lo necesitas.",
-      icon: "fa-user-tie",
-    },
-    {
-      title: "Alertas inteligentes",
-      text: "Recibe avisos automaticos si tus gastos se salen de presupuesto.",
-      icon: "fa-bell",
-    },
-    {
-      title: "Seguridad bancaria",
-      text: "Tus datos financieros viajan encriptados y protegidos al maximo nivel.",
-      icon: "fa-shield-halved",
-    },
-  ],
-  testimonials: [
-    {
-      name: "Lucas",
-      role: "Freelancer",
-      rating: 5,
-      text: "Ya no siento que mi cajero hable solo. Con FinTrack veo justo lo que debo pagar y cuanto puedo ahorrar.",
-    },
-    {
-      name: "Camila",
-      role: "Disenadora UX",
-      rating: 5,
-      text: "En dos semanas deje de improvisar. Ahora entiendo en que se me va la plata y que puedo ajustar sin sufrir.",
-    },
-    {
-      name: "Nicolas",
-      role: "Emprendedor",
-      rating: 4,
-      text: "Lo mejor fue tener una vista clara por categorias. Con eso pude recortar gastos invisibles y ordenar mis metas.",
-    },
-  ],
-  plans: [
-    {
-      name: "Plan Basico",
-      price: "$0",
-      subtitle: "Perfecto para empezar a organizarte.",
-      highlighted: false,
-      features: [
-        "Carga de tickets con IA (limitado)",
-        "Registro manual ilimitado",
-        "Graficos de gastos basicos",
-        "Asesor virtual incluido",
-      ],
-      cta: "Comenzar Gratis",
-    },
-    {
-      name: "Plan Pro",
-      price: "$4.99",
-      subtitle: "Tus finanzas supervisadas por expertos.",
-      highlighted: true,
-      features: [
-        "Asesor financiero asignado",
-        "Recomendaciones mensuales",
-        "Deteccion de gastos hormiga",
-        "Carga con IA ilimitada",
-      ],
-      cta: "Elegir Pro",
-    },
-    {
-      name: "Plan Premium",
-      price: "$12.99",
-      subtitle: "Comunicacion directa y prioritaria.",
-      highlighted: false,
-      features: [
-        "Todo lo del Plan Pro",
-        "Chat directo con tu asesor",
-        "Alertas de desvio en tiempo real",
-        "Analisis de inversiones y ahorros",
-      ],
-      cta: "Elegir Premium",
-    },
-  ],
+export const UI_LAYOUT = {
+  LANDING_SCROLL_OFFSET: 12,
 };
+
+// NOTA: LANDING_CONTENT ha sido movido a utils/i18n.js -> TEXTS.landing
+// Usar: import { TEXTS } from './i18n.js' y acceder a TEXTS.landing
 
 export const MOCK_AUTH_USERS = [
   {

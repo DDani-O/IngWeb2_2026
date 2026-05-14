@@ -1,9 +1,9 @@
 import { Component } from "../../core/Component.js";
 import {
-  LANDING_CONTENT,
-  TESTIMONIAL_AUTO_MS,
   UI_LAYOUT,
+  UI_TIMING,
 } from "../../utils/constants.js";
+import { TEXTS } from "../../utils/i18n.js";
 import { renderStars } from "../../utils/helpers.js";
 import { validateLoginForm, validateRegisterForm } from "../../utils/validators.js";
 
@@ -120,11 +120,19 @@ export class LandingPage extends Component {
   }
 
   _wireAuthFlows() {
+    this._wireModalSwitches();
+    this._wireAdvisorFieldToggle();
+    this._wireLoginForm();
+    this._wireRegisterForm();
+  }
+
+  /**
+   * Conecta los botones de cambio entre modales de login/registro
+   * @private
+   */
+  _wireModalSwitches() {
     const switchToRegister = this.element.querySelector("#switchToRegister");
     const switchToLogin = this.element.querySelector("#switchToLogin");
-    const roleUser = this.element.querySelector("#registerRoleUser");
-    const roleAdvisor = this.element.querySelector("#registerRoleAdvisor");
-    const advisorFields = this.element.querySelector("#registerAdvisorFields");
 
     this.listen(switchToRegister, "click", () => {
       this.loginModal?.hide();
@@ -135,6 +143,16 @@ export class LandingPage extends Component {
       this.registerModal?.hide();
       this.loginModal?.show();
     });
+  }
+
+  /**
+   * Conecta el toggle de campos adicionales de asesor en el registro
+   * @private
+   */
+  _wireAdvisorFieldToggle() {
+    const roleUser = this.element.querySelector("#registerRoleUser");
+    const roleAdvisor = this.element.querySelector("#registerRoleAdvisor");
+    const advisorFields = this.element.querySelector("#registerAdvisorFields");
 
     const updateAdvisorFields = () => {
       const advisorEnabled = roleAdvisor?.checked;
@@ -144,51 +162,74 @@ export class LandingPage extends Component {
     this.listen(roleUser, "change", updateAdvisorFields);
     this.listen(roleAdvisor, "change", updateAdvisorFields);
     updateAdvisorFields();
+  }
 
+  /**
+   * Conecta el form de login y su lógica de validación/envío
+   * @private
+   */
+  _wireLoginForm() {
     const loginForm = this.element.querySelector("#loginForm");
+
     this.listen(loginForm, "submit", async (event) => {
       event.preventDefault();
       this._hideError("#loginError");
 
-      const payload = {
-        email: this.element.querySelector("#loginEmail")?.value || "",
-        password: this.element.querySelector("#loginPassword")?.value || "",
-        remember: Boolean(this.element.querySelector("#loginRemember")?.checked),
-      };
-
+      const payload = this._getLoginFormPayload();
+      
       const validation = validateLoginForm(payload);
       if (!validation.isValid) {
         this._showError("#loginError", validation.errors[0]);
         return;
       }
 
-      try {
-        const user = await this.options.authManager.login(payload);
-        this.options.showToast?.(`Bienvenido ${user.fullName}.`, "success");
-        this.loginModal?.hide();
-        this._navigateByRole(user.role);
-      } catch (error) {
-        this._showError("#loginError", error.message || "No se pudo iniciar sesion.");
-      }
+      await this._submitLogin(payload);
     });
+  }
 
+  /**
+   * Extrae los datos del form de login
+   * @private
+   * @returns {object} Objeto con email, password y remember
+   */
+  _getLoginFormPayload() {
+    return {
+      email: this.element.querySelector("#loginEmail")?.value || "",
+      password: this.element.querySelector("#loginPassword")?.value || "",
+      remember: Boolean(this.element.querySelector("#loginRemember")?.checked),
+    };
+  }
+
+  /**
+   * Intenta iniciar sesión con las credenciales proporcionadas
+   * @private
+   * @param {object} payload - Datos de login (email, password, remember)
+   */
+  async _submitLogin(payload) {
+    try {
+      const user = await this.options.authManager.login(payload);
+      this.options.showToast?.(`Bienvenido ${user.fullName}.`, "success");
+      this.loginModal?.hide();
+      this._navigateByRole(user.role);
+    } catch (error) {
+      this._showError("#loginError", error.message || "No se pudo iniciar sesion.");
+    }
+  }
+
+  /**
+   * Conecta el form de registro y su lógica de validación/envío
+   * @private
+   */
+  _wireRegisterForm() {
     const registerForm = this.element.querySelector("#registerForm");
+    const roleAdvisor = this.element.querySelector("#registerRoleAdvisor");
+    const advisorFields = this.element.querySelector("#registerAdvisorFields");
+
     this.listen(registerForm, "submit", async (event) => {
       event.preventDefault();
       this._hideError("#registerError");
 
-      const payload = {
-        role: roleAdvisor?.checked ? "asesor" : "usuario",
-        fullName: this.element.querySelector("#registerFullName")?.value || "",
-        email: this.element.querySelector("#registerEmail")?.value || "",
-        password: this.element.querySelector("#registerPassword")?.value || "",
-        confirmPassword:
-          this.element.querySelector("#registerConfirmPassword")?.value || "",
-        licenseNumber:
-          this.element.querySelector("#registerLicenseNumber")?.value || "",
-        specialty: this.element.querySelector("#registerSpecialty")?.value || "",
-        acceptTerms: Boolean(this.element.querySelector("#registerTerms")?.checked),
-      };
+      const payload = this._getRegisterFormPayload(roleAdvisor);
 
       const validation = validateRegisterForm(payload);
       if (!validation.isValid) {
@@ -196,20 +237,53 @@ export class LandingPage extends Component {
         return;
       }
 
-      try {
-        const user = await this.options.authManager.register(payload);
-        this.options.showToast?.(`Cuenta creada para ${user.fullName}.`, "success");
-        this.registerModal?.hide();
-        registerForm.reset();
-        updateAdvisorFields();
-        this._navigateByRole(user.role);
-      } catch (error) {
-        this._showError(
-          "#registerError",
-          error.message || "No se pudo registrar la cuenta."
-        );
-      }
+      await this._submitRegister(payload, registerForm, advisorFields);
     });
+  }
+
+  /**
+   * Extrae los datos del form de registro
+   * @private
+   * @param {HTMLElement} roleAdvisor - Input radio de rol asesor
+   * @returns {object} Objeto con todos los campos del registro
+   */
+  _getRegisterFormPayload(roleAdvisor) {
+    return {
+      role: roleAdvisor?.checked ? "asesor" : "usuario",
+      fullName: this.element.querySelector("#registerFullName")?.value || "",
+      email: this.element.querySelector("#registerEmail")?.value || "",
+      password: this.element.querySelector("#registerPassword")?.value || "",
+      confirmPassword:
+        this.element.querySelector("#registerConfirmPassword")?.value || "",
+      licenseNumber:
+        this.element.querySelector("#registerLicenseNumber")?.value || "",
+      specialty: this.element.querySelector("#registerSpecialty")?.value || "",
+      acceptTerms: Boolean(this.element.querySelector("#registerTerms")?.checked),
+    };
+  }
+
+  /**
+   * Intenta registrar una nueva cuenta
+   * @private
+   * @param {object} payload - Datos del registro
+   * @param {HTMLElement} registerForm - Elemento del form
+   * @param {HTMLElement} advisorFields - Contenedor de campos de asesor
+   */
+  async _submitRegister(payload, registerForm, advisorFields) {
+    try {
+      const user = await this.options.authManager.register(payload);
+      this.options.showToast?.(`Cuenta creada para ${user.fullName}.`, "success");
+      this.registerModal?.hide();
+      registerForm.reset();
+      // Reseteamos visibilidad de campos de asesor
+      advisorFields?.classList.add("app-hidden");
+      this._navigateByRole(user.role);
+    } catch (error) {
+      this._showError(
+        "#registerError",
+        error.message || "No se pudo registrar la cuenta."
+      );
+    }
   }
 
   _navigateByRole(role) {
@@ -240,7 +314,7 @@ export class LandingPage extends Component {
       return;
     }
 
-    navContainer.innerHTML = LANDING_CONTENT.nav
+    navContainer.innerHTML = TEXTS.landing.nav
       .map((item) => {
         return `<button class="landing-nav-link" data-scroll-target="${item.id}" type="button">${item.label}</button>`;
       })
@@ -253,7 +327,7 @@ export class LandingPage extends Component {
       return;
     }
 
-    container.innerHTML = LANDING_CONTENT.brands
+    container.innerHTML = TEXTS.landing.brands
       .map((brand) => {
         const iconClass = brand.icon || "fa-circle";
         return `
@@ -272,7 +346,7 @@ export class LandingPage extends Component {
       return;
     }
 
-    container.innerHTML = LANDING_CONTENT.features
+    container.innerHTML = TEXTS.landing.features
       .map((feature, index) => {
         return `
           <article class="landing-card landing-card--feature">
@@ -294,7 +368,7 @@ export class LandingPage extends Component {
       return;
     }
 
-    container.innerHTML = LANDING_CONTENT.advantages
+    container.innerHTML = TEXTS.landing.advantages
       .map((item) => {
         return `
           <article class="landing-adv">
@@ -312,7 +386,7 @@ export class LandingPage extends Component {
       return;
     }
 
-    const testimonials = LANDING_CONTENT.testimonials || [];
+    const testimonials = TEXTS.landing.testimonials || [];
     if (!testimonials.length) {
       container.innerHTML = "";
       return;
@@ -364,7 +438,7 @@ export class LandingPage extends Component {
   }
 
   _cycleTestimonials(direction) {
-    const total = LANDING_CONTENT.testimonials?.length || 0;
+    const total = TEXTS.landing.testimonials?.length || 0;
     if (total <= 1) {
       return;
     }
@@ -378,7 +452,7 @@ export class LandingPage extends Component {
   _startTestimonialsAutoplay() {
     this._stopTestimonialsAutoplay();
 
-    const total = LANDING_CONTENT.testimonials?.length || 0;
+    const total = TEXTS.landing.testimonials?.length || 0;
     if (total <= 1) {
       return;
     }
@@ -387,7 +461,7 @@ export class LandingPage extends Component {
       const nextIndex = (this.activeTestimonialIndex + 1) % total;
       this.activeTestimonialIndex = nextIndex;
       this._renderLandingTestimonials();
-    }, TESTIMONIAL_AUTO_MS);
+    }, UI_TIMING.TESTIMONIAL_AUTO_MS);
   }
 
   _stopTestimonialsAutoplay() {
@@ -405,7 +479,7 @@ export class LandingPage extends Component {
       return;
     }
 
-    container.innerHTML = LANDING_CONTENT.plans
+    container.innerHTML = TEXTS.landing.plans
       .map((plan) => {
         return `
           <article class="landing-plan ${plan.highlighted ? "landing-plan--highlight" : ""}">

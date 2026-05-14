@@ -1,11 +1,16 @@
 .landing-page {
   min-height: 100vh;
-  --landing-surface-soft: rgba(7, 40, 42, 0.46);
-  --landing-surface-strong: rgba(7, 47, 49, 0.62);
-  --landing-surface-glass: rgba(6, 33, 36, 0.34);
-  --landing-border-soft: rgba(68, 230, 203, 0.2);
-  --landing-border-strong: rgba(68, 230, 203, 0.45);
-  --landing-shadow: 0 18px 38px rgba(2, 34, 32, 0.34);
+  /* SANDWICH THEME — Superficies y bordes para landing */
+  --landing-surface-soft: rgba(20, 32, 52, 0.5);         /* Muy transparente */
+  --landing-surface-strong: rgba(17, 25, 40, 0.65);      /* Moderado */
+  --landing-surface-glass: rgba(13, 20, 34, 0.35);       /* Muy ligero */
+  --landing-border-soft: rgba(45, 212, 191, 0.15);       /* Turquesa muy sutil */
+  --landing-border-strong: rgba(45, 212, 191, 0.35);     /* Turquesa visible */
+  --landing-accent-soft: var(--accent-soft);
+  --landing-accent-strong: var(--landing-border-strong);
+  --landing-accent-glow: var(--accent-glow);
+  --landing-action-gradient: linear-gradient(120deg, var(--accent), var(--accent-hover));
+  --landing-shadow: 0 18px 38px rgba(0, 0, 0, 0.4);      /* Sombra oscura */
   --landing-first-fold-offset: clamp(9rem, 13vh, 10.5rem);
   --landing-section-gap: clamp(1.75rem, 3.2vw, 2.25rem);
 }
@@ -14,7 +19,7 @@
   position: sticky;
   top: 0;
   z-index: 1030;
-  background: rgba(2, 22, 26, 0.84);
+  background: var(--navbar-bg);
   border-bottom: 1px solid var(--landing-border-soft);
   backdrop-filter: blur(14px);
 }
@@ -52,7 +57,7 @@
 .landing-nav-link:hover,
 .landing-nav-link:focus-visible {
   color: var(--color-primary);
-  background: rgba(57, 223, 191, 0.12);
+  background: rgba(45, 212, 191, 0.12);
 }
 
 .landing-actions {
@@ -153,8 +158,8 @@
 .landing-soon-chip {
   margin-top: 14px;
   border-radius: 999px;
-  border: 1px solid rgba(153, 241, 225, 0.35);
-  background: rgba(57, 223, 191, 0.15);
+  border: 1px solid var(--landing-border-soft);
+  background: var(--landing-accent-soft);
   color: var(--text-200);
   font-size: 0.73rem;
   font-weight: 700;
@@ -163,8 +168,8 @@
 }
 
 .landing-brands {
-  border-top: 1px solid rgba(68, 230, 203, 0.14);
-  border-bottom: 1px solid rgba(68, 230, 203, 0.14);
+  border-top: 1px solid var(--landing-accent-soft);
+  border-bottom: 1px solid var(--landing-accent-soft);
   padding: clamp(0.6rem, 1.6vw, 0.75rem) 0;
 }
 
@@ -201,7 +206,7 @@
 
 .landing-logo-item i {
   font-size: 1.55rem;
-  color: rgba(231, 252, 245, 0.95);
+  color: var(--text-main);
 }
 
 .landing-logo-item:hover {
@@ -277,8 +282,8 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: linear-gradient(120deg, #48e6c8, #29cfb7);
-  color: #04302c;
+  background: var(--landing-action-gradient);
+  color: var(--bg-main);
   font-size: 0.82rem;
   font-weight: 800;
   display: inline-flex;
@@ -291,9 +296,9 @@
   width: 78px;
   height: 78px;
   border-radius: 50%;
-  background: linear-gradient(145deg, rgba(57, 223, 191, 0.26), rgba(39, 193, 169, 0.15));
-  border: 1px solid rgba(98, 236, 208, 0.36);
-  color: var(--color-primary);
+  background: linear-gradient(145deg, var(--landing-accent-soft), rgba(13, 20, 34, 0.22));
+  border: 1px solid var(--landing-accent-strong);
+  color: var(--accent);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -372,10 +377,10 @@
 .landing-testimonial-nav {
   width: 36px;
   height: 36px;
-  border: 1px solid rgba(125, 215, 194, 0.34);
+  border: 1px solid var(--landing-accent-strong);
   border-radius: 50%;
-  background: rgba(57, 223, 191, 0.06);
-  color: var(--text-100);
+  background: var(--landing-accent-soft);
+  color: var(--text-main);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -383,7 +388,7 @@
 }
 
 .landing-testimonial-nav:hover {
-  background: rgba(57, 223, 191, 0.16);
+  background: var(--landing-accent-glow);
   border-color: var(--landing-border-strong);
 }
 
@@ -395,14 +400,14 @@
 }
 
 .landing-testimonial {
-  border: 1px solid rgba(127, 213, 192, 0.28);
+  border: 1px solid var(--landing-border-soft);
   border-radius: var(--radius-md);
   padding: 20px;
   background: linear-gradient(145deg, rgba(8, 46, 49, 0.36), rgba(6, 29, 32, 0.24));
 }
 
 .landing-testimonial__stars {
-  color: #fcd34d;
+  color: var(--accent);
   margin-bottom: 8px;
 }
 
@@ -428,7 +433,7 @@
   width: 8px;
   height: 8px;
   border-radius: 999px;
-  background: rgba(127, 213, 192, 0.35);
+  background: var(--landing-accent-glow);
   transition: 180ms ease;
 }
 
@@ -444,11 +449,11 @@
 }
 
 .landing-plan {
-  border: 1px solid rgba(125, 215, 194, 0.36);
+  border: 1px solid var(--landing-border-soft);
   border-radius: var(--radius-lg);
   padding: 22px;
-  background: linear-gradient(150deg, rgba(9, 47, 50, 0.78), rgba(7, 34, 37, 0.7));
-  box-shadow: 0 14px 28px rgba(1, 20, 19, 0.34);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-soft);
   position: relative;
   transition: 200ms ease;
 }
@@ -456,13 +461,13 @@
 .landing-plan:hover {
   transform: translateY(-4px);
   border-color: var(--landing-border-strong);
-  box-shadow: 0 18px 34px rgba(1, 20, 19, 0.4);
+  box-shadow: var(--shadow-soft);
 }
 
 .landing-plan--highlight {
-  border-color: var(--color-primary);
-  box-shadow: 0 20px 34px rgba(4, 61, 54, 0.38);
-  background: linear-gradient(145deg, rgba(10, 56, 60, 0.82), rgba(8, 49, 52, 0.72));
+  border-color: var(--accent);
+  box-shadow: var(--shadow-accent);
+  background: linear-gradient(145deg, rgba(15, 22, 35, 0.96), rgba(11, 17, 32, 0.9));
 }
 
 .landing-plan__badge {
@@ -471,8 +476,8 @@
   left: 50%;
   transform: translateX(-50%);
   border-radius: 999px;
-  background: linear-gradient(120deg, #49e6c8, #2fd0b8);
-  color: #06332e;
+  background: var(--landing-action-gradient);
+  color: var(--bg-main);
   font-size: 0.76rem;
   font-weight: 800;
   padding: 8px 16px;
@@ -519,7 +524,8 @@
 }
 
 .landing-footer {
-  border-top: 1px solid rgba(68, 230, 203, 0.17);
+  border-top: 1px solid var(--landing-accent-soft);
+  background: linear-gradient(180deg, rgba(11, 17, 32, 0.96), rgba(15, 22, 35, 0.9));
   padding-top: 26px;
 }
 
@@ -568,7 +574,7 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  border: 1px solid rgba(68, 230, 203, 0.26);
+  border: 1px solid var(--landing-accent-soft);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -577,13 +583,13 @@
 }
 
 .landing-socials a:hover {
-  color: var(--text-100);
+  color: var(--text-main);
   border-color: var(--landing-border-strong);
-  background: rgba(57, 223, 191, 0.14);
+  background: var(--landing-accent-glow);
 }
 
 .auth-modal .modal-content {
-  background: linear-gradient(145deg, rgba(6, 33, 40, 0.98), rgba(4, 23, 29, 0.95));
+  background: var(--modal-surface);
   border: 1px solid var(--landing-border-strong);
   border-radius: var(--radius-md);
   box-shadow: var(--landing-shadow);
@@ -643,7 +649,7 @@
 
 .auth-modal .modal-header,
 .auth-modal .modal-footer {
-  border-color: rgba(116, 213, 190, 0.24);
+  border-color: var(--landing-accent-soft);
 }
 
 .auth-modal .modal-title {
@@ -692,10 +698,10 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  border: 1px solid rgba(124, 214, 192, 0.32);
+  border: 1px solid var(--landing-border-strong);
   border-radius: 10px;
   padding: 0 10px;
-  background: rgba(8, 37, 43, 0.74);
+  background: rgba(11, 17, 32, 0.74);
   transition: 150ms ease;
 }
 
@@ -706,7 +712,7 @@
 
 .auth-input-wrap:focus-within {
   border-color: var(--landing-border-strong);
-  box-shadow: 0 0 0 3px rgba(57, 223, 191, 0.15);
+  box-shadow: 0 0 0 3px var(--landing-accent-glow);
 }
 
 .auth-input-wrap .form-control,
@@ -728,21 +734,21 @@
 }
 
 .auth-input-wrap .form-select option {
-  color: #102224;
+  color: var(--text-main);
 }
 
 .auth-modal .form-check-input {
-  border-color: rgba(124, 214, 192, 0.46);
-  background-color: rgba(7, 37, 43, 0.84);
+  border-color: var(--landing-border-strong);
+  background-color: rgba(11, 17, 32, 0.84);
 }
 
 .auth-modal .form-check-input:checked {
-  background-color: var(--color-primary-strong);
-  border-color: var(--color-primary-strong);
+  background-color: var(--accent-hover);
+  border-color: var(--accent-hover);
 }
 
 .auth-modal .text-danger {
-  color: #ff9ea4 !important;
+  color: var(--color-danger) !important;
 }
 
 @media (max-width: 1100px) {

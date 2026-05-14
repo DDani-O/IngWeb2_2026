@@ -90,8 +90,19 @@
   color: var(--text-muted);
 }
 
+.user-chart-grid {
+  gap: 10px;
+}
+
 .user-chart-grid .chart-card canvas {
-  min-height: var(--chart-canvas-min-height-compact);
+  min-height: 12.5rem;
+  max-height: 14rem;
+}
+
+@media (max-width: 991px) {
+  .user-chart-grid .chart-card canvas {
+    min-height: 13rem;
+  }
 }
 
 .merchant-list {

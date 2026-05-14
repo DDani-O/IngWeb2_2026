@@ -3,9 +3,9 @@ import { eventBus } from "./core/EventBus.js";
 import { Router } from "./core/Router.js";
 import { stateManager } from "./core/StateManager.js";
 import { themeManager } from "./core/ThemeManager.js";
-import { mountAdvisorRecommendationModal } from "./components/modals/AdvisorRecommendationModal.js";
-import { mountAdvisorShell } from "./components/navigation/AdvisorShell.js";
-import { mountUserShell } from "./components/navigation/UserShell.js";
+import { mountAdvisorRecommendationModal } from "./components/advisor/AdvisorRecommendationModal/AdvisorRecommendationModal.js";
+import { mountAdvisorShell } from "./components/advisor/AdvisorShell/AdvisorShell.js";
+import { mountUserShell } from "./components/user/UserShell/UserShell.js";
 import { EVENTS, ROUTES, UI_TIMING } from "./utils/constants.js";
 
 const toastContainer = document.querySelector("#globalToastContainer");

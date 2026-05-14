@@ -182,7 +182,7 @@
 }
 
 .action-btn--ghost:hover {
-  background: rgba(57, 223, 191, 0.16);
+  background: rgba(45, 212, 191, 0.16);
   background: color-mix(in srgb, var(--action-ghost-bg) 60%, var(--color-primary) 22%);
 }
 

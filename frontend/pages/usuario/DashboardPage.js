@@ -257,6 +257,10 @@ export class DashboardPage extends PageController {
     `;
   }
 
+  /**
+   * Inicializa todos los gráficos de la página si Chart.js está disponible
+   * @private
+   */
   _initCharts() {
     if (!window.Chart) {
       return;
@@ -270,107 +274,137 @@ export class DashboardPage extends PageController {
     const dailyCtx = this.element.querySelector("#userDailyChart");
 
     if (categoryCtx) {
-      this.charts.push(
-        new window.Chart(categoryCtx, {
-          type: "doughnut",
-          data: {
-            labels: this.data.charts.categoryDistribution.map((item) => item.label),
-            datasets: [
-              {
-                data: this.data.charts.categoryDistribution.map((item) => item.value),
-                backgroundColor: this.data.charts.categoryDistribution.map(
-                  (item) => item.color
-                ),
-                borderColor: chartColors.border,
-                borderWidth: 2,
-              },
-            ],
-          },
-          options: {
-            plugins: {
-              legend: {
-                labels: { color: chartColors.label },
-              },
-            },
-          },
-        })
-      );
+      this._initCategoryChart(categoryCtx, chartColors);
     }
 
     if (monthlyCtx) {
-      this.charts.push(
-        new window.Chart(monthlyCtx, {
-          type: "bar",
-          data: {
-            labels: this.data.charts.monthlyLabels,
-            datasets: [
-              {
-                label: "Gasto Mensual",
-                data: this.data.charts.monthlyExpenses,
-                backgroundColor: "rgba(45, 212, 191, 0.4)",
-                borderColor: "#2dd4bf",
-                borderWidth: 1,
-              },
-            ],
-          },
-          options: {
-            scales: {
-              x: {
-                ticks: { color: chartColors.label },
-                grid: { color: chartColors.grid },
-              },
-              y: {
-                ticks: { color: chartColors.label },
-                grid: { color: chartColors.grid },
-              },
-            },
-            plugins: {
-              legend: {
-                labels: { color: chartColors.label },
-              },
-            },
-          },
-        })
-      );
+      this._initMonthlyChart(monthlyCtx, chartColors);
     }
 
     if (dailyCtx) {
-      this.charts.push(
-        new window.Chart(dailyCtx, {
-          type: "line",
-          data: {
-            labels: this.data.charts.dailyLabels,
-            datasets: [
-              {
-                label: "Gasto Diario",
-                data: this.data.charts.dailySeries,
-                borderColor: chartColors.info,
-                backgroundColor: "rgba(6, 182, 212, 0.2)",
-                fill: true,
-                tension: 0.35,
-              },
-            ],
-          },
-          options: {
-            scales: {
-              x: {
-                ticks: { color: chartColors.label },
-                grid: { color: chartColors.grid },
-              },
-              y: {
-                ticks: { color: chartColors.label },
-                grid: { color: chartColors.grid },
-              },
-            },
-            plugins: {
-              legend: {
-                labels: { color: chartColors.label },
-              },
-            },
-          },
-        })
-      );
+      this._initDailyChart(dailyCtx, chartColors);
     }
+  }
+
+  /**
+   * Inicializa el gráfico de distribución de categorías (doughnut)
+   * @private
+   * @param {HTMLElement} ctx - Canvas context
+   * @param {object} chartColors - Colores temáticos del gráfico
+   */
+  _initCategoryChart(ctx, chartColors) {
+    this.charts.push(
+      new window.Chart(ctx, {
+        type: "doughnut",
+        data: {
+          labels: this.data.charts.categoryDistribution.map((item) => item.label),
+          datasets: [
+            {
+              data: this.data.charts.categoryDistribution.map((item) => item.value),
+              backgroundColor: this.data.charts.categoryDistribution.map(
+                (item) => item.color
+              ),
+              borderColor: chartColors.border,
+              borderWidth: 2,
+            },
+          ],
+        },
+        options: {
+          plugins: {
+            legend: {
+              labels: { color: chartColors.label },
+            },
+          },
+        },
+      })
+    );
+  }
+
+  /**
+   * Inicializa el gráfico de gastos mensuales (bar chart)
+   * @private
+   * @param {HTMLElement} ctx - Canvas context
+   * @param {object} chartColors - Colores temáticos del gráfico
+   */
+  _initMonthlyChart(ctx, chartColors) {
+    this.charts.push(
+      new window.Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: this.data.charts.monthlyLabels,
+          datasets: [
+            {
+              label: "Gasto Mensual",
+              data: this.data.charts.monthlyExpenses,
+              backgroundColor: "rgba(45, 212, 191, 0.4)",
+              borderColor: "#2dd4bf",
+              borderWidth: 1,
+            },
+          ],
+        },
+        options: {
+          scales: {
+            x: {
+              ticks: { color: chartColors.label },
+              grid: { color: chartColors.grid },
+            },
+            y: {
+              ticks: { color: chartColors.label },
+              grid: { color: chartColors.grid },
+            },
+          },
+          plugins: {
+            legend: {
+              labels: { color: chartColors.label },
+            },
+          },
+        },
+      })
+    );
+  }
+
+  /**
+   * Inicializa el gráfico de gastos diarios (line chart)
+   * @private
+   * @param {HTMLElement} ctx - Canvas context
+   * @param {object} chartColors - Colores temáticos del gráfico
+   */
+  _initDailyChart(ctx, chartColors) {
+    this.charts.push(
+      new window.Chart(ctx, {
+        type: "line",
+        data: {
+          labels: this.data.charts.dailyLabels,
+          datasets: [
+            {
+              label: "Gasto Diario",
+              data: this.data.charts.dailySeries,
+              borderColor: chartColors.info,
+              backgroundColor: "rgba(6, 182, 212, 0.2)",
+              fill: true,
+              tension: 0.35,
+            },
+          ],
+        },
+        options: {
+          scales: {
+            x: {
+              ticks: { color: chartColors.label },
+              grid: { color: chartColors.grid },
+            },
+            y: {
+              ticks: { color: chartColors.label },
+              grid: { color: chartColors.grid },
+            },
+          },
+          plugins: {
+            legend: {
+              labels: { color: chartColors.label },
+            },
+          },
+        },
+      })
+    );
   }
 
   _openChatModal() {
