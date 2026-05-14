@@ -1,0 +1,8 @@
+# Dependencias
+node_modules/
+
+# Variables de entorno (¡CRÍTICO!)
+.env
+
+# Archivos de compilación
+dist/
