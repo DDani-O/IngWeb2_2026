@@ -4,10 +4,12 @@ Base de datos PostgreSQL/Supabase para la plataforma de gestión de gastos.
 
 ## 🚀 Quick Start
 
-**Para levantar la BD en Supabase:**
+**Para levantar/actualizar la BD en Supabase:**
 
 1. Abrir el editor SQL de Supabase
-2. Copiar el contenido de: `migrations/0001_init_schema.sql`
+2. Copiar el contenido de las migraciones en orden:
+	- `migrations/0001_init_schema.sql`
+	- `migrations/0003_users_profiles_recommendations.sql`
 3. Ejecutar ✅
 
 **¡Listo!** La BD estará 100% operativa.
@@ -19,7 +21,8 @@ Base de datos PostgreSQL/Supabase para la plataforma de gestión de gastos.
 ```
 backend/src/database/
 ├── migrations/
-│   └── 0001_init_schema.sql    ← ÚNICO ARCHIVO NECESARIO
+│   ├── 0001_init_schema.sql
+│   └── 0003_users_profiles_recommendations.sql
 ├── functions/                   (referencia/modularización futura)
 ├── policies/                    (referencia/modularización futura)
 └── README.md
@@ -39,6 +42,13 @@ Un único archivo que define todo lo necesario:
 ✅ **Seguridad**: Políticas RLS en todas las tablas  
 ✅ **Constraints**: Validaciones de negocio
 
+## 📖 Qué contiene `0003_users_profiles_recommendations.sql`
+
+✅ **Nuevos ENUM**: estado_recomendacion  
+✅ **Nuevos campos**: perfiles extendidos (cliente) y recomendaciones enriquecidas  
+✅ **Usuarios**: agregado ultimo_acceso  
+✅ **Funciones**: update del validador `validar_recomendaciones_financieras`
+
 ---
 
 ## 📁 Directorios de Referencia
@@ -48,7 +58,7 @@ Los directorios `functions/` y `policies/` contienen los mismos componentes **se
 - Cambiar una política de seguridad
 - Mantener componentes versionados por separado
 
-**Nota**: No necesitas usarlos ahora. El `init_schema.sql` es autosuficiente.
+**Nota**: No necesitas usarlos ahora. Para un setup completo, aplica primero `0001_init_schema.sql` y luego `0003_users_profiles_recommendations.sql`.
 
 ## Componentes Principales
 
@@ -87,6 +97,7 @@ Para modificar el esquema:
 2. Para lógica: agregar archivo en `functions/`
 3. Para seguridad: agregar archivo en `policies/`
 4. Actualizar READMEs correspondientes
+5. Ejecutar las migraciones nuevas en Supabase SQL Editor (en orden)
 
 ## Notas Importantes
 
