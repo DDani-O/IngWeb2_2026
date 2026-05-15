@@ -139,7 +139,13 @@ export class ExpensesService {
 
     const grouped = rows.reduce((acc, expense) => {
       const categoryId = expense.categoria_id;
-      const categoryName = expense.categorias_de_gasto?.nombre || null;
+     
+      const categoryData = expense.categorias_de_gasto as any;
+      const categoryName = Array.isArray(categoryData) 
+        ? categoryData[0]?.nombre 
+        : categoryData?.nombre;
+     
+     
       const current = acc.find((item) => item.categoryId === categoryId);
 
       if (current) {
@@ -213,7 +219,7 @@ export class ExpensesService {
       amount: expense.monto,
       merchant: expense.comercio,
       categoryId: expense.categoria_id,
-      categoryName: expense.categorias_de_gasto?.nombre,
+      categoryName: expense.categorias_de_gasto?.[0]?.nombre,
       date: expense.fecha_gasto,
       notes: expense.descripcion,
       ticketImageUrl: expense.ticket_principal_id || null,
@@ -279,7 +285,7 @@ export class ExpensesService {
       amount: expense.monto,
       merchant: expense.comercio,
       categoryId: expense.categoria_id,
-      categoryName: expense.categorias_de_gasto?.nombre,
+      categoryName: expense.categorias_de_gasto?.[0]?.nombre,
       date: expense.fecha_gasto,
       notes: expense.descripcion,
       ticketImageUrl: expense.ticket_principal_id || null,
@@ -359,7 +365,7 @@ export class ExpensesService {
       amount: expense.monto,
       merchant: expense.comercio,
       categoryId: expense.categoria_id,
-      categoryName: expense.categorias_de_gasto?.nombre,
+      categoryName: expense.categorias_de_gasto?.[0]?.nombre,
       date: expense.fecha_gasto,
       notes: expense.descripcion,
       ticketImageUrl: expense.ticket_principal_id || null,

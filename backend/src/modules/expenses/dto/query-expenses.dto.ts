@@ -1,4 +1,4 @@
-import { IsInt, IsOptional, IsString, IsUUID, Max, Min } from "class-validator";
+import { IsInt, IsOptional, IsString, IsUUID, Max, MaxLength, Min } from "class-validator";
 import { Type } from "class-transformer";
 
 export class QueryExpensesDto {
@@ -29,6 +29,6 @@ export class QueryExpensesDto {
 
   @IsOptional()
   @IsString()
-  @Max(100)
+  @MaxLength(100)
   search?: string;
 }
