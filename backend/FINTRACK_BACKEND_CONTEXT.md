@@ -112,9 +112,101 @@ FRONTEND_URL=
 
 | Método | Ruta | Body | Respuesta |
 |--------|------|------|-----------|
-| `GET` | `/users/me` | — | `200 { id, email, fullName, role, avatarUrl, createdAt }` |
-| `PATCH` | `/users/me` | `{ fullName?, avatarUrl? }` | `200` perfil completo |
-| `GET` | `/users/me/recommendations` | — | `200 [{ id, advisorName, content, type, isRead, createdAt }]` |
+| `GET` | `/users/me` | — | `200` perfil completo (base + extendido) |
+| `PATCH` | `/users/me` | campos opcionales (base + extendido) | `200` perfil completo |
+| `GET` | `/users/me/recommendations` | — | `200 { stats, recommendations[] }` |
+
+**Base (siempre):**
+```json
+{
+  "id": "uuid",
+  "email": "string",
+  "fullName": "string",
+  "role": "usuario|asesor",
+  "avatarUrl": "string|null",
+  "createdAt": "ISO date",
+  "lastLogin": "ISO date|null",
+  "profile": "string|null",
+  "advisorName": "string|null"
+}
+```
+
+**Extendido (cliente):**
+```json
+{
+  "phone": "string|null",
+  "city": "string|null",
+  "occupation": "string|null",
+  "monthlyIncome": 0,
+  "savingsGoal": 0,
+  "alertThreshold": 0,
+  "currency": "ARS",
+  "theme": "dark",
+  "notifyEmail": true,
+  "notifyPush": false,
+  "financialGoal": "string|null"
+}
+```
+
+**Extendido (asesor):**
+```json
+{
+  "licenseNumber": "string|null",
+  "specialty": "string|null",
+  "description": "string|null"
+}
+```
+
+**PATCH /users/me (campos opcionales por rol):**
+```json
+{
+  "fullName?": "string",
+  "avatarUrl?": "string",
+  "phone?": "string",
+  "city?": "string",
+  "occupation?": "string",
+  "monthlyIncome?": 0,
+  "savingsGoal?": 0,
+  "alertThreshold?": 0,
+  "currency?": "ARS",
+  "theme?": "dark",
+  "notifyEmail?": true,
+  "notifyPush?": false,
+  "financialGoal?": "string",
+  "licenseNumber?": "string",
+  "specialty?": "string",
+  "description?": "string"
+}
+```
+
+**GET /users/me/recommendations:**
+```json
+{
+  "stats": {
+    "totalSavingsPotential": 0,
+    "activeRecommendations": 0,
+    "completedThisMonth": 0,
+    "estimatedImpact": "0%"
+  },
+  "recommendations": [
+    {
+      "id": "uuid",
+      "title": "string",
+      "priority": "Alta|Media",
+      "status": "Pendiente|Completada|Descartada",
+      "problem": "string|null",
+      "solution": "string|null",
+      "savingsPotential": 0,
+      "implementationSteps": ["string"],
+      "dateSent": "ISO date",
+      "advisorName": "string|null",
+      "advisorEmail": "string|null",
+      "icon": "string|null",
+      "type": "alerta|consejo|felicitacion"
+    }
+  ]
+}
+```
 
 ### CATEGORIES (público)
 

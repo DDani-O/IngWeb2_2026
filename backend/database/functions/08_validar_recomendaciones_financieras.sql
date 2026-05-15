@@ -56,8 +56,13 @@ begin
                or new.origen is distinct from old.origen
                or new.tipo is distinct from old.tipo
                or new.asesor_id is distinct from old.asesor_id
-               or new.cliente_id is distinct from old.cliente_id then
-                raise exception 'El cliente solo puede modificar leida y leida_en';
+               or new.cliente_id is distinct from old.cliente_id
+               or new.icono is distinct from old.icono
+               or new.problema is distinct from old.problema
+               or new.solucion is distinct from old.solucion
+               or new.ahorro_potencial is distinct from old.ahorro_potencial
+               or new.pasos_implementacion is distinct from old.pasos_implementacion then
+                raise exception 'El cliente solo puede modificar leida, leida_en y estado';
             end if;
         elsif auth.uid() = old.asesor_id then
             null;
@@ -69,6 +74,13 @@ begin
             new.leida_en := coalesce(new.leida_en, now());
         elsif new.leida = false then
             new.leida_en := null;
+        end if;
+
+        if new.estado is distinct from old.estado then
+            if new.estado in ('completada', 'descartada') then
+                new.leida := true;
+                new.leida_en := coalesce(new.leida_en, now());
+            end if;
         end if;
     end if;
 

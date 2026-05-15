@@ -11,6 +11,7 @@ Este documento resume la estructura generada por la migracion inicial. Incluye t
 - origen_recomendacion: sistema | asesor
 - tipo_recomendacion: sugerencia | alerta | observacion
 - prioridad_recomendacion: baja | media | alta
+- estado_recomendacion: pendiente | completada | descartada
 
 ## Funciones base
 - es_service_role(): true si request.jwt.claim.role = service_role.
@@ -20,13 +21,13 @@ Este documento resume la estructura generada por la migracion inicial. Incluye t
 
 ### usuarios
 - PK: id (uuid) -> auth.users(id)
-- Campos clave: rol, nombre_completo, estado, creado_en, actualizado_en
+- Campos clave: rol, nombre_completo, estado, creado_en, actualizado_en, ultimo_acceso
 - Trigger: actualizado_en
 
 ### perfiles_usuarios
 - PK: id (uuid)
 - FK: usuario_id -> usuarios(id) (unique)
-- Datos: ocupacion, ingreso_estimado, objetivo_financiero, moneda_preferida
+- Datos: ocupacion, ingreso_estimado, objetivo_financiero, moneda_preferida, telefono, ciudad, ahorro_objetivo, umbral_alerta, tema, notificar_email, notificar_push
 - Trigger: actualizado_en
 
 ### perfiles_asesores
@@ -74,7 +75,7 @@ Este documento resume la estructura generada por la migracion inicial. Incluye t
 - PK: id (uuid)
 - FK: cliente_id -> usuarios(id)
 - FK: asesor_id -> usuarios(id) (nullable)
-- Datos: origen, tipo, titulo, mensaje, prioridad, leida, leida_en, creado_en
+- Datos: origen, tipo, titulo, mensaje, prioridad, leida, leida_en, creado_en, estado, icono, problema, solucion, ahorro_potencial, pasos_implementacion
 
 ### perfiles_de_gasto
 - PK: id (uuid)
@@ -106,7 +107,7 @@ Este documento resume la estructura generada por la migracion inicial. Incluye t
 - validar_tickets: cliente_id debe ser rol cliente.
 - validar_recomendaciones_financieras:
   - Insercion: si no es service_role, solo origen asesor, asesor_id = auth.uid(), asesor asignado al cliente.
-  - Update: cliente solo puede marcar leida/leida_en; asesor puede actualizar; otros bloqueado.
+  - Update: cliente solo puede marcar leida/leida_en/estado; asesor puede actualizar; otros bloqueado.
 - validar_clasificacion_de_perfil: cliente_id rol cliente; asesor_id (si existe) rol asesor.
 - validar_analisis_de_consumo: cliente_id rol cliente.
 - validar_analisis_ocr: sin reglas adicionales.

@@ -139,6 +139,15 @@ export class AuthService {
       throw new UnauthorizedException("Credenciales invalidas");
     }
 
+    try {
+      await this.supabase
+        .from("usuarios")
+        .update({ ultimo_acceso: new Date().toISOString() })
+        .eq("id", profile.id);
+    } catch {
+      // Best-effort update to avoid blocking login.
+    }
+
     const token = this.jwtService.sign({
       sub: profile.id,
       email: data.user.email || email,
