@@ -229,7 +229,8 @@ export class ExpensesService {
   }
 
   async create(userId: string, dto: CreateExpenseDto) {
-    // Validar que la categoría existe
+    // Validar que la categoría existe en el sistema global
+    // NOTA: No hay categorías personales. Todas las categorías son globales y públicas.
     const { data: category, error: categoryError } = await this.supabase
       .from("categorias_de_gasto")
       .select("id, nombre")
@@ -237,7 +238,9 @@ export class ExpensesService {
       .single();
 
     if (categoryError || !category) {
-      throw new BadRequestException("La categoría especificada no existe");
+      throw new BadRequestException(
+        "La categoría especificada no existe. Solo se pueden asignar categorías globales.",
+      );
     }
 
     // Insertar el gasto
@@ -307,7 +310,8 @@ export class ExpensesService {
       throw new NotFoundException("Gasto no encontrado");
     }
 
-    // Si viene categoryId, validar que existe
+    // Si viene categoryId, validar que existe en el sistema global
+    // NOTA: No hay categorías personales. Todas las categorías son globales y públicas.
     if (dto.categoryId) {
       const { data: category, error: categoryError } = await this.supabase
         .from("categorias_de_gasto")
@@ -316,7 +320,9 @@ export class ExpensesService {
         .single();
 
       if (categoryError || !category) {
-        throw new BadRequestException("La categoría especificada no existe");
+        throw new BadRequestException(
+          "La categoría especificada no existe. Solo se pueden asignar categorías globales.",
+        );
       }
     }
 
