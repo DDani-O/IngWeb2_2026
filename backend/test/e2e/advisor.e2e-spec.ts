@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
 import { AppModule } from './../../src/app.module';
 import { SUPABASE_CLIENT } from './../../src/common/supabase/supabase.provider';
 import { SupabaseClient } from '@supabase/supabase-js';
@@ -75,7 +75,7 @@ describe('AdvisorController (e2e)', () => {
       .get('/advisor/dashboard')
       .set('Authorization', `Bearer ${advisorAccessToken}`)
       .expect(200)
-      .expect((res) => {
+      .expect((res: any) => {
         expect(res.body).toHaveProperty('stats');
         expect(res.body).toHaveProperty('advisor');
       });
@@ -86,7 +86,7 @@ describe('AdvisorController (e2e)', () => {
       .get('/advisor/clients')
       .set('Authorization', `Bearer ${advisorAccessToken}`)
       .expect(200)
-      .expect((res) => {
+      .expect((res: any) => {
         expect(res.body).toHaveProperty('data');
         expect(res.body.data.some(c => c.id === clientId)).toBe(true);
       });
@@ -97,7 +97,7 @@ describe('AdvisorController (e2e)', () => {
       .get(`/advisor/clients/${clientId}`)
       .set('Authorization', `Bearer ${advisorAccessToken}`)
       .expect(200)
-      .expect((res) => {
+      .expect((res: any) => {
         expect(res.body).toHaveProperty('id', clientId);
         expect(res.body).toHaveProperty('email', clientEmail);
       });
@@ -142,7 +142,7 @@ describe('AdvisorController (e2e)', () => {
       .get('/advisor/reports')
       .set('Authorization', `Bearer ${advisorAccessToken}`)
       .expect(200)
-      .expect((res) => {
+      .expect((res: any) => {
         expect(res.body).toHaveProperty('summary');
       });
   });
