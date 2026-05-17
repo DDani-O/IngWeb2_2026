@@ -1,7 +1,55 @@
 -- =========================================================
--- Migration: Advisor messaging inbox
+-- Migration: Advisor messaging inbox and User Email Sync
 -- =========================================================
 
+-- 1. Agregar columna email a public.usuarios si no existe
+do $$
+begin
+    if not exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'usuarios' and column_name = 'email') then
+        alter table public.usuarios add column email text;
+    end if;
+end $$;
+
+-- 2. Función para sincronizar email desde auth.users
+create or replace function public.sync_user_email()
+returns trigger
+language plpgsql
+security definer
+as $$
+begin
+    if (tg_op = 'INSERT') then
+        update public.usuarios
+        set email = (select email from auth.users where id = new.id)
+        where id = new.id;
+    elsif (tg_op = 'UPDATE') then
+        if (new.email is distinct from old.email) then
+            -- Si cambia en public.usuarios (raro), se ignora o se sincroniza.
+            -- Lo ideal es que auth sea el trigger.
+            null;
+        end if;
+    end if;
+    return new;
+end;
+$$;
+
+-- 3. Trigger en auth.users para actualizar public.usuarios
+-- Nota: Esto requiere permisos que usualmente se manejan en Supabase SQL editor.
+-- Aquí definimos la función que debe activarse cuando cambia el email en auth.users.
+create or replace function public.handle_auth_user_email_change()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+    update public.usuarios
+    set email = new.email
+    where id = new.id;
+    return new;
+end;
+$$;
+
+-- 4. Tipos y tablas de mensajes
 do $$
 begin
     create type public.tipo_mensaje_asesor as enum ('mensaje', 'ticket');

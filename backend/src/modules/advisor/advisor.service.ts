@@ -22,6 +22,7 @@ import {
 } from "./dto/advisor-recommendation-types.enum";
 import { CreateAdvisorMessageDto } from "./dto/create-advisor-message.dto";
 import { CreateAdvisorRecommendationDto } from "./dto/create-advisor-recommendation.dto";
+import { UpdateRecommendationDto } from "./dto/update-recommendation.dto";
 
 interface AssignmentRow {
   cliente_id: string;
@@ -32,6 +33,7 @@ interface UserRow {
   id: string;
   nombre_completo: string;
   foto_perfil_url: string | null;
+  email: string | null;
   estado: string;
   creado_en: string;
 }
@@ -51,51 +53,10 @@ interface ClientProfileRow {
   notificar_push: boolean | null;
 }
 
-interface ActiveProfileRow {
-  cliente_id: string;
-  perfil?: { nombre?: string | null } | null;
-}
-
 interface ExpenseRow {
   cliente_id: string;
   monto: number | string;
   fecha_gasto: string;
-}
-
-interface MessageRow {
-  id: string;
-  cliente_id: string;
-  asesor_id: string;
-  remitente_id: string;
-  destinatario_id: string;
-  tipo: string;
-  asunto: string | null;
-  contenido: string;
-  leido: boolean;
-  leido_en: string | null;
-  creado_en: string;
-  cliente?: { nombre_completo?: string | null; foto_perfil_url?: string | null } | null;
-  remitente?: { nombre_completo?: string | null; foto_perfil_url?: string | null } | null;
-}
-
-interface RecommendationRow {
-  id: string;
-  cliente_id: string;
-  asesor_id: string | null;
-  origen: string;
-  tipo: string;
-  titulo: string;
-  mensaje: string;
-  prioridad: string;
-  leida: boolean;
-  creado_en: string;
-  estado: string | null;
-  ahorro_potencial: number | string | null;
-  pasos_implementacion: string[] | null;
-  icono: string | null;
-  problema: string | null;
-  solucion: string | null;
-  cliente?: { nombre_completo?: string | null } | null;
 }
 
 const DEFAULT_PAGE = 1;
@@ -130,7 +91,7 @@ export class AdvisorService {
         clients: [],
         inbox: [],
         recommendations: this.buildRecommendationSummary([]),
-        charts: this.buildCharts(new Map(), [], []),
+        charts: this.buildCharts(new Map<string, string>(), [], []),
       };
     }
 
@@ -166,7 +127,8 @@ export class AdvisorService {
       this.fetchExpensesByRange(clientIds, this.formatDate(lastWeek), this.formatDate(tomorrow)),
     ]);
 
-    const emailMap = await this.fetchUserEmails(clientIds);
+    const emailMap = new Map<string, string | null>();
+    clientRows.forEach((row) => emailMap.set(row.id, row.email));
 
     const clients = this.buildClientSummaries(
       clientRows,
@@ -247,10 +209,8 @@ export class AdvisorService {
         this.fetchLastExpenseMap(clientIds),
       ]);
 
-    const [emailMap, unreadCounts] = await Promise.all([
-      this.fetchUserEmails(clientIds),
-      this.fetchUnreadMessageCounts(payload.sub, clientIds),
-    ]);
+    const emailMap = new Map(clientRows.map((r) => [r.id, r.email]));
+    const unreadCounts = await this.fetchUnreadMessageCounts(payload.sub, clientIds);
 
     let clients = this.buildClientSummaries(
       clientRows,
@@ -322,7 +282,7 @@ export class AdvisorService {
     const startOfPrevMonth = this.startOfMonth(this.addMonths(now, -1));
     const tomorrow = this.addDays(now, 1);
 
-    const [currentRows, previousRows, lastExpenseMap, emailMap, unreadCounts] =
+    const [currentRows, previousRows, lastExpenseMap, unreadCounts] =
       await Promise.all([
         this.fetchExpensesByRange([clientId], this.formatDate(startOfMonth), this.formatDate(tomorrow)),
         this.fetchExpensesByRange(
@@ -331,9 +291,10 @@ export class AdvisorService {
           this.formatDate(startOfMonth),
         ),
         this.fetchLastExpenseMap([clientId]),
-        this.fetchUserEmails([clientId]),
         this.fetchUnreadMessageCounts(payload.sub, [clientId]),
       ]);
+
+    const emailMap = new Map([[clientId, clientRow.email]]);
 
     const summaries = this.buildClientSummaries(
       [clientRow],
@@ -471,25 +432,26 @@ export class AdvisorService {
       throw new InternalServerErrorException("No se pudieron obtener recomendaciones");
     }
 
-    const recommendations = (data || []).map((row: RecommendationRow) => ({
-      id: row.id,
-      clientId: row.cliente_id,
-      clientName: row.cliente?.nombre_completo ?? null,
-      title: row.titulo,
-      content: row.mensaje,
-      priority: this.mapPriority(row.prioridad),
-      status: this.mapStatus(row.estado),
-      type: this.mapRecommendationTypeFromDb(row.tipo),
-      isRead: row.leida,
-      dateSent: row.creado_en,
-      savingsPotential: this.toNumber(row.ahorro_potencial, 0),
-      implementationSteps: Array.isArray(row.pasos_implementacion)
-        ? row.pasos_implementacion
-        : [],
-      icon: row.icono ?? null,
-      problem: row.problema ?? null,
-      solution: row.solucion ?? null,
-    }));
+    const recommendations = (data || []).map((row: any) => {
+      const cliente = Array.isArray(row.cliente) ? row.cliente[0] : row.cliente;
+      return {
+        id: row.id,
+        clientId: row.cliente_id,
+        clientName: cliente?.nombre_completo ?? null,
+        title: row.titulo,
+        content: row.mensaje,
+        priority: this.mapPriority(row.prioridad),
+        status: this.mapStatus(row.estado),
+        type: this.mapRecommendationTypeFromDb(row.tipo),
+        isRead: row.leida,
+        dateSent: row.creado_en,
+        savingsPotential: this.toNumber(row.ahorro_potencial, 0),
+        implementationSteps: Array.isArray(row.pasos_implementacion) ? row.pasos_implementacion : [],
+        icon: row.icono ?? null,
+        problem: row.problema ?? null,
+        solution: row.solucion ?? null,
+      };
+    });
 
     return {
       data: recommendations,
@@ -534,10 +496,11 @@ export class AdvisorService {
       throw new InternalServerErrorException("No se pudo crear la recomendacion");
     }
 
+    const cliente = Array.isArray(data.cliente) ? data.cliente[0] : data.cliente;
     return {
       id: data.id,
       clientId: data.cliente_id,
-      clientName: data.cliente?.nombre_completo ?? null,
+      clientName: cliente?.nombre_completo ?? null,
       title: data.titulo,
       content: data.mensaje,
       priority: this.mapPriority(data.prioridad),
@@ -551,6 +514,69 @@ export class AdvisorService {
       problem: data.problema ?? null,
       solution: data.solucion ?? null,
     };
+  }
+
+  async updateRecommendation(user: JwtPayload, id: string, dto: UpdateRecommendationDto) {
+    const payload = this.ensureAdvisor(user);
+
+    const updatePayload: any = {};
+    if (dto.title !== undefined) updatePayload.titulo = dto.title;
+    if (dto.content !== undefined) updatePayload.mensaje = dto.content;
+    if (dto.priority !== undefined) updatePayload.prioridad = dto.priority;
+    if (dto.status !== undefined) updatePayload.estado = dto.status;
+    if (dto.icon !== undefined) updatePayload.icono = dto.icon;
+    if (dto.problem !== undefined) updatePayload.problema = dto.problem;
+    if (dto.solution !== undefined) updatePayload.solucion = dto.solution;
+    if (dto.savingsPotential !== undefined) updatePayload.ahorro_potencial = dto.savingsPotential;
+    if (dto.implementationSteps !== undefined)
+      updatePayload.pasos_implementacion = dto.implementationSteps;
+
+    const { data, error } = await this.supabase
+      .from("recomendaciones_financieras")
+      .update(updatePayload)
+      .eq("id", id)
+      .eq("asesor_id", payload.sub)
+      .select(
+        "id, cliente_id, asesor_id, origen, tipo, titulo, mensaje, prioridad, leida, creado_en, estado, ahorro_potencial, pasos_implementacion, icono, problema, solucion, cliente:cliente_id (nombre_completo)",
+      )
+      .single();
+
+    if (error) {
+      if (error.code === "PGRST116") throw new NotFoundException("Recomendacion no encontrada");
+      throw new InternalServerErrorException("No se pudo actualizar la recomendacion");
+    }
+
+    const cliente = Array.isArray(data.cliente) ? data.cliente[0] : data.cliente;
+    return {
+      id: data.id,
+      clientId: data.cliente_id,
+      clientName: cliente?.nombre_completo ?? null,
+      title: data.titulo,
+      content: data.mensaje,
+      priority: this.mapPriority(data.prioridad),
+      status: this.mapStatus(data.estado),
+      type: this.mapRecommendationTypeFromDb(data.tipo),
+      isRead: data.leida,
+      dateSent: data.creado_en,
+      savingsPotential: this.toNumber(data.ahorro_potencial, 0),
+      implementationSteps: Array.isArray(data.pasos_implementacion) ? data.pasos_implementacion : [],
+      icon: data.icono ?? null,
+      problem: data.problema ?? null,
+      solution: data.solucion ?? null,
+    };
+  }
+
+  async deleteRecommendation(user: JwtPayload, id: string) {
+    const payload = this.ensureAdvisor(user);
+    const { error } = await this.supabase
+      .from("recomendaciones_financieras")
+      .delete()
+      .eq("id", id)
+      .eq("asesor_id", payload.sub);
+
+    if (error) {
+      throw new InternalServerErrorException("No se pudo eliminar la recomendacion");
+    }
   }
 
   async getMessages(user: JwtPayload, query: AdvisorMessagesQueryDto) {
@@ -586,23 +612,26 @@ export class AdvisorService {
         throw new InternalServerErrorException("No se pudieron obtener los mensajes");
       }
 
-      const messages = (data || []).map((row: MessageRow) => ({
-        id: row.id,
-        clientId: row.cliente_id,
-        advisorId: row.asesor_id,
-        subject: row.asunto ?? this.buildSubject(row.contenido),
-        content: row.contenido,
-        type: row.tipo,
-        dateSent: row.creado_en,
-        isRead: row.leido,
-        readAt: row.leido_en,
-        from: {
-          id: row.remitente_id,
-          role: row.remitente_id === payload.sub ? "asesor" : "cliente",
-          name: row.remitente?.nombre_completo ?? null,
-          avatarUrl: row.remitente?.foto_perfil_url ?? null,
-        },
-      }));
+      const messages = (data || []).map((row: any) => {
+        const remitente = Array.isArray(row.remitente) ? row.remitente[0] : row.remitente;
+        return {
+          id: row.id,
+          clientId: row.cliente_id,
+          advisorId: row.asesor_id,
+          subject: row.asunto ?? this.buildSubject(row.contenido),
+          content: row.contenido,
+          type: row.tipo,
+          dateSent: row.creado_en,
+          isRead: row.leido,
+          readAt: row.leido_en,
+          from: {
+            id: row.remitente_id,
+            role: row.remitente_id === payload.sub ? "asesor" : "cliente",
+            name: remitente?.nombre_completo ?? null,
+            avatarUrl: remitente?.foto_perfil_url ?? null,
+          },
+        };
+      });
 
       return {
         data: messages,
@@ -657,6 +686,7 @@ export class AdvisorService {
       throw new InternalServerErrorException("No se pudo enviar el mensaje");
     }
 
+    const cliente = Array.isArray(data.cliente) ? data.cliente[0] : data.cliente;
     return {
       id: data.id,
       clientId: data.cliente_id,
@@ -670,10 +700,25 @@ export class AdvisorService {
       to: {
         id: data.cliente_id,
         role: "cliente",
-        name: data.cliente?.nombre_completo ?? null,
-        avatarUrl: data.cliente?.foto_perfil_url ?? null,
+        name: cliente?.nombre_completo ?? null,
+        avatarUrl: cliente?.foto_perfil_url ?? null,
       },
     };
+  }
+
+  async markMessageAsRead(user: JwtPayload, messageId: string) {
+    const payload = this.ensureAdvisor(user);
+    const { error } = await this.supabase
+      .from("mensajes_asesor")
+      .update({ leido: true, leido_en: new Date().toISOString() })
+      .eq("id", messageId)
+      .eq("destinatario_id", payload.sub);
+
+    if (error) {
+      throw new InternalServerErrorException("No se pudo marcar el mensaje como leido");
+    }
+
+    return { success: true };
   }
 
   private ensureAdvisor(user: JwtPayload) {
@@ -817,7 +862,7 @@ export class AdvisorService {
   private async fetchAdvisorRow(advisorId: string): Promise<UserRow> {
     const { data, error } = await this.supabase
       .from("usuarios")
-      .select("id, nombre_completo, foto_perfil_url, estado, creado_en")
+      .select("id, nombre_completo, foto_perfil_url, email, estado, creado_en")
       .eq("id", advisorId)
       .single();
 
@@ -831,7 +876,7 @@ export class AdvisorService {
   private async fetchUserRow(userId: string): Promise<UserRow> {
     const { data, error } = await this.supabase
       .from("usuarios")
-      .select("id, nombre_completo, foto_perfil_url, estado, creado_en")
+      .select("id, nombre_completo, foto_perfil_url, email, estado, creado_en")
       .eq("id", userId)
       .single();
 
@@ -881,7 +926,7 @@ export class AdvisorService {
 
     const { data, error } = await this.supabase
       .from("usuarios")
-      .select("id, nombre_completo, foto_perfil_url, estado, creado_en")
+      .select("id, nombre_completo, foto_perfil_url, email, estado, creado_en")
       .in("id", clientIds);
 
     if (error) {
@@ -921,7 +966,8 @@ export class AdvisorService {
       throw new InternalServerErrorException("No se pudo cargar el perfil de consumo");
     }
 
-    return (data?.perfil?.nombre as string | null) || null;
+    const perfil = Array.isArray(data?.perfil) ? data.perfil[0] : data?.perfil;
+    return (perfil?.nombre as string | null) || null;
   }
 
   private async fetchActiveProfileMap(clientIds: string[]) {
@@ -940,8 +986,9 @@ export class AdvisorService {
     }
 
     const map = new Map<string, string>();
-    (data as ActiveProfileRow[]).forEach((row) => {
-      const name = row.perfil?.nombre || null;
+    (data || []).forEach((row: any) => {
+      const perfil = Array.isArray(row.perfil) ? row.perfil[0] : row.perfil;
+      const name = perfil?.nombre || null;
       if (name) {
         map.set(row.cliente_id, name);
       }
@@ -997,28 +1044,6 @@ export class AdvisorService {
     return map;
   }
 
-  private async fetchUserEmails(userIds: string[]) {
-    if (!userIds.length) {
-      return new Map<string, string | null>();
-    }
-
-    const entries = await Promise.all(
-      userIds.map(async (userId) => {
-        try {
-          const { data, error } = await this.supabase.auth.admin.getUserById(userId);
-          if (error || !data?.user?.email) {
-            return [userId, null] as const;
-          }
-          return [userId, data.user.email] as const;
-        } catch {
-          return [userId, null] as const;
-        }
-      }),
-    );
-
-    return new Map(entries);
-  }
-
   private async fetchUnreadMessageCounts(advisorId: string, clientIds: string[]) {
     if (!clientIds.length) {
       return new Map<string, number>();
@@ -1059,7 +1084,7 @@ export class AdvisorService {
       throw new InternalServerErrorException("No se pudieron cargar los mensajes");
     }
 
-    return (data as MessageRow[]) || [];
+    return (data as any[]) || [];
   }
 
   private async fetchRecommendationRows(advisorId: string) {
@@ -1076,13 +1101,13 @@ export class AdvisorService {
       throw new InternalServerErrorException("No se pudieron cargar recomendaciones");
     }
 
-    return (data as RecommendationRow[]) || [];
+    return (data as any[]) || [];
   }
 
   private buildClientSummaries(
     clientRows: UserRow[],
     emailMap: Map<string, string | null>,
-    profileMap: Map<string, string>,
+    profileMap: Map<string, string | null>,
     currentRows: ExpenseRow[],
     previousRows: ExpenseRow[],
     lastExpenseMap: Map<string, string>,
@@ -1233,7 +1258,7 @@ export class AdvisorService {
   private buildAlerts(
     clients: Array<{ status: string }>,
     unreadCounts: Map<string, number>,
-    recommendations: RecommendationRow[],
+    recommendations: any[],
     now: Date,
   ) {
     const alerts: Array<{ icon: string; title: string; description: string; level: string }> = [];
@@ -1278,7 +1303,7 @@ export class AdvisorService {
     return alerts;
   }
 
-  private buildInboxPreview(rows: MessageRow[], advisorId: string) {
+  private buildInboxPreview(rows: any[], advisorId: string) {
     const seen = new Set<string>();
     const preview: Array<any> = [];
 
@@ -1288,10 +1313,12 @@ export class AdvisorService {
       }
       seen.add(row.cliente_id);
 
+      const cliente = Array.isArray(row.cliente) ? row.cliente[0] : row.cliente;
+
       preview.push({
         id: row.id,
         clientId: row.cliente_id,
-        from: row.cliente?.nombre_completo ?? "Cliente",
+        from: cliente?.nombre_completo ?? "Cliente",
         subject: row.asunto ?? this.buildSubject(row.contenido),
         date: this.formatRelativeDate(row.creado_en),
         type: row.tipo,
@@ -1302,18 +1329,21 @@ export class AdvisorService {
     return preview;
   }
 
-  private buildRecommendationSummary(rows: RecommendationRow[]) {
+  private buildRecommendationSummary(rows: any[]) {
     const pending = rows.filter((rec) => rec.estado === AdvisorRecommendationStatus.Pendiente);
     const viewed = rows.filter(
       (rec) => rec.estado === AdvisorRecommendationStatus.Pendiente && rec.leida,
     );
     const completed = rows.filter((rec) => rec.estado === AdvisorRecommendationStatus.Completada);
 
-    const buildItems = (list: RecommendationRow[]) =>
-      list.slice(0, 3).map((item) => ({
-        clientName: item.cliente?.nombre_completo ?? "Cliente",
-        action: item.titulo || this.buildSubject(item.mensaje),
-      }));
+    const buildItems = (list: any[]) =>
+      list.slice(0, 3).map((item) => {
+        const cliente = Array.isArray(item.cliente) ? item.cliente[0] : item.cliente;
+        return {
+          clientName: cliente?.nombre_completo ?? "Cliente",
+          action: item.titulo || this.buildSubject(item.mensaje),
+        };
+      });
 
     return [
       {
@@ -1341,7 +1371,7 @@ export class AdvisorService {
   }
 
   private buildCharts(
-    profileMap: Map<string, string>,
+    profileMap: Map<string, string | null>,
     currentRows: ExpenseRow[],
     dailyRows: ExpenseRow[],
   ) {
@@ -1356,7 +1386,8 @@ export class AdvisorService {
 
     const profileCounts = new Map<string, number>();
     profileMap.forEach((profile) => {
-      profileCounts.set(profile, (profileCounts.get(profile) || 0) + 1);
+      const label = profile || "Sin perfil";
+      profileCounts.set(label, (profileCounts.get(label) || 0) + 1);
     });
 
     const profileDistribution = Array.from(profileCounts.entries()).map(

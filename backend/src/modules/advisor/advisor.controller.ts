@@ -1,9 +1,13 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
   Query,
   UseGuards,
@@ -16,6 +20,7 @@ import { AdvisorMessagesQueryDto } from "./dto/advisor-messages-query.dto";
 import { AdvisorRecommendationsQueryDto } from "./dto/advisor-recommendations-query.dto";
 import { CreateAdvisorMessageDto } from "./dto/create-advisor-message.dto";
 import { CreateAdvisorRecommendationDto } from "./dto/create-advisor-recommendation.dto";
+import { UpdateRecommendationDto } from "./dto/update-recommendation.dto";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles("asesor")
@@ -69,6 +74,24 @@ export class AdvisorController {
     return this.advisorService.createRecommendation(user, dto);
   }
 
+  @Patch("recommendations/:id")
+  updateRecommendation(
+    @CurrentUser() user: JwtPayload,
+    @Param("id", new ParseUUIDPipe()) id: string,
+    @Body() dto: UpdateRecommendationDto,
+  ) {
+    return this.advisorService.updateRecommendation(user, id, dto);
+  }
+
+  @Delete("recommendations/:id")
+  @HttpCode(HttpStatus.NO_CONTENT)
+  deleteRecommendation(
+    @CurrentUser() user: JwtPayload,
+    @Param("id", new ParseUUIDPipe()) id: string,
+  ) {
+    return this.advisorService.deleteRecommendation(user, id);
+  }
+
   @Get("messages")
   getMessages(
     @CurrentUser() user: JwtPayload,
@@ -83,5 +106,13 @@ export class AdvisorController {
     @Body() dto: CreateAdvisorMessageDto,
   ) {
     return this.advisorService.createMessage(user, dto);
+  }
+
+  @Patch("messages/:messageId/read")
+  markMessageAsRead(
+    @CurrentUser() user: JwtPayload,
+    @Param("messageId", new ParseUUIDPipe()) messageId: string,
+  ) {
+    return this.advisorService.markMessageAsRead(user, messageId);
   }
 }
