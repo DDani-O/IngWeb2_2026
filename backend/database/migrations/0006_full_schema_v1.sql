@@ -13,18 +13,16 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
-DO $$ BEGIN
-    CREATE TYPE public.rol_usuario AS ENUM ('cliente', 'asesor');
-    CREATE TYPE public.estado_usuario AS ENUM ('activo', 'inactivo');
-    CREATE TYPE public.origen_gasto AS ENUM ('manual', 'ticket');
-    CREATE TYPE public.estado_ocr AS ENUM ('pendiente', 'procesado', 'fallido');
-    CREATE TYPE public.estado_ticket AS ENUM ('subido', 'procesando', 'procesado', 'error');
-    CREATE TYPE public.origen_recomendacion AS ENUM ('sistema', 'asesor');
-    CREATE TYPE public.tipo_recomendacion AS ENUM ('sugerencia', 'alerta', 'observacion');
-    CREATE TYPE public.prioridad_recomendacion AS ENUM ('baja', 'media', 'alta');
-    CREATE TYPE public.estado_recomendacion AS ENUM ('pendiente', 'completada', 'descartada');
-    CREATE TYPE public.tipo_mensaje_asesor AS ENUM ('mensaje', 'ticket');
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE public.rol_usuario AS ENUM ('cliente', 'asesor'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE public.estado_usuario AS ENUM ('activo', 'inactivo'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE public.origen_gasto AS ENUM ('manual', 'ticket'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE public.estado_ocr AS ENUM ('pendiente', 'procesado', 'fallido'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE public.estado_ticket AS ENUM ('subido', 'procesando', 'procesado', 'error'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE public.origen_recomendacion AS ENUM ('sistema', 'asesor'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE public.tipo_recomendacion AS ENUM ('sugerencia', 'alerta', 'observacion'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE public.prioridad_recomendacion AS ENUM ('baja', 'media', 'alta'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE public.estado_recomendacion AS ENUM ('pendiente', 'completada', 'descartada'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE public.tipo_mensaje_asesor AS ENUM ('mensaje', 'ticket'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- =========================================================
 -- 2. Funciones Core y Helpers
@@ -410,22 +408,50 @@ END; $$;
 -- =========================================================
 
 -- updated_at triggers
+DROP TRIGGER IF EXISTS trg_usuarios_actualizado_en ON public.usuarios;
 CREATE TRIGGER trg_usuarios_actualizado_en BEFORE UPDATE ON public.usuarios FOR EACH ROW EXECUTE FUNCTION public.set_actualizado_en();
+
+DROP TRIGGER IF EXISTS trg_perfiles_usuarios_actualizado_en ON public.perfiles_usuarios;
 CREATE TRIGGER trg_perfiles_usuarios_actualizado_en BEFORE UPDATE ON public.perfiles_usuarios FOR EACH ROW EXECUTE FUNCTION public.set_actualizado_en();
+
+DROP TRIGGER IF EXISTS trg_perfiles_asesores_actualizado_en ON public.perfiles_asesores;
 CREATE TRIGGER trg_perfiles_asesores_actualizado_en BEFORE UPDATE ON public.perfiles_asesores FOR EACH ROW EXECUTE FUNCTION public.set_actualizado_en();
+
+DROP TRIGGER IF EXISTS trg_asignaciones_de_clientes_actualizado_en ON public.asignaciones_de_clientes;
 CREATE TRIGGER trg_asignaciones_de_clientes_actualizado_en BEFORE UPDATE ON public.asignaciones_de_clientes FOR EACH ROW EXECUTE FUNCTION public.set_actualizado_en();
+
+DROP TRIGGER IF EXISTS trg_gastos_actualizado_en ON public.gastos;
 CREATE TRIGGER trg_gastos_actualizado_en BEFORE UPDATE ON public.gastos FOR EACH ROW EXECUTE FUNCTION public.set_actualizado_en();
 
 -- validación triggers
+DROP TRIGGER IF EXISTS trg_validar_usuarios ON public.usuarios;
 CREATE TRIGGER trg_validar_usuarios BEFORE INSERT OR UPDATE ON public.usuarios FOR EACH ROW EXECUTE FUNCTION public.validar_usuarios();
+
+DROP TRIGGER IF EXISTS trg_validar_perfiles_usuarios ON public.perfiles_usuarios;
 CREATE TRIGGER trg_validar_perfiles_usuarios BEFORE INSERT OR UPDATE ON public.perfiles_usuarios FOR EACH ROW EXECUTE FUNCTION public.validar_perfiles_usuarios();
+
+DROP TRIGGER IF EXISTS trg_validar_perfiles_asesores ON public.perfiles_asesores;
 CREATE TRIGGER trg_validar_perfiles_asesores BEFORE INSERT OR UPDATE ON public.perfiles_asesores FOR EACH ROW EXECUTE FUNCTION public.validar_perfiles_asesores();
+
+DROP TRIGGER IF EXISTS trg_validar_asignaciones_de_clientes ON public.asignaciones_de_clientes;
 CREATE TRIGGER trg_validar_asignaciones_de_clientes BEFORE INSERT OR UPDATE ON public.asignaciones_de_clientes FOR EACH ROW EXECUTE FUNCTION public.validar_asignaciones_de_clientes();
+
+DROP TRIGGER IF EXISTS trg_validar_gastos ON public.gastos;
 CREATE TRIGGER trg_validar_gastos BEFORE INSERT OR UPDATE ON public.gastos FOR EACH ROW EXECUTE FUNCTION public.validar_gastos();
+
+DROP TRIGGER IF EXISTS trg_validar_tickets ON public.tickets;
 CREATE TRIGGER trg_validar_tickets BEFORE INSERT OR UPDATE ON public.tickets FOR EACH ROW EXECUTE FUNCTION public.validar_tickets();
+
+DROP TRIGGER IF EXISTS trg_validar_recomendaciones_financieras ON public.recomendaciones_financieras;
 CREATE TRIGGER trg_validar_recomendaciones_financieras BEFORE INSERT OR UPDATE ON public.recomendaciones_financieras FOR EACH ROW EXECUTE FUNCTION public.validar_recomendaciones_financieras();
+
+DROP TRIGGER IF EXISTS trg_validar_clasificacion_de_perfil ON public.clasificacion_de_perfil;
 CREATE TRIGGER trg_validar_clasificacion_de_perfil BEFORE INSERT OR UPDATE ON public.clasificacion_de_perfil FOR EACH ROW EXECUTE FUNCTION public.validar_clasificacion_de_perfil();
+
+DROP TRIGGER IF EXISTS trg_validar_analisis_de_consumo ON public.analisis_de_consumo;
 CREATE TRIGGER trg_validar_analisis_de_consumo BEFORE INSERT OR UPDATE ON public.analisis_de_consumo FOR EACH ROW EXECUTE FUNCTION public.validar_analisis_de_consumo();
+
+DROP TRIGGER IF EXISTS trg_validar_mensajes_asesor ON public.mensajes_asesor;
 CREATE TRIGGER trg_validar_mensajes_asesor BEFORE INSERT OR UPDATE ON public.mensajes_asesor FOR EACH ROW EXECUTE FUNCTION public.validar_mensajes_asesor();
 
 -- =========================================================
@@ -447,62 +473,115 @@ ALTER TABLE public.analisis_de_consumo ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.mensajes_asesor ENABLE ROW LEVEL SECURITY;
 
 -- usuarios
+DROP POLICY IF EXISTS "usuarios_select" ON public.usuarios;
 CREATE POLICY "usuarios_select" ON public.usuarios FOR SELECT USING (auth.uid() = id OR (rol = 'cliente' AND public.es_asesor_asignado_a_cliente(id)));
+
+DROP POLICY IF EXISTS "usuarios_insert" ON public.usuarios;
 CREATE POLICY "usuarios_insert" ON public.usuarios FOR INSERT WITH CHECK (auth.uid() = id);
+
+DROP POLICY IF EXISTS "usuarios_update" ON public.usuarios;
 CREATE POLICY "usuarios_update" ON public.usuarios FOR UPDATE USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
 
 -- perfiles_usuarios
+DROP POLICY IF EXISTS "perfiles_usuarios_select" ON public.perfiles_usuarios;
 CREATE POLICY "perfiles_usuarios_select" ON public.perfiles_usuarios FOR SELECT USING (usuario_id = auth.uid() OR public.es_asesor_asignado_a_cliente(usuario_id));
+
+DROP POLICY IF EXISTS "perfiles_usuarios_insert" ON public.perfiles_usuarios;
 CREATE POLICY "perfiles_usuarios_insert" ON public.perfiles_usuarios FOR INSERT WITH CHECK (usuario_id = auth.uid());
+
+DROP POLICY IF EXISTS "perfiles_usuarios_update" ON public.perfiles_usuarios;
 CREATE POLICY "perfiles_usuarios_update" ON public.perfiles_usuarios FOR UPDATE USING (usuario_id = auth.uid()) WITH CHECK (usuario_id = auth.uid());
 
 -- perfiles_asesores
+DROP POLICY IF EXISTS "perfiles_asesores_select" ON public.perfiles_asesores;
 CREATE POLICY "perfiles_asesores_select" ON public.perfiles_asesores FOR SELECT USING (usuario_id = auth.uid());
+
+DROP POLICY IF EXISTS "perfiles_asesores_insert" ON public.perfiles_asesores;
 CREATE POLICY "perfiles_asesores_insert" ON public.perfiles_asesores FOR INSERT WITH CHECK (usuario_id = auth.uid());
+
+DROP POLICY IF EXISTS "perfiles_asesores_update" ON public.perfiles_asesores;
 CREATE POLICY "perfiles_asesores_update" ON public.perfiles_asesores FOR UPDATE USING (usuario_id = auth.uid()) WITH CHECK (usuario_id = auth.uid());
 
 -- asignaciones_de_clientes
+DROP POLICY IF EXISTS "asignaciones_select" ON public.asignaciones_de_clientes;
 CREATE POLICY "asignaciones_select" ON public.asignaciones_de_clientes FOR SELECT USING (asesor_id = auth.uid() OR cliente_id = auth.uid());
+
+DROP POLICY IF EXISTS "asignaciones_insert" ON public.asignaciones_de_clientes;
 CREATE POLICY "asignaciones_insert" ON public.asignaciones_de_clientes FOR INSERT WITH CHECK (asesor_id = auth.uid());
+
+DROP POLICY IF EXISTS "asignaciones_update" ON public.asignaciones_de_clientes;
 CREATE POLICY "asignaciones_update" ON public.asignaciones_de_clientes FOR UPDATE USING (asesor_id = auth.uid()) WITH CHECK (asesor_id = auth.uid());
 
 -- categorias_de_gasto (PÚBLICA)
+DROP POLICY IF EXISTS "categorias_select" ON public.categorias_de_gasto;
 CREATE POLICY "categorias_select" ON public.categorias_de_gasto FOR SELECT USING (true);
 
 -- gastos
+DROP POLICY IF EXISTS "gastos_select" ON public.gastos;
 CREATE POLICY "gastos_select" ON public.gastos FOR SELECT USING (cliente_id = auth.uid() OR public.es_asesor_asignado_a_cliente(cliente_id));
+
+DROP POLICY IF EXISTS "gastos_insert" ON public.gastos;
 CREATE POLICY "gastos_insert" ON public.gastos FOR INSERT WITH CHECK (cliente_id = auth.uid());
+
+DROP POLICY IF EXISTS "gastos_update" ON public.gastos;
 CREATE POLICY "gastos_update" ON public.gastos FOR UPDATE USING (cliente_id = auth.uid()) WITH CHECK (cliente_id = auth.uid());
+
+DROP POLICY IF EXISTS "gastos_delete" ON public.gastos;
 CREATE POLICY "gastos_delete" ON public.gastos FOR DELETE USING (cliente_id = auth.uid());
 
 -- tickets
+DROP POLICY IF EXISTS "tickets_select" ON public.tickets;
 CREATE POLICY "tickets_select" ON public.tickets FOR SELECT USING (cliente_id = auth.uid() OR public.es_asesor_asignado_a_cliente(cliente_id));
+
+DROP POLICY IF EXISTS "tickets_insert" ON public.tickets;
 CREATE POLICY "tickets_insert" ON public.tickets FOR INSERT WITH CHECK (cliente_id = auth.uid());
+
+DROP POLICY IF EXISTS "tickets_delete" ON public.tickets;
 CREATE POLICY "tickets_delete" ON public.tickets FOR DELETE USING (cliente_id = auth.uid() AND estado_procesamiento IN ('subido', 'error'));
 
 -- analisis_ocr
+DROP POLICY IF EXISTS "analisis_ocr_select" ON public.analisis_ocr;
 CREATE POLICY "analisis_ocr_select" ON public.analisis_ocr FOR SELECT USING (auth.uid() = public.analisis_ocr_cliente_referencia(ticket_id, gasto_id) OR public.es_asesor_asignado_a_cliente(public.analisis_ocr_cliente_referencia(ticket_id, gasto_id)));
 
 -- recomendaciones_financieras
+DROP POLICY IF EXISTS "recomendaciones_select" ON public.recomendaciones_financieras;
 CREATE POLICY "recomendaciones_select" ON public.recomendaciones_financieras FOR SELECT USING (cliente_id = auth.uid() OR asesor_id = auth.uid() OR public.es_asesor_asignado_a_cliente(cliente_id));
+
+DROP POLICY IF EXISTS "recomendaciones_insert" ON public.recomendaciones_financieras;
 CREATE POLICY "recomendaciones_insert" ON public.recomendaciones_financieras FOR INSERT WITH CHECK (public.es_service_role() OR (origen = 'asesor' AND asesor_id = auth.uid() AND public.es_asesor_asignado_a_cliente(cliente_id)));
+
+DROP POLICY IF EXISTS "recomendaciones_update_cliente" ON public.recomendaciones_financieras;
 CREATE POLICY "recomendaciones_update_cliente" ON public.recomendaciones_financieras FOR UPDATE USING (cliente_id = auth.uid()) WITH CHECK (cliente_id = auth.uid());
+
+DROP POLICY IF EXISTS "recomendaciones_update_asesor" ON public.recomendaciones_financieras;
 CREATE POLICY "recomendaciones_update_asesor" ON public.recomendaciones_financieras FOR UPDATE USING (asesor_id = auth.uid()) WITH CHECK (asesor_id = auth.uid());
 
 -- perfiles_de_gasto
+DROP POLICY IF EXISTS "perfiles_de_gasto_select" ON public.perfiles_de_gasto;
 CREATE POLICY "perfiles_de_gasto_select" ON public.perfiles_de_gasto FOR SELECT USING (auth.uid() IS NOT NULL);
 
 -- clasificacion_de_perfil
+DROP POLICY IF EXISTS "clasificacion_select" ON public.clasificacion_de_perfil;
 CREATE POLICY "clasificacion_select" ON public.clasificacion_de_perfil FOR SELECT USING (cliente_id = auth.uid() OR public.es_asesor_asignado_a_cliente(cliente_id));
+
+DROP POLICY IF EXISTS "clasificacion_insert" ON public.clasificacion_de_perfil;
 CREATE POLICY "clasificacion_insert" ON public.clasificacion_de_perfil FOR INSERT WITH CHECK (public.es_service_role() OR (asesor_id = auth.uid() AND public.es_asesor_asignado_a_cliente(cliente_id)));
+
+DROP POLICY IF EXISTS "clasificacion_update" ON public.clasificacion_de_perfil;
 CREATE POLICY "clasificacion_update" ON public.clasificacion_de_perfil FOR UPDATE USING (public.es_service_role() OR (asesor_id = auth.uid() AND public.es_asesor_asignado_a_cliente(cliente_id))) WITH CHECK (public.es_service_role() OR (asesor_id = auth.uid() AND public.es_asesor_asignado_a_cliente(cliente_id)));
 
 -- analisis_de_consumo
+DROP POLICY IF EXISTS "analisis_consumo_select" ON public.analisis_de_consumo;
 CREATE POLICY "analisis_consumo_select" ON public.analisis_de_consumo FOR SELECT USING (cliente_id = auth.uid() OR public.es_asesor_asignado_a_cliente(cliente_id));
 
 -- mensajes_asesor
+DROP POLICY IF EXISTS "mensajes_asesor_select" ON public.mensajes_asesor;
 CREATE POLICY "mensajes_asesor_select" ON public.mensajes_asesor FOR SELECT USING (asesor_id = auth.uid() OR cliente_id = auth.uid());
+
+DROP POLICY IF EXISTS "mensajes_asesor_insert" ON public.mensajes_asesor;
 CREATE POLICY "mensajes_asesor_insert" ON public.mensajes_asesor FOR INSERT WITH CHECK (public.es_service_role() OR (remitente_id = auth.uid() AND ((asesor_id = auth.uid() AND EXISTS (SELECT 1 FROM public.asignaciones_de_clientes ac WHERE ac.cliente_id = mensajes_asesor.cliente_id AND ac.asesor_id = mensajes_asesor.asesor_id AND ac.activo = true)) OR (cliente_id = auth.uid() AND EXISTS (SELECT 1 FROM public.asignaciones_de_clientes ac WHERE ac.cliente_id = mensajes_asesor.cliente_id AND ac.asesor_id = mensajes_asesor.asesor_id AND ac.activo = true)))));
+
+DROP POLICY IF EXISTS "mensajes_asesor_update" ON public.mensajes_asesor;
 CREATE POLICY "mensajes_asesor_update" ON public.mensajes_asesor FOR UPDATE USING (destinatario_id = auth.uid()) WITH CHECK (destinatario_id = auth.uid());
 
 -- =========================================================
