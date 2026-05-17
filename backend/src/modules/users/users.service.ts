@@ -58,7 +58,7 @@ interface RecommendationRow {
   ahorro_potencial: number | string | null;
   pasos_implementacion: string[] | null;
   estado: string | null;
-  asesor?: { nombre_completo?: string | null } | null;
+  asesor?: { nombre_completo?: string | null } | Array<{ nombre_completo?: string | null }> | null;
 }
 
 @Injectable()
@@ -264,10 +264,11 @@ export class UsersService {
     const advisorEmails = await this.fetchAdvisorEmails(rows || []);
 
     const recommendations = (rows || []).map((row) => {
+      const asesor = Array.isArray(row.asesor) ? row.asesor[0] : row.asesor;
       const advisorName =
         row.origen === "sistema"
           ? "Sistema"
-          : row.asesor?.nombre_completo || null;
+          : asesor?.nombre_completo || null;
       const advisorEmail =
         row.origen === "sistema"
           ? null
@@ -368,7 +369,8 @@ export class UsersService {
       throw new InternalServerErrorException("No se pudo cargar el asesor");
     }
 
-    return (data?.asesor?.nombre_completo as string | null) || null;
+    const asesor = Array.isArray(data?.asesor) ? data.asesor[0] : data?.asesor;
+    return (asesor?.nombre_completo as string | null) || null;
   }
 
   private async fetchActiveProfile(userId: string): Promise<string | null> {
@@ -385,7 +387,8 @@ export class UsersService {
       throw new InternalServerErrorException("No se pudo cargar el perfil activo");
     }
 
-    return (data?.perfil?.nombre as string | null) || null;
+    const perfil = Array.isArray(data?.perfil) ? data.perfil[0] : data?.perfil;
+    return (perfil?.nombre as string | null) || null;
   }
 
   private async fetchAdvisorEmails(rows: RecommendationRow[]) {
@@ -457,7 +460,7 @@ export class UsersService {
   }
 
   private mapRole(role: "cliente" | "asesor") {
-    return role === "cliente" ? "usuario" : "asesor";
+    return role === "cliente" ? "cliente" : "asesor";
   }
 
   private mapPriority(value: string | null) {
