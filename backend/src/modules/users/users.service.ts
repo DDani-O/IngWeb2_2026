@@ -469,7 +469,7 @@ export class UsersService {
       return "Alta";
     }
     if (normalized === "baja") {
-      return "Media";
+      return "Baja";
     }
     return "Media";
   }
