@@ -24,6 +24,10 @@ export class AdvisorClientsQueryDto {
   status?: string;
 
   @IsOptional()
+  @IsIn(["low", "medium", "high"])
+  risk?: string;
+
+  @IsOptional()
   @IsString()
   profile?: string;
 

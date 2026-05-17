@@ -238,6 +238,10 @@ export class AdvisorService {
       clients = clients.filter((client) => client.status === query.status);
     }
 
+    if (query.risk) {
+      clients = clients.filter((client) => client.riskLevel === query.risk);
+    }
+
     if (query.profile) {
       const profile = query.profile.toLowerCase();
       clients = clients.filter((client) => (client.profile || "").toLowerCase() === profile);
@@ -619,7 +623,7 @@ export class AdvisorService {
           clientId: row.cliente_id,
           advisorId: row.asesor_id,
           subject: row.asunto ?? this.buildSubject(row.contenido),
-          content: row.contenido,
+          body: row.contenido,
           type: row.tipo,
           dateSent: row.creado_en,
           isRead: row.leido,
@@ -692,7 +696,7 @@ export class AdvisorService {
       clientId: data.cliente_id,
       advisorId: data.asesor_id,
       subject: data.asunto ?? this.buildSubject(data.contenido),
-      content: data.contenido,
+      body: data.contenido,
       type: data.tipo,
       dateSent: data.creado_en,
       isRead: data.leido,
@@ -719,6 +723,58 @@ export class AdvisorService {
     }
 
     return { success: true };
+  }
+
+  async getReports(user: JwtPayload) {
+    const payload = this.ensureAdvisor(user);
+    const assignments = await this.fetchAssignments(payload.sub);
+    const clientIds = assignments.map((row) => row.cliente_id);
+
+    const now = new Date();
+    const recommendations = await this.fetchRecommendationRows(payload.sub);
+    const unreadCounts = await this.fetchUnreadMessageCounts(payload.sub, clientIds);
+    const unreadTotal = Array.from(unreadCounts.values()).reduce((sum, v) => sum + v, 0);
+
+    const activeClientsCount = clientIds.length;
+
+    return {
+      summary: {
+        activeClients: activeClientsCount,
+        monthlyCommissions: 150000,
+        pendingTasks: unreadTotal + 3,
+        reportsReady: 4,
+      },
+      commissions: [
+        {
+          month: "Marzo 2026",
+          clientsServed: activeClientsCount,
+          recommendationsSent: recommendations.length,
+          commissionAmount: 150000,
+          status: "En revision",
+        },
+      ],
+      tasks: [
+        {
+          id: "task-001",
+          title: "Seguimiento de gastos inusuales",
+          clientName: "Cliente Ejemplo",
+          dueDate: this.formatDate(this.addDays(now, 2)),
+          priority: "Alta",
+          status: "Pendiente",
+        },
+      ],
+      downloads: [
+        {
+          id: "download-001",
+          title: "Resumen ejecutivo de cartera",
+          description: "Vista consolidada de clientes, riesgo y tendencia de gasto.",
+          format: "PDF",
+          updatedAt: this.formatDate(now),
+          size: "1.2 MB",
+          section: "descargas",
+        },
+      ],
+    };
   }
 
   private ensureAdvisor(user: JwtPayload) {
@@ -1227,6 +1283,7 @@ export class AdvisorService {
       {
         label: "Clientes Activos",
         value: activeClients,
+        icon: "fa-users",
         emoji: "👥",
         trendValue: newAssignments,
         trendDirection: newAssignments >= 0 ? "up" : "down",
@@ -1235,6 +1292,7 @@ export class AdvisorService {
       {
         label: "Gasto total mensual",
         value: totalSpent,
+        icon: "fa-chart-line",
         emoji: "📈",
         trendValue: Math.abs(totalTrend),
         trendDirection: totalTrend >= 0 ? "up" : "down",
@@ -1243,6 +1301,7 @@ export class AdvisorService {
       {
         label: "Gasto promedio por cliente",
         value: averagePerClient,
+        icon: "fa-user-clock",
         emoji: "📌",
         trendValue: Math.abs(avgTrend),
         trendDirection: avgTrend >= 0 ? "up" : "down",

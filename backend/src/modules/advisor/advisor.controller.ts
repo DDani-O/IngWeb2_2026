@@ -115,4 +115,9 @@ export class AdvisorController {
   ) {
     return this.advisorService.markMessageAsRead(user, messageId);
   }
+
+  @Get("reports")
+  getReports(@CurrentUser() user: JwtPayload) {
+    return this.advisorService.getReports(user);
+  }
 }
