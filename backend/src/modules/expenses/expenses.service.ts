@@ -66,8 +66,9 @@ export class ExpensesService {
     }
 
     if (search) {
+      const sanitized = search.replace(/[%(),\\]/g, "");
       request = request.or(
-        `comercio.ilike.%${search}%,descripcion.ilike.%${search}%`,
+        `comercio.ilike.%${sanitized}%,descripcion.ilike.%${sanitized}%`,
       );
     }
 
@@ -214,18 +215,7 @@ export class ExpensesService {
       throw new NotFoundException("Gasto no encontrado");
     }
 
-    return {
-      id: expense.id,
-      amount: expense.monto,
-      merchant: expense.comercio,
-      categoryId: expense.categoria_id,
-      categoryName: expense.categorias_de_gasto?.[0]?.nombre,
-      date: expense.fecha_gasto,
-      notes: expense.descripcion,
-      ticketImageUrl: expense.ticket_principal_id || null,
-      userId: expense.cliente_id,
-      createdAt: expense.creado_en,
-    };
+    return this.formatExpense(expense);
   }
 
   async create(userId: string, dto: CreateExpenseDto) {
@@ -283,18 +273,7 @@ export class ExpensesService {
     }
 
     // Formatear la respuesta según el contrato del API
-    return {
-      id: expense.id,
-      amount: expense.monto,
-      merchant: expense.comercio,
-      categoryId: expense.categoria_id,
-      categoryName: expense.categorias_de_gasto?.[0]?.nombre,
-      date: expense.fecha_gasto,
-      notes: expense.descripcion,
-      ticketImageUrl: expense.ticket_principal_id || null,
-      userId: expense.cliente_id,
-      createdAt: expense.creado_en,
-    };
+    return this.formatExpense(expense);
   }
 
   async update(userId: string, id: string, dto: UpdateExpenseDto) {
@@ -366,18 +345,7 @@ export class ExpensesService {
       throw new BadRequestException("Error al actualizar el gasto");
     }
 
-    return {
-      id: expense.id,
-      amount: expense.monto,
-      merchant: expense.comercio,
-      categoryId: expense.categoria_id,
-      categoryName: expense.categorias_de_gasto?.[0]?.nombre,
-      date: expense.fecha_gasto,
-      notes: expense.descripcion,
-      ticketImageUrl: expense.ticket_principal_id || null,
-      userId: expense.cliente_id,
-      createdAt: expense.creado_en,
-    };
+    return this.formatExpense(expense);
   }
 
   async remove(userId: string, id: string) {
@@ -406,12 +374,21 @@ export class ExpensesService {
   }
 
   private formatExpense(expense: any) {
+    const categoryData = expense.categorias_de_gasto as
+      | { nombre?: string | null }
+      | Array<{ nombre?: string | null }>
+      | null
+      | undefined;
+    const categoryName = Array.isArray(categoryData)
+      ? categoryData[0]?.nombre
+      : categoryData?.nombre;
+
     return {
       id: expense.id,
       amount: Number(expense.monto),
       merchant: expense.comercio,
       categoryId: expense.categoria_id,
-      categoryName: expense.categorias_de_gasto?.nombre,
+      categoryName: categoryName ?? null,
       date: expense.fecha_gasto,
       notes: expense.descripcion,
       ticketImageUrl: expense.ticket_principal_id || null,
