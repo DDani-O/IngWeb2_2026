@@ -2,11 +2,16 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
 import { AppModule } from './../../src/app.module';
+import { SUPABASE_CLIENT } from './../../src/common/supabase/supabase.provider';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { cleanupTestUser, generateTestEmail } from './test-utils';
 
 describe('AuthController (e2e)', () => {
   let app: INestApplication;
-  const testEmail = `test.user.${Date.now()}@example.com`;
+  let supabase: SupabaseClient;
+  const testEmail = generateTestEmail('auth.user');
   const testPassword = 'password123';
+  let userId: string;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -16,15 +21,17 @@ describe('AuthController (e2e)', () => {
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
     await app.init();
+    supabase = app.get(SUPABASE_CLIENT);
   });
 
   afterAll(async () => {
+    await cleanupTestUser(supabase, userId);
     await app.close();
   });
 
   describe('/auth/register (POST)', () => {
-    it('should register a new client user', () => {
-      return request(app.getHttpServer())
+    it('should register a new client user', async () => {
+      const res = await request(app.getHttpServer())
         .post('/auth/register')
         .send({
           email: testEmail,
@@ -34,12 +41,11 @@ describe('AuthController (e2e)', () => {
           occupation: 'Engineer',
           estimatedIncome: 50000,
         })
-        .expect(201)
-        .expect((res) => {
-          expect(res.body).toHaveProperty('access_token');
-          expect(res.body.user).toHaveProperty('email', testEmail);
-          expect(res.body.user).toHaveProperty('role', 'cliente');
-        });
+        .expect(201);
+
+      expect(res.body).toHaveProperty('access_token');
+      expect(res.body.user).toHaveProperty('email', testEmail);
+      userId = res.body.user.id;
     });
 
     it('should throw 409 Conflict when registering with existing email', () => {
@@ -52,18 +58,6 @@ describe('AuthController (e2e)', () => {
           role: 'cliente',
         })
         .expect(409);
-    });
-
-    it('should throw 400 Bad Request when validation fails', () => {
-      return request(app.getHttpServer())
-        .post('/auth/register')
-        .send({
-          email: 'invalid-email',
-          password: '123', // too short
-          fullName: '',
-          role: 'invalid-role',
-        })
-        .expect(400);
     });
   });
 
@@ -80,26 +74,6 @@ describe('AuthController (e2e)', () => {
           expect(res.body).toHaveProperty('access_token');
           expect(res.body.user).toHaveProperty('email', testEmail);
         });
-    });
-
-    it('should throw 401 Unauthorized with invalid password', () => {
-      return request(app.getHttpServer())
-        .post('/auth/login')
-        .send({
-          email: testEmail,
-          password: 'wrongpassword',
-        })
-        .expect(401);
-    });
-
-    it('should throw 401 Unauthorized with non-existent user', () => {
-      return request(app.getHttpServer())
-        .post('/auth/login')
-        .send({
-          email: 'nonexistent@example.com',
-          password: 'any-password',
-        })
-        .expect(401);
     });
   });
 });

@@ -69,6 +69,7 @@ export class AuthService {
         id: userId,
         rol: role,
         nombre_completo: fullName,
+        email: email, // Guardamos el email también en la tabla pública
       })
       .select("id, nombre_completo, rol, foto_perfil_url, creado_en")
       .single();

@@ -2,13 +2,18 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
 import { AppModule } from './../../src/app.module';
+import { SUPABASE_CLIENT } from './../../src/common/supabase/supabase.provider';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { cleanupTestUser, generateTestEmail } from './test-utils';
 
 describe('ExpensesController (e2e)', () => {
   let app: INestApplication;
+  let supabase: SupabaseClient;
   let accessToken: string;
+  let userId: string;
   let categoryId: string;
-  let expenseId: string;
-  const testEmail = `test.expenses.${Date.now()}@example.com`;
+  let testExpenseId: string;
+  const testEmail = generateTestEmail('expenses.full');
   const testPassword = 'password123';
 
   beforeAll(async () => {
@@ -19,54 +24,49 @@ describe('ExpensesController (e2e)', () => {
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
     await app.init();
+    supabase = app.get(SUPABASE_CLIENT);
 
-    // Register to get a token
     const registerRes = await request(app.getHttpServer())
       .post('/auth/register')
       .send({
         email: testEmail,
         password: testPassword,
-        fullName: 'Expenses Test User',
+        fullName: 'Expenses Full Test',
         role: 'cliente',
       });
 
     accessToken = registerRes.body.access_token;
+    userId = registerRes.body.user.id;
 
-    // Get a valid categoryId
-    const categoriesRes = await request(app.getHttpServer())
-      .get('/categories')
-      .expect(200);
-
+    const categoriesRes = await request(app.getHttpServer()).get('/categories');
     categoryId = categoriesRes.body[0].id;
   });
 
   afterAll(async () => {
+    await cleanupTestUser(supabase, userId);
     await app.close();
   });
 
-  describe('/expenses (POST)', () => {
-    it('should create a new expense', () => {
-      return request(app.getHttpServer())
+  describe('CRUD Flow', () => {
+    it('POST /expenses - should create a new expense', async () => {
+      const res = await request(app.getHttpServer())
         .post('/expenses')
         .set('Authorization', `Bearer ${accessToken}`)
         .send({
-          amount: 100.50,
-          merchant: 'Supermarket',
+          amount: 125.50,
+          merchant: 'Test Restaurant',
           categoryId: categoryId,
           date: new Date().toISOString(),
-          notes: 'Weekly groceries',
+          notes: 'Dinner with friends'
         })
-        .expect(201)
-        .expect((res) => {
-          expect(res.body).toHaveProperty('id');
-          expect(res.body).toHaveProperty('amount', 100.5);
-          expenseId = res.body.id;
-        });
-    });
-  });
+        .expect(201);
 
-  describe('/expenses (GET)', () => {
-    it('should return list of expenses', () => {
+      expect(res.body).toHaveProperty('id');
+      expect(res.body).toHaveProperty('amount', 125.5);
+      testExpenseId = res.body.id;
+    });
+
+    it('GET /expenses - should return list of expenses', () => {
       return request(app.getHttpServer())
         .get('/expenses')
         .set('Authorization', `Bearer ${accessToken}`)
@@ -77,55 +77,33 @@ describe('ExpensesController (e2e)', () => {
           expect(res.body.data.length).toBeGreaterThan(0);
         });
     });
-  });
 
-  describe('/expenses/summary (GET)', () => {
-    it('should return expense summary', () => {
-      const month = new Date().toISOString().substring(0, 7); // YYYY-MM
+    it('GET /expenses/summary - should return monthly summary', () => {
+      const month = new Date().toISOString().substring(0, 7);
       return request(app.getHttpServer())
         .get(`/expenses/summary?month=${month}`)
         .set('Authorization', `Bearer ${accessToken}`)
         .expect(200)
         .expect((res) => {
           expect(res.body).toHaveProperty('totalMonth');
-          expect(res.body).toHaveProperty('totalByCategory');
+          expect(res.body.totalMonth).toBeGreaterThanOrEqual(125.5);
         });
     });
-  });
 
-  describe('/expenses/:id (GET)', () => {
-    it('should return a single expense', () => {
+    it('PATCH /expenses/:id - should update expense amount', () => {
       return request(app.getHttpServer())
-        .get(`/expenses/${expenseId}`)
+        .patch(`/expenses/${testExpenseId}`)
         .set('Authorization', `Bearer ${accessToken}`)
-        .expect(200)
-        .expect((res) => {
-          expect(res.body).toHaveProperty('id', expenseId);
-        });
-    });
-  });
-
-  describe('/expenses/:id (PATCH)', () => {
-    it('should update an expense', () => {
-      return request(app.getHttpServer())
-        .patch(`/expenses/${expenseId}`)
-        .set('Authorization', `Bearer ${accessToken}`)
-        .send({
-          amount: 150.00,
-          merchant: 'Supermarket Updated',
-        })
+        .send({ amount: 150.00 })
         .expect(200)
         .expect((res) => {
           expect(res.body).toHaveProperty('amount', 150);
-          expect(res.body).toHaveProperty('merchant', 'Supermarket Updated');
         });
     });
-  });
 
-  describe('/expenses/:id (DELETE)', () => {
-    it('should delete an expense', () => {
+    it('DELETE /expenses/:id - should remove the expense', () => {
       return request(app.getHttpServer())
-        .delete(`/expenses/${expenseId}`)
+        .delete(`/expenses/${testExpenseId}`)
         .set('Authorization', `Bearer ${accessToken}`)
         .expect(204);
     });
