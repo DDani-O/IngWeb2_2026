@@ -1,12 +1,13 @@
+import { apiClient } from "../../core/APIClient.js";
 import { PageController } from "../../core/PageController.js";
-import { MOCK_ADVISOR_DASHBOARD, ROUTES } from "../../utils/constants.js";
+import { ROUTES } from "../../utils/constants.js";
 import { getInitials } from "../../utils/helpers.js";
 import { formatCurrency, formatTrendLabel } from "../../utils/formatters.js";
 
 export class AsesorDashboardPage extends PageController {
   constructor(element, options = {}) {
     super(element, options);
-    this.data = JSON.parse(JSON.stringify(MOCK_ADVISOR_DASHBOARD));
+    this.data = this._buildEmptyData();
     this.clientsViewMode = "cards";
     this.recommendationModal = null;
   }
@@ -27,6 +28,7 @@ export class AsesorDashboardPage extends PageController {
     this._renderRecommendations();
     this._renderRecommendationClientOptions();
     this._syncClientsView();
+    this._loadDashboard();
   }
 
   attachEvents() {
@@ -300,16 +302,32 @@ export class AsesorDashboardPage extends PageController {
     this.recommendationModal = this._showModal("#advisorRecommendationModal");
   }
 
-  _handleCreateRecommendation() {
+  async _handleCreateRecommendation() {
     const form = this.element.querySelector("#advisorRecommendationForm");
     if (!form || !form.checkValidity()) {
       form?.reportValidity();
       return;
     }
 
-    this.options.showToast?.("Recomendacion creada y enviada al cliente.", "success");
-    this.recommendationModal?.hide();
-    form.reset();
+    const payload = this._getRecommendationPayload({
+      clientSelector: "#advisorRecommendationClient",
+      typeSelector: "#advisorRecommendationType",
+      contentSelector: "#advisorRecommendationDescription",
+      savingsSelector: "#advisorRecommendationSavings",
+    });
+
+    try {
+      await apiClient.post("/advisor/recommendations", payload);
+      this.options.showToast?.("Recomendacion creada y enviada al cliente.", "success");
+      this.recommendationModal?.hide();
+      form.reset();
+      this._loadDashboard();
+    } catch (error) {
+      this.options.showToast?.(
+        error.message || "No se pudo crear la recomendacion.",
+        "warning"
+      );
+    }
   }
 
   _handleInboxNavigation(event) {
@@ -334,5 +352,121 @@ export class AsesorDashboardPage extends PageController {
     }
 
     return String(stat.value);
+  }
+
+  async _loadDashboard() {
+    try {
+      const response = await apiClient.get("/advisor/dashboard");
+      this.data = this._mapDashboardData(response);
+
+      this._renderCalendar();
+      this._renderAlerts();
+      this._renderStats();
+      this._renderClients();
+      this._renderInbox();
+      this._renderRecommendations();
+      this._renderRecommendationClientOptions();
+      this._syncClientsView();
+    } catch (error) {
+      this.options.showToast?.(
+        error.message || "No se pudo cargar el dashboard del asesor.",
+        "warning"
+      );
+    }
+  }
+
+  _mapDashboardData(payload) {
+    const advisor = payload?.advisor || {};
+    const calendar = payload?.calendar || this._buildEmptyData().calendar;
+
+    return {
+      advisor: {
+        name: advisor.name || "Asesor",
+        email: advisor.email || "",
+        role: advisor.role || "asesor",
+      },
+      calendar,
+      alerts: Array.isArray(payload?.alerts) ? payload.alerts : [],
+      stats: Array.isArray(payload?.stats) ? payload.stats : [],
+      clients: Array.isArray(payload?.clients) ? payload.clients : [],
+      inbox: Array.isArray(payload?.inbox) ? payload.inbox : [],
+      recommendations: Array.isArray(payload?.recommendations) ? payload.recommendations : [],
+    };
+  }
+
+  _buildEmptyData() {
+    const now = new Date();
+    const months = [
+      "Enero",
+      "Febrero",
+      "Marzo",
+      "Abril",
+      "Mayo",
+      "Junio",
+      "Julio",
+      "Agosto",
+      "Septiembre",
+      "Octubre",
+      "Noviembre",
+      "Diciembre",
+    ];
+    const days = [
+      "Domingo",
+      "Lunes",
+      "Martes",
+      "Miercoles",
+      "Jueves",
+      "Viernes",
+      "Sabado",
+    ];
+
+    return {
+      advisor: {
+        name: "Asesor",
+        email: "",
+        role: "asesor",
+      },
+      calendar: {
+        day: String(now.getDate()),
+        month: months[now.getMonth()],
+        year: String(now.getFullYear()),
+        dayName: days[now.getDay()],
+      },
+      alerts: [],
+      stats: [],
+      clients: [],
+      inbox: [],
+      recommendations: [],
+    };
+  }
+
+  _getRecommendationPayload({
+    clientSelector,
+    typeSelector,
+    contentSelector,
+    savingsSelector,
+  }) {
+    const clientId = this._getValue(clientSelector);
+    const typeValue = this._getValue(typeSelector);
+    const content = this._getValue(contentSelector);
+    const savingsRaw = this._getValue(savingsSelector);
+
+    return {
+      clientId,
+      type: this._mapRecommendationType(typeValue),
+      content,
+      savingsPotential: Number(savingsRaw || 0),
+    };
+  }
+
+  _mapRecommendationType(value) {
+    const normalized = String(value || "").toLowerCase();
+    if (normalized.includes("alerta") || normalized.includes("presupuesto")) {
+      return "alerta";
+    }
+    if (normalized.includes("felicitacion")) {
+      return "felicitacion";
+    }
+    return "consejo";
   }
 }

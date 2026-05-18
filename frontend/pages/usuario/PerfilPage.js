@@ -1,18 +1,14 @@
+import { apiClient } from "../../core/APIClient.js";
 import { PageController } from "../../core/PageController.js";
-import {
-  MOCK_USER_PROFILE_DETAILS,
-  STORAGE_KEYS,
-} from "../../utils/constants.js";
+import { STORAGE_KEYS } from "../../utils/constants.js";
 import { formatCurrency } from "../../utils/formatters.js";
 import { getInitials } from "../../utils/helpers.js";
-
-const PROFILE_STORAGE_KEY = "fintrack.userProfileDetails.v1";
 
 export class PerfilPage extends PageController {
   constructor(element, options = {}) {
     super(element, options);
     this.baseProfile = this._buildBaseProfile();
-    this.profile = this._loadPersistedProfile();
+    this.profile = { ...this.baseProfile };
   }
 
   render() {
@@ -20,6 +16,7 @@ export class PerfilPage extends PageController {
     this._renderSummary();
     this._fillFormValues();
     this._syncShellUser(this.profile.fullName);
+    this._loadProfile();
   }
 
   attachEvents() {
@@ -34,6 +31,10 @@ export class PerfilPage extends PageController {
   }
 
   _renderSummary() {
+    const advisorName = this.profile.advisorName || "Sin asignar";
+    const memberSince = this.profile.memberSince || "-";
+    const lastLogin = this.profile.lastLogin || "-";
+
     this._setText("#profileAvatarInitials", getInitials(this.profile.fullName) || "JP");
     this._setText("#profileSummaryName", this.profile.fullName);
     this._setText("#profileSummaryEmail", this.profile.email);
@@ -58,15 +59,15 @@ export class PerfilPage extends PageController {
       </article>
       <article class="profile-meta-item">
         <span>Asesor asignado</span>
-        <strong>${this.profile.advisorName}</strong>
+        <strong>${advisorName}</strong>
       </article>
       <article class="profile-meta-item">
         <span>Miembro desde</span>
-        <strong>${this.profile.memberSince}</strong>
+        <strong>${memberSince}</strong>
       </article>
       <article class="profile-meta-item">
         <span>Ultimo acceso</span>
-        <strong>${this.profile.lastLogin}</strong>
+        <strong>${lastLogin}</strong>
       </article>
     `;
   }
@@ -77,7 +78,7 @@ export class PerfilPage extends PageController {
     this._setInputValue("#profilePhone", this.profile.phone);
     this._setInputValue("#profileCity", this.profile.city);
     this._setInputValue("#profileOccupation", this.profile.occupation);
-    this._setInputValue("#profileCurrency", this.profile.currency);
+    this._setInputValue("#profileCurrency", this.profile.currency || "ARS");
     this._setInputValue("#profileMonthlyIncome", String(this.profile.monthlyIncome));
     this._setInputValue("#profileSavingsGoal", String(this.profile.savingsGoal));
     this._setInputValue("#profileAlertThreshold", String(this.profile.alertThreshold));
@@ -95,7 +96,7 @@ export class PerfilPage extends PageController {
     }
   }
 
-  _handleSave(event) {
+  async _handleSave(event) {
     event.preventDefault();
 
     const form = this.element.querySelector("#userProfileForm");
@@ -104,72 +105,139 @@ export class PerfilPage extends PageController {
       return;
     }
 
-    this.profile = {
-      ...this.profile,
-      ...this._readFormValues(),
-      lastLogin: `${new Date().toLocaleDateString("es-AR")} · ${new Date().toLocaleTimeString("es-AR", {
-        hour: "2-digit",
-        minute: "2-digit",
-      })}`,
-    };
-
-    localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(this.profile));
-    localStorage.setItem(STORAGE_KEYS.APP_THEME, this.profile.theme);
-    document.documentElement.setAttribute("data-theme", this.profile.theme);
-
-    this._renderSummary();
-    this._syncShellUser(this.profile.fullName);
-
-    this.options.showToast?.("Perfil actualizado correctamente.", "success");
+    try {
+      const payload = this._readFormValues();
+      const response = await apiClient.patch("/users/me", payload);
+      this._applyProfile(this._mapProfile(response));
+      this.options.showToast?.("Perfil actualizado correctamente.", "success");
+    } catch (error) {
+      this.options.showToast?.(
+        error.message || "No se pudo actualizar el perfil.",
+        "warning"
+      );
+    }
   }
 
-  _handleReset() {
-    this.profile = JSON.parse(JSON.stringify(this.baseProfile));
-    localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(this.profile));
-
-    this._renderSummary();
-    this._fillFormValues();
-    this._syncShellUser(this.profile.fullName);
-
-    this.options.showToast?.("Perfil restaurado a valores base.", "warning");
+  async _handleReset() {
+    await this._loadProfile();
+    this.options.showToast?.("Perfil sincronizado con el servidor.", "warning");
   }
 
   _buildBaseProfile() {
     const currentUser = this.options.authManager?.getCurrentUser();
+    const fallbackTheme = localStorage.getItem(STORAGE_KEYS.APP_THEME) || "dark";
 
     return {
-      ...MOCK_USER_PROFILE_DETAILS,
-      fullName: currentUser?.fullName || MOCK_USER_PROFILE_DETAILS.fullName,
-      email: currentUser?.email || MOCK_USER_PROFILE_DETAILS.email,
-      theme:
-        localStorage.getItem(STORAGE_KEYS.APP_THEME) || MOCK_USER_PROFILE_DETAILS.theme,
+      id: currentUser?.id || null,
+      fullName: currentUser?.fullName || "",
+      email: currentUser?.email || "",
+      phone: "",
+      city: "",
+      occupation: "",
+      monthlyIncome: 0,
+      savingsGoal: 0,
+      alertThreshold: 0,
+      currency: "ARS",
+      theme: fallbackTheme,
+      notifyEmail: true,
+      notifyPush: false,
+      memberSince: "-",
+      lastLogin: "-",
+      advisorName: "",
     };
   }
 
-  _loadPersistedProfile() {
-    const raw = localStorage.getItem(PROFILE_STORAGE_KEY);
-    if (!raw) {
-      return JSON.parse(JSON.stringify(this.baseProfile));
+  async _loadProfile() {
+    try {
+      const response = await apiClient.get("/users/me");
+      this._applyProfile(this._mapProfile(response));
+    } catch (error) {
+      this.options.showToast?.(
+        error.message || "No se pudo cargar el perfil.",
+        "warning"
+      );
+    }
+  }
+
+  _applyProfile(profile) {
+    this.profile = profile;
+    localStorage.setItem(STORAGE_KEYS.APP_THEME, this.profile.theme);
+    document.documentElement.setAttribute("data-theme", this.profile.theme);
+
+    this._renderSummary();
+    this._fillFormValues();
+    this._syncShellUser(this.profile.fullName);
+  }
+
+  _mapProfile(payload) {
+    return {
+      id: payload?.id || null,
+      fullName: payload?.fullName || "",
+      email: payload?.email || "",
+      phone: payload?.phone || "",
+      city: payload?.city || "",
+      occupation: payload?.occupation || "",
+      monthlyIncome: Number(payload?.monthlyIncome) || 0,
+      savingsGoal: Number(payload?.savingsGoal) || 0,
+      alertThreshold: Number(payload?.alertThreshold) || 0,
+      currency: (payload?.currency || "ARS").toUpperCase(),
+      theme: payload?.theme || (localStorage.getItem(STORAGE_KEYS.APP_THEME) || "dark"),
+      notifyEmail: payload?.notifyEmail ?? true,
+      notifyPush: payload?.notifyPush ?? false,
+      memberSince: this._formatMonthYear(payload?.createdAt),
+      lastLogin: this._formatDateTime(payload?.lastLogin),
+      advisorName: payload?.advisorName || "",
+    };
+  }
+
+  _formatMonthYear(value) {
+    if (!value) {
+      return "-";
     }
 
-    try {
-      return {
-        ...this.baseProfile,
-        ...JSON.parse(raw),
-      };
-    } catch {
-      return JSON.parse(JSON.stringify(this.baseProfile));
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return "-";
     }
+
+    const label = date.toLocaleDateString("es-AR", {
+      month: "long",
+      year: "numeric",
+    });
+
+    return label.charAt(0).toUpperCase() + label.slice(1);
+  }
+
+  _formatDateTime(value) {
+    if (!value) {
+      return "-";
+    }
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return "-";
+    }
+
+    const dateLabel = date.toLocaleDateString("es-AR", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+    const timeLabel = date.toLocaleTimeString("es-AR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    return `${dateLabel} · ${timeLabel}`;
   }
 
   _readFormValues() {
     return {
       fullName: this._getValue("#profileFullName"),
-      email: this._getValue("#profileEmail"),
       phone: this._getValue("#profilePhone"),
       city: this._getValue("#profileCity"),
       occupation: this._getValue("#profileOccupation"),
-      currency: this._getValue("#profileCurrency"),
+      currency: this._getValue("#profileCurrency").toUpperCase(),
       monthlyIncome: Number(this._getValue("#profileMonthlyIncome") || 0),
       savingsGoal: Number(this._getValue("#profileSavingsGoal") || 0),
       alertThreshold: Number(this._getValue("#profileAlertThreshold") || 0),

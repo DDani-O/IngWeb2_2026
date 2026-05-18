@@ -249,7 +249,7 @@ export class LandingPage extends Component {
    */
   _getRegisterFormPayload(roleAdvisor) {
     return {
-      role: roleAdvisor?.checked ? "asesor" : "usuario",
+      role: roleAdvisor?.checked ? "asesor" : "cliente",
       fullName: this.element.querySelector("#registerFullName")?.value || "",
       email: this.element.querySelector("#registerEmail")?.value || "",
       password: this.element.querySelector("#registerPassword")?.value || "",

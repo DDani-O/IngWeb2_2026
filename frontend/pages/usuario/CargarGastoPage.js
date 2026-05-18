@@ -1,20 +1,31 @@
+import { apiClient } from "../../core/APIClient.js";
 import { PageController } from "../../core/PageController.js";
-import {
-  MOCK_USER_EXPENSE_FORM,
-  MOCK_USER_EXPENSE_HISTORY,
-} from "../../utils/constants.js";
 import { formatCurrency } from "../../utils/formatters.js";
 import { getInitials } from "../../utils/helpers.js";
 
 const DRAFT_STORAGE_KEY = "fintrack.userExpenseDraft.v1";
+const DEFAULT_PAYMENT_METHODS = ["Debito", "Credito", "Efectivo", "Transferencia"];
+const DEFAULT_OCR_SAMPLE = {
+  merchant: "Supermercado Central",
+  amount: 18500,
+  category: "Alimentacion",
+  paymentMethod: "Debito",
+  date: "2026-04-16",
+  description: "Compra semanal con ticket OCR",
+};
 
 export class CargarGastoPage extends PageController {
   constructor(element, options = {}) {
     super(element, options);
-    this.formData = JSON.parse(JSON.stringify(MOCK_USER_EXPENSE_FORM));
-    this.recentExpenses = JSON.parse(
-      JSON.stringify(MOCK_USER_EXPENSE_HISTORY.expenses.slice(0, 6))
-    );
+    this.categories = [];
+    this.categoryMap = new Map();
+    this.formData = {
+      categories: [],
+      paymentMethods: [...DEFAULT_PAYMENT_METHODS],
+      suggestedMerchants: [],
+      ocrSample: { ...DEFAULT_OCR_SAMPLE },
+    };
+    this.recentExpenses = [];
   }
 
   render() {
@@ -32,6 +43,8 @@ export class CargarGastoPage extends PageController {
     this._renderRecentExpenses();
     this._restoreDraft();
     this._setDateIfEmpty();
+    this._loadCategories();
+    this._loadRecentExpenses();
   }
 
   attachEvents() {
@@ -66,12 +79,20 @@ export class CargarGastoPage extends PageController {
     const paymentSelect = this.element.querySelector("#expensePaymentMethod");
 
     if (categorySelect) {
+      const currentValue = categorySelect.value;
+      const placeholder = this.categories.length
+        ? "Seleccionar categoria"
+        : "Cargando categorias...";
       categorySelect.innerHTML = [
-        '<option value="">Seleccionar categoria</option>',
-        ...this.formData.categories.map(
-          (category) => `<option value="${category}">${category}</option>`
+        `<option value="">${placeholder}</option>`,
+        ...this.categories.map(
+          (category) => `<option value="${category.id}">${category.nombre}</option>`
         ),
       ].join("");
+
+      if (currentValue) {
+        categorySelect.value = currentValue;
+      }
     }
 
     if (paymentSelect) {
@@ -123,7 +144,7 @@ export class CargarGastoPage extends PageController {
       .join("");
   }
 
-  _handleFormSubmit(event) {
+  async _handleFormSubmit(event) {
     event.preventDefault();
 
     const form = this.element.querySelector("#userExpenseForm");
@@ -132,21 +153,36 @@ export class CargarGastoPage extends PageController {
       return;
     }
 
-    const payload = this._readFormValues();
-    this.recentExpenses.unshift({
-      id: `exp-${Date.now()}`,
-      ...payload,
-      status: "Pendiente",
-    });
+    try {
+      const payload = this._readFormValues();
+      const notes = this._buildNotes(payload);
 
-    if (this.recentExpenses.length > 6) {
-      this.recentExpenses.pop();
+      const response = await apiClient.post("/expenses", {
+        amount: payload.amount,
+        merchant: payload.merchant,
+        categoryId: payload.categoryId,
+        date: payload.date,
+        notes,
+      });
+
+      const formatted = this._mapExpenseToUi(response);
+      this.recentExpenses.unshift(formatted);
+
+      if (this.recentExpenses.length > 6) {
+        this.recentExpenses.pop();
+      }
+
+      this._updateMerchantSuggestions();
+      this._renderRecentExpenses();
+      this._showOcrResult(null);
+      this._clearForm();
+      this.options.showToast?.("Gasto registrado correctamente.", "success");
+    } catch (error) {
+      this.options.showToast?.(
+        error.message || "No se pudo registrar el gasto.",
+        "warning"
+      );
     }
-
-    this._renderRecentExpenses();
-    this._showOcrResult(null);
-    this._clearForm();
-    this.options.showToast?.("Gasto registrado correctamente.", "success");
   }
 
   _analyzeTicket() {
@@ -159,9 +195,11 @@ export class CargarGastoPage extends PageController {
     }
 
     const sample = this.formData.ocrSample;
+    const categoryId = this._findCategoryIdByName(sample.category);
+
     this._setInputValue("#expenseMerchant", sample.merchant);
     this._setInputValue("#expenseAmount", String(sample.amount));
-    this._setInputValue("#expenseCategory", sample.category);
+    this._setInputValue("#expenseCategory", categoryId || "");
     this._setInputValue("#expensePaymentMethod", sample.paymentMethod);
     this._setInputValue("#expenseDate", sample.date);
     this._setInputValue(
@@ -215,7 +253,7 @@ export class CargarGastoPage extends PageController {
       const draft = JSON.parse(rawDraft);
       this._setInputValue("#expenseMerchant", draft.merchant || "");
       this._setInputValue("#expenseAmount", draft.amount ? String(draft.amount) : "");
-      this._setInputValue("#expenseCategory", draft.category || "");
+      this._setInputValue("#expenseCategory", draft.categoryId || "");
       this._setInputValue("#expensePaymentMethod", draft.paymentMethod || "");
       this._setInputValue("#expenseDate", draft.date || "");
       this._setInputValue("#expenseReference", draft.reference || "");
@@ -248,14 +286,117 @@ export class CargarGastoPage extends PageController {
     return {
       merchant: this.element.querySelector("#expenseMerchant")?.value.trim() || "",
       amount: Number(amountRaw),
-      category: this.element.querySelector("#expenseCategory")?.value || "",
+      categoryId: this.element.querySelector("#expenseCategory")?.value || "",
       paymentMethod:
         this.element.querySelector("#expensePaymentMethod")?.value || "",
       date: this.element.querySelector("#expenseDate")?.value || "",
       reference: this.element.querySelector("#expenseReference")?.value.trim() || "",
       description:
         this.element.querySelector("#expenseDescription")?.value.trim() || "",
-      note: this.element.querySelector("#expenseDescription")?.value.trim() || "",
     };
+  }
+
+  async _loadCategories() {
+    try {
+      const categories = await apiClient.get("/categories");
+      this.categories = Array.isArray(categories) ? categories : [];
+      this.categoryMap = new Map(
+        this.categories.map((category) => [category.id, category.nombre])
+      );
+      this._renderSelectOptions();
+    } catch (error) {
+      this.options.showToast?.(
+        error.message || "No se pudieron cargar categorias.",
+        "warning"
+      );
+    }
+  }
+
+  async _loadRecentExpenses() {
+    try {
+      const response = await apiClient.get("/expenses", {
+        query: { page: 1, limit: 6 },
+      });
+
+      const expenses = Array.isArray(response?.data) ? response.data : [];
+      this.recentExpenses = expenses.map((expense) => this._mapExpenseToUi(expense));
+      this._updateMerchantSuggestions();
+      this._renderRecentExpenses();
+    } catch (error) {
+      this.options.showToast?.(
+        error.message || "No se pudieron cargar los gastos recientes.",
+        "warning"
+      );
+    }
+  }
+
+  _updateMerchantSuggestions() {
+    const unique = new Set(
+      this.recentExpenses
+        .map((expense) => expense.merchant)
+        .filter((value) => value && value.length > 0)
+    );
+    this.formData.suggestedMerchants = Array.from(unique).slice(0, 8);
+    this._renderMerchantSuggestions();
+  }
+
+  _mapExpenseToUi(expense) {
+    return {
+      id: expense.id,
+      merchant: expense.merchant,
+      amount: Number(expense.amount) || 0,
+      category:
+        expense.categoryName ||
+        this.categoryMap.get(expense.categoryId) ||
+        "Sin categoria",
+      paymentMethod: this._extractPaymentMethod(expense.notes),
+      date: expense.date,
+      status: expense.ticketImageUrl ? "Pendiente" : "Validado",
+      note: expense.notes || "",
+    };
+  }
+
+  _buildNotes(payload) {
+    const notes = [];
+
+    if (payload.description) {
+      notes.push(payload.description);
+    }
+
+    if (payload.reference) {
+      notes.push(`Referencia: ${payload.reference}`);
+    }
+
+    if (payload.paymentMethod) {
+      notes.push(`Metodo de pago: ${payload.paymentMethod}`);
+    }
+
+    return notes.length ? notes.join(" | ") : undefined;
+  }
+
+  _extractPaymentMethod(notes) {
+    if (!notes) {
+      return "Sin definir";
+    }
+
+    const match = String(notes).match(/Metodo de pago:\s*([^|]+)/i);
+    if (match && match[1]) {
+      return match[1].trim();
+    }
+
+    return "Sin definir";
+  }
+
+  _findCategoryIdByName(name) {
+    if (!name) {
+      return "";
+    }
+
+    const lower = name.toLowerCase();
+    const match = this.categories.find(
+      (category) => category.nombre.toLowerCase() === lower
+    );
+
+    return match?.id || "";
   }
 }

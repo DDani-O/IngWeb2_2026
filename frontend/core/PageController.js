@@ -44,7 +44,7 @@ export class PageController extends Component {
   /**
    * Vincula listeners para los botones comunes de cierre de sesion por rol.
    */
-  _bindLogoutButtons({ role = "usuario", toastMessage } = {}) {
+  _bindLogoutButtons({ role = "cliente", toastMessage } = {}) {
     const selectors =
       role === "asesor"
         ? ["#advisorLogoutButton", "#advisorLogoutButtonMobile"]

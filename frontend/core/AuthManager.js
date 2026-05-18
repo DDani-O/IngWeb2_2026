@@ -1,13 +1,7 @@
-import {
-  EVENTS,
-  MOCK_AUTH_USERS,
-  ROUTES,
-  STORAGE_KEYS,
-  UI_TIMING,
-} from "../utils/constants.js";
-import { sleep } from "../utils/helpers.js";
+import { EVENTS, ROUTES, STORAGE_KEYS } from "../utils/constants.js";
 import { stateManager } from "./StateManager.js";
 import { eventBus } from "./EventBus.js";
+import { apiClient } from "./APIClient.js";
 
 export class AuthManager {
   /**
@@ -37,12 +31,16 @@ export class AuthManager {
 
     try {
       const parsed = JSON.parse(storedUser);
-      this.currentUser = parsed;
+      const normalizedRole = this._normalizeRole(parsed?.role);
+      this.currentUser = {
+        ...parsed,
+        role: normalizedRole,
+      };
       this.token = storedToken;
 
       stateManager.patch({
-        user: parsed,
-        role: parsed.role,
+        user: this.currentUser,
+        role: normalizedRole,
         isAuthenticated: true,
       });
     } catch {
@@ -51,64 +49,66 @@ export class AuthManager {
   }
 
   /**
-   * Valida credenciales contra datos mock y crea sesion activa.
-   * Puede reemplazarse por llamada real a backend sin cambiar consumidores.
+    * Autentica contra el backend y crea sesion activa.
    */
   async login(credentials) {
-    await sleep(UI_TIMING.AUTH_LOGIN_DELAY_MS);
-
-    const match = MOCK_AUTH_USERS.find((user) => {
-      return (
-        user.email.toLowerCase() === String(credentials.email).toLowerCase() &&
-        user.password === credentials.password
-      );
+    const response = await apiClient.post("/auth/login", {
+      email: credentials.email,
+      password: credentials.password,
     });
 
-    if (!match) {
-      throw new Error("Email o contrasena invalida.");
+    if (!response?.access_token || !response?.user) {
+      throw new Error("Respuesta invalida del servidor.");
     }
 
-    const user = {
-      id: match.id,
-      role: match.role,
-      fullName: match.fullName,
-      email: match.email,
-      profile: match.profile,
-    };
-
-    const token = `mock-token-${user.id}-${Date.now()}`;
-    this._persistSession(user, token);
+    const user = this._mapAuthUser(response.user);
+    this._persistSession(user, response.access_token);
 
     eventBus.emit(EVENTS.AUTH.LOGIN, { user });
     return user;
   }
 
   /**
-   * Registra un usuario nuevo en flujo mock y lo autentica automaticamente.
+    * Registra un usuario nuevo en backend y lo autentica automaticamente.
    */
   async register(payload) {
-    await sleep(UI_TIMING.AUTH_REGISTER_DELAY_MS);
-
-    const existing = MOCK_AUTH_USERS.find((user) => {
-      return user.email.toLowerCase() === String(payload.email).toLowerCase();
-    });
-
-    if (existing) {
-      throw new Error("El email ya se encuentra registrado.");
-    }
-
-    const role = payload.role === "asesor" ? "asesor" : "usuario";
-    const user = {
-      id: `new-${Date.now()}`,
-      role,
-      fullName: payload.fullName,
+    const normalizedRole = payload.role === "asesor" ? "asesor" : "cliente";
+    const registerPayload = {
       email: payload.email,
-      profile: role === "asesor" ? "Asesor" : "Equilibrista",
+      password: payload.password,
+      fullName: payload.fullName,
+      role: normalizedRole,
     };
 
-    const token = `mock-token-${user.id}`;
+    if (normalizedRole === "asesor") {
+      registerPayload.licenseNumber = payload.licenseNumber;
+      registerPayload.specialty = payload.specialty;
+      if (payload.description) {
+        registerPayload.description = payload.description;
+      }
+    } else {
+      if (payload.occupation) {
+        registerPayload.occupation = payload.occupation;
+      }
+      if (payload.estimatedIncome !== undefined) {
+        registerPayload.estimatedIncome = payload.estimatedIncome;
+      }
+      if (payload.financialGoal) {
+        registerPayload.financialGoal = payload.financialGoal;
+      }
+      if (payload.preferredCurrency) {
+        registerPayload.preferredCurrency = payload.preferredCurrency;
+      }
+    }
 
-    this._persistSession(user, token);
+    const response = await apiClient.post("/auth/register", registerPayload);
+
+    if (!response?.access_token || !response?.user) {
+      throw new Error("Respuesta invalida del servidor.");
+    }
+
+    const user = this._mapAuthUser(response.user);
+    this._persistSession(user, response.access_token);
     eventBus.emit(EVENTS.AUTH.REGISTER, { user });
     return user;
   }
@@ -145,7 +145,7 @@ export class AuthManager {
    * Verifica si el usuario actual coincide con un rol esperado.
    */
   hasRole(role) {
-    return this.currentUser?.role === role;
+    return this._normalizeRole(this.currentUser?.role) === this._normalizeRole(role);
   }
 
   /**
@@ -159,31 +159,59 @@ export class AuthManager {
    * Retorna el rol actual o null si no hay sesion.
    */
   getCurrentRole() {
-    return this.currentUser?.role || null;
+    return this._normalizeRole(this.currentUser?.role) || null;
   }
 
   /**
    * Devuelve ruta inicial recomendada segun rol.
    */
   getDefaultRouteForRole(role) {
-    return role === "asesor" ? ROUTES.ADVISOR_DASHBOARD : ROUTES.USER_DASHBOARD;
+    const normalizedRole = this._normalizeRole(role);
+    return normalizedRole === "asesor"
+      ? ROUTES.ADVISOR_DASHBOARD
+      : ROUTES.USER_DASHBOARD;
   }
 
   /**
    * Persiste token/usuario y sincroniza estado global autenticado.
    */
   _persistSession(user, token) {
-    this.currentUser = user;
+    const normalizedRole = this._normalizeRole(user?.role);
+    const normalizedUser = {
+      ...user,
+      role: normalizedRole,
+    };
+
+    this.currentUser = normalizedUser;
     this.token = token;
 
     localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
-    localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(user));
+    localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(normalizedUser));
 
     stateManager.patch({
-      user,
-      role: user.role,
+      user: normalizedUser,
+      role: normalizedRole,
       isAuthenticated: true,
     });
+  }
+
+  _normalizeRole(role) {
+    if (!role) {
+      return role;
+    }
+
+    return role === "usuario" ? "cliente" : role;
+  }
+
+  _mapAuthUser(user) {
+    return {
+      id: user.id,
+      role: this._normalizeRole(user.role),
+      fullName: user.fullName,
+      email: user.email,
+      avatarUrl: user.avatarUrl ?? null,
+      createdAt: user.createdAt ?? null,
+    };
   }
 
   /**

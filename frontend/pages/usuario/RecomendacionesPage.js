@@ -1,12 +1,20 @@
+import { apiClient } from "../../core/APIClient.js";
 import { PageController } from "../../core/PageController.js";
-import { MOCK_RECOMMENDATIONS } from "../../utils/constants.js";
 import { formatCurrency } from "../../utils/formatters.js";
 import { getInitials } from "../../utils/helpers.js";
 
 export class RecomendacionesPage extends PageController {
   constructor(element, options = {}) {
     super(element, options);
-    this.data = JSON.parse(JSON.stringify(MOCK_RECOMMENDATIONS));
+    this.data = {
+      stats: {
+        totalSavingsPotential: 0,
+        activeRecommendations: 0,
+        completedThisMonth: 0,
+        estimatedImpact: "0%",
+      },
+      recommendations: [],
+    };
     this.filteredRecommendations = [...this.data.recommendations];
     this.detailModal = null;
     this.contactModal = null;
@@ -25,6 +33,7 @@ export class RecomendacionesPage extends PageController {
 
     this._renderSummary();
     this._applyFilters();
+    this._loadRecommendations();
   }
 
   attachEvents() {
@@ -135,9 +144,68 @@ export class RecomendacionesPage extends PageController {
       : '<p class="text-muted">Aun no tienes recomendaciones completadas en este filtro.</p>';
   }
 
+  async _loadRecommendations() {
+    try {
+      const response = await apiClient.get("/users/me/recommendations");
+      this.data = this._mapRecommendations(response);
+      this.filteredRecommendations = [...this.data.recommendations];
+      this._renderSummary();
+      this._applyFilters();
+    } catch (error) {
+      this.options.showToast?.(
+        error.message || "No se pudieron cargar recomendaciones.",
+        "warning"
+      );
+    }
+  }
+
+  _mapRecommendations(payload) {
+    const stats = payload?.stats || {};
+    const items = Array.isArray(payload?.recommendations)
+      ? payload.recommendations
+      : [];
+
+    return {
+      stats: {
+        totalSavingsPotential: Number(stats.totalSavingsPotential) || 0,
+        activeRecommendations: Number(stats.activeRecommendations) || 0,
+        completedThisMonth: Number(stats.completedThisMonth) || 0,
+        estimatedImpact: stats.estimatedImpact || "0%",
+      },
+      recommendations: items.map((item) => ({
+        ...item,
+        priority: item.priority || "Media",
+        status: item.status || "Pendiente",
+        icon: item.icon || "💡",
+        implementationSteps: Array.isArray(item.implementationSteps)
+          ? item.implementationSteps
+          : [],
+        dateSentLabel: this._formatDateLabel(item.dateSent),
+      })),
+    };
+  }
+
+  _formatDateLabel(value) {
+    if (!value) {
+      return "-";
+    }
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return value;
+    }
+
+    return date.toLocaleDateString("es-AR", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  }
+
   _buildRecommendationCard(item) {
     const priorityClass = item.priority === "Alta" ? "alta" : "media";
     const completedClass = item.status === "Completada" ? "recommendation-card--completada" : "";
+    const dateLabel = item.dateSentLabel || item.dateSent || "-";
 
     return `
       <article class="recommendation-card recommendation-card--${priorityClass} ${completedClass}">
@@ -163,7 +231,7 @@ export class RecomendacionesPage extends PageController {
           ${item.implementationSteps.map((step) => `<li>${step}</li>`).join("")}
         </ol>
 
-        <p class="text-muted">Enviado el ${item.dateSent}</p>
+        <p class="text-muted">Enviado el ${dateLabel}</p>
 
         <div class="recommendation-actions">
           ${

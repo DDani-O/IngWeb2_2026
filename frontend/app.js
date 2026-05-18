@@ -107,7 +107,7 @@ function configureRouter() {
     return createProtectedRoute({
       path,
       templateUrl,
-      role: "usuario",
+      role: "cliente",
       shellMount: mountUserShell,
       shellOptions: () => ({
         userName: getUserName(),

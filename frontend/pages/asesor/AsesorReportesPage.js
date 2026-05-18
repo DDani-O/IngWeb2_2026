@@ -1,5 +1,6 @@
+import { apiClient } from "../../core/APIClient.js";
 import { PageController } from "../../core/PageController.js";
-import { MOCK_ADVISOR_REPORTS, ROUTES } from "../../utils/constants.js";
+import { ROUTES } from "../../utils/constants.js";
 import { formatCurrency } from "../../utils/formatters.js";
 
 const VALID_SECTIONS = ["comisiones", "tareas", "descargas"];
@@ -7,7 +8,17 @@ const VALID_SECTIONS = ["comisiones", "tareas", "descargas"];
 export class AsesorReportesPage extends PageController {
   constructor(element, options = {}) {
     super(element, options);
-    this.data = JSON.parse(JSON.stringify(MOCK_ADVISOR_REPORTS));
+    this.data = {
+      summary: {
+        activeClients: 0,
+        monthlyCommissions: 0,
+        pendingTasks: 0,
+        reportsReady: 0,
+      },
+      commissions: [],
+      tasks: [],
+      downloads: [],
+    };
     this.activeSection = this._resolveInitialSection();
   }
 
@@ -23,6 +34,7 @@ export class AsesorReportesPage extends PageController {
     this._renderTasks();
     this._renderDownloads();
     this._syncSectionUi();
+    this._loadReports();
   }
 
   attachEvents() {
@@ -236,6 +248,23 @@ export class AsesorReportesPage extends PageController {
     }
 
     return "comisiones";
+  }
+
+  async _loadReports() {
+    try {
+      const response = await apiClient.get("/advisor/reports");
+      this.data = response || this.data;
+      this._renderSummary();
+      this._renderCommissions();
+      this._renderTasks();
+      this._renderDownloads();
+      this._syncSectionUi();
+    } catch (error) {
+      this.options.showToast?.(
+        error.message || "No se pudieron cargar los reportes.",
+        "warning"
+      );
+    }
   }
 
 }

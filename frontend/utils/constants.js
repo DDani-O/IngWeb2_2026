@@ -1,7 +1,7 @@
 export const APP_CONFIG = {
   APP_NAME: "FinTrack",
   APP_VERSION: "1.0.0",
-  USE_MOCK_API: true,
+  USE_MOCK_API: false,
   MOCK_DELAY_MS: 280,
   DEFAULT_THEME: "dark",
   DEFAULT_LOCALE: "es-AR",
@@ -9,7 +9,7 @@ export const APP_CONFIG = {
 };
 
 export const API_CONFIG = {
-  BASE_URL: "http://api.fintrack.local/v1",
+  BASE_URL: "http://localhost:3000/api/v1",
   TIMEOUT_MS: 8000,
   RETRIES: 1,
 };
@@ -86,7 +86,7 @@ export const UI_LAYOUT = {
 export const MOCK_AUTH_USERS = [
   {
     id: "usr-001",
-    role: "usuario",
+    role: "cliente",
     fullName: "Juan Perez",
     email: "usuario@fintrack.local",
     password: "Fintrack2026*",

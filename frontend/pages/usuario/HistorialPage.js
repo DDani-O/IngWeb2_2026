@@ -1,13 +1,13 @@
+import { apiClient } from "../../core/APIClient.js";
 import { PageController } from "../../core/PageController.js";
-import { MOCK_USER_EXPENSE_HISTORY } from "../../utils/constants.js";
 import { formatCurrency } from "../../utils/formatters.js";
 import { getInitials } from "../../utils/helpers.js";
 
 export class HistorialPage extends PageController {
   constructor(element, options = {}) {
     super(element, options);
-    this.expenses = JSON.parse(JSON.stringify(MOCK_USER_EXPENSE_HISTORY.expenses));
-    this.filteredExpenses = [...this.expenses];
+    this.expenses = [];
+    this.filteredExpenses = [];
     this.detailModal = null;
   }
 
@@ -23,6 +23,7 @@ export class HistorialPage extends PageController {
 
     this._renderCategoryOptions();
     this._applyFilters();
+    this._loadExpenses();
   }
 
   attachEvents() {
@@ -140,7 +141,7 @@ export class HistorialPage extends PageController {
       .join("");
   }
 
-  _handleTableAction(event) {
+  async _handleTableAction(event) {
     const actionButton = event.target.closest("[data-action]");
     if (!actionButton) {
       return;
@@ -167,9 +168,18 @@ export class HistorialPage extends PageController {
         return;
       }
 
-      this.expenses = this.expenses.filter((item) => item.id !== expenseId);
-      this.options.showToast?.("Gasto eliminado del historial.", "warning");
-      this._applyFilters();
+      try {
+        await apiClient.delete(`/expenses/${expenseId}`);
+        this.expenses = this.expenses.filter((item) => item.id !== expenseId);
+        this.options.showToast?.("Gasto eliminado del historial.", "warning");
+        this._renderCategoryOptions();
+        this._applyFilters();
+      } catch (error) {
+        this.options.showToast?.(
+          error.message || "No se pudo eliminar el gasto.",
+          "warning"
+        );
+      }
     }
   }
 
@@ -192,5 +202,48 @@ export class HistorialPage extends PageController {
     `;
 
     this.detailModal = this._showModal("#historyDetailModal");
+  }
+
+  async _loadExpenses() {
+    try {
+      const response = await apiClient.get("/expenses", {
+        query: { page: 1, limit: 100 },
+      });
+      const expenses = Array.isArray(response?.data) ? response.data : [];
+      this.expenses = expenses.map((expense) => this._mapExpenseToUi(expense));
+      this._renderCategoryOptions();
+      this._applyFilters();
+    } catch (error) {
+      this.options.showToast?.(
+        error.message || "No se pudieron cargar los gastos.",
+        "warning"
+      );
+    }
+  }
+
+  _mapExpenseToUi(expense) {
+    return {
+      id: expense.id,
+      date: expense.date,
+      merchant: expense.merchant,
+      category: expense.categoryName || "Sin categoria",
+      amount: Number(expense.amount) || 0,
+      paymentMethod: this._extractPaymentMethod(expense.notes),
+      status: expense.ticketImageUrl ? "Pendiente" : "Validado",
+      note: expense.notes || "",
+    };
+  }
+
+  _extractPaymentMethod(notes) {
+    if (!notes) {
+      return "Sin definir";
+    }
+
+    const match = String(notes).match(/Metodo de pago:\s*([^|]+)/i);
+    if (match && match[1]) {
+      return match[1].trim();
+    }
+
+    return "Sin definir";
   }
 }

@@ -1,13 +1,14 @@
+import { apiClient } from "../../core/APIClient.js";
 import { PageController } from "../../core/PageController.js";
-import { MOCK_ADVISOR_DASHBOARD, ROUTES } from "../../utils/constants.js";
+import { ROUTES } from "../../utils/constants.js";
 import { formatCurrency } from "../../utils/formatters.js";
 import { getInitials } from "../../utils/helpers.js";
 
 export class AsesorClientesPage extends PageController {
   constructor(element, options = {}) {
     super(element, options);
-    this.clients = JSON.parse(JSON.stringify(MOCK_ADVISOR_DASHBOARD.clients));
-    this.filteredClients = [...this.clients];
+    this.clients = [];
+    this.filteredClients = [];
     this.viewMode = "cards";
     this.detailModal = null;
     this.recommendationModal = null;
@@ -23,6 +24,7 @@ export class AsesorClientesPage extends PageController {
     this._renderRecommendationClientOptions();
     this._applyFilters();
     this._syncView();
+    this._loadClients();
   }
 
   attachEvents() {
@@ -74,8 +76,8 @@ export class AsesorClientesPage extends PageController {
     if (search) {
       result = result.filter((client) => {
         return (
-          client.name.toLowerCase().includes(search) ||
-          client.profile.toLowerCase().includes(search)
+          String(client.name || "").toLowerCase().includes(search) ||
+          String(client.profile || "").toLowerCase().includes(search)
         );
       });
     }
@@ -231,27 +233,45 @@ export class AsesorClientesPage extends PageController {
     `;
   }
 
-  _openClientModal(client) {
+  async _openClientModal(client) {
     const content = this.element.querySelector("#advisorClientDetailContent");
     if (!content) {
       return;
     }
 
-    content.innerHTML = `
-      <article class="history-detail-card">
-        <p><strong>Cliente:</strong> ${client.name}</p>
-        <p><strong>Perfil:</strong> ${client.profile}</p>
-        <p><strong>Email:</strong> ${client.email}</p>
-        <p><strong>Gasto promedio:</strong> ${formatCurrency(client.averageSpend)}</p>
-        <p><strong>Cambio mensual:</strong> ${
-          client.changePercent >= 0 ? "+" : ""
-        }${client.changePercent}%</p>
-        <p><strong>Riesgo:</strong> ${client.risk}</p>
-        <p><strong>Mensajes sin leer:</strong> ${client.unreadMessages}</p>
-      </article>
-    `;
+    try {
+      const detail = await apiClient.get(`/advisor/clients/${client.id}`);
+      const advisorName = detail?.advisorName || "";
+      const profile = detail?.profile || client.profile || "Sin perfil";
 
-    this.detailModal = this._showModal("#advisorClientDetailModal");
+      content.innerHTML = `
+        <article class="history-detail-card">
+          <p><strong>Cliente:</strong> ${detail?.name || client.name}</p>
+          <p><strong>Perfil:</strong> ${profile}</p>
+          <p><strong>Email:</strong> ${detail?.email || client.email || "-"}</p>
+          <p><strong>Telefono:</strong> ${detail?.phone || "-"}</p>
+          <p><strong>Ciudad:</strong> ${detail?.city || "-"}</p>
+          <p><strong>Ocupacion:</strong> ${detail?.occupation || "-"}</p>
+          <p><strong>Gasto promedio:</strong> ${formatCurrency(detail?.averageSpend || client.averageSpend)}</p>
+          <p><strong>Cambio mensual:</strong> ${
+            (detail?.changePercent ?? client.changePercent) >= 0 ? "+" : ""
+          }${detail?.changePercent ?? client.changePercent}%</p>
+          <p><strong>Riesgo:</strong> ${detail?.risk || client.risk}</p>
+          <p><strong>Mensajes sin leer:</strong> ${detail?.unreadMessages ?? client.unreadMessages}</p>
+          <p><strong>Asesor asignado:</strong> ${advisorName || "-"}</p>
+          <p><strong>Ingreso mensual:</strong> ${formatCurrency(detail?.monthlyIncome || 0)}</p>
+          <p><strong>Meta de ahorro:</strong> ${formatCurrency(detail?.savingsGoal || 0)}</p>
+          <p><strong>Alerta de presupuesto:</strong> ${detail?.alertThreshold ?? 0}%</p>
+        </article>
+      `;
+
+      this.detailModal = this._showModal("#advisorClientDetailModal");
+    } catch (error) {
+      this.options.showToast?.(
+        error.message || "No se pudo cargar el detalle del cliente.",
+        "warning"
+      );
+    }
   }
 
   _openRecommendationModal(clientId = "") {
@@ -267,16 +287,77 @@ export class AsesorClientesPage extends PageController {
     this.recommendationModal = this._showModal("#advisorClientRecommendationModal");
   }
 
-  _handleCreateRecommendation() {
+  async _handleCreateRecommendation() {
     const form = this.element.querySelector("#advisorClientRecommendationForm");
     if (!form || !form.checkValidity()) {
       form?.reportValidity();
       return;
     }
 
-    this.options.showToast?.("Recomendacion creada y enviada al cliente.", "success");
-    this.recommendationModal?.hide();
-    form.reset();
+    const payload = this._getRecommendationPayload({
+      clientSelector: "#advisorClientRecommendationClient",
+      typeSelector: "#advisorClientRecommendationType",
+      contentSelector: "#advisorClientRecommendationDescription",
+      savingsSelector: "#advisorClientRecommendationSavings",
+    });
+
+    try {
+      await apiClient.post("/advisor/recommendations", payload);
+      this.options.showToast?.("Recomendacion creada y enviada al cliente.", "success");
+      this.recommendationModal?.hide();
+      form.reset();
+    } catch (error) {
+      this.options.showToast?.(
+        error.message || "No se pudo crear la recomendacion.",
+        "warning"
+      );
+    }
+  }
+
+  async _loadClients() {
+    try {
+      const response = await apiClient.get("/advisor/clients", {
+        query: { page: 1, limit: 100 },
+      });
+      this.clients = Array.isArray(response?.data) ? response.data : [];
+      this._renderRecommendationClientOptions();
+      this._applyFilters();
+    } catch (error) {
+      this.options.showToast?.(
+        error.message || "No se pudieron cargar los clientes.",
+        "warning"
+      );
+    }
+  }
+
+  _getRecommendationPayload({
+    clientSelector,
+    typeSelector,
+    contentSelector,
+    savingsSelector,
+  }) {
+    const clientId = this._getValue(clientSelector);
+    const typeValue = this._getValue(typeSelector);
+    const content = this._getValue(contentSelector);
+    const savingsRaw = this._getValue(savingsSelector);
+
+    return {
+      clientId,
+      type: this._mapRecommendationType(typeValue),
+      content,
+      savingsPotential: Number(savingsRaw || 0),
+    };
+  }
+
+  _mapRecommendationType(value) {
+    const normalized = String(value || "").toLowerCase();
+    if (normalized.includes("alerta") || normalized.includes("presupuesto")) {
+      return "alerta";
+    }
+    if (normalized.includes("felicitacion")) {
+      return "felicitacion";
+    }
+    return "consejo";
   }
 
 }

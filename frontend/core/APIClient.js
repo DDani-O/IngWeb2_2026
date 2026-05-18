@@ -33,6 +33,13 @@ export class APIClient {
   }
 
   /**
+   * Realiza solicitudes PATCH para actualizaciones parciales.
+   */
+  async patch(endpoint, data = {}, options = {}) {
+    return this._request("PATCH", endpoint, { ...options, data });
+  }
+
+  /**
    * Realiza solicitudes DELETE.
    */
   async delete(endpoint, options = {}) {
@@ -77,10 +84,21 @@ export class APIClient {
       });
 
       const text = await response.text();
-      const payload = text ? JSON.parse(text) : {};
+      let payload = {};
+
+      if (text) {
+        try {
+          payload = JSON.parse(text);
+        } catch {
+          payload = { message: text };
+        }
+      }
 
       if (!response.ok) {
-        throw new Error(payload.message || "Error de comunicacion con el backend.");
+        const message = Array.isArray(payload?.message)
+          ? payload.message[0]
+          : payload?.message;
+        throw new Error(message || "Error de comunicacion con el backend.");
       }
 
       return payload;

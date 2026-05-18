@@ -1,24 +1,15 @@
+import { apiClient } from "../../core/APIClient.js";
 import { PageController } from "../../core/PageController.js";
-import { MOCK_ADVISOR_DASHBOARD } from "../../utils/constants.js";
 import { getInitials } from "../../utils/helpers.js";
 
 export class AsesorInboxPage extends PageController {
   constructor(element, options = {}) {
     super(element, options);
-    this.messages = JSON.parse(JSON.stringify(MOCK_ADVISOR_DASHBOARD.inbox)).map(
-      (message) => ({
-        ...message,
-        body:
-          message.type === "ticket"
-            ? "Adjuntamos informacion adicional para ayudarte con el seguimiento del cliente."
-            : "Necesito tu orientacion para ajustar mi plan financiero en esta semana.",
-      })
-    );
-    this.filteredMessages = [...this.messages];
-    const initialMessageId = options.query?.messageId || null;
-    this.selectedMessageId = this.messages.some((message) => message.id === initialMessageId)
-      ? initialMessageId
-      : this.messages[0]?.id || null;
+    this.messages = [];
+    this.filteredMessages = [];
+    this.messageDetails = new Map();
+    this.initialMessageId = options.query?.messageId || null;
+    this.selectedMessageId = null;
   }
 
   render() {
@@ -30,6 +21,7 @@ export class AsesorInboxPage extends PageController {
 
     this._applyFilters();
     this._renderDetail();
+    this._loadInbox();
   }
 
   attachEvents() {
@@ -49,6 +41,7 @@ export class AsesorInboxPage extends PageController {
       }
 
       this.selectedMessageId = item.dataset.messageId;
+      this.initialMessageId = this.selectedMessageId;
       this._renderList();
       this._renderDetail();
     });
@@ -64,9 +57,7 @@ export class AsesorInboxPage extends PageController {
         return;
       }
 
-      this.options.showToast?.("Respuesta enviada al cliente.", "success");
-      replyForm.reset();
-      this._markCurrentAsRead();
+      this._sendReply(message, replyForm);
     });
 
     this._bindLogoutButtons({
@@ -169,21 +160,155 @@ export class AsesorInboxPage extends PageController {
       return;
     }
 
-    this._setText("#advisorInboxDetailFrom", message.from);
-    this._setText("#advisorInboxDetailSubject", message.subject);
-    this._setText("#advisorInboxDetailDate", message.date);
-    this._setText("#advisorInboxDetailBody", message.body);
+    const detail = this.messageDetails.get(message.id);
+
+    this._setText("#advisorInboxDetailFrom", detail?.from || message.from || "-");
+    this._setText("#advisorInboxDetailSubject", detail?.subject || message.subject || "-");
+    this._setText("#advisorInboxDetailDate", detail?.date || message.date || "-");
+    this._setText(
+      "#advisorInboxDetailBody",
+      detail?.body || "Cargando detalle del mensaje..."
+    );
+
+    if (!detail) {
+      this._loadMessageDetail(message);
+    }
   }
 
-  _markCurrentAsRead() {
+  async _markCurrentAsRead() {
     const message = this.messages.find((item) => item.id === this.selectedMessageId);
     if (!message || !message.unread) {
       return;
     }
 
-    message.unread = false;
-    this.options.showToast?.("Conversacion marcada como leida.", "success");
-    this._applyFilters();
+    try {
+      await apiClient.patch(`/advisor/messages/${message.id}/read`);
+      message.unread = false;
+      this.options.showToast?.("Conversacion marcada como leida.", "success");
+      this._applyFilters();
+    } catch (error) {
+      this.options.showToast?.(
+        error.message || "No se pudo marcar el mensaje como leido.",
+        "warning"
+      );
+    }
+  }
+
+  async _loadInbox() {
+    try {
+      const response = await apiClient.get("/advisor/messages");
+      const messages = Array.isArray(response?.data) ? response.data : [];
+      this.messages = messages.map((message) => this._mapPreviewMessage(message));
+
+      if (this.initialMessageId) {
+        this.selectedMessageId = this.messages.some(
+          (item) => item.id === this.initialMessageId
+        )
+          ? this.initialMessageId
+          : this.messages[0]?.id || null;
+      } else {
+        this.selectedMessageId = this.messages[0]?.id || null;
+      }
+
+      this._applyFilters();
+    } catch (error) {
+      this.options.showToast?.(
+        error.message || "No se pudieron cargar los mensajes.",
+        "warning"
+      );
+    }
+  }
+
+  _mapPreviewMessage(message) {
+    return {
+      id: message.id,
+      clientId: message.clientId,
+      from: message.from || "Cliente",
+      subject: message.subject || "Mensaje del cliente",
+      date: message.date || "-",
+      type: message.type || "mensaje",
+      unread: Boolean(message.unread),
+    };
+  }
+
+  async _loadMessageDetail(message) {
+    if (!message?.clientId) {
+      return;
+    }
+
+    try {
+      const response = await apiClient.get("/advisor/messages", {
+        query: { clientId: message.clientId, page: 1, limit: 20 },
+      });
+      const rows = Array.isArray(response?.data) ? response.data : [];
+      const selected =
+        rows.find((row) => row.id === message.id) || rows[0] || null;
+
+      if (!selected) {
+        return;
+      }
+
+      this.messageDetails.set(message.id, {
+        from: selected.from?.name || message.from,
+        subject: selected.subject || message.subject,
+        date: this._formatDetailDate(selected.dateSent),
+        body: selected.body || "",
+      });
+
+      this._renderDetail();
+    } catch (error) {
+      this.options.showToast?.(
+        error.message || "No se pudo cargar el detalle del mensaje.",
+        "warning"
+      );
+    }
+  }
+
+  async _sendReply(content, replyForm) {
+    const message = this.messages.find((item) => item.id === this.selectedMessageId);
+    if (!message?.clientId) {
+      this.options.showToast?.("Selecciona una conversacion valida.", "warning");
+      return;
+    }
+
+    const detail = this.messageDetails.get(message.id);
+    const subject = detail?.subject || message.subject || "Mensaje del asesor";
+
+    try {
+      await apiClient.post("/advisor/messages", {
+        clientId: message.clientId,
+        content,
+        subject,
+        type: "mensaje",
+      });
+
+      this.options.showToast?.("Respuesta enviada al cliente.", "success");
+      replyForm.reset();
+      await this._loadInbox();
+      this._markCurrentAsRead();
+    } catch (error) {
+      this.options.showToast?.(
+        error.message || "No se pudo enviar la respuesta.",
+        "warning"
+      );
+    }
+  }
+
+  _formatDetailDate(value) {
+    if (!value) {
+      return "-";
+    }
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return value;
+    }
+
+    return date.toLocaleDateString("es-AR", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
   }
 
 }
