@@ -41,11 +41,13 @@ export class AsesorDashboardPage extends PageController {
     const recommendationButton = this.element.querySelector("#openCreateRecommendationButton");
     this.listen(recommendationButton, "click", () => this._openRecommendationModal());
 
-    const recommendationForm = this.element.querySelector("#advisorRecommendationForm");
-    this.listen(recommendationForm, "submit", (event) => {
-      event.preventDefault();
-      this._handleCreateRecommendation();
-    });
+    const recommendationForm = this.element.querySelector("#advisorClientRecommendationForm");
+    if (recommendationForm) {
+      this.listen(recommendationForm, "submit", (event) => {
+        event.preventDefault();
+        this._handleCreateRecommendation();
+      });
+    }
 
     const inboxList = this.element.querySelector("#advisorInboxList");
     this.listen(inboxList, "click", (event) => this._handleInboxNavigation(event));
@@ -267,7 +269,7 @@ export class AsesorDashboardPage extends PageController {
   }
 
   _renderRecommendationClientOptions() {
-    const select = this.element.querySelector("#advisorRecommendationClient");
+    const select = this.element.querySelector("#advisorClientRecommendationClient");
     if (!select) {
       return;
     }
@@ -299,21 +301,27 @@ export class AsesorDashboardPage extends PageController {
   }
 
   _openRecommendationModal() {
-    this.recommendationModal = this._showModal("#advisorRecommendationModal");
+    this.recommendationModal = this._showModal("#advisorClientRecommendationModal");
   }
 
   async _handleCreateRecommendation() {
-    const form = this.element.querySelector("#advisorRecommendationForm");
+    const form = this.element.querySelector("#advisorClientRecommendationForm");
     if (!form || !form.checkValidity()) {
       form?.reportValidity();
       return;
     }
 
     const payload = this._getRecommendationPayload({
-      clientSelector: "#advisorRecommendationClient",
-      typeSelector: "#advisorRecommendationType",
-      contentSelector: "#advisorRecommendationDescription",
-      savingsSelector: "#advisorRecommendationSavings",
+      clientSelector: "#advisorClientRecommendationClient",
+      typeSelector: "#advisorClientRecommendationType",
+      contentSelector: "#advisorClientRecommendationDescription",
+      savingsSelector: "#advisorClientRecommendationSavings",
+      titleSelector: "#advisorClientRecommendationTitle",
+      prioritySelector: "#advisorClientRecommendationPriority",
+      problemSelector: "#advisorClientRecommendationProblem",
+      solutionSelector: "#advisorClientRecommendationSolution",
+      iconSelector: "#advisorClientRecommendationIcon",
+      stepsSelector: "#advisorClientRecommendationSteps",
     });
 
     try {
@@ -484,17 +492,35 @@ export class AsesorDashboardPage extends PageController {
     typeSelector,
     contentSelector,
     savingsSelector,
+    titleSelector,
+    prioritySelector,
+    problemSelector,
+    solutionSelector,
+    iconSelector,
+    stepsSelector,
   }) {
     const clientId = this._getValue(clientSelector);
     const typeValue = this._getValue(typeSelector);
     const content = this._getValue(contentSelector);
     const savingsRaw = this._getValue(savingsSelector);
+    const title = this._getValue(titleSelector);
+    const priority = this._getValue(prioritySelector);
+    const problem = this._getValue(problemSelector);
+    const solution = this._getValue(solutionSelector);
+    const icon = this._getValue(iconSelector);
+    const stepsRaw = this._getValue(stepsSelector);
 
     return {
       clientId,
       type: this._mapRecommendationType(typeValue),
+      title,
       content,
+      priority: priority || "media",
+      problem,
+      solution,
+      icon,
       savingsPotential: Number(savingsRaw || 0),
+      steps: stepsRaw ? String(stepsRaw).split(/\r?\n/).filter(Boolean) : [],
     };
   }
 

@@ -46,14 +46,8 @@ export class RecomendacionesPage extends PageController {
       this.listen(select, "change", () => this._applyFilters());
     });
 
-    [
-      "#recommendationsHighPriority",
-      "#recommendationsMediumPriority",
-      "#recommendationsCompleted",
-    ].forEach((selector) => {
-      const group = this.element.querySelector(selector);
-      this.listen(group, "click", (event) => this._handleCardAction(event));
-    });
+    // Delegación global para capturar acciones en recomendaciones
+    this.listen(this.element, "click", (event) => this._handleCardAction(event));
 
     const openContact = this.element.querySelector("#openRecommendationContactButton");
     this.listen(openContact, "click", () => this._openContactModal());
@@ -127,6 +121,10 @@ export class RecomendacionesPage extends PageController {
       (item) => item.priority === "Media" && item.status !== "Completada" && item.status !== "Descartada"
     );
 
+    const low = this.filteredRecommendations.filter(
+      (item) => item.priority === "Baja" && item.status !== "Completada" && item.status !== "Descartada"
+    );
+
     const completed = this.filteredRecommendations.filter(
       (item) => item.status === "Completada" || item.status === "Descartada"
     );
@@ -138,6 +136,13 @@ export class RecomendacionesPage extends PageController {
     mediumContainer.innerHTML = medium.length
       ? medium.map((item) => this._buildRecommendationCard(item)).join("")
       : '<p class="text-muted">No hay recomendaciones de prioridad media para este filtro.</p>';
+
+    const lowContainer = this.element.querySelector("#recommendationsLowPriority");
+    if (lowContainer) {
+      lowContainer.innerHTML = low.length
+        ? low.map((item) => this._buildRecommendationCard(item)).join("")
+        : '<p class="text-muted">No hay recomendaciones de prioridad baja para este filtro.</p>';
+    }
 
     completedContainer.innerHTML = completed.length
       ? completed.map((item) => this._buildRecommendationCard(item)).join("")
@@ -254,33 +259,67 @@ export class RecomendacionesPage extends PageController {
 
     const action = actionTarget.dataset.action;
     const recommendationId = actionTarget.dataset.id;
-    const recommendation = this.data.recommendations.find((item) => item.id === recommendationId);
+    if (!recommendationId) {
+      return;
+    }
 
+    const recommendation = this.data.recommendations.find((item) => item.id === recommendationId);
     if (!recommendation) {
       return;
     }
 
     if (action === "complete") {
-      recommendation.status = "Completada";
-      this.options.showToast?.("Recomendacion marcada como completada.", "success");
-      this._applyFilters();
+      event.preventDefault();
+      this._updateRecommendationStatus(recommendation, "completada");
       return;
     }
 
     if (action === "discard") {
-      recommendation.status = "Descartada";
-      this.options.showToast?.("Recomendacion descartada.", "warning");
-      this._applyFilters();
+      event.preventDefault();
+      this._updateRecommendationStatus(recommendation, "descartada");
       return;
     }
 
     if (action === "detail") {
+      event.preventDefault();
       this._openDetailModal(recommendation);
+      return;
+    }
+  }
+
+  async _updateRecommendationStatus(recommendation, status) {
+    try {
+      const result = await apiClient.patch(
+        `/users/me/recommendations/${recommendation.id}`,
+        { status },
+      );
+      recommendation.status = result.status;
+      this.options.showToast?.(
+        status === "completada"
+          ? "Recomendacion marcada como completada."
+          : "Recomendacion descartada.",
+        status === "completada" ? "success" : "warning",
+      );
+      this._applyFilters();
+    } catch (error) {
+      this.options.showToast?.(
+        error.message || "No se pudo actualizar la recomendacion.",
+        "warning",
+      );
     }
   }
 
   _openDetailModal(recommendation) {
     this.activeRecommendation = recommendation;
+
+    if (!recommendation.isRead) {
+      apiClient
+        .patch(`/users/me/recommendations/${recommendation.id}`, { isRead: true })
+        .then(() => {
+          recommendation.isRead = true;
+        })
+        .catch(() => {});
+    }
 
     const content = this.element.querySelector("#recommendationDetailContent");
     if (content) {
@@ -291,8 +330,9 @@ export class RecomendacionesPage extends PageController {
         <p class="text-muted mb-2"><strong>Ahorro potencial:</strong> ${formatCurrency(
           recommendation.savingsPotential
         )} por mes</p>
-        <p class="text-muted mb-2"><strong>Asesor:</strong> ${recommendation.advisorName}</p>
-        <p class="text-muted mb-0"><strong>Contacto:</strong> ${recommendation.advisorEmail}</p>
+        <p class="text-muted mb-2"><strong>Asesor:</strong> ${recommendation.advisorName || "-"}</p>
+        <p class="text-muted mb-2"><strong>Estado:</strong> ${recommendation.status}</p>
+        <p class="text-muted mb-0"><strong>Leida:</strong> ${recommendation.isRead ? "Si" : "No"}</p>
       `;
     }
 

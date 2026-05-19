@@ -12,6 +12,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { JwtPayload } from "../../common/auth";
 import { SUPABASE_CLIENT } from "../../common/supabase/supabase.provider";
 import { UpdateUserDto } from "./dto/update-user.dto";
+import { UpdateClientRecommendationDto } from "./dto/update-client-recommendation.dto";
 
 interface UserRow {
   id: string;
@@ -289,6 +290,7 @@ export class UsersService {
         title: row.titulo,
         priority: this.mapPriority(row.prioridad),
         status: this.mapStatus(row.estado),
+        isRead: row.leida ?? false,
         problem: row.problema ?? null,
         solution: row.solucion ?? row.mensaje ?? null,
         savingsPotential: this.toNumber(row.ahorro_potencial, 0),
@@ -534,6 +536,58 @@ export class UsersService {
       activeRecommendations: active.length,
       completedThisMonth: completedThisMonth.length,
       estimatedImpact,
+    };
+  }
+
+  async updateMyRecommendation(
+    user: JwtPayload,
+    recommendationId: string,
+    dto: UpdateClientRecommendationDto,
+  ) {
+    const payload = this.ensureUser(user);
+
+    if (payload.role !== "cliente") {
+      throw new ForbiddenException("Solo clientes pueden actualizar sus recomendaciones");
+    }
+
+    const updatePayload: Record<string, unknown> = {};
+
+    if (dto.status !== undefined) {
+      updatePayload.estado = dto.status;
+    }
+
+    if (dto.isRead !== undefined) {
+      updatePayload.leida = dto.isRead;
+      if (dto.isRead) {
+        updatePayload.leida_en = new Date().toISOString();
+      }
+    }
+
+    if (Object.keys(updatePayload).length === 0) {
+      throw new BadRequestException("No se proporcionaron campos para actualizar");
+    }
+
+    const { data, error } = await this.supabase
+      .from("recomendaciones_financieras")
+      .update(updatePayload)
+      .eq("id", recommendationId)
+      .eq("cliente_id", payload.sub)
+      .select("id, estado, leida, leida_en")
+      .single();
+
+    if (error) {
+      console.error('[updateMyRecommendation] Supabase error:', error, 'payload:', updatePayload);
+      if (error.code === "PGRST116") {
+        throw new NotFoundException("Recomendacion no encontrada");
+      }
+      throw new InternalServerErrorException(error.message || "No se pudo actualizar la recomendacion");
+    }
+
+    return {
+      id: data.id,
+      status: this.mapStatus(data.estado),
+      isRead: data.leida ?? false,
+      readAt: data.leida_en ?? null,
     };
   }
 

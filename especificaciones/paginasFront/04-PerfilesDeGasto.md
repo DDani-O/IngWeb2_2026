@@ -1,15 +1,17 @@
-# Especificación: Perfiles de Gasto
+# Especificación: Perfiles de Gasto (actualizada mayo 2026)
 
 ## DESCRIPCIÓN GENERAL
 
-La página de Perfiles de Gasto permite a los usuarios regulares explorar, entender y seleccionar su perfil de consumo. Un perfil de gasto es una clasificación que agrupa a usuarios según su comportamiento financiero (ahorrador, equilibrado, derrochador). Esta página presenta los tres perfiles disponibles con descripciones detalladas, características, tips de ahorro, y una tabla comparativa. Los usuarios pueden ver sus beneficios y seleccionar el que mejor se adapte a su situación.
+La página de Perfiles de Gasto (`/usuario/perfiles`) es un **explorador informativo y educativo**. Presenta el catalogo de perfiles financieros disponibles en el sistema, con descripcion, caracteristicas, consejos y tabla comparativa.
 
-**Objetivos principales:**
-- Educar al usuario sobre los diferentes perfiles de gasto
-- Permitir visualizar características de cada perfil
-- Facilitar comparación entre perfiles
-- Permitir seleccionar un perfil (actualizar perfil activo)
-- Proporcionar tips prácticos para cada perfil
+**REGLA DE NEGOCIO CRITICA:** El cliente NO puede asignarse un perfil a si mismo. Los perfiles son asignados exclusivamente por el asesor financiero (via panel del asesor). El cliente solo puede consultar informacion sobre los perfiles.
+
+**Objetivos:**
+- Educar al usuario sobre los diferentes perfiles de gasto financiero
+- Mostrar cuál es su perfil activo actual (asignado por el asesor)
+- Explicar las caracteristicas de cada perfil
+- Facilitar comparacion entre perfiles
+- Proveer tips practicos para mejorar habitos financieros
 
 ---
 
@@ -52,8 +54,8 @@ La página de Perfiles de Gasto permite a los usuarios regulares explorar, enten
   - Ej: "Eres alguien que controla cada peso. Registras gastos constantemente, evitas compras impulsivas y priorizas el ahorro. Tu disciplina es tu fortaleza."
 - **Lista de Características:** 4-5 puntos sobre este perfil
   - Ej: "Registra gastos diarios", "Gasto controlado", "Ahorra más del 30%", etc.
-- **Botón CTA:** "Seleccionar Este Perfil" (actualiza perfil activo)
-- **Indicador:** Si es el perfil activo, mostrar badge "Perfil Actual"
+- **Indicador de perfil activo:** badge "Tu perfil actual" si este es el perfil asignado al cliente
+- **Sin boton de seleccion:** el cliente no puede cambiar su propio perfil
 - **Tema:** Card con borde en color principal (turquesa), background oscuro
 
 #### **Tarjeta 2: Perfil Equilibrista (Equilibrado)**
@@ -64,9 +66,9 @@ La página de Perfiles de Gasto permite a los usuarios regulares explorar, enten
   - Ej: "Buscas balance entre disfrutar y ahorrar. Registras gastos regularmente, pero permites pequeños gastos discretos. Ahorras modestamente pero de forma consistente."
 - **Lista de Características:** 4-5 puntos
   - Ej: "Balance entre gasto y ahorro", "Algunos gastos discretos permitidos", "Ahorra 15-25%", etc.
-- **Botón CTA:** "Seleccionar Este Perfil"
-- **Indicador:** Si es activo, mostrar badge "Perfil Actual"
-- **Tema:** Card similar, posiblemente con borde más destacado (perfil recomendado por defecto)
+- **Indicador de perfil activo:** badge "Tu perfil actual" si corresponde
+- **Sin boton de seleccion**
+- **Tema:** Card similar, posiblemente con borde mas destacado
 
 #### **Tarjeta 3: Perfil Espíritu Libre (Derrochador)**
 - **Emoji/Icono:** 🌪️ (Espíritu libre o similar)
@@ -76,8 +78,8 @@ La página de Perfiles de Gasto permite a los usuarios regulares explorar, enten
   - Ej: "Eres impulsivo con tus gastos. No sueles registrar cada compra y prefieres disfrutar del momento. Poco enfoque en ahorrar, más en vivir."
 - **Lista de Características:** 4-5 puntos
   - Ej: "Gastos impulsivos frecuentes", "Bajo seguimiento de gastos", "Poco o nada de ahorro", "Vives el presente", etc.
-- **Botón CTA:** "Seleccionar Este Perfil"
-- **Indicador:** Si es activo, mostrar badge "Perfil Actual"
+- **Indicador de perfil activo:** badge si corresponde
+- **Sin boton de seleccion**
 - **Tema:** Card similar, con tonalidad visual diferente (opcional)
 
 ### 5. Sección de Tips/Consejos
@@ -136,12 +138,8 @@ La página de Perfiles de Gasto permite a los usuarios regulares explorar, enten
 
 ### Tarjetas de Perfil
 - **Hover:** Sombra elevada, cambio sutil de color de borde
-- **Click en "Seleccionar Este Perfil":**
-  - Actualiza perfil activo del usuario
-  - Badge "Perfil Actual" se mueve a la tarjeta clickeada
-  - Toast confirma selección: "Perfil actualizado a [Nombre]"
-  - Otros botones pasan a estado normal (sin "Perfil Actual")
-- **Animación:** Transición suave al cambiar estado
+- **Sin interaccion de seleccion:** las tarjetas son solo informativas
+- **Badge "Tu perfil actual":** aparece en la tarjeta del perfil asignado por el asesor
 
 ### Sección de Tips (Acordeón)
 - **Click en encabezado de perfil:** Expande/colapsa tips
@@ -156,7 +154,7 @@ La página de Perfiles de Gasto permite a los usuarios regulares explorar, enten
 ### Botones de Navegación
 - **"Ir a mi Dashboard":** Navega a `/usuario/dashboard`
 - **"Ver Recomendaciones":** Navega a `/usuario/recomendaciones`
-- **"Seleccionar Este Perfil":** POST /usuario/perfil (actualiza perfil activo)
+- **Sin endpoint de seleccion para el cliente:** la pagina es de solo lectura
 
 ### Sidebar/Navegación
 - **Click en item:** Navega a página correspondiente
@@ -323,12 +321,11 @@ La página de Perfiles de Gasto permite a los usuarios regulares explorar, enten
 3. Analiza diferencias clave
 4. Identifica qué perfil se adapta más
 
-### Flujo 3: Cambiar Perfil
-1. Usuario selecciona "Seleccionar Este Perfil" en una tarjeta
-2. Sistema actualiza perfil activo en backend
-3. Badge "Perfil Actual" se mueve a la tarjeta
-4. Toast confirma cambio: "Perfil actualizado a [Nombre]"
-5. Dashboard se actualiza la próxima vez que carga
+### Flujo 3: Ver perfil activo
+1. La pagina carga los perfiles desde `GET /users/spending-profiles`
+2. El perfil activo del cliente viene de `GET /users/me` (campo `spendingProfile`)
+3. La tarjeta correspondiente muestra el badge "Tu perfil actual"
+4. El cliente puede explorar los demas perfiles de forma informativa
 
 ### Flujo 4: Actuar sobre Selección
 1. Después de elegir perfil, usuario tiene 2 opciones:
@@ -349,10 +346,10 @@ La página de Perfiles de Gasto permite a los usuarios regulares explorar, enten
 - **Composición:** Page = Navbar + Sidebar + Header + ProfileCards + Tips + Comparison Table + CTA Section + Footer
 - **Ciclo de vida:** Fetch datos de perfil al montar, actualizar en localStorage cuando cambia
 
-### Interacción con Backend
-- **GET /usuario/perfiles:** Obtiene lista de perfiles disponibles + perfil actual del usuario
-- **POST /usuario/perfil:** Actualiza perfil activo del usuario (body: { profileId })
-- **Respuesta:** { success: true, newProfile: { name, emoji, ... } }
+### Interaccion con Backend
+- **GET /users/spending-profiles:** Obtiene lista de perfiles disponibles (catalogo completo)
+- **GET /users/me:** Obtiene perfil activo actual del cliente (`spendingProfile`, `spendingProfileSource`)
+- **Sin POST:** el cliente no puede cambiar su perfil via API
 
 ### Performance
 - Todos los datos estáticos (se pueden hardcodear después de primera consulta)
@@ -381,21 +378,20 @@ La página de Perfiles de Gasto permite a los usuarios regulares explorar, enten
 
 ## REGLAS DE COMPORTAMIENTO
 
-1. **Al cargar:** Mostrar el perfil activo del usuario (highlighted)
-2. **Al cambiar perfil:** Actualizar inmediatamente en UI y backend
-3. **Validación:** No permitir cambiar a un perfil inválido (siempre 3 opciones válidas)
-4. **Toast:** Mostrar confirmación de cambio de perfil
-5. **Persistencia:** Perfil se mantiene en todos los viajes del usuario
-6. **Errores:** Si la actualización falla, mostrar modal con retry option
+1. **Al cargar:** Mostrar badge "Tu perfil actual" en la tarjeta del perfil asignado por el asesor
+2. **Sin seleccion:** No hay botones de seleccion de perfil. El cliente es un observador.
+3. **Perfiles dinamicos:** Los perfiles se cargan desde la API (no hardcodeados en frontend)
+4. **Sin perfil asignado:** Mostrar mensaje informativo "Tu asesor aun no ha asignado un perfil"
+5. **Errores de carga:** Mostrar estado de error con opcion de reintentar
 
 ---
 
 ## METADATA
 
 - **Route:** `/usuario/perfiles`
-- **HTTP Methods:** GET (fetch perfiles), POST (cambiar perfil activo)
-- **Autenticación:** Requerida (rol: usuario)
-- **Roles permitidos:** Usuario regular (no asesor)
+- **HTTP Methods:** GET (fetch perfiles) — sin POST para el cliente
+- **Autenticacion:** Requerida (rol: cliente)
+- **Roles permitidos:** cliente (no asesor)
 - **Tema:** Dark mode obligatorio
 - **Responsivo:** Sí (mobile-first)
 

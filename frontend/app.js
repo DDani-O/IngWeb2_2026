@@ -262,7 +262,7 @@ function configureRouter() {
       pageModulePath: "./pages/asesor/AsesorDashboardPage.js",
       pageExportName: "AsesorDashboardPage",
       footerText: "FinTrack 2026 · Panel asesor",
-      beforePageMount: mountDashboardRecommendationModal,
+      beforePageMount: mountClientsRecommendationModal,
     }),
     createAdvisorRoute({
       path: ROUTES.ADVISOR_CLIENTES,

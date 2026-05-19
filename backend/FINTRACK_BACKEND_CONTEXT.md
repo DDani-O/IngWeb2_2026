@@ -1,134 +1,261 @@
-# FinTrack Backend — Contexto para Generación de Código (v2)
+# FinTrack Backend — Contexto tecnico (actualizado mayo 2026)
 
-**Stack:** NestJS + TypeScript + Supabase (PostgreSQL) + JWT + Gemini AI  
-**Base URL:** `https://fintrack-api.onrender.com/api/v1`  
-**Proyecto:** Ingeniería Web II — 2026
+**Stack:** NestJS + TypeScript + Supabase (PostgreSQL + Auth + Storage) + JWT + Google Gemini AI
+**Base URL local:** `http://localhost:3000/api/v1`
+**Proyecto:** Ingenieria Web II — 2026
 
 ---
 
 ## Arquitectura
 
-Cada dominio tiene: `*.module.ts` → `*.controller.ts` → `*.service.ts` → `dto/*.dto.ts`
-
-- **Controlador:** solo recibe el request HTTP y delega al servicio.
-- **Servicio:** lógica de negocio. Interactúa con Supabase (vía `SUPABASE_CLIENT` con service key).
-- **DTO:** define y valida el JSON entrante con `class-validator` y `class-transformer`.
-- **Guard:** `JwtAuthGuard` verifica JWT; `RolesGuard` verifica el rol (`cliente` o `asesor`).
-
-**Pipeline de un request:**
-1. `JwtAuthGuard` → verifica JWT, adjunta `user` al request.
-2. `ValidationPipe` → valida el DTO (whitelist: true, transform: true).
-3. `Controller` → delega al servicio.
-4. `Service` → lógica + Supabase.
-
----
-
-## Estructura de carpetas
-
+### Pipeline de un request
 ```
-src/
-├── main.ts
-├── app.module.ts
-└── modules/
-    ├── auth/         { auth.module, auth.controller, auth.service, dto/{register,login}.dto }
-    ├── users/        { users.module, users.controller, users.service, dto/update-user.dto }
-    ├── expenses/     { expenses.module, expenses.controller, expenses.service, dto/{create,update,query}-expense.dto }
-    ├── categories/   { categories.module, categories.controller, categories.service, dto/category.dto }
-    └── advisor/      { advisor.module, advisor.controller, advisor.service, dto/*.dto }
+Request HTTP
+  → JwtAuthGuard (verifica JWT, adjunta JwtPayload al request)
+  → RolesGuard (si aplica, verifica rol)
+  → ValidationPipe (valida y transforma el DTO)
+  → Controller (delega al servicio)
+  → Service (logica + consultas Supabase)
+  → Response
 ```
 
+### Convencion por modulo
+```
+src/modules/<dominio>/
+  <dominio>.module.ts
+  <dominio>.controller.ts
+  <dominio>.service.ts
+  dto/
+    *.dto.ts
+```
+
+### Seguridad — reglas criticas
+- El `user_id` **NUNCA** viene del body. Siempre del JWT via `@CurrentUser()`.
+- JWT payload: `{ sub: userId, email, role }`.
+- Roles validos: `cliente` y `asesor`.
+- Endpoints de asesor: `@UseGuards(JwtAuthGuard, RolesGuard)` + `@Roles('asesor')`.
+- `GET /categories` es **publico** (sin guards).
+- El backend usa el **service role** de Supabase, sin RLS en las consultas del servidor. La seguridad se aplica en la capa NestJS (guards + validacion de ownership manual).
+
 ---
 
-## Seguridad — Reglas críticas
+## Modulos
 
-- El `user_id` **NUNCA** viene del body. Siempre del token JWT via `@CurrentUser()`.
-- El JWT payload incluye `{ sub: userId, email, role }`.
-- Roles válidos: `cliente` (antes "usuario") y `asesor`.
-- Endpoints de asesor usan `@UseGuards(JwtAuthGuard, RolesGuard)` + `@Roles('asesor')`.
-- Categorías (`GET /categories`) es **PÚBLICO** (sin guard).
+### `auth`
+Registro y login de usuarios.
+
+**Endpoints:**
+```
+POST /auth/register   { email, password, fullName, role, ...extras }  → 201 { access_token, user }
+POST /auth/login      { email, password }                              → 200 { access_token, user }
+```
+
+**Flujo register:**
+1. Crear usuario en `auth.users` via Supabase Admin API.
+2. Insertar en `usuarios` (nombre, rol, email).
+3. Crear `perfiles_usuarios` o `perfiles_asesores` segun rol.
+4. Asignar asesor disponible automaticamente si rol=cliente (`obtener_asesor_disponible()`).
+5. Retornar JWT + datos del usuario.
 
 ---
 
-## Endpoints — Contrato completo
+### `users`
+Perfil del usuario autenticado, recomendaciones, dashboard cliente, perfiles de gasto.
 
-### AUTH (público)
+**Endpoints:**
+```
+GET   /users/me                              → perfil completo (base + extendido segun rol)
+PATCH /users/me                              → actualizar perfil (campos segun rol)
+GET   /users/me/recommendations              → { stats, recommendations[] }
+GET   /users/me/dashboard                    → { profile, recommendations.stats, createdAt }
+GET   /users/me/consumption-analysis         → analytics completo (ver modulo analytics)
+GET   /users/spending-profiles               → { profiles[] } catalogo de perfiles de gasto
+```
 
-| Método | Ruta | Body | Respuesta |
-|--------|------|------|-----------|
-| `POST` | `/auth/register` | `{ email, password, fullName, role: 'cliente'\|'asesor', ...extras }` | `201 { access_token, user }` |
-| `POST` | `/auth/login` | `{ email, password }` | `200 { access_token, user }` |
-
-- `extras` en register (según rol): `licenseNumber`, `specialty`, `occupation`, `estimatedIncome`, etc.
-
-### USERS (🔒 JWT)
-
-| Método | Ruta | Body | Respuesta |
-|--------|------|------|-----------|
-| `GET` | `/users/me` | — | `200` perfil completo (base + extendido) |
-| `PATCH` | `/users/me` | campos opcionales | `200` perfil actualizado |
-| `GET` | `/users/me/recommendations` | — | `200 { stats, recommendations[] }` |
-
-**Base User:**
+**Respuesta GET /users/me (cliente):**
 ```json
 {
   "id": "uuid",
   "email": "string",
   "fullName": "string",
-  "role": "cliente|asesor",
+  "role": "cliente",
   "avatarUrl": "string|null",
-  "createdAt": "ISO date",
-  "lastLogin": "ISO date|null",
-  "profile": "string|null",
-  "advisorName": "string|null"
+  "createdAt": "ISO",
+  "lastLogin": "ISO|null",
+  "spendingProfile": "string|null",
+  "spendingProfileSource": "asesor|sistema|null",
+  "advisorName": "string|null",
+  "phone": "string|null",
+  "country": "string|null",
+  "occupation": "string|null",
+  "monthlyIncome": 0,
+  "savingsGoal": 0,
+  "alertThreshold": 0,
+  "currency": "ARS",
+  "theme": "dark",
+  "notifyEmail": true,
+  "notifyPush": false,
+  "financialGoal": "string|null"
 }
 ```
 
-### CATEGORIES (público)
+**PATCH /users/me — campos permitidos:**
 
-| Método | Ruta | Respuesta |
-|--------|------|-----------|
-| `GET` | `/categories` | `200 [{ id, nombre, icono, descripcion }]` |
+Cliente: `fullName`, `avatarUrl`, `phone`, `country`, `occupation`, `monthlyIncome`, `savingsGoal`, `alertThreshold`, `currency`, `theme`, `notifyEmail`, `notifyPush`, `financialGoal`
 
-### EXPENSES (🔒 JWT — solo `cliente`)
+Asesor: `fullName`, `avatarUrl`, `licenseNumber`, `specialty`, `description`
 
-| Método | Ruta | Body / Query | Respuesta |
-|--------|------|------|-----------|
-| `GET` | `/expenses` | `?page&limit&categoryId&from&to&search` | `200 { data[], pagination }` |
-| `POST` | `/expenses` | `{ amount, merchant, categoryId, date, notes? }` | `201` gasto completo |
-| `GET` | `/expenses/summary` | `?month=YYYY-MM` | `200 { totalMonth, totalByCategory[], ... }` |
-| `PATCH` | `/expenses/:id` | campos opcionales | `200` gasto actualizado |
-| `DELETE` | `/expenses/:id` | — | `204 No Content` |
-
-### ADVISOR (🔒 JWT — solo `asesor`)
-
-| Método | Ruta | Body / Query | Respuesta |
-|--------|------|------|-----------|
-| `GET` | `/advisor/dashboard` | — | `200` datos consolidados del asesor |
-| `GET` | `/advisor/clients` | `?page&limit&search&status&risk&profile` | `200 { data[], pagination }` |
-| `GET` | `/advisor/clients/:clientId` | — | `200` detalle del cliente |
-| `GET` | `/advisor/clients/:clientId/expenses` | query de gastos | `200 { data[], pagination }` |
-| `GET` | `/advisor/recommendations` | `?clientId&type&status` | `200 { data[], pagination }` |
-| `POST` | `/advisor/recommendations` | `{ clientId, title?, content, type, priority?, icon?, ... }` | `201` recomendación creada |
-| `GET` | `/advisor/messages` | `?clientId&onlyUnread` | `200` mensajes/inbox |
-| `POST` | `/advisor/messages` | `{ clientId, subject?, content, type? }` | `201` mensaje enviado |
-| `GET` | `/advisor/reports` | — | `200` reportes de gestión |
+> Nota: `country` mapea a la columna `pais` en `perfiles_usuarios`. El campo fue renombrado de `ciudad` en migration 0010.
 
 ---
 
-## Integración IA — OCR de Tickets
+### `expenses`
+CRUD de gastos. Solo para clientes.
 
-**Flujo:** `frontend` → `POST /tickets/upload` → `tickets.service`:
-1. Subir imagen a Supabase Storage (`ticket-images/{userId}/{timestamp}.jpg`).
-2. Llamar a Gemini (modelo `gemini-1.5-flash`).
-3. Extraer: `amount`, `merchant`, `date`.
-4. Crear automáticamente el gasto en la tabla `gastos`.
-5. Retornar `202 Accepted`.
+**Endpoints:**
+```
+GET    /expenses                    ?page&limit&categoryId&from&to&search&orderBy&order
+POST   /expenses                    { amount, merchant, categoryId, date, currency?, notes?, origin? }
+GET    /expenses/:id
+PATCH  /expenses/:id                campos opcionales
+DELETE /expenses/:id
+GET    /expenses/summary            ?month=YYYY-MM
+```
+
+**GET /expenses/summary** retorna: `totalMonth`, `totalByCategory[]`, `averageExpense`, `totalTransactions`, `topMerchant`.
 
 ---
 
-## Manejo de Errores
+### `categories`
+Catalogo global de categorias de gasto. Endpoint publico.
 
-| Excepción | HTTP |
+```
+GET /categories   → [{ id, nombre, icono, descripcion }]
+```
+
+---
+
+### `tickets`
+Upload de tickets (imagenes/PDF) y procesamiento OCR via Gemini AI.
+
+**Endpoints:**
+```
+POST /tickets/upload    multipart/form-data { file }   → 202 { ticketId, status, expense? }
+GET  /tickets                                          → [{ id, estado_procesamiento, subido_en }]
+GET  /tickets/:id/status                               → { id, estado, resultado? }
+```
+
+**Flujo OCR:**
+1. Subir archivo a Supabase Storage en bucket `ticket-images/{userId}/{timestamp}`.
+2. Llamar a Gemini (`gemini-1.5-flash`) con el contenido del archivo.
+3. Prompt extrae: `comercio`, `monto`, `fecha`, `categoria_sugerida`.
+4. Crear registro en `analisis_ocr` con resultado del modelo.
+5. Si confianza es suficiente, crear gasto con `origen: "ticket"` y `ocr_estado: "procesado"`.
+6. Retornar resultado al frontend para confirmacion del usuario.
+
+---
+
+### `analytics`
+Calculo dinamico de analytics de consumo. No persiste en `analisis_de_consumo`.
+
+**Endpoint:**
+```
+GET /users/me/consumption-analysis?monthsBack=12
+```
+
+**Respuesta:**
+```json
+{
+  "highlights": {
+    "totalExpense": 0,
+    "averageExpense": 0,
+    "maxExpense": 0,
+    "minExpense": 0,
+    "dayOfHighestExpense": "string|null",
+    "topMerchants": [{ "merchant": "string", "count": 0 }]
+  },
+  "categoryDistribution": [
+    { "categoryName": "string", "amount": 0, "percentage": 0, "count": 0 }
+  ],
+  "monthlyEvolution": [
+    { "month": "YYYY-MM", "totalExpense": 0, "transactionCount": 0, "averageExpense": 0 }
+  ],
+  "categoryMonthlyEvolution": {
+    "months": ["YYYY-MM"],
+    "series": [{ "name": "string", "amounts": [0] }]
+  },
+  "unusualExpenses": [
+    {
+      "id": "uuid",
+      "amount": 0,
+      "merchant": "string",
+      "date": "ISO",
+      "category": "string",
+      "categoryMean": 0,
+      "zScore": 0,
+      "anomalyScore": 0
+    }
+  ]
+}
+```
+
+**Servicios internos del modulo analytics:**
+- `ConsumptionAnalyticsService`: orquesta el calculo completo.
+- `AnomalyDetectionService`: Z-score + percentil para deteccion de gastos inusuales.
+
+**Algoritmo de anomalias:**
+1. Agrupar gastos por categoria.
+2. Por categoria: calcular media y desvio estandar.
+3. Z-score de cada gasto: `(monto - media) / stdev`.
+4. Percentil dentro de su categoria.
+5. Gasto anomalo si `|zScore| > 1.5` O `percentil > 95`.
+6. Score final: promedio ponderado de zscore y percentil (0-1).
+7. Retorna top N anomalias ordenadas por score desc.
+
+---
+
+### `advisor`
+Dashboard del asesor, gestion de cartera, perfiles, recomendaciones, mensajeria.
+
+**Endpoints:**
+```
+GET   /advisor/dashboard
+GET   /advisor/profile
+PATCH /advisor/profile                 { specialty?, description?, maxCapacity?, phone?, country? }
+
+GET   /advisor/clients                 ?page&limit&search&status&profile
+GET   /advisor/clients/:id
+GET   /advisor/clients/:id/expenses    ?from&to&page&limit
+GET   /advisor/clients/:id/profile     perfil activo del cliente
+POST  /advisor/clients/:id/assign-profile   { profileId, motivo? }   asigna perfil al cliente
+
+GET   /advisor/recommendations         ?clientId&status&type
+POST  /advisor/recommendations         { clientId, title, content, type, priority?, icon?, problem?, solution?, savingsPotential?, steps? }
+PATCH /advisor/recommendations/:id     { status? }
+
+GET   /advisor/messages                ?clientId&onlyUnread
+POST  /advisor/messages                { clientId, subject?, content, type? }
+
+GET   /advisor/reports
+```
+
+**Asignacion automatica de clientes:**
+Al registrarse un nuevo cliente, el sistema llama a `obtener_asesor_disponible()` (funcion SQL) que retorna el asesor con menor cantidad de clientes activos respecto a su `capacidad_maxima`. Se crea una fila en `asignaciones_de_clientes` automaticamente.
+
+---
+
+## DTOs — Convenciones
+
+- Todos los DTOs usan `class-validator` con `@IsOptional`, `@IsString`, `@IsNumber`, etc.
+- `ValidationPipe` configurado con `whitelist: true, transform: true`.
+- `@Type(() => Number)` / `@Type(() => Boolean)` para conversion automatica desde query params.
+- Campos de solo lectura (calculados, ids, timestamps) nunca estan en DTOs de entrada.
+
+---
+
+## Manejo de errores
+
+| Excepcion | HTTP |
 |-----------|------|
 | `BadRequestException` | 400 |
 | `UnauthorizedException` | 401 |
@@ -137,4 +264,76 @@ src/
 | `ConflictException` | 409 |
 | `InternalServerErrorException` | 500 |
 
-Formato: `{ "statusCode", "message", "timestamp", "path" }`.
+Formato de respuesta de error:
+```json
+{ "statusCode": 400, "message": "...", "timestamp": "ISO", "path": "/api/v1/..." }
+```
+
+---
+
+## Supabase — Integracion
+
+El backend usa **dos clientes** Supabase definidos en `common/supabase/supabase.provider.ts`:
+- `SUPABASE_SERVICE_KEY`: service role, sin RLS. Usado para la mayoria de operaciones del backend.
+- `SUPABASE_ANON_KEY`: anon key, respeta RLS. Usado para casos especificos.
+
+Las consultas usan la API de PostgREST (`supabase.from(...).select(...)`). No se usa ORM.
+
+---
+
+## Estructura real de carpetas
+
+```
+src/
+├── main.ts
+├── app.module.ts
+├── common/
+│   ├── auth/
+│   │   ├── jwt.strategy.ts
+│   │   ├── jwt-auth.guard.ts
+│   │   ├── roles.guard.ts
+│   │   ├── roles.decorator.ts
+│   │   └── current-user.decorator.ts
+│   └── supabase/
+│       └── supabase.provider.ts
+└── modules/
+    ├── auth/
+    │   ├── auth.module.ts
+    │   ├── auth.controller.ts
+    │   ├── auth.service.ts
+    │   └── dto/  register.dto.ts  login.dto.ts
+    ├── users/
+    │   ├── users.module.ts
+    │   ├── users.controller.ts
+    │   ├── users.service.ts
+    │   └── dto/  update-user.dto.ts
+    ├── expenses/
+    │   ├── expenses.module.ts
+    │   ├── expenses.controller.ts
+    │   ├── expenses.service.ts
+    │   └── dto/  create-expense.dto.ts  update-expense.dto.ts  query-expense.dto.ts
+    ├── categories/
+    │   ├── categories.module.ts
+    │   ├── categories.controller.ts
+    │   └── categories.service.ts
+    ├── tickets/
+    │   ├── tickets.module.ts
+    │   ├── tickets.controller.ts
+    │   ├── tickets.service.ts
+    │   ├── ocr.service.ts
+    │   └── dto/  upload-ticket.dto.ts
+    ├── analytics/
+    │   ├── analytics.module.ts
+    │   ├── analytics.controller.ts
+    │   ├── constants/  analytics.constants.ts
+    │   ├── dto/  consumption-analysis.dto.ts  consumption-highlights.dto.ts  unusual-expense.dto.ts  ...
+    │   ├── services/
+    │   │   ├── consumption-analytics.service.ts
+    │   │   └── anomaly-detection.service.ts
+    │   └── types/  anomaly.types.ts  ...
+    └── advisor/
+        ├── advisor.module.ts
+        ├── advisor.controller.ts
+        ├── advisor.service.ts
+        └── dto/  assign-client-profile.dto.ts  create-recommendation.dto.ts  ...
+```

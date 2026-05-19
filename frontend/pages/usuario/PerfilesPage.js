@@ -1,6 +1,5 @@
 import { apiClient } from "../../core/APIClient.js";
 import { PageController } from "../../core/PageController.js";
-import { MOCK_SPENDING_PROFILES } from "../../utils/constants.js";
 import { getInitials } from "../../utils/helpers.js";
 
 export class PerfilesPage extends PageController {
@@ -83,8 +82,8 @@ export class PerfilesPage extends PageController {
       };
     } catch (error) {
       this.loadError = error?.message || "No se pudieron cargar los perfiles.";
-      this.data = JSON.parse(JSON.stringify(MOCK_SPENDING_PROFILES));
-      this.activeProfileName = this.data.user?.activeProfile || null;
+      this.data.profiles = [];
+      this.activeProfileName = null;
       this.activeProfileSource = null;
       this.options.showToast?.(this.loadError, "warning");
     }
@@ -93,6 +92,17 @@ export class PerfilesPage extends PageController {
   _renderProfiles() {
     const container = this.element.querySelector("#profilesGrid");
     if (!container) {
+      return;
+    }
+
+    if (!this.data.profiles.length) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <i class="fa-solid fa-circle-exclamation empty-state__icon"></i>
+          <p class="empty-state__title">${this.loadError ? "No se pudieron cargar los perfiles" : "Sin perfiles disponibles"}</p>
+          <p class="empty-state__sub text-muted">${this.loadError || "Tu asesor aun no ha configurado perfiles de gasto."}</p>
+        </div>
+      `;
       return;
     }
 

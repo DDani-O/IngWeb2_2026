@@ -1,52 +1,68 @@
-# Índice de Archivos SQL - Base de Datos
+# Indice de archivos SQL — FinTrack 2026
 
-Listado de componentes de la base de datos PostgreSQL/Supabase.
-
-## 📋 ÚNICO ARCHIVO NECESARIO
-
-| Archivo | Contenido | Estado |
-|---------|-----------|--------|
-| `migrations/0001_init_schema.sql` | **TODO lo necesario** | ✅ Listo para usar |
-
-**Este archivo único incluye:**
-- ✅ Extensión `pgcrypto`
-- ✅ 8 tipos ENUM
-- ✅ 12 tablas principales
-- ✅ Funciones y validadores
-- ✅ Triggers
-- ✅ Políticas RLS
-- ✅ Integridad referencial
-
-
+Ultima actualizacion: mayo 2026.
 
 ---
 
-## 📁 Archivos Modularizados (Referencia)
+## Migraciones (ejecutar en orden)
 
-Los siguientes directorios contienen los mismos componentes separados por categoría, útiles para **futuras modificaciones**:
+| Archivo | Descripcion | Estado |
+|---------|-------------|--------|
+| `migrations/0001_init_schema.sql` | Schema completo: ENUMs, tablas, funciones, triggers, RLS | ✅ Base |
+| `migrations/0002_*.sql` — `0009_*.sql` | Parches incrementales: vistas, funciones adicionales, ajustes de RLS, filtros de fecha | ✅ Aplicar en orden |
+| `migrations/0010_ciudad_to_pais.sql` | Renombrar columna `ciudad` → `pais` en `perfiles_usuarios` | ✅ Aplicar |
 
-### `functions/` - 12 archivos
-Funciones SQL, triggers y validadores (ya incluidos en init_schema.sql)
-
-### `policies/` - 12 archivos  
-Políticas de RLS por tabla (ya incluidas en init_schema.sql)
-
----
-
-## 📊 Resumen de Componentes
-
-| Componente | Cantidad | Estado |
-|-----------|----------|--------|
-| Tablas | 12 | En init_schema.sql |
-| Funciones | 15 | En init_schema.sql |
-| Triggers | 16 | En init_schema.sql |
-| Políticas RLS | 30+ | En init_schema.sql |
+**Forma de aplicar en Supabase:**
+1. Abrir el editor SQL de Supabase.
+2. Pegar y ejecutar cada archivo en orden numerado.
+3. Para un deploy fresco: ejecutar `0001` primero, luego los demas en orden.
 
 ---
 
-## 🚀 Deploy en Supabase
+## Seeds (datos iniciales)
 
-1. Abrir editor SQL de Supabase
-2. Copiar `migrations/0001_init_schema.sql`
-3. Pegar y ejecutar
-4. ✅ Base de datos operativa
+| Archivo | Descripcion |
+|---------|-------------|
+| `seeds/seed_gastos_2026.sql` | Gastos de prueba para testing |
+| `seeds/seed_perfiles_de_gasto.sql` | 7 perfiles financieros con metadata completa (emoji, caracteristicas, tips, umbrales) |
+
+---
+
+## Componentes del schema
+
+| Componente | Cantidad |
+|-----------|----------|
+| ENUMs | 10 |
+| Tablas | 13 |
+| Views SQL | 5 |
+| Funciones SQL | 8 |
+| Triggers | 16+ |
+| Politicas RLS | 30+ |
+
+---
+
+## Tablas
+
+Ver detalle completo en `DB_SCHEMA_SUMMARY.md`.
+
+| Tabla | Proposito |
+|-------|-----------|
+| `usuarios` | Usuarios del sistema |
+| `perfiles_usuarios` | Preferencias del cliente |
+| `perfiles_asesores` | Datos del asesor |
+| `asignaciones_de_clientes` | Relacion asesor ↔ cliente |
+| `categorias_de_gasto` | Catalogo global de categorias |
+| `gastos` | Gastos registrados |
+| `tickets` | Imagenes subidas para OCR |
+| `analisis_ocr` | Resultados del procesamiento OCR |
+| `recomendaciones_financieras` | Recomendaciones del asesor o sistema |
+| `mensajes_asesor` | Mensajeria asesor ↔ cliente |
+| `perfiles_de_gasto` | Catalogo de perfiles financieros |
+| `clasificacion_de_perfil` | Perfil asignado a un cliente |
+| `analisis_de_consumo` | Snapshots historicos (sin escritura activa) |
+
+---
+
+## Archivos modularizados (referencia)
+
+Los directorios `functions/` y `policies/` contienen los mismos componentes separados por tabla, utiles para modificaciones puntuales sin tocar el schema completo.

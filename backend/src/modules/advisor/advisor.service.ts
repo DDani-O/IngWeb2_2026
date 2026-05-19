@@ -556,7 +556,10 @@ export class AdvisorService {
       .single();
 
     if (error || !data) {
-      throw new InternalServerErrorException("No se pudo crear la recomendacion");
+      console.error("[createRecommendation] Supabase error:", JSON.stringify(error), "payload:", JSON.stringify(insertPayload));
+      throw new InternalServerErrorException(
+        error?.message ?? "No se pudo crear la recomendacion",
+      );
     }
 
     const cliente = Array.isArray(data.cliente) ? data.cliente[0] : data.cliente;
@@ -1780,11 +1783,10 @@ export class AdvisorService {
   }
 
   private buildRecommendationSummary(rows: any[]) {
-    const pending = rows.filter((rec) => rec.estado === AdvisorRecommendationStatus.Pendiente);
-    const viewed = rows.filter(
-      (rec) => rec.estado === AdvisorRecommendationStatus.Pendiente && rec.leida,
-    );
-    const completed = rows.filter((rec) => rec.estado === AdvisorRecommendationStatus.Completada);
+    const total = rows.length;
+    const unread = rows.filter((rec) => !rec.leida).length;
+    const discarded = rows.filter((rec) => rec.estado === AdvisorRecommendationStatus.Descartada).length;
+    const completed = rows.filter((rec) => rec.estado === AdvisorRecommendationStatus.Completada).length;
 
     const buildItems = (list: any[]) =>
       list.slice(0, 3).map((item) => {
@@ -1795,27 +1797,35 @@ export class AdvisorService {
         };
       });
 
+    // Mostrar Totales / No leídas / Descartadas / Completadas para claridad del asesor
     return [
       {
         id: "adv-rec-001",
-        title: "Enviadas",
-        count: pending.length,
+        title: "Totales",
+        count: total,
         icon: "💡",
-        items: buildItems(pending),
+        items: buildItems(rows),
       },
       {
         id: "adv-rec-002",
-        title: "Vistas",
-        count: viewed.length,
-        icon: "💡",
-        items: buildItems(viewed),
+        title: "No leídas",
+        count: unread,
+        icon: "📭",
+        items: buildItems(rows.filter((r) => !r.leida)),
       },
       {
         id: "adv-rec-003",
-        title: "Implementadas",
-        count: completed.length,
-        icon: "💡",
-        items: buildItems(completed),
+        title: "Descartadas",
+        count: discarded,
+        icon: "🗑️",
+        items: buildItems(rows.filter((r) => r.estado === AdvisorRecommendationStatus.Descartada)),
+      },
+      {
+        id: "adv-rec-004",
+        title: "Completadas",
+        count: completed,
+        icon: "✅",
+        items: buildItems(rows.filter((r) => r.estado === AdvisorRecommendationStatus.Completada)),
       },
     ];
   }

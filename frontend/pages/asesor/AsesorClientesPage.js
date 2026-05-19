@@ -379,11 +379,23 @@ export class AsesorClientesPage extends PageController {
       return;
     }
 
+    const clientId = this._getValue("#advisorClientRecommendationClient");
+    if (!clientId) {
+      this.options.showToast?.("Debes seleccionar un cliente.", "warning");
+      return;
+    }
+
     const payload = this._getRecommendationPayload({
       clientSelector: "#advisorClientRecommendationClient",
       typeSelector: "#advisorClientRecommendationType",
       contentSelector: "#advisorClientRecommendationDescription",
       savingsSelector: "#advisorClientRecommendationSavings",
+      titleSelector: "#advisorClientRecommendationTitle",
+      prioritySelector: "#advisorClientRecommendationPriority",
+      problemSelector: "#advisorClientRecommendationProblem",
+      solutionSelector: "#advisorClientRecommendationSolution",
+      iconSelector: "#advisorClientRecommendationIcon",
+      stepsSelector: "#advisorClientRecommendationSteps",
     });
 
     try {
@@ -420,26 +432,48 @@ export class AsesorClientesPage extends PageController {
     typeSelector,
     contentSelector,
     savingsSelector,
+    titleSelector,
+    prioritySelector,
+    problemSelector,
+    solutionSelector,
+    iconSelector,
+    stepsSelector,
   }) {
     const clientId = this._getValue(clientSelector);
     const typeValue = this._getValue(typeSelector);
     const content = this._getValue(contentSelector);
     const savingsRaw = this._getValue(savingsSelector);
+    const title = titleSelector ? this._getValue(titleSelector) : undefined;
+    const priority = prioritySelector ? this._getValue(prioritySelector) : undefined;
+    const problem = problemSelector ? this._getValue(problemSelector) : undefined;
+    const solution = solutionSelector ? this._getValue(solutionSelector) : undefined;
+    const icon = iconSelector ? this._getValue(iconSelector) : undefined;
+    const stepsRaw = stepsSelector ? this._getValue(stepsSelector) : "";
+
+    const implementationSteps = stepsRaw
+      ? stepsRaw.split("\n").map((s) => s.trim()).filter(Boolean)
+      : [];
 
     return {
       clientId,
       type: this._mapRecommendationType(typeValue),
       content,
-      savingsPotential: Number(savingsRaw || 0),
+      savingsPotential: Number(savingsRaw || 0) || undefined,
+      ...(title ? { title } : {}),
+      ...(priority ? { priority } : {}),
+      ...(problem ? { problem } : {}),
+      ...(solution ? { solution } : {}),
+      ...(icon ? { icon } : {}),
+      ...(implementationSteps.length ? { implementationSteps } : {}),
     };
   }
 
   _mapRecommendationType(value) {
     const normalized = String(value || "").toLowerCase();
-    if (normalized.includes("alerta") || normalized.includes("presupuesto")) {
+    if (normalized === "alerta") {
       return "alerta";
     }
-    if (normalized.includes("felicitacion")) {
+    if (normalized === "felicitacion") {
       return "felicitacion";
     }
     return "consejo";

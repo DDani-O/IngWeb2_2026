@@ -1,33 +1,65 @@
 <div class="modal fade advisor-recommendation-modal" id="{{modalId}}" tabindex="-1" aria-labelledby="{{labelId}}" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-scrollable advisor-recommendation-dialog">
+  <div class="modal-dialog modal-lg modal-dialog-centered advisor-recommendation-dialog">
     <div class="modal-content app-modal-surface">
       <div class="modal-header">
         <h5 class="modal-title" id="{{labelId}}">{{title}}</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
       </div>
       <form class="modal-body" id="{{formId}}">
-        <div class="mb-3">
-          <label for="{{clientSelectId}}" class="form-label">Cliente</label>
-          <select id="{{clientSelectId}}" class="form-select" required></select>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label for="{{clientSelectId}}" class="form-label">Cliente <span class="text-danger">*</span></label>
+            <select id="{{clientSelectId}}" class="form-select" required></select>
+          </div>
+          <div class="col-md-3">
+            <label for="{{typeSelectId}}" class="form-label">Tipo <span class="text-danger">*</span></label>
+            <select id="{{typeSelectId}}" class="form-select" required>
+              <option value="consejo">Consejo</option>
+              <option value="alerta">Alerta</option>
+              <option value="felicitacion">Felicitacion</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label for="advisorClientRecommendationPriority" class="form-label">Prioridad</label>
+            <select id="advisorClientRecommendationPriority" class="form-select">
+              <option value="media">Media</option>
+              <option value="alta">Alta</option>
+              <option value="baja">Baja</option>
+            </select>
+          </div>
+          <div class="col-12">
+            <label for="advisorClientRecommendationTitle" class="form-label">Titulo</label>
+            <input id="advisorClientRecommendationTitle" class="form-control" type="text" maxlength="120" placeholder="Ej: Reducir gastos en entretenimiento" />
+          </div>
+          <div class="col-12">
+            <label for="{{descriptionId}}" class="form-label">Mensaje principal <span class="text-danger">*</span></label>
+            <textarea id="{{descriptionId}}" class="form-control" rows="3" minlength="10" maxlength="1000" required placeholder="Descripcion de la recomendacion..."></textarea>
+          </div>
+          <div class="col-md-6">
+            <label for="advisorClientRecommendationProblem" class="form-label">Problema identificado</label>
+            <textarea id="advisorClientRecommendationProblem" class="form-control" rows="2" maxlength="500" placeholder="Ej: El cliente gasta mas del 40% en ocio"></textarea>
+          </div>
+          <div class="col-md-6">
+            <label for="advisorClientRecommendationSolution" class="form-label">Solucion propuesta</label>
+            <textarea id="advisorClientRecommendationSolution" class="form-control" rows="2" maxlength="1000" placeholder="Ej: Establecer un presupuesto mensual de ocio"></textarea>
+          </div>
+          <div class="col-md-6">
+            <label for="{{savingsId}}" class="form-label">Ahorro potencial mensual (ARS)</label>
+            <input id="{{savingsId}}" class="form-control" type="number" min="0" step="100" placeholder="0" />
+          </div>
+          <div class="col-md-6">
+            <label for="advisorClientRecommendationIcon" class="form-label">Icono (emoji opcional)</label>
+            <input id="advisorClientRecommendationIcon" class="form-control" type="text" maxlength="8" placeholder="Ej: 💡" />
+          </div>
+          <div class="col-12">
+            <label for="advisorClientRecommendationSteps" class="form-label">Pasos de implementacion (uno por linea)</label>
+            <textarea id="advisorClientRecommendationSteps" class="form-control" rows="3" maxlength="2000" placeholder="Paso 1&#10;Paso 2&#10;Paso 3"></textarea>
+          </div>
         </div>
-        <div class="mb-3">
-          <label for="{{typeSelectId}}" class="form-label">Tipo</label>
-          <select id="{{typeSelectId}}" class="form-select" required>
-            <option value="">Seleccionar tipo</option>
-            <option value="Ahorro">Ahorro</option>
-            <option value="Presupuesto">Presupuesto</option>
-            <option value="Habito">Habito de consumo</option>
-          </select>
+        <div class="d-flex flex-wrap gap-2 mt-3">
+          <button class="action-btn action-btn--primary" type="submit">{{submitText}}</button>
+          <button class="action-btn action-btn--ghost" type="button" data-bs-dismiss="modal">Cancelar</button>
         </div>
-        <div class="mb-3">
-          <label for="{{descriptionId}}" class="form-label">Descripcion</label>
-          <textarea id="{{descriptionId}}" class="form-control" rows="3" required></textarea>
-        </div>
-        <div class="mb-3">
-          <label for="{{savingsId}}" class="form-label">Ahorro estimado</label>
-          <input type="number" min="0" id="{{savingsId}}" class="form-control" required />
-        </div>
-        <button class="action-btn action-btn--primary" type="submit">{{submitText}}</button>
       </form>
     </div>
   </div>

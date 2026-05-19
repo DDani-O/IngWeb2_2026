@@ -1,7 +1,8 @@
-import { Body, Controller, Get, Patch, Query, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Query, UseGuards } from "@nestjs/common";
 import { ConsumptionAnalyticsService } from "../analytics/services/consumption-analytics.service";
 import { CurrentUser, JwtAuthGuard, JwtPayload, RolesGuard, Roles } from "../../common/auth";
 import { UpdateUserDto } from "./dto/update-user.dto";
+import { UpdateClientRecommendationDto } from "./dto/update-client-recommendation.dto";
 import { UsersService } from "./users.service";
 
 @UseGuards(JwtAuthGuard)
@@ -43,6 +44,17 @@ export class UsersController {
   ) {
     const months = monthsBack ? parseInt(monthsBack, 10) : 12;
     return this.consumptionAnalytics.getConsumptionAnalysis(user.sub, months);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles("cliente")
+  @Patch("me/recommendations/:id")
+  async updateMyRecommendation(
+    @CurrentUser() user: JwtPayload,
+    @Param("id", new ParseUUIDPipe()) id: string,
+    @Body() dto: UpdateClientRecommendationDto,
+  ) {
+    return this.usersService.updateMyRecommendation(user, id, dto);
   }
 
   @Get("spending-profiles")

@@ -1,13 +1,17 @@
--- =========================================================
--- FUNCIONES AUXILIARES CORE
--- =========================================================
--- Funciones básicas para el sistema
+-- Migration: 0013_fix_es_service_role.sql
+-- Purpose: Fix es_service_role() to support both request.jwt.claim.role and
+-- request.jwt.claims JSON formats so service_role checks work with different
+-- Supabase/PostgREST deployments.
 
-create or replace function public.es_service_role()
-returns boolean
-language sql
-stable
-as $$
+-- Nota: Esta migration reemplaza la función existente en los helpers.
+
+BEGIN;
+
+CREATE OR REPLACE FUNCTION public.es_service_role()
+RETURNS boolean
+LANGUAGE sql
+STABLE
+AS $$
     -- Compatibilidad con distintas versiones de PostgREST/Supabase:
     -- Algunas instalaciones exponen la claim individual en
     -- current_setting('request.jwt.claim.role') mientras que otras
@@ -22,12 +26,4 @@ as $$
     );
 $$;
 
-create or replace function public.set_actualizado_en()
-returns trigger
-language plpgsql
-as $$
-begin
-    new.actualizado_en := now();
-    return new;
-end;
-$$;
+COMMIT;
