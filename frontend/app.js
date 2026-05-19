@@ -274,12 +274,18 @@ function configureRouter() {
     }),
     createAdvisorRoute({
       path: ROUTES.ADVISOR_INBOX,
-      templateUrl: "./pages/asesor/inbox.html",
-      pageModulePath: "./pages/asesor/AsesorInboxPage.js",
-      pageExportName: "AsesorInboxPage",
+      templateUrl: "./pages/public/placeholder.html",
+      pageModulePath: "./pages/public/PlaceholderPage.js",
+      pageExportName: "PlaceholderPage",
       footerText: "FinTrack 2026 · Bandeja del asesor",
       pageOptions: (context) => ({
-        query: context.query,
+        query: {
+          title: "Bandeja de Entrada Inactiva",
+          description: "La bandeja de entrada de mensajes directos ya no está disponible. Las recomendaciones se gestionan ahora a través del panel de clientes.",
+          icon: "fa-inbox",
+          ctaText: "Volver al Dashboard",
+          ctaUrl: ROUTES.ADVISOR_DASHBOARD,
+        },
       }),
     }),
     createAdvisorRoute({

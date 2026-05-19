@@ -12,15 +12,12 @@ import { JwtPayload } from "../../common/auth";
 import { SUPABASE_CLIENT } from "../../common/supabase/supabase.provider";
 import { AdvisorClientExpensesQueryDto } from "./dto/advisor-client-expenses-query.dto";
 import { AdvisorClientsQueryDto } from "./dto/advisor-clients-query.dto";
-import { AdvisorMessagesQueryDto } from "./dto/advisor-messages-query.dto";
 import { AdvisorRecommendationsQueryDto } from "./dto/advisor-recommendations-query.dto";
-import { AdvisorMessageType } from "./dto/advisor-message-type.enum";
 import {
   AdvisorRecommendationPriority,
   AdvisorRecommendationStatus,
   AdvisorRecommendationType,
 } from "./dto/advisor-recommendation-types.enum";
-import { CreateAdvisorMessageDto } from "./dto/create-advisor-message.dto";
 import { CreateAdvisorRecommendationDto } from "./dto/create-advisor-recommendation.dto";
 import { UpdateRecommendationDto } from "./dto/update-recommendation.dto";
 import { UpdateAdvisorProfileDto } from "./dto/update-advisor-profile.dto";
@@ -110,8 +107,6 @@ export class AdvisorService {
       currentMonthRows,
       previousMonthRows,
       lastExpenseMap,
-      unreadCounts,
-      inboxRows,
       recommendationRows,
       dailyRows,
     ] = await Promise.all([
@@ -124,8 +119,6 @@ export class AdvisorService {
         this.formatDate(startOfMonth),
       ),
       this.fetchLastExpenseMap(clientIds),
-      this.fetchUnreadMessageCounts(payload.sub, clientIds),
-      this.fetchInboxRows(payload.sub),
       this.fetchRecommendationRows(payload.sub),
       this.fetchExpensesByRange(clientIds, this.formatDate(lastWeek), this.formatDate(tomorrow)),
     ]);
@@ -140,7 +133,7 @@ export class AdvisorService {
       currentMonthRows,
       previousMonthRows,
       lastExpenseMap,
-      unreadCounts,
+      new Map(),
       now,
     );
 
@@ -152,9 +145,7 @@ export class AdvisorService {
       clientIds,
     );
 
-    const alerts = this.buildAlerts(clients, unreadCounts, recommendationRows, now);
-
-    const inbox = this.buildInboxPreview(inboxRows, payload.sub);
+    const alerts = this.buildAlerts(clients, recommendationRows, now);
 
     const recommendations = this.buildRecommendationSummary(recommendationRows);
 
@@ -173,7 +164,7 @@ export class AdvisorService {
       alerts,
       stats,
       clients,
-      inbox,
+      inbox: [],
       recommendations,
       charts,
     };
@@ -213,7 +204,6 @@ export class AdvisorService {
       ]);
 
     const emailMap = new Map(clientRows.map((r) => [r.id, r.email]));
-    const unreadCounts = await this.fetchUnreadMessageCounts(payload.sub, clientIds);
 
     let clients = this.buildClientSummaries(
       clientRows,
@@ -222,7 +212,7 @@ export class AdvisorService {
       currentMonthRows,
       previousMonthRows,
       lastExpenseMap,
-      unreadCounts,
+      new Map(),
       now,
     );
 
@@ -289,7 +279,7 @@ export class AdvisorService {
     const startOfPrevMonth = this.startOfMonth(this.addMonths(now, -1));
     const tomorrow = this.addDays(now, 1);
 
-    const [currentRows, previousRows, lastExpenseMap, unreadCounts] =
+    const [currentRows, previousRows, lastExpenseMap] =
       await Promise.all([
         this.fetchExpensesByRange([clientId], this.formatDate(startOfMonth), this.formatDate(tomorrow)),
         this.fetchExpensesByRange(
@@ -298,7 +288,6 @@ export class AdvisorService {
           this.formatDate(startOfMonth),
         ),
         this.fetchLastExpenseMap([clientId]),
-        this.fetchUnreadMessageCounts(payload.sub, [clientId]),
       ]);
 
     const emailMap = new Map([[clientId, clientRow.email]]);
@@ -310,7 +299,7 @@ export class AdvisorService {
       currentRows,
       previousRows,
       lastExpenseMap,
-      unreadCounts,
+      new Map(),
       now,
     );
 
@@ -645,148 +634,6 @@ export class AdvisorService {
     }
   }
 
-  async getMessages(user: JwtPayload, query: AdvisorMessagesQueryDto) {
-    const payload = this.ensureAdvisor(user);
-    const page = this.normalizePage(query.page);
-    const limit = this.normalizeLimit(query.limit);
-
-    if (query.clientId) {
-      await this.ensureAssignment(payload.sub, query.clientId);
-
-      let request = this.supabase
-        .from("mensajes_asesor")
-        .select(
-          "id, cliente_id, asesor_id, remitente_id, destinatario_id, tipo, asunto, contenido, leido, leido_en, creado_en, remitente:remitente_id (nombre_completo, foto_perfil_url)",
-          { count: "exact" },
-        )
-        .eq("asesor_id", payload.sub)
-        .eq("cliente_id", query.clientId)
-        .order("creado_en", { ascending: false })
-        .range((page - 1) * limit, page * limit - 1);
-
-      if (query.type) {
-        request = request.eq("tipo", query.type);
-      }
-
-      if (query.onlyUnread) {
-        request = request.eq("destinatario_id", payload.sub).eq("leido", false);
-      }
-
-      const { data, error, count } = await request;
-
-      if (error) {
-        throw new InternalServerErrorException("No se pudieron obtener los mensajes");
-      }
-
-      const messages = (data || []).map((row: any) => {
-        const remitente = Array.isArray(row.remitente) ? row.remitente[0] : row.remitente;
-        return {
-          id: row.id,
-          clientId: row.cliente_id,
-          advisorId: row.asesor_id,
-          subject: row.asunto ?? this.buildSubject(row.contenido),
-          body: row.contenido,
-          type: row.tipo,
-          dateSent: row.creado_en,
-          isRead: row.leido,
-          readAt: row.leido_en,
-          from: {
-            id: row.remitente_id,
-            role: row.remitente_id === payload.sub ? "asesor" : "cliente",
-            name: remitente?.nombre_completo ?? null,
-            avatarUrl: remitente?.foto_perfil_url ?? null,
-          },
-        };
-      });
-
-      return {
-        data: messages,
-        pagination: this.buildPagination(count || 0, page, limit),
-      };
-    }
-
-    const inboxRows = await this.fetchInboxRows(payload.sub);
-    const preview = this.buildInboxPreview(inboxRows, payload.sub);
-
-    if (query.onlyUnread) {
-      return {
-        data: preview.filter((item) => item.unread),
-      };
-    }
-
-    if (query.type) {
-      return {
-        data: preview.filter((item) => item.type === query.type),
-      };
-    }
-
-    return { data: preview };
-  }
-
-  async createMessage(user: JwtPayload, dto: CreateAdvisorMessageDto) {
-    const payload = this.ensureAdvisor(user);
-    await this.ensureAssignment(payload.sub, dto.clientId);
-
-    const subject = dto.subject?.trim() || this.buildSubject(dto.content);
-    const type = dto.type || AdvisorMessageType.Mensaje;
-
-    const insertPayload = {
-      asesor_id: payload.sub,
-      cliente_id: dto.clientId,
-      remitente_id: payload.sub,
-      destinatario_id: dto.clientId,
-      tipo: type,
-      asunto: subject,
-      contenido: dto.content,
-    };
-
-    const { data, error } = await this.supabase
-      .from("mensajes_asesor")
-      .insert(insertPayload)
-      .select(
-        "id, cliente_id, asesor_id, remitente_id, destinatario_id, tipo, asunto, contenido, leido, leido_en, creado_en, cliente:cliente_id (nombre_completo, foto_perfil_url)",
-      )
-      .single();
-
-    if (error || !data) {
-      throw new InternalServerErrorException("No se pudo enviar el mensaje");
-    }
-
-    const cliente = Array.isArray(data.cliente) ? data.cliente[0] : data.cliente;
-    return {
-      id: data.id,
-      clientId: data.cliente_id,
-      advisorId: data.asesor_id,
-      subject: data.asunto ?? this.buildSubject(data.contenido),
-      body: data.contenido,
-      type: data.tipo,
-      dateSent: data.creado_en,
-      isRead: data.leido,
-      readAt: data.leido_en,
-      to: {
-        id: data.cliente_id,
-        role: "cliente",
-        name: cliente?.nombre_completo ?? null,
-        avatarUrl: cliente?.foto_perfil_url ?? null,
-      },
-    };
-  }
-
-  async markMessageAsRead(user: JwtPayload, messageId: string) {
-    const payload = this.ensureAdvisor(user);
-    const { error } = await this.supabase
-      .from("mensajes_asesor")
-      .update({ leido: true, leido_en: new Date().toISOString() })
-      .eq("id", messageId)
-      .eq("destinatario_id", payload.sub);
-
-    if (error) {
-      throw new InternalServerErrorException("No se pudo marcar el mensaje como leido");
-    }
-
-    return { success: true };
-  }
-
   async getReports(user: JwtPayload) {
     const payload = this.ensureAdvisor(user);
     const assignments = await this.fetchAssignments(payload.sub);
@@ -794,8 +641,6 @@ export class AdvisorService {
 
     const now = new Date();
     const recommendations = await this.fetchRecommendationRows(payload.sub);
-    const unreadCounts = await this.fetchUnreadMessageCounts(payload.sub, clientIds);
-    const unreadTotal = Array.from(unreadCounts.values()).reduce((sum, v) => sum + v, 0);
 
     const activeClientsCount = clientIds.length;
 
@@ -803,7 +648,7 @@ export class AdvisorService {
       summary: {
         activeClients: activeClientsCount,
         monthlyCommissions: 150000,
-        pendingTasks: unreadTotal + 3,
+        pendingTasks: 3,
         reportsReady: 4,
       },
       commissions: [
@@ -1495,46 +1340,11 @@ export class AdvisorService {
   }
 
   private async fetchUnreadMessageCounts(advisorId: string, clientIds: string[]) {
-    if (!clientIds.length) {
-      return new Map<string, number>();
-    }
-
-    const { data, error } = await this.supabase
-      .from("mensajes_asesor")
-      .select("cliente_id")
-      .eq("asesor_id", advisorId)
-      .eq("destinatario_id", advisorId)
-      .eq("leido", false)
-      .in("cliente_id", clientIds);
-
-    if (error) {
-      throw new InternalServerErrorException("No se pudieron cargar los mensajes pendientes");
-    }
-
-    const map = new Map<string, number>();
-    (data || []).forEach((row: any) => {
-      const current = map.get(row.cliente_id) || 0;
-      map.set(row.cliente_id, current + 1);
-    });
-
-    return map;
+    return new Map<string, number>();
   }
 
   private async fetchInboxRows(advisorId: string) {
-    const { data, error } = await this.supabase
-      .from("mensajes_asesor")
-      .select(
-        "id, cliente_id, asesor_id, remitente_id, destinatario_id, tipo, asunto, contenido, leido, creado_en, cliente:cliente_id (nombre_completo, foto_perfil_url)",
-      )
-      .eq("asesor_id", advisorId)
-      .order("creado_en", { ascending: false })
-      .limit(50);
-
-    if (error) {
-      throw new InternalServerErrorException("No se pudieron cargar los mensajes");
-    }
-
-    return (data as any[]) || [];
+    return [];
   }
 
   private async fetchRecommendationRows(advisorId: string) {
@@ -1710,7 +1520,6 @@ export class AdvisorService {
 
   private buildAlerts(
     clients: Array<{ status: string }>,
-    unreadCounts: Map<string, number>,
     recommendations: any[],
     now: Date,
   ) {
@@ -1723,16 +1532,6 @@ export class AdvisorService {
         title: `${inactiveCount} clientes requieren seguimiento`,
         description: "No registran gastos recientemente.",
         level: "warning",
-      });
-    }
-
-    const unreadTotal = Array.from(unreadCounts.values()).reduce((sum, value) => sum + value, 0);
-    if (unreadTotal > 0) {
-      alerts.push({
-        icon: "💬",
-        title: `${unreadTotal} mensajes sin leer`,
-        description: "Pendientes en el inbox.",
-        level: "success",
       });
     }
 
@@ -1757,29 +1556,7 @@ export class AdvisorService {
   }
 
   private buildInboxPreview(rows: any[], advisorId: string) {
-    const seen = new Set<string>();
-    const preview: Array<any> = [];
-
-    rows.forEach((row) => {
-      if (seen.has(row.cliente_id)) {
-        return;
-      }
-      seen.add(row.cliente_id);
-
-      const cliente = Array.isArray(row.cliente) ? row.cliente[0] : row.cliente;
-
-      preview.push({
-        id: row.id,
-        clientId: row.cliente_id,
-        from: cliente?.nombre_completo ?? "Cliente",
-        subject: row.asunto ?? this.buildSubject(row.contenido),
-        date: this.formatRelativeDate(row.creado_en),
-        type: row.tipo,
-        unread: !row.leido && row.destinatario_id === advisorId,
-      });
-    });
-
-    return preview;
+    return [];
   }
 
   private buildRecommendationSummary(rows: any[]) {

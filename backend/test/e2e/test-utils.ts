@@ -15,7 +15,6 @@ export async function cleanupTestUser(supabase: SupabaseClient, userId: string) 
     // Se eliminan registros donde el usuario sea cliente o asesor en relaciones.
     await supabase.from('asignaciones_de_clientes').delete().or(`asesor_id.eq.${userId},cliente_id.eq.${userId}`);
     await supabase.from('recomendaciones_financieras').delete().or(`asesor_id.eq.${userId},cliente_id.eq.${userId}`);
-    await supabase.from('mensajes_asesor').delete().or(`asesor_id.eq.${userId},cliente_id.eq.${userId}`);
     await supabase.from('gastos').delete().eq('cliente_id', userId);
     await supabase.from('perfiles_usuarios').delete().eq('usuario_id', userId);
     await supabase.from('perfiles_asesores').delete().eq('usuario_id', userId);

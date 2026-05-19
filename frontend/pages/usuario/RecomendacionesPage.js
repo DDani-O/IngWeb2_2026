@@ -53,14 +53,6 @@ export class RecomendacionesPage extends PageController {
     this.listen(openContact, "click", () => this._openContactModal());
     this._bindDashboardBackButtons();
     this._bindLogoutButtons();
-
-    const contactForm = this.element.querySelector("#recommendationContactForm");
-    this.listen(contactForm, "submit", (event) => {
-      event.preventDefault();
-      this.options.showToast?.("Mensaje enviado a tu asesor.", "success");
-      this.contactModal?.hide();
-      contactForm.reset();
-    });
   }
 
   _renderSummary() {
@@ -340,7 +332,13 @@ export class RecomendacionesPage extends PageController {
   }
 
   _openContactModal() {
-    this.contactModal = this._showModal("#recommendationContactModal");
+    this.options.router.navigate("/utils/placeholder", {
+      title: "Contacto con Asesor",
+      description: "Esta funcionalidad de mensajería directa ha sido deshabilitada. Por favor, utiliza los canales oficiales de soporte para contactar a tu asesor.",
+      icon: "fa-comments-slash",
+      ctaText: "Volver a Recomendaciones",
+      ctaUrl: "/usuario/recomendaciones",
+    });
   }
 
   _statusColor(status) {

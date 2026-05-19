@@ -16,9 +16,7 @@ import { AdvisorService } from "./advisor.service";
 import { CurrentUser, JwtPayload, JwtAuthGuard, Roles, RolesGuard } from "../../common/auth";
 import { AdvisorClientsQueryDto } from "./dto/advisor-clients-query.dto";
 import { AdvisorClientExpensesQueryDto } from "./dto/advisor-client-expenses-query.dto";
-import { AdvisorMessagesQueryDto } from "./dto/advisor-messages-query.dto";
 import { AdvisorRecommendationsQueryDto } from "./dto/advisor-recommendations-query.dto";
-import { CreateAdvisorMessageDto } from "./dto/create-advisor-message.dto";
 import { CreateAdvisorRecommendationDto } from "./dto/create-advisor-recommendation.dto";
 import { AssignClientProfileDto } from "./dto/assign-client-profile.dto";
 import { UpdateRecommendationDto } from "./dto/update-recommendation.dto";
@@ -109,30 +107,6 @@ export class AdvisorController {
     @Param("id", new ParseUUIDPipe()) id: string,
   ) {
     return this.advisorService.deleteRecommendation(user, id);
-  }
-
-  @Get("messages")
-  getMessages(
-    @CurrentUser() user: JwtPayload,
-    @Query() query: AdvisorMessagesQueryDto,
-  ) {
-    return this.advisorService.getMessages(user, query);
-  }
-
-  @Post("messages")
-  createMessage(
-    @CurrentUser() user: JwtPayload,
-    @Body() dto: CreateAdvisorMessageDto,
-  ) {
-    return this.advisorService.createMessage(user, dto);
-  }
-
-  @Patch("messages/:messageId/read")
-  markMessageAsRead(
-    @CurrentUser() user: JwtPayload,
-    @Param("messageId", new ParseUUIDPipe()) messageId: string,
-  ) {
-    return this.advisorService.markMessageAsRead(user, messageId);
   }
 
   @Get("reports")

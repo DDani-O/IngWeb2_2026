@@ -1,42 +1,5 @@
 # Pendientes Generales — FinTrack 2026
 
-Ultima actualizacion: 19 mayo 2026.
-Este archivo reemplaza a `FALTANTES_BACKEND.md` (que puede eliminarse).
-
----
-
-## Criticos (bloquean funcionalidad principal)
-
-### ~~1. Recomendaciones financieras — flujo completo asesor → cliente~~ ✅ IMPLEMENTADO (19/05/2026)
-
-**Implementado:**
-- Modal HTML completo en `/asesor/clientes` con todos los campos del formulario
-- `AsesorClientesPage.js`: `_handleCreateRecommendation` llama a `POST /advisor/recommendations` real
-- `PATCH /users/me/recommendations/:id` — nuevo endpoint para que el cliente marque leida/completada/descartada
-- `UpdateClientRecommendationDto` en backend
-- `isRead` incluido en la respuesta de `GET /users/me/recommendations`
-- `RecomendacionesPage.js`: acciones conectadas al backend real (sin mocks)
-- Migración `0011_recommendations_indexes.sql` con índices de performance
-
----
-
-### ~~2. Mensajeria cliente ↔ asesor (bidireccional)~~ ✅ IMPLEMENTADO (19/05/2026)
-
-**Implementado:**
-- `GET /users/me/messages` — listar mensajes del cliente con filtros (`onlyUnread`, `type`) y paginacion.
-- `POST /users/me/messages` — cliente envia mensaje al asesor asignado.
-- `PATCH /users/me/messages/:id/read` — marcar como leido.
-- Chat del dashboard cliente conectado al backend real, con polling cada 30s y badge de no leidos.
-
----
-
-### ~~3. Boton logout del dashboard cliente — comportamiento incorrecto~~ ✅ IMPLEMENTADO (19/05/2026)
-
-**Implementado:**
-- Se elimino el `attachEvents()` duplicado en `DashboardPage.js` que anulaba el binding de logout.
-- `_bindLogoutButtons()` vuelve a ejecutarse en el dashboard, corrigiendo tambien el logout del panel lateral.
----
-
 ## Mejoras UX/UI
 
 ### 4. Revision completa del dashboard del asesor
