@@ -236,6 +236,33 @@
   border: 1px solid var(--border-strong);
 }
 
+.chat-unread-anchor:not(.user-chat-fab) {
+  position: relative;
+}
+
+.chat-unread-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--color-warning);
+  color: #1b1b1b;
+  font-size: 0.62rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--surface-1);
+  box-shadow: var(--shadow-accent);
+}
+
+.chat-unread-badge--hidden {
+  display: none;
+}
+
 @media (max-width: 1199px) {
   .user-hero-grid {
     grid-template-columns: 1fr;

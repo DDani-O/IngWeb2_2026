@@ -67,6 +67,9 @@ Perfil del usuario autenticado, recomendaciones, dashboard cliente, perfiles de 
 GET   /users/me                              → perfil completo (base + extendido segun rol)
 PATCH /users/me                              → actualizar perfil (campos segun rol)
 GET   /users/me/recommendations              → { stats, recommendations[] }
+GET   /users/me/messages                      → { data[], pagination }
+POST  /users/me/messages                      → mensaje creado
+PATCH /users/me/messages/:id/read             → marcar como leido
 GET   /users/me/dashboard                    → { profile, recommendations.stats, createdAt }
 GET   /users/me/consumption-analysis         → analytics completo (ver modulo analytics)
 GET   /users/spending-profiles               → { profiles[] } catalogo de perfiles de gasto
@@ -106,6 +109,11 @@ Cliente: `fullName`, `avatarUrl`, `phone`, `country`, `occupation`, `monthlyInco
 Asesor: `fullName`, `avatarUrl`, `licenseNumber`, `specialty`, `description`
 
 > Nota: `country` mapea a la columna `pais` en `perfiles_usuarios`. El campo fue renombrado de `ciudad` en migration 0010.
+
+**Mensajeria (cliente):**
+- `GET /users/me/messages` soporta `page`, `limit`, `onlyUnread`, `type`.
+- `POST /users/me/messages` payload: `{ content, subject?, type? }`.
+- `PATCH /users/me/messages/:id/read` marca como leido si el cliente es destinatario.
 
 ---
 

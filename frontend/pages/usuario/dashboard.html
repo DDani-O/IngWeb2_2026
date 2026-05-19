@@ -90,9 +90,10 @@
     <div>
       <h3>Tu Asesor Financiero</h3>
       <p class="text-muted" id="advisorPanelMessage">Maria Rodriguez esta disponible ahora.</p>
-      <button class="action-btn action-btn--ghost mt-2" id="openAdvisorChatButton" type="button">
+      <button class="action-btn action-btn--ghost mt-2 chat-unread-anchor" id="openAdvisorChatButton" type="button">
         <i class="fa-solid fa-comment-dots"></i>
         Iniciar Chat
+        <span class="chat-unread-badge chat-unread-badge--hidden" id="advisorChatUnreadBadgeTeaser" aria-hidden="true"></span>
       </button>
     </div>
     <button class="advisor-teaser__close" id="advisorTeaserClose" type="button" aria-label="Cerrar">
@@ -100,8 +101,9 @@
     </button>
   </article>
 
-  <button class="user-chat-fab" id="openAdvisorChatBubble" type="button" aria-label="Abrir chat">
+  <button class="user-chat-fab chat-unread-anchor" id="openAdvisorChatBubble" type="button" aria-label="Abrir chat">
     <i class="fa-solid fa-comments"></i>
+    <span class="chat-unread-badge chat-unread-badge--hidden" id="advisorChatUnreadBadge" aria-hidden="true"></span>
   </button>
 
   <div class="modal fade" id="advisorChatModal" tabindex="-1" aria-labelledby="advisorChatModalLabel" aria-hidden="true">

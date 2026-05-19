@@ -13,6 +13,12 @@ export class DashboardPage extends PageController {
     this.data = null;
     this.charts = [];
     this.chatModal = null;
+    this.chatMessages = [];
+    this.chatPollingId = null;
+    this.chatLoading = false;
+    this.chatLoadError = null;
+    this.chatUnreadCount = 0;
+    this.chatSending = false;
     this.isLoading = false;
     this.loadError = null;
   }
@@ -45,6 +51,7 @@ export class DashboardPage extends PageController {
       this._renderSummaryCards();
       this._renderMerchants();
       this._renderAdvisorMessage();
+      this._refreshChatUnreadCount();
       this._initCharts();
     } else {
       this._renderEmptyState();
@@ -338,6 +345,7 @@ export class DashboardPage extends PageController {
     const closeTeaser = this.element.querySelector("#advisorTeaserClose");
     const sendButton = this.element.querySelector("#advisorChatSendButton");
     const input = this.element.querySelector("#advisorChatInput");
+    const modalElement = this.element.querySelector("#advisorChatModal");
 
     this.listen(openChatButton, "click", () => {
       this._openChatModal();
@@ -362,6 +370,11 @@ export class DashboardPage extends PageController {
         this._sendChatMessage();
       }
     });
+
+    if (modalElement) {
+      this.listen(modalElement, "shown.bs.modal", () => this._handleChatOpened());
+      this.listen(modalElement, "hidden.bs.modal", () => this._handleChatClosed());
+    }
 
     this._bindLogoutButtons();
   }
@@ -535,6 +548,21 @@ export class DashboardPage extends PageController {
 
     const { advisor } = this.data;
     container.textContent = `${advisor.name} está disponible ahora. Puedes pedir una guía rápida para optimizar tus gastos.`;
+  }
+
+  async _refreshChatUnreadCount() {
+    try {
+      const response = await apiClient.get("/users/me/messages", {
+        query: { page: 1, limit: 30, onlyUnread: true },
+      });
+      const messages = Array.isArray(response?.data) ? response.data : [];
+      const unreadCount = messages.filter(
+        (message) => message.from?.role === "asesor"
+      ).length;
+      this._updateUnreadBadge(unreadCount);
+    } catch (error) {
+      console.warn("[Chat] No se pudo actualizar el contador de mensajes:", error);
+    }
   }
 
   _renderEmptyState() {
@@ -723,63 +751,225 @@ export class DashboardPage extends PageController {
     );
   }
 
-  attachEvents() {
-    const openChatButton = this.element.querySelector("#openAdvisorChatButton");
-    const openChatBubble = this.element.querySelector("#openAdvisorChatBubble");
-    const closeTeaser = this.element.querySelector("#advisorTeaserClose");
-    const sendButton = this.element.querySelector("#advisorChatSendButton");
-    const input = this.element.querySelector("#advisorChatInput");
-
-    this.listen(openChatButton, "click", () => this._openChatModal());
-    this.listen(openChatBubble, "click", () => this._openChatModal());
-
-    this.listen(closeTeaser, "click", () => {
-      const teaser = this.element.querySelector("#advisorTeaserCard");
-      if (teaser) {
-        teaser.classList.add("app-hidden");
-      }
-    });
-
-    this.listen(sendButton, "click", () => this._sendChatMessage());
-
-    this.listen(input, "keydown", (event) => {
-      if (event.key === "Enter") {
-        event.preventDefault();
-        this._sendChatMessage();
-      }
-    });
-  }
-
   _openChatModal() {
     this.chatModal = this._showModal("#advisorChatModal");
+    if (!this.chatModal) {
+      this._handleChatOpened();
+    }
   }
 
-  _sendChatMessage() {
-    const input = this.element.querySelector("#advisorChatInput");
-    const messages = this.element.querySelector("#advisorChatMessages");
+  async _handleChatOpened() {
+    await this._loadChatHistory({ scrollToBottom: true, markAsRead: true });
+    this._startChatPolling();
+  }
 
-    if (!input || !messages) {
+  _handleChatClosed() {
+    this._stopChatPolling();
+  }
+
+  async _loadChatHistory({ scrollToBottom = false, markAsRead = false, silent = false } = {}) {
+    if (this.chatLoading) {
+      return;
+    }
+
+    const container = this.element.querySelector("#advisorChatMessages");
+    if (!container) {
+      return;
+    }
+
+    this.chatLoading = true;
+    this.chatLoadError = null;
+
+    if (!silent) {
+      container.textContent = "Cargando mensajes...";
+    }
+
+    try {
+      const response = await apiClient.get("/users/me/messages", {
+        query: { page: 1, limit: 40 },
+      });
+      const messages = Array.isArray(response?.data) ? response.data : [];
+      const sorted = [...messages].sort((a, b) => {
+        const left = new Date(a.dateSent).getTime();
+        const right = new Date(b.dateSent).getTime();
+        return left - right;
+      });
+
+      this.chatMessages = sorted;
+      this._renderChatMessages(sorted);
+
+      if (scrollToBottom) {
+        this._scrollChatToBottom();
+      }
+
+      const unreadIds = sorted
+        .filter((message) => message.from?.role === "asesor" && !message.isRead)
+        .map((message) => message.id);
+
+      this._updateUnreadBadge(unreadIds.length);
+
+      if (markAsRead && unreadIds.length) {
+        await this._markMessagesAsRead(unreadIds);
+        this.chatMessages = this.chatMessages.map((message) =>
+          unreadIds.includes(message.id) ? { ...message, isRead: true } : message
+        );
+        this._updateUnreadBadge(0);
+      }
+    } catch (error) {
+      const message = error?.message || "No se pudo cargar el chat.";
+      this.chatLoadError = message;
+
+      if (!silent) {
+        container.textContent = message;
+        this.options.showToast?.(message, "warning");
+      } else {
+        console.warn("[Chat] Error al sincronizar mensajes:", message);
+      }
+    } finally {
+      this.chatLoading = false;
+    }
+  }
+
+  _renderChatMessages(messages) {
+    const container = this.element.querySelector("#advisorChatMessages");
+    if (!container) {
+      return;
+    }
+
+    container.innerHTML = "";
+
+    if (!messages.length) {
+      const empty = document.createElement("p");
+      empty.className = "text-muted";
+      empty.textContent = "Todavia no hay mensajes. Envia tu primera consulta.";
+      container.appendChild(empty);
+      return;
+    }
+
+    messages.forEach((message) => {
+      const bubble = document.createElement("div");
+      const fromUser = message.from?.role === "cliente";
+      bubble.className = `chat-message ${fromUser ? "chat-message--user" : "chat-message--advisor"}`;
+      bubble.textContent = message.body || "";
+      bubble.title = this._formatChatTimestamp(message.dateSent);
+      container.appendChild(bubble);
+    });
+  }
+
+  _scrollChatToBottom() {
+    const container = this.element.querySelector("#advisorChatMessages");
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
+  }
+
+  async _markMessagesAsRead(ids) {
+    if (!ids.length) {
+      return;
+    }
+
+    try {
+      await Promise.all(
+        ids.map((id) => apiClient.patch(`/users/me/messages/${id}/read`))
+      );
+    } catch (error) {
+      console.warn("[Chat] No se pudieron marcar mensajes como leidos:", error);
+    }
+  }
+
+  _startChatPolling() {
+    if (this.chatPollingId) {
+      return;
+    }
+
+    this.chatPollingId = window.setInterval(() => {
+      this._loadChatHistory({ silent: true });
+    }, 30000);
+  }
+
+  _stopChatPolling() {
+    if (!this.chatPollingId) {
+      return;
+    }
+
+    window.clearInterval(this.chatPollingId);
+    this.chatPollingId = null;
+  }
+
+  async _sendChatMessage() {
+    const input = this.element.querySelector("#advisorChatInput");
+    const sendButton = this.element.querySelector("#advisorChatSendButton");
+
+    if (!input) {
       return;
     }
 
     const message = input.value.trim();
-    if (!message) {
+    if (!message || this.chatSending) {
       return;
     }
 
-    const userBubble = document.createElement("div");
-    userBubble.className = "chat-message chat-message--user";
-    userBubble.textContent = message;
-    messages.appendChild(userBubble);
+    this.chatSending = true;
+    sendButton?.setAttribute("disabled", "true");
 
-    const answerBubble = document.createElement("div");
-    answerBubble.className = "chat-message chat-message--advisor";
-    answerBubble.textContent =
-      "Muy buena observacion. Te preparo una recomendacion puntual en base a tus datos recientes.";
-    messages.appendChild(answerBubble);
+    try {
+      await apiClient.post("/users/me/messages", {
+        content: message,
+        type: "mensaje",
+      });
+      input.value = "";
+      await this._loadChatHistory({ scrollToBottom: true, silent: true });
+    } catch (error) {
+      this.options.showToast?.(
+        error.message || "No se pudo enviar el mensaje.",
+        "warning"
+      );
+    } finally {
+      this.chatSending = false;
+      sendButton?.removeAttribute("disabled");
+    }
+  }
 
-    input.value = "";
-    messages.scrollTop = messages.scrollHeight;
+  _updateUnreadBadge(count) {
+    this.chatUnreadCount = count;
+    const badges = [
+      this.element.querySelector("#advisorChatUnreadBadge"),
+      this.element.querySelector("#advisorChatUnreadBadgeTeaser"),
+    ];
+
+    badges.forEach((badge) => {
+      if (!badge) {
+        return;
+      }
+
+      if (count > 0) {
+        badge.classList.remove("chat-unread-badge--hidden");
+        badge.textContent = count > 9 ? "9+" : String(count);
+        badge.setAttribute("aria-label", `${count} mensajes no leidos`);
+      } else {
+        badge.classList.add("chat-unread-badge--hidden");
+        badge.textContent = "";
+        badge.removeAttribute("aria-label");
+      }
+    });
+  }
+
+  _formatChatTimestamp(value) {
+    if (!value) {
+      return "";
+    }
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return value;
+    }
+
+    return date.toLocaleString("es-AR", {
+      day: "2-digit",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   }
 
   _destroyCharts() {
@@ -805,6 +995,7 @@ export class DashboardPage extends PageController {
 
   destroy() {
     this._destroyCharts();
+    this._stopChatPolling();
     super.destroy();
   }
 }

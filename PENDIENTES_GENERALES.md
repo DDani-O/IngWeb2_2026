@@ -20,36 +20,21 @@ Este archivo reemplaza a `FALTANTES_BACKEND.md` (que puede eliminarse).
 
 ---
 
-### 2. Mensajeria cliente ↔ asesor (bidireccional)
+### ~~2. Mensajeria cliente ↔ asesor (bidireccional)~~ ✅ IMPLEMENTADO (19/05/2026)
 
-**Descripcion:** El asesor puede enviar mensajes (`POST /advisor/messages`). El cliente no tiene endpoint para leer ni responder.
-
-**Lo que falta — backend:**
-- `GET /users/me/messages` — listar mensajes del cliente (leidos/no leidos)
-- `POST /users/me/messages` — cliente envia mensaje al asesor asignado
-- `PATCH /users/me/messages/:id/read` — marcar como leido
-
-**Lo que falta — frontend:**
-- Pantalla o modal de chat en el dashboard del cliente
-- Listado de conversaciones con el asesor
-- Formulario de respuesta
-- Indicador de mensajes no leidos
-
-**Tabla disponible:** `mensajes_asesor` — ya tiene estructura de remitente/destinatario.
-
-**Recomendacion tecnica:** Usar polling cada 30s desde el frontend para simplificar. Supabase Realtime es una alternativa pero requiere configuracion adicional de canales y RLS Realtime.
+**Implementado:**
+- `GET /users/me/messages` — listar mensajes del cliente con filtros (`onlyUnread`, `type`) y paginacion.
+- `POST /users/me/messages` — cliente envia mensaje al asesor asignado.
+- `PATCH /users/me/messages/:id/read` — marcar como leido.
+- Chat del dashboard cliente conectado al backend real, con polling cada 30s y badge de no leidos.
 
 ---
 
-### 3. Boton logout del dashboard cliente — comportamiento incorrecto
+### ~~3. Boton logout del dashboard cliente — comportamiento incorrecto~~ ✅ IMPLEMENTADO (19/05/2026)
 
-**Descripcion:** El boton de logout en el dashboard del cliente no ejecuta correctamente el flujo de cierre de sesion (limpieza de localStorage, redireccion a landing).
-
-**Donde:** `UserShell` / `DashboardPage.js` — selector `#userLogoutButton` o equivalente.
-
-**Lo que falta:** Verificar que `_bindLogoutButtons()` encuentra el elemento correcto, que llama a `authManager.logout()`, y que la redireccion funciona.
-
-Tambien cabe resalar q el boton de salir en el panel del usuario tampoco funciona ahi, pero si lo hace si estoy en cualquiera de las otras paginas q no sea el dashboard.
+**Implementado:**
+- Se elimino el `attachEvents()` duplicado en `DashboardPage.js` que anulaba el binding de logout.
+- `_bindLogoutButtons()` vuelve a ejecutarse en el dashboard, corrigiendo tambien el logout del panel lateral.
 ---
 
 ## Mejoras UX/UI

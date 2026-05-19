@@ -13,6 +13,9 @@ import { JwtPayload } from "../../common/auth";
 import { SUPABASE_CLIENT } from "../../common/supabase/supabase.provider";
 import { UpdateUserDto } from "./dto/update-user.dto";
 import { UpdateClientRecommendationDto } from "./dto/update-client-recommendation.dto";
+import { ClientMessagesQueryDto } from "./dto/client-messages-query.dto";
+import { CreateClientMessageDto } from "./dto/create-client-message.dto";
+import { ClientMessageType } from "./dto/client-message-type.enum";
 
 interface UserRow {
   id: string;
@@ -61,6 +64,10 @@ interface RecommendationRow {
   estado: string | null;
   asesor?: { nombre_completo?: string | null } | Array<{ nombre_completo?: string | null }> | null;
 }
+
+const DEFAULT_PAGE = 1;
+const DEFAULT_LIMIT = 20;
+const MAX_LIMIT = 100;
 
 @Injectable()
 export class UsersService {
@@ -369,11 +376,244 @@ export class UsersService {
     return { profiles };
   }
 
+  async getMyMessages(user: JwtPayload, query: ClientMessagesQueryDto) {
+    const payload = this.ensureUser(user);
+
+    if (payload.role !== "cliente") {
+      throw new ForbiddenException("Solo clientes pueden ver mensajes");
+    }
+
+    const page = this.normalizePage(query.page);
+    const limit = this.normalizeLimit(query.limit);
+
+    const assignment = await this.fetchActiveAdvisorAssignment(payload.sub);
+    if (!assignment) {
+      return {
+        data: [],
+        pagination: this.buildPagination(0, page, limit),
+      };
+    }
+
+    let request = this.supabase
+      .from("mensajes_asesor")
+      .select(
+        "id, cliente_id, asesor_id, remitente_id, destinatario_id, tipo, asunto, contenido, leido, leido_en, creado_en, remitente:remitente_id (nombre_completo, foto_perfil_url), destinatario:destinatario_id (nombre_completo, foto_perfil_url)",
+        { count: "exact" },
+      )
+      .eq("cliente_id", payload.sub)
+      .eq("asesor_id", assignment.id)
+      .order("creado_en", { ascending: false })
+      .range((page - 1) * limit, page * limit - 1);
+
+    if (query.type) {
+      request = request.eq("tipo", query.type);
+    }
+
+    if (query.onlyUnread) {
+      request = request.eq("destinatario_id", payload.sub).eq("leido", false);
+    }
+
+    const { data, error, count } = await request;
+
+    if (error) {
+      throw new InternalServerErrorException("No se pudieron obtener los mensajes");
+    }
+
+    const messages = (data || []).map((row: any) => {
+      const remitente = Array.isArray(row.remitente) ? row.remitente[0] : row.remitente;
+      const destinatario = Array.isArray(row.destinatario)
+        ? row.destinatario[0]
+        : row.destinatario;
+      const fromRole = row.remitente_id === payload.sub ? "cliente" : "asesor";
+      const toRole = row.destinatario_id === payload.sub ? "cliente" : "asesor";
+      const fallbackSubject =
+        fromRole === "cliente" ? "Mensaje del cliente" : "Mensaje del asesor";
+
+      return {
+        id: row.id,
+        clientId: row.cliente_id,
+        advisorId: row.asesor_id,
+        subject: row.asunto ?? this.buildMessageSubject(row.contenido, fallbackSubject),
+        body: row.contenido,
+        type: row.tipo,
+        dateSent: row.creado_en,
+        isRead: row.leido ?? false,
+        readAt: row.leido_en ?? null,
+        from: {
+          id: row.remitente_id,
+          role: fromRole,
+          name: remitente?.nombre_completo ?? null,
+          avatarUrl: remitente?.foto_perfil_url ?? null,
+        },
+        to: {
+          id: row.destinatario_id,
+          role: toRole,
+          name: destinatario?.nombre_completo ?? null,
+          avatarUrl: destinatario?.foto_perfil_url ?? null,
+        },
+      };
+    });
+
+    return {
+      data: messages,
+      pagination: this.buildPagination(count || 0, page, limit),
+    };
+  }
+
+  async createMyMessage(user: JwtPayload, dto: CreateClientMessageDto) {
+    const payload = this.ensureUser(user);
+
+    if (payload.role !== "cliente") {
+      throw new ForbiddenException("Solo clientes pueden enviar mensajes");
+    }
+
+    const assignment = await this.fetchActiveAdvisorAssignment(payload.sub);
+    if (!assignment) {
+      throw new NotFoundException("No tienes un asesor asignado");
+    }
+
+    const subject = dto.subject?.trim() || this.buildMessageSubject(dto.content, "Mensaje del cliente");
+    const type = dto.type || ClientMessageType.Mensaje;
+
+    const insertPayload = {
+      asesor_id: assignment.id,
+      cliente_id: payload.sub,
+      remitente_id: payload.sub,
+      destinatario_id: assignment.id,
+      tipo: type,
+      asunto: subject,
+      contenido: dto.content,
+    };
+
+    const { data, error } = await this.supabase
+      .from("mensajes_asesor")
+      .insert(insertPayload)
+      .select(
+        "id, cliente_id, asesor_id, remitente_id, destinatario_id, tipo, asunto, contenido, leido, leido_en, creado_en, remitente:remitente_id (nombre_completo, foto_perfil_url), destinatario:destinatario_id (nombre_completo, foto_perfil_url)",
+      )
+      .single();
+
+    if (error || !data) {
+      throw new InternalServerErrorException("No se pudo enviar el mensaje");
+    }
+
+    const remitente = Array.isArray(data.remitente) ? data.remitente[0] : data.remitente;
+    const destinatario = Array.isArray(data.destinatario) ? data.destinatario[0] : data.destinatario;
+
+    return {
+      id: data.id,
+      clientId: data.cliente_id,
+      advisorId: data.asesor_id,
+      subject: data.asunto ?? subject,
+      body: data.contenido,
+      type: data.tipo,
+      dateSent: data.creado_en,
+      isRead: data.leido ?? false,
+      readAt: data.leido_en ?? null,
+      from: {
+        id: data.remitente_id,
+        role: "cliente",
+        name: remitente?.nombre_completo ?? null,
+        avatarUrl: remitente?.foto_perfil_url ?? null,
+      },
+      to: {
+        id: data.destinatario_id,
+        role: "asesor",
+        name: destinatario?.nombre_completo ?? assignment.name ?? null,
+        avatarUrl: destinatario?.foto_perfil_url ?? assignment.avatarUrl ?? null,
+      },
+    };
+  }
+
+  async markMyMessageAsRead(user: JwtPayload, messageId: string) {
+    const payload = this.ensureUser(user);
+
+    if (payload.role !== "cliente") {
+      throw new ForbiddenException("Solo clientes pueden actualizar mensajes");
+    }
+
+    const { error } = await this.supabase
+      .from("mensajes_asesor")
+      .update({ leido: true, leido_en: new Date().toISOString() })
+      .eq("id", messageId)
+      .eq("destinatario_id", payload.sub);
+
+    if (error) {
+      throw new InternalServerErrorException("No se pudo marcar el mensaje como leido");
+    }
+
+    return { success: true };
+  }
+
   private ensureUser(user: JwtPayload) {
     if (!user?.sub) {
       throw new UnauthorizedException("Token invalido");
     }
     return user;
+  }
+
+  private normalizePage(page?: number) {
+    if (!page || Number.isNaN(page) || page < 1) {
+      return DEFAULT_PAGE;
+    }
+    return Math.floor(page);
+  }
+
+  private normalizeLimit(limit?: number) {
+    if (!limit || Number.isNaN(limit) || limit < 1) {
+      return DEFAULT_LIMIT;
+    }
+    return Math.min(Math.floor(limit), MAX_LIMIT);
+  }
+
+  private buildPagination(total: number, page: number, limit: number) {
+    return {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  private buildMessageSubject(content: string, fallback: string) {
+    const trimmed = content.trim();
+    if (!trimmed) {
+      return fallback;
+    }
+    if (trimmed.length <= 80) {
+      return trimmed;
+    }
+    return `${trimmed.slice(0, 77)}...`;
+  }
+
+  private async fetchActiveAdvisorAssignment(clientId: string): Promise<{
+    id: string;
+    name: string | null;
+    avatarUrl: string | null;
+  } | null> {
+    const { data, error } = await this.supabase
+      .from("asignaciones_de_clientes")
+      .select("asesor_id, asesor:asesor_id (nombre_completo, foto_perfil_url)")
+      .eq("cliente_id", clientId)
+      .eq("activo", true)
+      .order("asignado_en", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      throw new InternalServerErrorException("No se pudo cargar el asesor asignado");
+    }
+
+    if (!data?.asesor_id) {
+      return null;
+    }
+
+    const asesor = Array.isArray(data.asesor) ? data.asesor[0] : data.asesor;
+    return {
+      id: data.asesor_id,
+      name: asesor?.nombre_completo ?? null,
+      avatarUrl: asesor?.foto_perfil_url ?? null,
+    };
   }
 
   private async fetchUserRow(userId: string): Promise<UserRow> {
