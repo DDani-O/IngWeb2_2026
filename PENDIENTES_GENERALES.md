@@ -106,6 +106,8 @@ Eso deja claro que hay que revisar toda esa parte del perfil.
 
 **Descripcion:** `AsesorPerfilPage.js` carga y permite editar el perfil del asesor. Verificar que todos los campos (telefono, pais, capacidad maxima, especialidad) se guardan y leen correctamente desde `perfiles_asesores`.
 
+### REALIZAR UNA LIMPIEZA PORQUE TODAVIA ESTAN DANDO VUELTAS LOS DATOS MOCKEADOS
+
 ---
 
 ## Funcionalidades futuras (backlog)

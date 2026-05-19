@@ -520,7 +520,7 @@ export class AsesorDashboardPage extends PageController {
       solution,
       icon,
       savingsPotential: Number(savingsRaw || 0),
-      steps: stepsRaw ? String(stepsRaw).split(/\r?\n/).filter(Boolean) : [],
+      implementationSteps: stepsRaw ? String(stepsRaw).split(/\r?\n/).filter(Boolean) : [],
     };
   }
 
