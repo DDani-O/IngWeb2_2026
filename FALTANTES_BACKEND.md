@@ -4,7 +4,13 @@ Fecha: 2026-05-18
 Contexto: integracion frontend-backend local (backend :3000, frontend :5500). Este listado resume funcionalidades del frontend que aun usan mock o requieren nuevos endpoints.
 
 ## Funcionalidades sin endpoint
-1) Asignacion de clientes para el asesor. Actualizar el dashboard del asesor con los datos reales de la bd de cada cliente que le fue asignado.
+1) ✅ **COMPLETADO** - Asignacion de clientes para el asesor. 
+   - Status: IMPLEMENTADO
+   - Ver: IMPLEMENTATION_SUMMARY.md, ARCHITECTURE_ASSIGNMENT_SYSTEM.md
+   - Cambios: +5 métodos en AdvisorService, +2 endpoints, SQL migración 0007
+   - Asignación automática balanceada al registrar cliente
+   - Dashboard del asesor con datos REALES de BD
+   - GET /advisor/profile y PATCH /advisor/profile funcionales
 
 2) Patrones de consumo / analitica
 - UI: /usuario/patrones

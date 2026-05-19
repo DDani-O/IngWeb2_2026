@@ -356,8 +356,13 @@ export class AsesorDashboardPage extends PageController {
 
   async _loadDashboard() {
     try {
-      const response = await apiClient.get("/advisor/dashboard");
-      this.data = this._mapDashboardData(response);
+      // Cargar dashboard y evaluación de riesgo en paralelo
+      const [dashboardData, riskData] = await Promise.all([
+        apiClient.get("/advisor/dashboard"),
+        apiClient.get("/advisor/risk-assessment"),
+      ]);
+
+      this.data = this._mapDashboardData(dashboardData, riskData);
 
       this._renderCalendar();
       this._renderAlerts();
@@ -368,16 +373,49 @@ export class AsesorDashboardPage extends PageController {
       this._renderRecommendationClientOptions();
       this._syncClientsView();
     } catch (error) {
-      this.options.showToast?.(
-        error.message || "No se pudo cargar el dashboard del asesor.",
-        "warning"
-      );
+      // Si falla alguna petición, intentar al menos con dashboard
+      try {
+        const dashboardData = await apiClient.get("/advisor/dashboard");
+        this.data = this._mapDashboardData(dashboardData, null);
+
+        this._renderCalendar();
+        this._renderAlerts();
+        this._renderStats();
+        this._renderClients();
+        this._renderInbox();
+        this._renderRecommendations();
+        this._renderRecommendationClientOptions();
+        this._syncClientsView();
+      } catch (fallbackError) {
+        this.options.showToast?.(
+          fallbackError.message || "No se pudo cargar el dashboard del asesor.",
+          "warning"
+        );
+      }
     }
   }
 
-  _mapDashboardData(payload) {
+  _mapDashboardData(payload, riskPayload) {
     const advisor = payload?.advisor || {};
     const calendar = payload?.calendar || this._buildEmptyData().calendar;
+
+    // Enriquecer clientes con datos de riesgo
+    let clients = Array.isArray(payload?.clients) ? payload.clients : [];
+    const riskClients = Array.isArray(riskPayload?.riskClients) ? riskPayload.riskClients : [];
+
+    // Mapear riesgo por cliente
+    const riskMap = new Map(riskClients.map((rc) => [rc.clientId, rc]));
+
+    clients = clients.map((client) => {
+      const riskData = riskMap.get(client.id);
+      return {
+        ...client,
+        // Actualizar riesgo si hay datos nuevos
+        changePercent: riskData?.changePercent ?? client.changePercent ?? 0,
+        risk: riskData?.riskLevel?.label ?? client.risk ?? "Bajo",
+        riskLevel: (riskData?.riskLevel?.level ?? client.riskLevel ?? "low").toLowerCase(),
+      };
+    });
 
     return {
       advisor: {
@@ -388,9 +426,10 @@ export class AsesorDashboardPage extends PageController {
       calendar,
       alerts: Array.isArray(payload?.alerts) ? payload.alerts : [],
       stats: Array.isArray(payload?.stats) ? payload.stats : [],
-      clients: Array.isArray(payload?.clients) ? payload.clients : [],
+      clients,
       inbox: Array.isArray(payload?.inbox) ? payload.inbox : [],
       recommendations: Array.isArray(payload?.recommendations) ? payload.recommendations : [],
+      riskSummary: riskPayload?.summary || { highRisk: 0, mediumRisk: 0, lowRisk: 0 },
     };
   }
 

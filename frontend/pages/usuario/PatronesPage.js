@@ -1,32 +1,223 @@
 import { PageController } from "../../core/PageController.js";
-import { MOCK_CONSUMPTION_PATTERNS } from "../../utils/constants.js";
+import { apiClient } from "../../core/APIClient.js";
 import { formatCurrency } from "../../utils/formatters.js";
 import { getChartThemeColors, getInitials } from "../../utils/helpers.js";
 
 export class PatronesPage extends PageController {
   constructor(element, options = {}) {
     super(element, options);
-    this.data = JSON.parse(JSON.stringify(MOCK_CONSUMPTION_PATTERNS));
+    this.data = null;
     this.charts = [];
+    this.isLoading = false;
   }
 
-  render() {
+  async render() {
     this._resetViewPosition();
 
     const currentUser = this.options.authManager?.getCurrentUser();
-    const fallbackName = this.data.user.name;
-    const userName = currentUser?.fullName || fallbackName;
+    const userName = currentUser?.fullName || "Usuario";
 
     this._setText("#patternsUserName", userName);
     this._setText("#userTopbarName", userName);
     this._setText("#userSidebarName", userName);
-    this._setText("#userSidebarInitials", getInitials(userName) || "JP");
+    this._setText("#userSidebarInitials", getInitials(userName) || "U");
 
-    this._renderHighlights();
-    this._renderStats();
-    this._renderCategoryList();
-    this._renderUnusualAlerts();
-    this._initCharts();
+    // Cargar datos reales de la API
+    await this._loadConsumptionAnalysis();
+
+    if (this.data) {
+      this._renderHighlights();
+      this._renderStats();
+      this._renderCategoryList();
+      this._renderUnusualAlerts();
+      this._initCharts();
+    }
+  }
+
+  async _loadConsumptionAnalysis() {
+    try {
+      this.isLoading = true;
+      const analysisData = await apiClient.get("/users/me/consumption-analysis?monthsBack=12");
+      
+      if (!analysisData) {
+        throw new Error("No data received from server");
+      }
+
+      this.data = this._transformApiDataToPageFormat(analysisData);
+    } catch (error) {
+      console.error("Error loading consumption analysis:", error);
+      this.element.innerHTML = `
+        <div class="error-message" style="padding: 2rem; text-align: center;">
+          <p style="font-size: 1.2rem; margin-bottom: 0.5rem;">Error al cargar los patrones de consumo</p>
+          <p style="color: #999;">${error.message}</p>
+        </div>
+      `;
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  _transformApiDataToPageFormat(apiData) {
+    // apiData es: { highlights: {...}, categoryDistribution: [...], monthlyEvolution: [...], unusualExpenses: [...] }
+    const highlights = apiData.highlights || {};
+    const categoryDist = apiData.categoryDistribution || [];
+    const monthlyEvo = apiData.monthlyEvolution || [];
+    const unusualExp = apiData.unusualExpenses || [];
+
+    // Construir highlights inteligentes
+    const pageHighlights = [];
+    if (monthlyEvo.length >= 2) {
+      const latest = monthlyEvo[monthlyEvo.length - 1];
+      const previous = monthlyEvo[monthlyEvo.length - 2];
+      const change = latest.variationPercentage || 0;
+      
+      if (change < -5) {
+        pageHighlights.push({
+          type: "positive",
+          icon: "📉",
+          title: "Tendencia Positiva",
+          text: `Tus gastos bajaron ${Math.abs(change).toFixed(1)}% respecto al mes anterior.`,
+        });
+      } else if (change > 5) {
+        pageHighlights.push({
+          type: "warning",
+          icon: "📈",
+          title: "Area de Atención",
+          text: `Tus gastos aumentaron ${change.toFixed(1)}% respecto al mes anterior.`,
+        });
+      }
+    }
+
+    if (unusualExp.length > 0) {
+      pageHighlights.push({
+        type: "warning",
+        icon: "⚠️",
+        title: "Gastos Inusuales Detectados",
+        text: `Se detectaron ${unusualExp.length} gastos potencialmente anómalos.`,
+      });
+    }
+
+    // Construir stats
+    const stats = [];
+    const total = highlights.totalExpense || 0;
+    const avg = highlights.averageExpense || 0;
+    const maxExp = highlights.maxExpense || 0;
+    const transCount = highlights.transactionCount || 0;
+
+    stats.push({
+      label: "Gasto Total",
+      value: total,
+      format: "currency",
+      subtitle: "Período analizado",
+      trendValue: 0,
+      trendDirection: "stable",
+      trendLabel: "",
+      icon: "💰",
+    });
+
+    stats.push({
+      label: "Promedio por Transacción",
+      value: avg,
+      format: "currency",
+      subtitle: "Promedio de gastos",
+      trendValue: 0,
+      trendDirection: "stable",
+      trendLabel: "",
+      icon: "📅",
+    });
+
+    stats.push({
+      label: "Mayor Gasto",
+      value: maxExp,
+      format: "currency",
+      subtitle: `${transCount} transacciones`,
+      trendValue: 0,
+      trendDirection: "up",
+      trendLabel: "",
+      icon: "💳",
+    });
+
+    stats.push({
+      label: "Gastos Inusuales",
+      value: unusualExp.length,
+      format: "number",
+      suffix: " eventos",
+      subtitle: "Detectados",
+      trendValue: unusualExp.length > 0 ? 1 : 0,
+      trendDirection: "up",
+      trendLabel: unusualExp.length > 0 ? "revisa" : "ninguno",
+      icon: "🚨",
+    });
+
+    // Construir categorías para chart (top 5)
+    const categories = categoryDist.slice(0, 5).map((cat, idx) => {
+      const colors = ["#3ad5c7", "#21b6d7", "#f6a40a", "#9952dd", "#e04697"];
+      return {
+        label: cat.categoryName || `Categoría ${idx + 1}`,
+        percentage: Math.round(cat.percentage || 0),
+        amount: cat.amount || 0,
+        color: colors[idx % colors.length],
+      };
+    });
+
+    // Construir evolución mensual
+    const labels = monthlyEvo.map((entry) => {
+      // entry.month es formato YYYY-MM
+      const [year, month] = entry.month.split("-");
+      const date = new Date(year, parseInt(month) - 1);
+      return date.toLocaleDateString("es-ES", { month: "short" });
+    });
+
+    const values = monthlyEvo.map((entry) => entry.totalExpense || 0);
+
+    // Construir evolución por categoría (top 3)
+    const categoryEvolution = {
+      labels: labels,
+      series: categoryDist.slice(0, 3).map((cat, idx) => {
+        const colors = ["#3ad5c7", "#21b6d7", "#f6a40a"];
+        // Para simplificar: distribuir proporcionalmente cada mes
+        const avgPerMonth = (cat.amount / (monthlyEvo.length || 1));
+        return {
+          name: cat.categoryName || `Cat ${idx + 1}`,
+          color: colors[idx % colors.length],
+          values: monthlyEvo.map(() => avgPerMonth),
+        };
+      }),
+    };
+
+    // Construir gastos inusuales para chart (top 5)
+    const unusualLabels = unusualExp.slice(0, 5).map((exp) => exp.category || "Otros");
+    const unusualExpected = unusualExp.slice(0, 5).map((exp) => {
+      // Estimado basado en z-score
+      return exp.amount / Math.max(exp.anomalyScore || 1, 0.1);
+    });
+    const unusualDetected = unusualExp.slice(0, 5).map((exp) => exp.amount);
+
+    return {
+      highlights: pageHighlights && pageHighlights.length > 0 ? pageHighlights : [{
+        type: "positive",
+        icon: "✅",
+        title: "Gastos bajo control",
+        text: "No se detectaron anomalías significativas.",
+      }],
+      stats,
+      categories,
+      monthlyEvolution: { labels, values },
+      categoryEvolution,
+      unusualExpenses: {
+        labels: unusualLabels,
+        expected: unusualExpected,
+        detected: unusualDetected,
+        alerts: unusualExp.map((exp) => ({
+          title: `${exp.category} (${exp.reason === "HIGH_ZSCORE" ? "Alta" : "Percentil"})`,
+          date: new Date(exp.date).toLocaleDateString("es-ES"),
+          expected: exp.amount / Math.max(exp.anomalyScore || 1, 0.1),
+          detected: exp.amount,
+          delta: `Score: ${(exp.anomalyScore || 0).toFixed(2)}`,
+          severity: exp.anomalyScore > 0.7 ? "high" : "medium",
+        })),
+      },
+    };
   }
 
   attachEvents() {

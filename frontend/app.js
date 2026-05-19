@@ -89,7 +89,7 @@ function configureRouter() {
           showToast,
           ...(pageOptions ? pageOptions(context) : {}),
         });
-        page.mount();
+        await page.mount();
         return () => page.destroy();
       },
     };
@@ -190,7 +190,7 @@ function configureRouter() {
           showToast,
         });
 
-        page.mount();
+        await page.mount();
         activeLandingPage = page;
 
         const modal = context.query.modal;
@@ -311,7 +311,7 @@ function configureRouter() {
           router,
           query: context.query,
         });
-        page.mount();
+        await page.mount();
         return () => page.destroy();
       },
     },

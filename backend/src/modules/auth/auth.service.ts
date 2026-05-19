@@ -106,6 +106,16 @@ export class AuthService {
       );
     }
 
+    // 🆕 Asignar cliente a asesor automáticamente (mejor esfuerzo)
+    if (role === UserRoleEnum.Cliente) {
+      try {
+        await this.assignClientToAdvisorAuto(userId);
+      } catch (err) {
+        // No romper el registro si falla la asignación automática
+        console.warn('Failed to auto-assign client to advisor:', err);
+      }
+    }
+
     const token = this.jwtService.sign({
       sub: userId,
       email,
@@ -170,6 +180,46 @@ export class AuthService {
       avatarUrl: profile.foto_perfil_url,
       createdAt: profile.creado_en,
     };
+  }
+
+  /**
+   * 🆕 Asigna un cliente a un asesor disponible automáticamente.
+   * Usa la función SQL obtener_asesor_disponible para seleccionar el asesor
+   * con menos clientes que tenga capacidad disponible.
+   * No rompe el flujo si falla - es mejor esfuerzo.
+   */
+  private async assignClientToAdvisorAuto(clientId: string): Promise<void> {
+    try {
+      // 1. Obtener asesor disponible usando función SQL
+      const { data: advisorId, error: rpcError } = await this.supabase.rpc(
+        'obtener_asesor_disponible',
+        {}
+      );
+
+      if (rpcError || !advisorId) {
+        console.warn('No available advisors for new client:', clientId);
+        return;
+      }
+
+      // 2. Crear asignación
+      const { error: assignError } = await this.supabase
+        .from('asignaciones_de_clientes')
+        .insert({
+          asesor_id: advisorId,
+          cliente_id: clientId,
+          activo: true,
+        });
+
+      if (assignError) {
+        console.warn('Failed to create assignment:', assignError);
+        return;
+      }
+
+      console.log(`Client ${clientId} assigned to advisor ${advisorId}`);
+    } catch (err) {
+      // Silenciosamente ignorar errores en asignación automática
+      console.error('Exception in assignClientToAdvisorAuto:', err);
+    }
   }
 
   private isDuplicateEmail(

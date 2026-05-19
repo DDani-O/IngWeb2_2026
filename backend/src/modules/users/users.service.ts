@@ -63,7 +63,9 @@ interface RecommendationRow {
 
 @Injectable()
 export class UsersService {
-  constructor(@Inject(SUPABASE_CLIENT) private readonly supabase: SupabaseClient) {}
+  constructor(
+    @Inject(SUPABASE_CLIENT) private readonly supabase: SupabaseClient,
+  ) {}
 
   async getMe(user: JwtPayload) {
     const payload = this.ensureUser(user);
@@ -301,6 +303,33 @@ export class UsersService {
     return {
       stats,
       recommendations,
+    };
+  }
+
+  async getClientDashboard(user: JwtPayload) {
+    const payload = this.ensureUser(user);
+
+    if (payload.role !== "cliente") {
+      throw new ForbiddenException("Solo clientes pueden ver el dashboard");
+    }
+
+    const [profile, recommendations, monthlyIncome] = await Promise.all([
+      this.fetchClientProfile(payload.sub),
+      this.getMyRecommendations(payload),
+      this.fetchMonthlyIncome(payload.sub),
+    ]);
+
+    return {
+      profile: {
+        phone: profile?.telefono ?? null,
+        city: profile?.ciudad ?? null,
+        occupation: profile?.ocupacion ?? null,
+        monthlyIncome: this.toNumber(profile?.ingreso_estimado, 0),
+        currency: (profile?.moneda_preferida || "ARS").toUpperCase(),
+        financialGoal: profile?.objetivo_financiero ?? null,
+      },
+      recommendations: recommendations.stats,
+      createdAt: new Date().toISOString(),
     };
   }
 

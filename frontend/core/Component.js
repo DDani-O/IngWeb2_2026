@@ -41,15 +41,20 @@ export class Component {
 
   /**
    * Monta el componente ejecutando render y luego el binding de eventos.
+   * Maneja tanto renders síncronos como asíncronos.
    */
-  mount() {
+  async mount() {
     if (!this.element) {
       throw new Error(
         `${this.constructor.name} no encontro un elemento valido para montar.`
       );
     }
 
-    this.render();
+    const renderResult = this.render();
+    if (renderResult instanceof Promise) {
+      await renderResult;
+    }
+
     this.attachEvents();
     this._mounted = true;
     return this;

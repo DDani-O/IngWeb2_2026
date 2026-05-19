@@ -1,5 +1,6 @@
 import { PageController } from "../../core/PageController.js";
-import { ROUTES, MOCK_USER_DASHBOARD } from "../../utils/constants.js";
+import { apiClient } from "../../core/APIClient.js";
+import { ROUTES } from "../../utils/constants.js";
 import {
   buildHash,
   getChartThemeColors,
@@ -9,22 +10,23 @@ import { formatCurrency, formatTrendLabel } from "../../utils/formatters.js";
 export class DashboardPage extends PageController {
   constructor(element, options = {}) {
     super(element, options);
-    this.data = JSON.parse(JSON.stringify(MOCK_USER_DASHBOARD));
+    this.data = null;
     this.charts = [];
     this.chatModal = null;
+    this.isLoading = false;
+    this.loadError = null;
   }
 
-  render() {
+  async render() {
     const currentUser = this.options.authManager?.getCurrentUser();
-    const userName = currentUser?.fullName || this.data.user.name;
-    const shortName = userName.split(" ")[0] || userName;
+    const shortName = (currentUser?.fullName || "Usuario").split(" ")[0];
 
     const titleElement = this.element.querySelector("#userWelcomeTitle");
     if (titleElement) {
       titleElement.textContent = `Hola, ${shortName}!`;
     }
 
-    this._setText("#userTopbarName", userName);
+    this._setText("#userTopbarName", currentUser?.fullName || "Usuario");
 
     const subtitleElement = this.element.querySelector("#userWelcomeSubtitle");
     if (subtitleElement) {
@@ -32,15 +34,251 @@ export class DashboardPage extends PageController {
         "Tu resumen financiero esta listo. Explora tus patrones de gasto y descubre como mejorar tu economia personal.";
     }
 
-    this._renderCalendar();
-    this._renderAlerts();
-    this._renderStats();
-    this._renderProfileCard();
-    this._renderSummaryCards();
-    this._renderMerchants();
-    this._renderAdvisorMessage();
-    this._renderChatSeed();
-    this._initCharts();
+    // Cargar datos reales de la API
+    await this._loadDashboardData();
+
+    if (this.data) {
+      this._renderCalendar();
+      this._renderAlerts();
+      this._renderStats();
+      this._renderProfileCard();
+      this._renderSummaryCards();
+      this._renderMerchants();
+      this._renderAdvisorMessage();
+      this._initCharts();
+    } else {
+      this._renderEmptyState();
+    }
+  }
+
+  async _loadDashboardData() {
+    try {
+      this.isLoading = true;
+      this.loadError = null;
+
+      const [dashboardData, consumptionData] = await Promise.all([
+        apiClient.get("/users/me/dashboard"),
+        apiClient.get("/users/me/consumption-analysis?monthsBack=6"),
+      ]);
+
+      if (!dashboardData) {
+        throw new Error("No se pudieron cargar los datos del dashboard");
+      }
+
+      this.data = this._transformApiDataToPageFormat(dashboardData, consumptionData);
+    } catch (error) {
+      console.error("Error loading dashboard data:", error);
+      this.loadError = error?.message || "No se pudo cargar el dashboard.";
+      this.data = null;
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  _transformApiDataToPageFormat(dashboardData, consumptionData) {
+    const consumption = consumptionData || {};
+    const highlights = consumption.highlights || {};
+    const categoryDist = consumption.categoryDistribution || [];
+    const monthlyEvo = consumption.monthlyEvolution || [];
+    const recommendations = dashboardData.recommendations || {};
+    const profile = dashboardData.profile || {};
+    const currentUser = this.options.authManager?.getCurrentUser();
+    const userName = currentUser?.fullName || "Usuario";
+
+    const now = new Date();
+    const months = [
+      "Enero",
+      "Febrero",
+      "Marzo",
+      "Abril",
+      "Mayo",
+      "Junio",
+      "Julio",
+      "Agosto",
+      "Septiembre",
+      "Octubre",
+      "Noviembre",
+      "Diciembre",
+    ];
+    const dayNames = [
+      "Domingo",
+      "Lunes",
+      "Martes",
+      "Miercoles",
+      "Jueves",
+      "Viernes",
+      "Sabado",
+    ];
+
+    const stats = [];
+    const totalSpent = highlights.totalExpense || 0;
+    const avgExpense = highlights.averageExpense || 0;
+
+    stats.push({
+      key: "totalSpent",
+      label: "Total Gastado",
+      value: totalSpent,
+      format: "currency",
+      emoji: "💸",
+      subtitle: "Últimos 6 meses",
+      trendValue: 0,
+      trendDirection: "stable",
+      trendLabel: "",
+    });
+
+    stats.push({
+      key: "budgetLeft",
+      label: "Promedio por Transacción",
+      value: avgExpense,
+      format: "currency",
+      emoji: "💳",
+      subtitle: "Promedio calculado",
+      trendValue: 0,
+      trendDirection: "stable",
+      trendLabel: "",
+    });
+
+    stats.push({
+      key: "activeRecommendations",
+      label: "Recomendaciones Activas",
+      value: recommendations.activeRecommendations || 0,
+      format: "number",
+      emoji: "📝",
+      subtitle: "Basado en tus sugerencias actuales",
+      trendValue: 0,
+      trendDirection: "stable",
+      trendLabel: "",
+    });
+
+    const alerts = [];
+    if (monthlyEvo.length >= 2) {
+      const latest = monthlyEvo[monthlyEvo.length - 1];
+      const variation = latest.variationPercentage || 0;
+
+      if (variation > 15) {
+        alerts.push({
+          icon: "⚠️",
+          title: "Has gastado más de lo normal",
+          description: `Tus gastos aumentaron ${variation.toFixed(1)}% respecto al mes anterior.`,
+          level: "danger",
+        });
+      } else if (variation < -10) {
+        alerts.push({
+          icon: "✅",
+          title: "Buen control de gastos",
+          description: `Has reducido tu gasto ${Math.abs(variation).toFixed(1)}% en relación al mes anterior.`,
+          level: "success",
+        });
+      }
+    }
+
+    if (alerts.length === 0) {
+      alerts.push({
+        icon: "✅",
+        title: "Finanzas bajo control",
+        description: "No se detectaron anomalías significativas.",
+        level: "success",
+      });
+    }
+
+    const currency = profile.currency || "ARS";
+    const mostFrequentMerchant = highlights.mostFrequentMerchant || "Sin datos";
+    const merchantItems = [
+      {
+        name: mostFrequentMerchant,
+        icon: "🏪",
+        spending:
+          highlights.maxExpense && highlights.maxExpense > 0
+            ? formatCurrency(highlights.maxExpense, currency)
+            : "Sin registros",
+      },
+    ];
+
+    const categoryItems = categoryDist.slice(0, 4).map((cat) => ({
+      label: cat.categoryName || "Otro",
+      value: `${Math.round(cat.percentage || 0)}%`,
+    }));
+
+    const monthLabels = monthlyEvo.map((entry) => {
+      const [year, month] = entry.month.split("-");
+      const date = new Date(year, parseInt(month, 10) - 1);
+      return date.toLocaleDateString("es-ES", { month: "short" });
+    });
+
+    return {
+      user: {
+        id: profile.userId || "",
+        name: userName,
+        activeProfile: profile.occupation || "Sin perfil activo",
+      },
+      calendar: {
+        day: String(now.getDate()).padStart(2, "0"),
+        month: months[now.getMonth()],
+        year: String(now.getFullYear()),
+        dayName: dayNames[now.getDay()],
+      },
+      alerts,
+      stats,
+      profileCard: {
+        name: profile.occupation ? "Perfil Activo" : "Perfil no cargado",
+        description: profile.financialGoal
+          ? `Objetivo: ${profile.financialGoal}`
+          : "Actualiza tu información financiera para obtener recomendaciones más precisas.",
+        categories: categoryDist.slice(0, 4).map((cat) => cat.categoryName || "Otros"),
+      },
+      summaryCards: [
+        {
+          title: "Patrones de Consumo",
+          subtitle: `${categoryDist.length} categorías`,
+          icon: "fa-chart-pie",
+          accent: "teal",
+          items: categoryItems.length
+            ? categoryItems
+            : [{ label: "Sin datos", value: "-" }],
+          route: ROUTES.USER_PATRONES,
+        },
+        {
+          title: "Recomendaciones",
+          subtitle: `${recommendations.activeRecommendations || 0} activas`,
+          icon: "fa-lightbulb",
+          accent: "cyan",
+          items: [
+            {
+              label: "Ahorro potencial",
+              value: formatCurrency(recommendations.totalSavingsPotential || 0, currency),
+            },
+          ],
+          route: ROUTES.USER_RECOMENDACIONES,
+        },
+      ],
+      charts: {
+        categoryDistribution: categoryDist.slice(0, 5).map((cat, idx) => {
+          const colors = [
+            "#2dd4bf",
+            "#06b6d4",
+            "#f59e0b",
+            "#a855f7",
+            "#ec4899",
+          ];
+          return {
+            label: cat.categoryName || `Cat ${idx + 1}`,
+            value: Math.round(cat.percentage || 0),
+            color: colors[idx % colors.length],
+          };
+        }),
+        monthlyExpenses: monthlyEvo.map((entry) => entry.totalExpense || 0),
+        monthlyLabels: monthLabels,
+        dailySeries: monthlyEvo.map((entry) => (entry.totalExpense || 0) / 30),
+        dailyLabels: ["L", "M", "X", "J", "V", "S", "D"],
+        merchants: merchantItems,
+      },
+      advisor: {
+        name: "Tu Asesor",
+        title: "Soporte Financiero",
+        avatar: "👨‍💼",
+        message: "Estoy disponible para ayudarte a optimizar tus gastos y patrones.",
+      },
+    };
   }
 
   attachEvents() {
@@ -236,25 +474,48 @@ export class DashboardPage extends PageController {
 
   _renderAdvisorMessage() {
     const container = this.element.querySelector("#advisorPanelMessage");
-    if (!container) {
+    if (!container || !this.data) {
       return;
     }
 
     const { advisor } = this.data;
-    container.textContent = `${advisor.name} esta disponible ahora. Puedes pedir una guia rapida para optimizar tus gastos.`;
+    container.textContent = `${advisor.name} está disponible ahora. Puedes pedir una guía rápida para optimizar tus gastos.`;
   }
 
-  _renderChatSeed() {
-    const messages = this.element.querySelector("#advisorChatMessages");
-    if (!messages) {
-      return;
-    }
+  _renderEmptyState() {
+    this._destroyCharts();
 
-    messages.innerHTML = `
-      <div class="chat-message chat-message--advisor">
-        Hola, soy ${this.data.advisor.name}. Estoy aqui para ayudarte a priorizar tus recomendaciones de esta semana.
-      </div>
-    `;
+    const emptyMessage = this.loadError
+      ? `No se pudieron cargar datos reales: ${this.loadError}`
+      : "No hay datos disponibles en este momento.";
+
+    const containers = [
+      "#userAlertsList",
+      "#userStatsGrid",
+      "#userProfileCard",
+      "#userSummaryGrid",
+      "#userMerchantsList",
+    ];
+
+    containers.forEach((selector) => {
+      const container = this.element.querySelector(selector);
+      if (container) {
+        container.innerHTML = "";
+      }
+    });
+
+    const alertContainer = this.element.querySelector("#userAlertsList");
+    if (alertContainer) {
+      alertContainer.innerHTML = `
+        <article class="alert-card alert-card--warning">
+          <div>ℹ️</div>
+          <div>
+            <h3 class="alert-card__title">Sin datos reales</h3>
+            <p class="alert-card__description">${emptyMessage}</p>
+          </div>
+        </article>
+      `;
+    }
   }
 
   /**

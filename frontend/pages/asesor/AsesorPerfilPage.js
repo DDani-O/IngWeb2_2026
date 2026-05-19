@@ -1,24 +1,47 @@
 import { PageController } from "../../core/PageController.js";
 import {
-  MOCK_ADVISOR_PROFILE_DETAILS,
   ROUTES,
 } from "../../utils/constants.js";
 import { getInitials } from "../../utils/helpers.js";
 
-const ADVISOR_PROFILE_STORAGE_KEY = "fintrack.advisorProfileDetails.v1";
-
 export class AsesorPerfilPage extends PageController {
   constructor(element, options = {}) {
     super(element, options);
-    this.baseProfile = this._buildBaseProfile();
-    this.profile = this._loadPersistedProfile();
+    this.profile = null;
+    this.isLoading = false;
   }
 
-  render() {
+  async render() {
     this._resetViewPosition();
-    this._renderSummary();
-    this._fillFormValues();
-    this._setText("#advisorTopbarName", this.profile.fullName);
+    this.isLoading = true;
+    
+    try {
+      // Cargar perfil desde API
+      await this._loadProfileFromAPI();
+      this._renderSummary();
+      this._fillFormValues();
+      this._setText("#advisorTopbarName", this.profile.fullName);
+    } catch (error) {
+      console.error("Error cargando perfil:", error);
+      this.options.showToast?.("Error al cargar el perfil", "error");
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  async _loadProfileFromAPI() {
+    const apiClient = this.options.apiClient;
+    if (!apiClient) {
+      throw new Error("API Client no disponible");
+    }
+
+    try {
+      const response = await apiClient.get("/advisor/profile");
+      this.profile = response;
+    } catch (error) {
+      console.error("Error en API:", error);
+      throw error;
+    }
   }
 
   attachEvents() {
@@ -39,6 +62,8 @@ export class AsesorPerfilPage extends PageController {
   }
 
   _renderSummary() {
+    if (!this.profile) return;
+
     this._setText("#advisorProfileAvatarInitials", getInitials(this.profile.fullName) || "MR");
     this._setText("#advisorProfileSummaryName", this.profile.fullName);
     this._setText("#advisorProfileSummaryEmail", this.profile.email);
@@ -51,55 +76,41 @@ export class AsesorPerfilPage extends PageController {
     meta.innerHTML = `
       <article class="profile-meta-item">
         <span>Especialidad</span>
-        <strong>${this.profile.specialty}</strong>
+        <strong>${this.profile.specialty || "-"}</strong>
       </article>
       <article class="profile-meta-item">
         <span>Matricula</span>
-        <strong>${this.profile.licenseNumber}</strong>
-      </article>
-      <article class="profile-meta-item">
-        <span>Experiencia</span>
-        <strong>${this.profile.yearsExperience} anos</strong>
+        <strong>${this.profile.licenseNumber || "-"}</strong>
       </article>
       <article class="profile-meta-item">
         <span>Clientes activos</span>
-        <strong>${this.profile.activeClients}</strong>
+        <strong>${this.profile.activeClientsCount || 0}</strong>
       </article>
       <article class="profile-meta-item">
         <span>Capacidad maxima</span>
-        <strong>${this.profile.maxClientLoad}</strong>
+        <strong>${this.profile.maxCapacity || "-"}</strong>
       </article>
       <article class="profile-meta-item">
-        <span>Ultima revision</span>
-        <strong>${this.profile.lastReview}</strong>
+        <span>Pais</span>
+        <strong>${this.profile.country || "-"}</strong>
       </article>
     `;
   }
 
   _fillFormValues() {
+    if (!this.profile) return;
+
     this._setInputValue("#advisorProfileFullName", this.profile.fullName);
     this._setInputValue("#advisorProfileEmail", this.profile.email);
-    this._setInputValue("#advisorProfilePhone", this.profile.phone);
-    this._setInputValue("#advisorProfileCity", this.profile.city);
-    this._setInputValue("#advisorProfileSpecialty", this.profile.specialty);
-    this._setInputValue("#advisorProfileLicense", this.profile.licenseNumber);
-    this._setInputValue("#advisorProfileExperience", String(this.profile.yearsExperience));
-    this._setInputValue("#advisorProfileActiveClients", String(this.profile.activeClients));
-    this._setInputValue("#advisorProfileMaxClients", String(this.profile.maxClientLoad));
-
-    const notifyEmail = this.element.querySelector("#advisorProfileNotifyEmail");
-    const notifyPush = this.element.querySelector("#advisorProfileNotifyPush");
-
-    if (notifyEmail) {
-      notifyEmail.checked = Boolean(this.profile.notifyEmail);
-    }
-
-    if (notifyPush) {
-      notifyPush.checked = Boolean(this.profile.notifyPush);
-    }
+    this._setInputValue("#advisorProfilePhone", this.profile.phone || "");
+    this._setInputValue("#advisorProfileCountry", this.profile.country || "");
+    this._setInputValue("#advisorProfileSpecialty", this.profile.specialty || "");
+    this._setInputValue("#advisorProfileDescription", this.profile.description || "");
+    this._setInputValue("#advisorProfileActiveClients", String(this.profile.activeClientsCount || 0));
+    this._setInputValue("#advisorProfileMaxClients", String(this.profile.maxCapacity || 5));
   }
 
-  _handleSave(event) {
+  async _handleSave(event) {
     event.preventDefault();
 
     const form = this.element.querySelector("#advisorProfileForm");
@@ -108,71 +119,48 @@ export class AsesorPerfilPage extends PageController {
       return;
     }
 
-    this.profile = {
-      ...this.profile,
-      ...this._readFormValues(),
-      lastReview: `${new Date().toLocaleDateString("es-AR")} · ${new Date().toLocaleTimeString("es-AR", {
-        hour: "2-digit",
-        minute: "2-digit",
-      })}`,
-    };
-
-    localStorage.setItem(ADVISOR_PROFILE_STORAGE_KEY, JSON.stringify(this.profile));
-
-    this._renderSummary();
-    this._setText("#advisorTopbarName", this.profile.fullName);
-    this.options.showToast?.("Perfil profesional actualizado.", "success");
-  }
-
-  _handleReset() {
-    this.profile = JSON.parse(JSON.stringify(this.baseProfile));
-    localStorage.setItem(ADVISOR_PROFILE_STORAGE_KEY, JSON.stringify(this.profile));
-
-    this._renderSummary();
-    this._fillFormValues();
-    this._setText("#advisorTopbarName", this.profile.fullName);
-    this.options.showToast?.("Perfil restaurado a valores base.", "warning");
-  }
-
-  _buildBaseProfile() {
-    const currentAdvisor = this.options.authManager?.getCurrentUser();
-
-    return {
-      ...MOCK_ADVISOR_PROFILE_DETAILS,
-      fullName: currentAdvisor?.fullName || MOCK_ADVISOR_PROFILE_DETAILS.fullName,
-      email: currentAdvisor?.email || MOCK_ADVISOR_PROFILE_DETAILS.email,
-    };
-  }
-
-  _loadPersistedProfile() {
-    const raw = localStorage.getItem(ADVISOR_PROFILE_STORAGE_KEY);
-    if (!raw) {
-      return JSON.parse(JSON.stringify(this.baseProfile));
+    const apiClient = this.options.apiClient;
+    if (!apiClient) {
+      this.options.showToast?.("Error: API Client no disponible", "error");
+      return;
     }
 
+    const updateData = this._readFormValues();
+
     try {
-      return {
-        ...this.baseProfile,
-        ...JSON.parse(raw),
-      };
-    } catch {
-      return JSON.parse(JSON.stringify(this.baseProfile));
+      const response = await apiClient.patch("/advisor/profile", updateData);
+      this.profile = response;
+      
+      this._renderSummary();
+      this._setText("#advisorTopbarName", this.profile.fullName);
+      this.options.showToast?.("Perfil actualizado exitosamente", "success");
+    } catch (error) {
+      console.error("Error al guardar perfil:", error);
+      this.options.showToast?.(error?.message || "Error al guardar el perfil", "error");
+    }
+  }
+
+  async _handleReset() {
+    try {
+      // Recargar desde API
+      await this._loadProfileFromAPI();
+      this._renderSummary();
+      this._fillFormValues();
+      this._setText("#advisorTopbarName", this.profile.fullName);
+      this.options.showToast?.("Perfil restaurado a valores guardados", "warning");
+    } catch (error) {
+      console.error("Error al restaurar perfil:", error);
+      this.options.showToast?.("Error al restaurar el perfil", "error");
     }
   }
 
   _readFormValues() {
     return {
-      fullName: this._getValue("#advisorProfileFullName"),
-      email: this._getValue("#advisorProfileEmail"),
-      phone: this._getValue("#advisorProfilePhone"),
-      city: this._getValue("#advisorProfileCity"),
       specialty: this._getValue("#advisorProfileSpecialty"),
-      licenseNumber: this._getValue("#advisorProfileLicense"),
-      yearsExperience: Number(this._getValue("#advisorProfileExperience") || 0),
-      activeClients: Number(this._getValue("#advisorProfileActiveClients") || 0),
-      maxClientLoad: Number(this._getValue("#advisorProfileMaxClients") || 0),
-      notifyEmail: Boolean(this.element.querySelector("#advisorProfileNotifyEmail")?.checked),
-      notifyPush: Boolean(this.element.querySelector("#advisorProfileNotifyPush")?.checked),
+      description: this._getValue("#advisorProfileDescription"),
+      maxCapacity: Number(this._getValue("#advisorProfileMaxClients") || 5),
+      phone: this._getValue("#advisorProfilePhone"),
+      country: this._getValue("#advisorProfileCountry"),
     };
   }
 }

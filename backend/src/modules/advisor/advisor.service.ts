@@ -23,6 +23,8 @@ import {
 import { CreateAdvisorMessageDto } from "./dto/create-advisor-message.dto";
 import { CreateAdvisorRecommendationDto } from "./dto/create-advisor-recommendation.dto";
 import { UpdateRecommendationDto } from "./dto/update-recommendation.dto";
+import { UpdateAdvisorProfileDto } from "./dto/update-advisor-profile.dto";
+import { GetAdvisorProfileDto } from "./dto/get-advisor-profile.dto";
 
 interface AssignmentRow {
   cliente_id: string;
@@ -774,6 +776,338 @@ export class AdvisorService {
           section: "descargas",
         },
       ],
+    };
+  }
+
+  // ================================================
+  // NUEVOS MÉTODOS: Gestión de Asignaciones y Perfil
+  // ================================================
+
+  /**
+   * Obtiene el asesor disponible con menos clientes.
+   * Utiliza función SQL para load balancing.
+   * Si no hay disponibles, retorna null.
+   */
+  async selectAvailableAdvisor(): Promise<string | null> {
+    try {
+      const { data, error } = await this.supabase.rpc(
+        'obtener_asesor_disponible',
+        {}
+      );
+
+      if (error) {
+        console.error('Error selecting available advisor:', error);
+        return null;
+      }
+
+      return data || null;
+    } catch (err) {
+      console.error('Exception in selectAvailableAdvisor:', err);
+      return null;
+    }
+  }
+
+  /**
+   * Asigna un cliente a un asesor automáticamente.
+   * Si no hay disponibles, no falla, solo retorna warning.
+   */
+  async assignClientToAdvisor(clientId: string): Promise<{
+    assigned: boolean;
+    advisorId?: string;
+    warning?: string;
+  }> {
+    try {
+      // 1. Obtener asesor disponible balanceado
+      const advisorId = await this.selectAvailableAdvisor();
+
+      if (!advisorId) {
+        console.warn(`No available advisors for client ${clientId}`);
+        return {
+          assigned: false,
+          warning: 'No hay asesores disponibles en este momento',
+        };
+      }
+
+      // 2. Crear asignación
+      const { error } = await this.supabase
+        .from('asignaciones_de_clientes')
+        .insert({
+          asesor_id: advisorId,
+          cliente_id: clientId,
+          activo: true,
+        });
+
+      if (error) {
+        // Violación de constraint de capacidad (trigger)
+        if ((error.message || '').includes('capacidad')) {
+          console.warn(`Advisor capacity exceeded for ${advisorId}`);
+          return {
+            assigned: false,
+            warning: 'El asesor alcanzó su capacidad máxima',
+          };
+        }
+
+        // Asignación duplicada
+        if (error.code === '23505') {
+          console.warn(`Client ${clientId} already assigned`);
+          return {
+            assigned: false,
+            warning: 'El cliente ya está asignado',
+          };
+        }
+
+        throw error;
+      }
+
+      return { assigned: true, advisorId };
+    } catch (err) {
+      console.error('Error assigning client to advisor:', err);
+      return {
+        assigned: false,
+        warning: 'Error en la asignación automática',
+      };
+    }
+  }
+
+  /**
+   * Cuenta dinámicamente los clientes activos de un asesor.
+   */
+  async countActiveClientsForAdvisor(advisorId: string): Promise<number> {
+    try {
+      const { count, error } = await this.supabase
+        .from('asignaciones_de_clientes')
+        .select('*', { count: 'exact', head: true })
+        .eq('asesor_id', advisorId)
+        .eq('activo', true);
+
+      if (error) {
+        console.error('Error counting active clients:', error);
+        return 0;
+      }
+
+      return count || 0;
+    } catch (err) {
+      console.error('Exception in countActiveClientsForAdvisor:', err);
+      return 0;
+    }
+  }
+
+  /**
+   * Obtiene el perfil del asesor (GET /advisor/profile)
+   * Incluye conteo dinámico de clientes activos
+   */
+  async getAdvisorProfile(user: JwtPayload): Promise<GetAdvisorProfileDto> {
+    const payload = this.ensureAdvisor(user);
+
+    // Obtener datos del perfil de asesor
+    const { data: advisorRow, error: advisorError } = await this.supabase
+      .from('perfiles_asesores')
+      .select('*')
+      .eq('usuario_id', payload.sub)
+      .single();
+
+    if (advisorError || !advisorRow) {
+      throw new NotFoundException('Perfil del asesor no encontrado');
+    }
+
+    // Obtener datos de usuario
+    const { data: userRow, error: userError } = await this.supabase
+      .from('usuarios')
+      .select('id, nombre_completo, email, foto_perfil_url, creado_en, actualizado_en')
+      .eq('id', payload.sub)
+      .single();
+
+    if (userError || !userRow) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+
+    // Contar clientes activos dinámicamente
+    const activeClientsCount = await this.countActiveClientsForAdvisor(payload.sub);
+
+    return {
+      id: advisorRow.id,
+      userId: advisorRow.usuario_id,
+      email: payload.email,
+      fullName: userRow.nombre_completo,
+      licenseNumber: advisorRow.matricula,
+      specialty: advisorRow.especialidad,
+      description: advisorRow.descripcion,
+      maxCapacity: advisorRow.capacidad_maxima,
+      activeClientsCount,
+      phone: advisorRow.telefono,
+      country: advisorRow.pais,
+      photo: userRow.foto_perfil_url,
+      createdAt: advisorRow.creado_en,
+      updatedAt: advisorRow.actualizado_en,
+    };
+  }
+
+  /**
+   * Actualiza el perfil del asesor (PATCH /advisor/profile)
+   * Campos editables: specialty, description, maxCapacity, phone, country
+   */
+  async updateAdvisorProfile(
+    user: JwtPayload,
+    dto: UpdateAdvisorProfileDto,
+  ): Promise<GetAdvisorProfileDto> {
+    const payload = this.ensureAdvisor(user);
+
+    // Validación: capacidad debe ser al menos 1
+    if (dto.maxCapacity !== undefined && dto.maxCapacity < 1) {
+      throw new BadRequestException('La capacidad debe ser al menos 1');
+    }
+
+    // Construir objeto de actualización (solo campos presentes)
+    const updateData: Record<string, unknown> = {};
+
+    if (dto.specialty !== undefined) {
+      updateData.especialidad = dto.specialty;
+    }
+    if (dto.description !== undefined) {
+      updateData.descripcion = dto.description;
+    }
+    if (dto.maxCapacity !== undefined) {
+      // Validar que no sea menor a clientes activos actuales
+      const activeCount = await this.countActiveClientsForAdvisor(payload.sub);
+      if (dto.maxCapacity < activeCount) {
+        throw new BadRequestException(
+          `Capacidad mínima debe ser al menos ${activeCount} (clientes activos actuales)`,
+        );
+      }
+      updateData.capacidad_maxima = dto.maxCapacity;
+    }
+    if (dto.phone !== undefined) {
+      updateData.telefono = dto.phone;
+    }
+    if (dto.country !== undefined) {
+      updateData.pais = dto.country;
+    }
+
+    // Realizar actualización
+    const { error } = await this.supabase
+      .from('perfiles_asesores')
+      .update(updateData)
+      .eq('usuario_id', payload.sub);
+
+    if (error) {
+      console.error('Error updating advisor profile:', error);
+      throw new InternalServerErrorException('Error al actualizar el perfil');
+    }
+
+    // Retornar perfil actualizado
+    return this.getAdvisorProfile(user);
+  }
+
+  async verifyClientAssignment(advisorId: string, clientId: string): Promise<boolean> {
+    const { data, error } = await this.supabase
+      .from("asignaciones_de_clientes")
+      .select("id")
+      .eq("asesor_id", advisorId)
+      .eq("cliente_id", clientId)
+      .eq("activo", true)
+      .maybeSingle();
+
+    if (error || !data) {
+      throw new ForbiddenException(
+        "No tiene permiso para acceder al análisis de consumo de este cliente",
+      );
+    }
+
+    return true;
+  }
+
+  async getRiskAssessment(user: JwtPayload) {
+    const payload = this.ensureAdvisor(user);
+    const assignments = await this.fetchAssignments(payload.sub);
+    const clientIds = assignments.map((row) => row.cliente_id);
+
+    if (clientIds.length === 0) {
+      return {
+        totalClients: 0,
+        riskClients: [],
+        summary: {
+          highRisk: 0,
+          mediumRisk: 0,
+          lowRisk: 0,
+        },
+      };
+    }
+
+    // Get all clients with their expense info
+    const clients = await this.fetchClientRows(clientIds);
+    const now = new Date();
+    const thisPeriodStart = this.addMonths(now, -1);
+    const lastPeriodStart = this.addMonths(thisPeriodStart, -1);
+
+    const thisPeriodExpenses = await this.fetchExpensesByRange(
+      clientIds,
+      this.formatDate(thisPeriodStart),
+      this.formatDate(now),
+    );
+
+    const lastPeriodExpenses = await this.fetchExpensesByRange(
+      clientIds,
+      this.formatDate(lastPeriodStart),
+      this.formatDate(thisPeriodStart),
+    );
+
+    const thisPeriodTotal = this.sumRows(thisPeriodExpenses);
+    const lastPeriodTotal = this.sumRows(lastPeriodExpenses);
+    const changePercent = this.calculateChangePercent(thisPeriodTotal, lastPeriodTotal);
+
+    // Extract unique client IDs from expense reports
+    const clientIdSet = new Set([
+      ...thisPeriodExpenses.map((e) => e.cliente_id),
+      ...lastPeriodExpenses.map((e) => e.cliente_id),
+    ]);
+
+    // Filter clients that had activity in either period
+    const activeClients = clients.filter((c) => clientIdSet.has(c.id));
+
+    // Build risk assessment for each client
+    const riskClients = activeClients
+      .map((client) => {
+        const clientThisPeriod = thisPeriodExpenses
+          .filter((e) => e.cliente_id === client.id)
+          .reduce((sum, e) => sum + this.toNumber(e.monto, 0), 0);
+
+        const clientLastPeriod = lastPeriodExpenses
+          .filter((e) => e.cliente_id === client.id)
+          .reduce((sum, e) => sum + this.toNumber(e.monto, 0), 0);
+
+        const clientChangePercent = this.calculateChangePercent(clientThisPeriod, clientLastPeriod);
+        const risk = this.buildRisk(clientChangePercent);
+
+        // Only include if there's some anomaly (high increase or large decrease)
+        if (clientChangePercent > 30 || clientChangePercent < -30) {
+          return {
+            clientId: client.id,
+            clientName: client.nombre_completo,
+            currentSpending: clientThisPeriod,
+            previousSpending: clientLastPeriod,
+            changePercent: clientChangePercent,
+            riskLevel: risk,
+            recommendation:
+              clientChangePercent > 30
+                ? "Gasto incrementado significativamente"
+                : "Reducción importantes en gastos",
+          };
+        }
+
+        return null;
+      })
+      .filter((item) => item !== null);
+
+    const summary = {
+      highRisk: riskClients.filter((r) => r.riskLevel.level === "high").length,
+      mediumRisk: riskClients.filter((r) => r.riskLevel.level === "medium").length,
+      lowRisk: riskClients.filter((r) => r.riskLevel.level === "low").length,
+    };
+
+    return {
+      totalClients: clients.length,
+      riskClients: riskClients.sort((a, b) => Math.abs(b.changePercent) - Math.abs(a.changePercent)),
+      summary,
     };
   }
 

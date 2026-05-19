@@ -21,16 +21,34 @@ import { AdvisorRecommendationsQueryDto } from "./dto/advisor-recommendations-qu
 import { CreateAdvisorMessageDto } from "./dto/create-advisor-message.dto";
 import { CreateAdvisorRecommendationDto } from "./dto/create-advisor-recommendation.dto";
 import { UpdateRecommendationDto } from "./dto/update-recommendation.dto";
+import { UpdateAdvisorProfileDto } from "./dto/update-advisor-profile.dto";
+import { ConsumptionAnalyticsService } from "../analytics/services/consumption-analytics.service";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles("asesor")
 @Controller("advisor")
 export class AdvisorController {
-  constructor(private readonly advisorService: AdvisorService) {}
+  constructor(
+    private readonly advisorService: AdvisorService,
+    private readonly consumptionAnalytics: ConsumptionAnalyticsService,
+  ) {}
 
   @Get("dashboard")
   getDashboard(@CurrentUser() user: JwtPayload) {
     return this.advisorService.getDashboard(user);
+  }
+
+  @Get("profile")
+  getProfile(@CurrentUser() user: JwtPayload) {
+    return this.advisorService.getAdvisorProfile(user);
+  }
+
+  @Patch("profile")
+  updateProfile(
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: UpdateAdvisorProfileDto,
+  ) {
+    return this.advisorService.updateAdvisorProfile(user, dto);
   }
 
   @Get("clients")
@@ -119,5 +137,23 @@ export class AdvisorController {
   @Get("reports")
   getReports(@CurrentUser() user: JwtPayload) {
     return this.advisorService.getReports(user);
+  }
+
+  @Get("clients/:clientId/consumption-analysis")
+  async getClientConsumptionAnalysis(
+    @CurrentUser() user: JwtPayload,
+    @Param("clientId", new ParseUUIDPipe()) clientId: string,
+    @Query("monthsBack") monthsBack?: string,
+  ) {
+    // Verify advisor is assigned to this client
+    await this.advisorService.verifyClientAssignment(user.sub, clientId);
+
+    const months = monthsBack ? parseInt(monthsBack, 10) : 12;
+    return this.consumptionAnalytics.getConsumptionAnalysis(clientId, months);
+  }
+
+  @Get("risk-assessment")
+  async getRiskAssessment(@CurrentUser() user: JwtPayload) {
+    return this.advisorService.getRiskAssessment(user);
   }
 }
