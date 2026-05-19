@@ -1,7 +1,17 @@
 // src/modules/analytics/dto/consumption-highlights.dto.ts
 
-import { Expose } from 'class-transformer';
-import { IsNumber, IsString, IsOptional } from 'class-validator';
+import { Expose, Type } from 'class-transformer';
+import { IsNumber, IsString, IsArray, ValidateNested } from 'class-validator';
+
+export class MerchantFrequencyDto {
+  @Expose()
+  @IsString()
+  merchant: string;
+
+  @Expose()
+  @IsNumber()
+  count: number;
+}
 
 export class ConsumptionHighlightsDto {
   @Expose()
@@ -25,19 +35,20 @@ export class ConsumptionHighlightsDto {
   maxExpense: number;
 
   @Expose()
-  @IsString()
-  @IsOptional()
-  mostFrequentMerchant: string | null;
+  @IsNumber()
+  minExpense: number;
+
+  @Expose()
+  @IsNumber()
+  uniqueMerchants: number;
 
   @Expose()
   @IsNumber()
   dayOfHighestExpense: number; // 1-7 (Monday-Sunday)
 
   @Expose()
-  @IsNumber()
-  minExpense?: number;
-
-  @Expose()
-  @IsNumber()
-  uniqueMerchants?: number;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => MerchantFrequencyDto)
+  topMerchants: MerchantFrequencyDto[];
 }

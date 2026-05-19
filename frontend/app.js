@@ -233,7 +233,7 @@ function configureRouter() {
       templateUrl: "./pages/usuario/perfil.html",
       pageModulePath: "./pages/usuario/PerfilPage.js",
       pageExportName: "PerfilPage",
-      footerText: "FinTrack 2026 · Perfil de usuario",
+      footerText: "FinTrack 2026 · Perfiles financieros",
     }),
     createUserRoute({
       path: ROUTES.USER_PATRONES,

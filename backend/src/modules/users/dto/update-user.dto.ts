@@ -31,7 +31,7 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   @MaxLength(80)
-  city?: string;
+  country?: string;
 
   @IsOptional()
   @IsString()

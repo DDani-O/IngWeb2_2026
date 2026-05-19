@@ -165,6 +165,12 @@
   transition: 180ms ease;
 }
 
+.action-btn--small {
+  padding: 7px 12px;
+  font-size: 0.82rem;
+  border-radius: 10px;
+}
+
 .action-btn--primary {
   background: var(--action-primary-bg);
   color: var(--action-primary-text);

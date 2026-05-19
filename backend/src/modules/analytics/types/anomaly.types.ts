@@ -10,6 +10,7 @@ export interface AnomalyResult {
   zScore: number;
   reason: 'HIGH_ZSCORE' | 'ABOVE_95_PERCENTILE';
   anomalyScore: number;
+  categoryMean: number;
 }
 
 export interface ZScoreResult {

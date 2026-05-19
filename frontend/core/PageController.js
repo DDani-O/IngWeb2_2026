@@ -43,6 +43,8 @@ export class PageController extends Component {
 
   /**
    * Vincula listeners para los botones comunes de cierre de sesion por rol.
+   * Se usa delegacion en document porque los botones pueden vivir fuera de
+   * la zona del componente actual (topbar/sidebar montados en shell).
    */
   _bindLogoutButtons({ role = "cliente", toastMessage } = {}) {
     const selectors =
@@ -50,12 +52,17 @@ export class PageController extends Component {
         ? ["#advisorLogoutButton", "#advisorLogoutButtonMobile"]
         : ["#userLogoutButton", "#userLogoutButtonMobile"];
 
-    selectors.forEach((selector) => {
-      const button = this.element.querySelector(selector);
-      this.listen(button, "click", () => {
-        this._handleLogout({ toastMessage });
-      });
-    });
+    const listener = (event) => {
+      const target = event.target.closest(selectors.join(", "));
+      if (!target) {
+        return;
+      }
+
+      event.preventDefault();
+      this._handleLogout({ toastMessage });
+    };
+
+    this.listen(document, "click", listener);
   }
 
   /**

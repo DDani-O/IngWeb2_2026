@@ -95,5 +95,36 @@
     </div>
   </div>
 
+  <div class="modal fade" id="advisorClientProfileModal" tabindex="-1" aria-labelledby="advisorClientProfileModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content app-modal-surface">
+        <div class="modal-header">
+          <h5 class="modal-title" id="advisorClientProfileModalLabel">Asignar perfil financiero</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <form id="advisorClientProfileForm" class="modal-body" novalidate>
+          <input type="hidden" id="advisorClientProfileClientId" />
+          <div class="mb-3">
+            <label class="form-label" for="advisorClientProfileSelect">Perfil a asignar</label>
+            <select id="advisorClientProfileSelect" class="form-select" required></select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="advisorClientProfileReason">Motivo (opcional)</label>
+            <textarea id="advisorClientProfileReason" class="form-control" rows="3" maxlength="200" placeholder="Ej: Ajuste por cambio de habitos"></textarea>
+          </div>
+          <div class="d-flex flex-wrap gap-2">
+            <button class="action-btn action-btn--primary" type="submit">
+              <i class="fa-solid fa-check"></i>
+              Asignar perfil
+            </button>
+            <button class="action-btn action-btn--ghost" type="button" data-bs-dismiss="modal">
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <div id="advisorClientRecommendationModalSlot"></div>
 </div>

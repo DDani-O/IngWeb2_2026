@@ -5,7 +5,8 @@
     <section class="section-block patterns-hero">
       <h1 class="text-gradient">Patrones de Consumo</h1>
       <p class="text-muted">
-        Analisis detallado de tus gastos y habitos de consumo. Comprende donde va tu dinero.
+        Analisis detallado de tus gastos y habitos de consumo en los ultimos 6 meses.
+        Comprende donde va tu dinero y cuales categorias dominan tu presupuesto.
       </p>
       <p class="text-muted mt-2">Usuario: <strong id="patternsUserName">Juan Perez</strong></p>
     </section>
@@ -20,14 +21,26 @@
 
     <section class="patterns-stats-grid" id="patternsStatsGrid"></section>
 
+    <section class="section-block">
+      <h2 class="section-title">
+        <i class="fa-solid fa-store accent"></i>
+        Comercios más frecuentes · últimos 6 meses
+      </h2>
+      <p class="text-muted mb-3">Los comercios donde más gastaste en los últimos seis meses.</p>
+      <div id="patternsTopMerchants" class="patterns-merchants-list"></div>
+    </section>
+
     <section class="section-block patterns-categories">
       <h2 class="section-title">
         <i class="fa-solid fa-layer-group accent"></i>
-        Categorias donde mas dinero se gasta
+        Categorias donde mas dinero se gasta · últimos 6 meses
       </h2>
+      <p class="text-muted mb-3">Las categorías principales según tus gastos de los últimos seis meses.</p>
       <div class="patterns-categories-grid">
         <article class="chart-card">
-          <canvas id="patternsCategoryChart" aria-label="Gastos por categoria"></canvas>
+          <div class="patterns-category-chart-wrap">
+            <canvas id="patternsCategoryChart" aria-label="Gastos por categoria"></canvas>
+          </div>
         </article>
         <div class="patterns-category-list" id="patternsCategoryList"></div>
       </div>
@@ -44,8 +57,8 @@
           <canvas id="patternsEvolutionChart" aria-label="Evolucion mensual"></canvas>
         </article>
         <article class="chart-card">
-          <h3 class="info-card__title">Evolucion por categoria</h3>
-          <canvas id="patternsByCategoryChart" aria-label="Evolucion por categoria"></canvas>
+          <h3 class="info-card__title">Monto por categoria</h3>
+          <canvas id="patternsByCategoryChart" aria-label="Monto por categoria"></canvas>
         </article>
       </div>
     </section>
@@ -56,14 +69,13 @@
         Gastos Inusuales
       </h2>
       <p class="text-muted mb-3">
-        Movimientos que superan mas de un 35% tu promedio historico en cada categoria.
+        Movimientos que superan significativamente tu promedio de los últimos seis meses en cada categoria.
       </p>
-      <div class="patterns-unusual-grid">
-        <article class="chart-card">
-          <canvas id="patternsUnusualChart" aria-label="Comparativa de gastos inusuales"></canvas>
-        </article>
-        <div class="patterns-unusual-list" id="patternsUnusualList"></div>
-      </div>
+      <article class="chart-card patterns-unusual-chart-card">
+        <h3 class="info-card__title">Detectado vs. Promedio esperado</h3>
+        <canvas id="patternsUnusualChart" aria-label="Comparativa de gastos inusuales"></canvas>
+      </article>
+      <div class="patterns-unusual-list mt-3" id="patternsUnusualList"></div>
       <button class="action-btn action-btn--primary mt-3 js-dashboard-back" type="button">
         <i class="fa-solid fa-arrow-left"></i>
         Volver al Dashboard

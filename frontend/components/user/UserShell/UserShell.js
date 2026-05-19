@@ -81,7 +81,7 @@ function buildActionLinks(activeRoute) {
     {
       href: "#/usuario/perfiles",
       icon: "fa-user-pen",
-      label: "Perfiles de Gasto",
+      label: "Perfiles financieros",
       classes: activeRoute === ROUTES.USER_PERFILES ? "active" : "",
     },
   ];

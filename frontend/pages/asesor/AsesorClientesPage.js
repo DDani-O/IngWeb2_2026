@@ -12,9 +12,11 @@ export class AsesorClientesPage extends PageController {
     this.viewMode = "cards";
     this.detailModal = null;
     this.recommendationModal = null;
+    this.profileModal = null;
+    this.spendingProfiles = [];
   }
 
-  render() {
+  async render() {
     this._resetViewPosition();
 
     const currentAdvisor = this.options.authManager?.getCurrentUser();
@@ -24,6 +26,7 @@ export class AsesorClientesPage extends PageController {
     this._renderRecommendationClientOptions();
     this._applyFilters();
     this._syncView();
+    await this._loadSpendingProfiles();
     this._loadClients();
   }
 
@@ -37,6 +40,7 @@ export class AsesorClientesPage extends PageController {
     const backButton = this.element.querySelector("#backToAdvisorDashboardButton");
     const openRecommendationButton = this.element.querySelector("#openClientRecommendationButton");
     const recommendationForm = this.element.querySelector("#advisorClientRecommendationForm");
+    const profileForm = this.element.querySelector("#advisorClientProfileForm");
 
     this.listen(searchInput, "input", () => this._applyFilters());
     this.listen(riskFilter, "change", () => this._applyFilters());
@@ -54,6 +58,11 @@ export class AsesorClientesPage extends PageController {
     this.listen(recommendationForm, "submit", (event) => {
       event.preventDefault();
       this._handleCreateRecommendation();
+    });
+
+    this.listen(profileForm, "submit", (event) => {
+      event.preventDefault();
+      this._handleAssignProfile();
     });
 
     this.listen(backButton, "click", () => {
@@ -138,6 +147,9 @@ export class AsesorClientesPage extends PageController {
               <button class="action-btn action-btn--ghost" data-action="detail" data-id="${
                 client.id
               }" type="button">Ver detalle</button>
+              <button class="action-btn action-btn--ghost" data-action="profile" data-id="${
+                client.id
+              }" type="button">Asignar perfil</button>
               <button class="action-btn action-btn--primary" data-action="recommend" data-id="${
                 client.id
               }" type="button">Enviar recomendacion</button>
@@ -169,6 +181,9 @@ export class AsesorClientesPage extends PageController {
                 <button class="action-btn action-btn--ghost" data-action="detail" data-id="${
                   client.id
                 }" type="button">Detalle</button>
+                <button class="action-btn action-btn--ghost" data-action="profile" data-id="${
+                  client.id
+                }" type="button">Perfil</button>
                 <button class="action-btn action-btn--primary" data-action="recommend" data-id="${
                   client.id
                 }" type="button">Recomendar</button>
@@ -218,6 +233,11 @@ export class AsesorClientesPage extends PageController {
       return;
     }
 
+    if (action === "profile") {
+      this._openProfileModal(client.id);
+      return;
+    }
+
     this._openClientModal(client);
   }
 
@@ -231,6 +251,71 @@ export class AsesorClientesPage extends PageController {
       <option value="">Seleccionar cliente</option>
       ${this.clients.map((client) => `<option value="${client.id}">${client.name}</option>`).join("")}
     `;
+  }
+
+  async _loadSpendingProfiles() {
+    try {
+      const response = await apiClient.get("/users/spending-profiles");
+      this.spendingProfiles = Array.isArray(response?.profiles) ? response.profiles : [];
+    } catch (error) {
+      this.spendingProfiles = [];
+      this.options.showToast?.(
+        error.message || "No se pudieron cargar los perfiles de gasto.",
+        "warning",
+      );
+    }
+  }
+
+  _openProfileModal(clientId) {
+    const select = this.element.querySelector("#advisorClientProfileSelect");
+    const clientInput = this.element.querySelector("#advisorClientProfileClientId");
+    const reasonInput = this.element.querySelector("#advisorClientProfileReason");
+
+    if (!select || !clientInput) {
+      return;
+    }
+
+    select.innerHTML = `
+      <option value="">Seleccionar perfil</option>
+      ${this.spendingProfiles
+        .map((profile) => `<option value="${profile.id}">${profile.name}</option>`)
+        .join("")}
+    `;
+
+    clientInput.value = clientId;
+    if (reasonInput) {
+      reasonInput.value = "";
+    }
+
+    this.profileModal = this._showModal("#advisorClientProfileModal");
+  }
+
+  async _handleAssignProfile() {
+    const clientId = this._getValue("#advisorClientProfileClientId");
+    const profileId = this._getValue("#advisorClientProfileSelect");
+    const reason = this._getValue("#advisorClientProfileReason");
+
+    if (!clientId || !profileId) {
+      this.options.showToast?.("Selecciona un perfil valido.", "warning");
+      return;
+    }
+
+    try {
+      const response = await apiClient.patch(`/advisor/clients/${clientId}/profile`, {
+        profileId,
+        reason: reason || undefined,
+      });
+
+      const profileName = response?.profileName || "Perfil";
+      this.options.showToast?.(`Perfil asignado: ${profileName}.`, "success");
+      this.profileModal?.hide();
+      await this._loadClients();
+    } catch (error) {
+      this.options.showToast?.(
+        error.message || "No se pudo asignar el perfil.",
+        "warning",
+      );
+    }
   }
 
   async _openClientModal(client) {
@@ -250,7 +335,7 @@ export class AsesorClientesPage extends PageController {
           <p><strong>Perfil:</strong> ${profile}</p>
           <p><strong>Email:</strong> ${detail?.email || client.email || "-"}</p>
           <p><strong>Telefono:</strong> ${detail?.phone || "-"}</p>
-          <p><strong>Ciudad:</strong> ${detail?.city || "-"}</p>
+          <p><strong>Pais:</strong> ${detail?.country || "-"}</p>
           <p><strong>Ocupacion:</strong> ${detail?.occupation || "-"}</p>
           <p><strong>Gasto promedio:</strong> ${formatCurrency(detail?.averageSpend || client.averageSpend)}</p>
           <p><strong>Cambio mensual:</strong> ${

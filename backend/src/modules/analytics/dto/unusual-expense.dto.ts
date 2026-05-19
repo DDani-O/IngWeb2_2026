@@ -35,4 +35,8 @@ export class UnusualExpenseDto {
   @Expose()
   @IsNumber()
   anomalyScore: number; // 0-1 (confidence)
+
+  @Expose()
+  @IsNumber()
+  categoryMean: number; // promedio histórico de la categoría
 }

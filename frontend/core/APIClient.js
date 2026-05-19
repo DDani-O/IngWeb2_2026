@@ -47,6 +47,54 @@ export class APIClient {
   }
 
   /**
+   * Envia un FormData (multipart/form-data) al servidor.
+   * No setea Content-Type para que el browser incluya el boundary correcto.
+   */
+  async postFile(endpoint, formData) {
+    const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+    const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+    const url = `${this.baseUrl}${cleanEndpoint}`;
+
+    const headers = {};
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), this.timeoutMs);
+
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers,
+        body: formData,
+        signal: controller.signal,
+      });
+
+      const text = await response.text();
+      let payload = {};
+      if (text) {
+        try {
+          payload = JSON.parse(text);
+        } catch {
+          payload = { message: text };
+        }
+      }
+
+      if (!response.ok) {
+        const message = Array.isArray(payload?.message)
+          ? payload.message[0]
+          : payload?.message;
+        throw new Error(message || "Error de comunicacion con el backend.");
+      }
+
+      return payload;
+    } finally {
+      window.clearTimeout(timeoutId);
+    }
+  }
+
+  /**
    * Metodo central de red: arma URL, headers, timeout y manejo de errores.
    * Tambien puede servir como punto unico para agregar retries o telemetry.
    */

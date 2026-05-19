@@ -1,35 +1,93 @@
+import { apiClient } from "../../core/APIClient.js";
 import { PageController } from "../../core/PageController.js";
-import {
-  MOCK_SPENDING_PROFILES,
-  STORAGE_KEYS,
-} from "../../utils/constants.js";
+import { MOCK_SPENDING_PROFILES } from "../../utils/constants.js";
 import { getInitials } from "../../utils/helpers.js";
 
 export class PerfilesPage extends PageController {
   constructor(element, options = {}) {
     super(element, options);
-    this.data = JSON.parse(JSON.stringify(MOCK_SPENDING_PROFILES));
-    this.activeProfileId = this._resolveActiveProfileId();
+    this.data = { profiles: [], user: { name: "", activeProfile: "" } };
+    this.activeProfileName = null;
+    this.activeProfileSource = null;
+    this.loadError = null;
   }
 
-  render() {
+  async render() {
     this._resetViewPosition();
 
     const currentUser = this.options.authManager?.getCurrentUser();
-    const userName = currentUser?.fullName || this.data.user.name;
+    const userName = currentUser?.fullName || this.data.user.name || "Cliente";
 
     this._setText("#userTopbarName", userName);
     this._setText("#userSidebarName", userName);
     this._setText("#userSidebarInitials", getInitials(userName) || "JP");
 
+    await this._loadProfiles();
     this._renderProfiles();
     this._renderComparison();
   }
 
   attachEvents() {
-    this._bindProfileButtons();
     this._bindDashboardBackButtons();
     this._bindLogoutButtons();
+  }
+
+  async _loadProfiles() {
+    try {
+      this.loadError = null;
+
+      const [profilesResult, userResult] = await Promise.allSettled([
+        apiClient.get("/users/spending-profiles"),
+        apiClient.get("/users/me"),
+      ]);
+
+      const profilesResponse =
+        profilesResult.status === "fulfilled" ? profilesResult.value : null;
+      const userResponse = userResult.status === "fulfilled" ? userResult.value : null;
+
+      if (!profilesResponse) {
+        throw new Error("No se pudieron cargar los perfiles de gasto.");
+      }
+
+      const rawProfiles = Array.isArray(profilesResponse?.profiles)
+        ? profilesResponse.profiles
+        : [];
+
+      const colorClasses = [
+        "profile-card--dracula",
+        "profile-card--equilibrista",
+        "profile-card--espiritu-libre",
+      ];
+
+      this.data.profiles = rawProfiles.map((profile, index) => {
+        const rule = profile.rule || {};
+        return {
+          id: profile.id,
+          name: profile.name,
+          emoji: rule.emoji || "✨",
+          tagline: rule.tagline || "Perfil financiero",
+          colorClass: colorClasses[index % colorClasses.length],
+          description: profile.description || "",
+          characteristics: Array.isArray(rule.characteristics) ? rule.characteristics : [],
+          tips: Array.isArray(rule.tips) ? rule.tips : [],
+          comparison: rule.comparison || {},
+        };
+      });
+
+      this.activeProfileName =
+        userResponse?.spendingProfile || userResponse?.profile || null;
+      this.activeProfileSource = userResponse?.spendingProfileSource || null;
+      this.data.user = {
+        name: userResponse?.fullName || "",
+        activeProfile: this.activeProfileName || "",
+      };
+    } catch (error) {
+      this.loadError = error?.message || "No se pudieron cargar los perfiles.";
+      this.data = JSON.parse(JSON.stringify(MOCK_SPENDING_PROFILES));
+      this.activeProfileName = this.data.user?.activeProfile || null;
+      this.activeProfileSource = null;
+      this.options.showToast?.(this.loadError, "warning");
+    }
   }
 
   _renderProfiles() {
@@ -40,8 +98,14 @@ export class PerfilesPage extends PageController {
 
     container.innerHTML = this.data.profiles
       .map((profile) => {
-        const isActive = profile.id === this.activeProfileId;
-        const guideTitle = this._getGuideTitle(profile.id);
+        const isActive =
+          this.activeProfileName && profile.name === this.activeProfileName;
+        const guideTitle = "Guia de habitos";
+        const activeBadge = isActive
+          ? this.activeProfileSource === "asesor"
+            ? "Asignado por tu asesor"
+            : "Sugerido por analitica"
+          : null;
 
         return `
           <article class="profile-showcase profile-card ${profile.colorClass} ${
@@ -64,15 +128,9 @@ export class PerfilesPage extends PageController {
               </ul>
             </article>
 
-            <button class="action-btn action-btn--${
-              isActive ? "ghost" : "primary"
-            }" data-select-profile="${profile.id}" type="button">
-              ${isActive ? "Este es tu perfil actual" : "Seleccionar Este Perfil"}
-            </button>
-
             ${
-              isActive
-                ? '<span class="profile-active-badge"><i class="fa-solid fa-circle-check"></i>Este es tu perfil actual</span>'
+              activeBadge
+                ? `<span class="profile-active-badge"><i class="fa-solid fa-circle-check"></i>${activeBadge}</span>`
                 : ""
             }
           </article>
@@ -81,17 +139,14 @@ export class PerfilesPage extends PageController {
       .join("");
   }
 
-  _bindProfileButtons() {
-    this.element.querySelectorAll("[data-select-profile]").forEach((button) => {
-      this.listen(button, "click", () => {
-        this._selectProfile(button.dataset.selectProfile);
-      });
-    });
-  }
-
   _renderComparison() {
     const body = this.element.querySelector("#profilesComparisonBody");
+    const head = this.element.querySelector("#profilesComparisonHead");
     if (!body) {
+      return;
+    }
+
+    if (!head) {
       return;
     }
 
@@ -103,55 +158,26 @@ export class PerfilesPage extends PageController {
       ["Diversion/Disfrute", "funLevel"],
     ];
 
-    const [dracula, equilibrista, espirituLibre] = this.data.profiles;
+    const profilesToCompare = this.data.profiles.slice(0, 3);
+
+    head.innerHTML = `
+      <tr>
+        <th>Metrica</th>
+        ${profilesToCompare.map((profile) => `<th>${profile.name}</th>`).join("")}
+      </tr>
+    `;
 
     body.innerHTML = rows
       .map(([label, key]) => {
         return `
           <tr>
             <td>${label}</td>
-            <td>${dracula.comparison[key]}</td>
-            <td>${equilibrista.comparison[key]}</td>
-            <td>${espirituLibre.comparison[key]}</td>
+            ${profilesToCompare
+              .map((profile) => `<td>${profile.comparison?.[key] || "-"}</td>`)
+              .join("")}
           </tr>
         `;
       })
       .join("");
-  }
-
-  _selectProfile(profileId) {
-    this.activeProfileId = profileId;
-    localStorage.setItem(STORAGE_KEYS.ACTIVE_PROFILE, profileId);
-
-    this._renderProfiles();
-    this._bindProfileButtons();
-
-    const selected = this.data.profiles.find((profile) => profile.id === profileId);
-    this.options.showToast?.(`Perfil actualizado a ${selected?.name || "nuevo perfil"}.`, "success");
-  }
-
-  _resolveActiveProfileId() {
-    const persisted = localStorage.getItem(STORAGE_KEYS.ACTIVE_PROFILE);
-    if (persisted) {
-      return persisted;
-    }
-
-    const byName = this.data.profiles.find((profile) => {
-      return profile.name === this.data.user.activeProfile;
-    });
-
-    return byName?.id || this.data.profiles[0].id;
-  }
-
-  _getGuideTitle(profileId) {
-    if (profileId === "dracula") {
-      return "💡 Como llegar a ser Dracula Nocturno";
-    }
-
-    if (profileId === "equilibrista") {
-      return "💡 Como mantener el Equilibrio";
-    }
-
-    return "⚠️ Como mejorar tu situacion financiera";
   }
 }

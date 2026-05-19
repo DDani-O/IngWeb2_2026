@@ -1,8 +1,8 @@
-import { Body, Controller, Get, Patch, UseGuards, Query } from "@nestjs/common";
+import { Body, Controller, Get, Patch, Query, UseGuards } from "@nestjs/common";
+import { ConsumptionAnalyticsService } from "../analytics/services/consumption-analytics.service";
 import { CurrentUser, JwtAuthGuard, JwtPayload, RolesGuard, Roles } from "../../common/auth";
 import { UpdateUserDto } from "./dto/update-user.dto";
 import { UsersService } from "./users.service";
-import { ConsumptionAnalyticsService } from "../analytics/services/consumption-analytics.service";
 
 @UseGuards(JwtAuthGuard)
 @Controller("users")
@@ -29,6 +29,13 @@ export class UsersController {
 
   @UseGuards(RolesGuard)
   @Roles("cliente")
+  @Get("me/dashboard")
+  async getClientDashboard(@CurrentUser() user: JwtPayload) {
+    return this.usersService.getClientDashboard(user);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles("cliente")
   @Get("me/consumption-analysis")
   async getConsumptionAnalysis(
     @CurrentUser() user: JwtPayload,
@@ -38,10 +45,9 @@ export class UsersController {
     return this.consumptionAnalytics.getConsumptionAnalysis(user.sub, months);
   }
 
-  @UseGuards(RolesGuard)
-  @Roles("cliente")
-  @Get("me/dashboard")
-  async getDashboard(@CurrentUser() user: JwtPayload) {
-    return this.usersService.getClientDashboard(user);
+  @Get("spending-profiles")
+  async getSpendingProfiles() {
+    return this.usersService.getSpendingProfiles();
   }
+
 }

@@ -4,9 +4,28 @@
   gap: 16px;
 }
 
+.profile-hero-pill {
+  margin-top: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 24%, transparent);
+}
+
+.profile-hero-pill span + span {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
 .profile-showcase {
   border-width: 1px;
-  padding: 20px;
+  padding: 16px;
 }
 
 .profile-card {
@@ -38,24 +57,24 @@
 }
 
 .profile-card__emoji {
-  font-size: 3.2rem;
+  font-size: 2.6rem;
   margin-bottom: 8px;
 }
 
 .profile-card__name {
-  font-size: clamp(1.8rem, 3vw, 2.4rem);
+  font-size: clamp(1.4rem, 2.2vw, 1.9rem);
   margin-bottom: 6px;
 }
 
 .profile-card__tagline {
   color: var(--color-primary);
   font-weight: 700;
-  font-size: 1.16rem;
+  font-size: 1rem;
   margin-bottom: 10px;
 }
 
 .profile-card__description {
-  font-size: 1.08rem;
+  font-size: 0.98rem;
   color: var(--text-muted);
   margin-bottom: 14px;
 }
@@ -63,7 +82,7 @@
 .profile-card__section-title {
   color: var(--color-primary);
   margin-bottom: 8px;
-  font-size: 1.3rem;
+  font-size: 1.05rem;
 }
 
 .profile-card__list {
@@ -76,7 +95,7 @@
 }
 
 .profile-card__list li {
-  font-size: 0.97rem;
+  font-size: 0.9rem;
   color: var(--text-muted);
   display: flex;
   gap: 8px;
@@ -98,14 +117,14 @@
 .profile-tip-box h5 {
   margin-bottom: 8px;
   color: var(--color-primary);
-  font-size: 1rem;
+  font-size: 0.92rem;
 }
 
 .profile-tip-box ul {
   margin: 0;
   padding-left: 18px;
   color: var(--text-muted);
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   display: flex;
   flex-direction: column;
   gap: 5px;

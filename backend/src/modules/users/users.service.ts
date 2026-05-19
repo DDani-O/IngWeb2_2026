@@ -28,7 +28,7 @@ interface ClientProfileRow {
   objetivo_financiero: string | null;
   moneda_preferida: string | null;
   telefono: string | null;
-  ciudad: string | null;
+  pais: string | null;
   ahorro_objetivo: number | string | null;
   umbral_alerta: number | string | null;
   tema: string | null;
@@ -80,6 +80,8 @@ export class UsersService {
       createdAt: userRow.creado_en,
       lastLogin: userRow.ultimo_acceso,
       profile: null as string | null,
+      spendingProfile: null as string | null,
+      spendingProfileSource: null as "asesor" | "sistema" | null,
       advisorName: null as string | null,
     };
 
@@ -87,15 +89,19 @@ export class UsersService {
       const [profile, advisorName, activeProfile] = await Promise.all([
         this.fetchClientProfile(userRow.id),
         this.fetchAdvisorName(userRow.id),
-        this.fetchActiveProfile(userRow.id),
+        this.fetchActiveProfileDetail(userRow.id),
       ]);
+
+      const activeProfileName = activeProfile?.name ?? null;
 
       return {
         ...base,
-        profile: activeProfile,
+        profile: activeProfileName,
+        spendingProfile: activeProfileName,
+        spendingProfileSource: activeProfile?.source ?? null,
         advisorName,
         phone: profile?.telefono ?? null,
-        city: profile?.ciudad ?? null,
+        country: profile?.pais ?? null,
         occupation: profile?.ocupacion ?? null,
         monthlyIncome: this.toNumber(profile?.ingreso_estimado, 0),
         savingsGoal: this.toNumber(profile?.ahorro_objetivo, 0),
@@ -132,7 +138,7 @@ export class UsersService {
     } else {
       if (
         dto.phone !== undefined ||
-        dto.city !== undefined ||
+        dto.country !== undefined ||
         dto.occupation !== undefined ||
         dto.monthlyIncome !== undefined ||
         dto.savingsGoal !== undefined ||
@@ -172,8 +178,8 @@ export class UsersService {
       if (dto.phone !== undefined) {
         profileUpdates.telefono = dto.phone;
       }
-      if (dto.city !== undefined) {
-        profileUpdates.ciudad = dto.city;
+      if (dto.country !== undefined) {
+        profileUpdates.pais = dto.country;
       }
       if (dto.occupation !== undefined) {
         profileUpdates.ocupacion = dto.occupation;
@@ -319,18 +325,46 @@ export class UsersService {
       this.fetchMonthlyIncome(payload.sub),
     ]);
 
+    const activeProfile = await this.fetchActiveProfileDetail(payload.sub);
+
     return {
       profile: {
         phone: profile?.telefono ?? null,
-        city: profile?.ciudad ?? null,
+        country: profile?.pais ?? null,
         occupation: profile?.ocupacion ?? null,
         monthlyIncome: this.toNumber(profile?.ingreso_estimado, 0),
         currency: (profile?.moneda_preferida || "ARS").toUpperCase(),
         financialGoal: profile?.objetivo_financiero ?? null,
+        activeSpendingProfile: activeProfile?.name ?? null,
+        activeProfileSource: activeProfile?.source ?? null,
+        activeProfileFunLine: activeProfile?.funLine ?? null,
+        suggestedProfiles: [],
       },
       recommendations: recommendations.stats,
       createdAt: new Date().toISOString(),
     };
+  }
+
+  async getSpendingProfiles() {
+    const { data, error } = await this.supabase
+      .from("perfiles_de_gasto")
+      .select("id, nombre, descripcion, criterio_regla, activo")
+      .eq("activo", true)
+      .order("nombre", { ascending: true });
+
+    if (error) {
+      throw new InternalServerErrorException("No se pudieron cargar los perfiles de gasto");
+    }
+
+    const profiles = (data || []).map((row: any) => ({
+      id: row.id,
+      name: row.nombre,
+      description: row.descripcion ?? null,
+      rule: row.criterio_regla ?? null,
+      active: row.activo ?? true,
+    }));
+
+    return { profiles };
   }
 
   private ensureUser(user: JwtPayload) {
@@ -358,7 +392,7 @@ export class UsersService {
     const { data, error } = await this.supabase
       .from("perfiles_usuarios")
       .select(
-        "ocupacion, ingreso_estimado, objetivo_financiero, moneda_preferida, telefono, ciudad, ahorro_objetivo, umbral_alerta, tema, notificar_email, notificar_push",
+        "ocupacion, ingreso_estimado, objetivo_financiero, moneda_preferida, telefono, pais, ahorro_objetivo, umbral_alerta, tema, notificar_email, notificar_push",
       )
       .eq("usuario_id", userId)
       .maybeSingle();
@@ -402,10 +436,14 @@ export class UsersService {
     return (asesor?.nombre_completo as string | null) || null;
   }
 
-  private async fetchActiveProfile(userId: string): Promise<string | null> {
+  private async fetchActiveProfileDetail(userId: string): Promise<{
+    name: string | null;
+    source: "asesor" | "sistema" | null;
+    funLine?: string | null;
+  } | null> {
     const { data, error } = await this.supabase
       .from("clasificacion_de_perfil")
-      .select("perfil:perfil_id (nombre)")
+      .select("perfil:perfil_id (nombre, criterio_regla), asesor_id")
       .eq("cliente_id", userId)
       .is("vigente_hasta", null)
       .order("vigente_desde", { ascending: false })
@@ -417,7 +455,18 @@ export class UsersService {
     }
 
     const perfil = Array.isArray(data?.perfil) ? data.perfil[0] : data?.perfil;
-    return (perfil?.nombre as string | null) || null;
+    const name = (perfil?.nombre as string | null) || null;
+    if (!name) {
+      return null;
+    }
+
+    const funLine = (perfil?.criterio_regla as { funLine?: string } | null)?.funLine || null;
+
+    return {
+      name,
+      source: data?.asesor_id ? "asesor" : "sistema",
+      funLine,
+    };
   }
 
   private async fetchAdvisorEmails(rows: RecommendationRow[]) {

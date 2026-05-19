@@ -56,16 +56,36 @@ export class DashboardPage extends PageController {
       this.isLoading = true;
       this.loadError = null;
 
-      const [dashboardData, consumptionData] = await Promise.all([
+      const [dashboardResult, consumptionResult] = await Promise.allSettled([
         apiClient.get("/users/me/dashboard"),
         apiClient.get("/users/me/consumption-analysis?monthsBack=6"),
       ]);
 
-      if (!dashboardData) {
-        throw new Error("No se pudieron cargar los datos del dashboard");
+      const dashboardData =
+        dashboardResult.status === "fulfilled" ? dashboardResult.value : null;
+      const consumptionData =
+        consumptionResult.status === "fulfilled" ? consumptionResult.value : null;
+
+      if (dashboardResult.status === "rejected") {
+        console.warn("[Dashboard] /users/me/dashboard falló:", dashboardResult.reason?.message);
+      }
+      if (consumptionResult.status === "rejected") {
+        console.warn(
+          "[Dashboard] /users/me/consumption-analysis falló:",
+          consumptionResult.reason?.message,
+        );
       }
 
-      this.data = this._transformApiDataToPageFormat(dashboardData, consumptionData);
+      if (!dashboardData && !consumptionData) {
+        throw new Error(
+          "No se pudo conectar con el servidor. Verificá que el backend esté activo.",
+        );
+      }
+
+      this.data = this._transformApiDataToPageFormat(
+        dashboardData || {},
+        consumptionData || null,
+      );
     } catch (error) {
       console.error("Error loading dashboard data:", error);
       this.loadError = error?.message || "No se pudo cargar el dashboard.";
@@ -111,16 +131,32 @@ export class DashboardPage extends PageController {
     ];
 
     const stats = [];
-    const totalSpent = highlights.totalExpense || 0;
-    const avgExpense = highlights.averageExpense || 0;
+    const latestMonth = monthlyEvo.length ? monthlyEvo[monthlyEvo.length - 1] : null;
+    const latestMonthLabel = latestMonth
+      ? (() => {
+          const [year, month] = latestMonth.month.split("-");
+          return new Date(Number(year), Number(month) - 1).toLocaleDateString("es-ES", {
+            month: "long",
+          });
+        })()
+      : null;
+
+    const totalSpent = latestMonth?.totalExpense ?? highlights.totalExpense ?? 0;
+    const avgExpense = latestMonth?.averagePerTransaction ?? highlights.averageExpense ?? 0;
+    const periodSubtitle = latestMonth
+      ? `Último mes (${latestMonthLabel})`
+      : "Últimos 6 meses";
+    const averageSubtitle = latestMonth
+      ? `Promedio por transacción en ${latestMonthLabel}`
+      : "Promedio calculado";
 
     stats.push({
       key: "totalSpent",
-      label: "Total Gastado",
+      label: "Gasto del último mes",
       value: totalSpent,
       format: "currency",
       emoji: "💸",
-      subtitle: "Últimos 6 meses",
+      subtitle: periodSubtitle,
       trendValue: 0,
       trendDirection: "stable",
       trendLabel: "",
@@ -132,7 +168,7 @@ export class DashboardPage extends PageController {
       value: avgExpense,
       format: "currency",
       emoji: "💳",
-      subtitle: "Promedio calculado",
+      subtitle: averageSubtitle,
       trendValue: 0,
       trendDirection: "stable",
       trendLabel: "",
@@ -182,17 +218,14 @@ export class DashboardPage extends PageController {
     }
 
     const currency = profile.currency || "ARS";
-    const mostFrequentMerchant = highlights.mostFrequentMerchant || "Sin datos";
-    const merchantItems = [
-      {
-        name: mostFrequentMerchant,
-        icon: "🏪",
-        spending:
-          highlights.maxExpense && highlights.maxExpense > 0
-            ? formatCurrency(highlights.maxExpense, currency)
-            : "Sin registros",
-      },
-    ];
+    const topMerchants = highlights.topMerchants || [];
+    const merchantItems = topMerchants.length > 0
+      ? topMerchants.map((m) => ({
+          name: m.merchant,
+          icon: "🏪",
+          spending: `${m.count} ${m.count === 1 ? "vez" : "veces"}`,
+        }))
+      : [{ name: "Sin datos", icon: "🏪", spending: "Sin registros" }];
 
     const categoryItems = categoryDist.slice(0, 4).map((cat) => ({
       label: cat.categoryName || "Otro",
@@ -205,11 +238,25 @@ export class DashboardPage extends PageController {
       return date.toLocaleDateString("es-ES", { month: "short" });
     });
 
+    const activeSpendingProfile =
+      profile.activeSpendingProfile || profile.spendingProfile || profile.profile || null;
+    const activeProfileLabel = activeSpendingProfile || "Sin perfil asignado";
+    const activeProfileSource = profile.activeProfileSource || null;
+    const sourceLabel = activeSpendingProfile
+      ? activeProfileSource === "asesor"
+        ? "Asignado por tu asesor"
+        : "Sugerido por analitica"
+      : "Sin asignacion vigente";
+
+    const suggestedProfiles = Array.isArray(profile.suggestedProfiles)
+      ? profile.suggestedProfiles
+      : [];
+
     return {
       user: {
         id: profile.userId || "",
         name: userName,
-        activeProfile: profile.occupation || "Sin perfil activo",
+        activeProfile: activeProfileLabel,
       },
       calendar: {
         day: String(now.getDate()).padStart(2, "0"),
@@ -220,7 +267,11 @@ export class DashboardPage extends PageController {
       alerts,
       stats,
       profileCard: {
-        name: profile.occupation ? "Perfil Activo" : "Perfil no cargado",
+        name: activeProfileLabel,
+        sourceLabel,
+        suggestedProfiles,
+        recommendationsCount: recommendations.activeRecommendations || 0,
+        funLine: profile.activeProfileFunLine || null,
         description: profile.financialGoal
           ? `Objetivo: ${profile.financialGoal}`
           : "Actualiza tu información financiera para obtener recomendaciones más precisas.",
@@ -229,7 +280,7 @@ export class DashboardPage extends PageController {
       summaryCards: [
         {
           title: "Patrones de Consumo",
-          subtitle: `${categoryDist.length} categorías`,
+          subtitle: `Top 4 categorías · últimos 6 meses`,
           icon: "fa-chart-pie",
           accent: "teal",
           items: categoryItems.length
@@ -382,27 +433,31 @@ export class DashboardPage extends PageController {
     }
 
     const { profileCard } = this.data;
+    const profileName = profileCard.name || "Sin perfil asignado";
+    const funLine = profileCard.funLine
+      || (profileName === "Sin perfil asignado"
+        ? "Aun no hay veredicto, pero tu asesor ya esta calentando motores."
+        : "No es sentencia, es una invitacion a mejorar con estilo.");
 
     container.innerHTML = `
       <div>
         <h2 class="section-title mb-1">
           <i class="fa-solid fa-user-shield accent"></i>
-          Perfil Activo: ${profileCard.name}
+          Perfil asignado por tu asesor
         </h2>
-        <p class="text-muted">${profileCard.description}</p>
-        <div class="profile-highlight__tags">
-          ${profileCard.categories
-            .map((category) => `<span class="profile-tag">${category}</span>`)
-            .join("")}
-        </div>
+        <p class="text-muted mb-1">Tu asesor te ha dado el perfil de:</p>
+        <p class="text-muted mb-1"><span class="profile-highlight__name">${profileName}</span></p>
+        <p class="text-muted">${funLine}</p>
       </div>
-      <a class="action-btn action-btn--ghost" href="${buildHash(
+      <a class="action-btn action-btn--ghost action-btn--small" href="${buildHash(
         ROUTES.USER_PERFILES
       )}" target="_blank">
-        <i class="fa-solid fa-rotate"></i>
-        Cambiar perfil
+        <i class="fa-solid fa-compass"></i>
+        Consultar posibles perfiles
       </a>
     `;
+
+    container.classList.add("profile-highlight", "profile-highlight--compact");
   }
 
   _renderSummaryCards() {
@@ -666,6 +721,33 @@ export class DashboardPage extends PageController {
         },
       })
     );
+  }
+
+  attachEvents() {
+    const openChatButton = this.element.querySelector("#openAdvisorChatButton");
+    const openChatBubble = this.element.querySelector("#openAdvisorChatBubble");
+    const closeTeaser = this.element.querySelector("#advisorTeaserClose");
+    const sendButton = this.element.querySelector("#advisorChatSendButton");
+    const input = this.element.querySelector("#advisorChatInput");
+
+    this.listen(openChatButton, "click", () => this._openChatModal());
+    this.listen(openChatBubble, "click", () => this._openChatModal());
+
+    this.listen(closeTeaser, "click", () => {
+      const teaser = this.element.querySelector("#advisorTeaserCard");
+      if (teaser) {
+        teaser.classList.add("app-hidden");
+      }
+    });
+
+    this.listen(sendButton, "click", () => this._sendChatMessage());
+
+    this.listen(input, "keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        this._sendChatMessage();
+      }
+    });
   }
 
   _openChatModal() {

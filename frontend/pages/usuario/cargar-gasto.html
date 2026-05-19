@@ -86,29 +86,52 @@
       <article class="section-block user-ocr-panel">
         <h2 class="section-title">
           <i class="fa-solid fa-receipt accent"></i>
-          Carga por Ticket (OCR)
+          Carga por Ticket (OCR + IA)
         </h2>
         <p class="text-muted mb-3">
-          Sube una imagen del ticket para precompletar comercio, monto, fecha y categoria.
+          Sube una foto o PDF del ticket. La IA detectara comercio, monto, fecha y categoria automaticamente.
         </p>
 
-        <label class="ticket-dropzone" for="expenseTicketFile">
-          <i class="fa-solid fa-cloud-arrow-up"></i>
-          <span id="ticketFileName">Arrastra una imagen o selecciona un archivo</span>
+        <label class="ticket-dropzone" for="expenseTicketFile" id="ticketDropzone">
+          <i class="fa-solid fa-cloud-arrow-up ocr-dropzone__icon"></i>
+          <span id="ticketFileName">Arrastra una imagen o PDF, o hace click para seleccionar</span>
+          <span class="ocr-dropzone__hint">JPG, PNG, WEBP, HEIC, PDF · Max 8 MB</span>
         </label>
-        <input id="expenseTicketFile" type="file" accept="image/*" class="app-hidden" />
+        <input id="expenseTicketFile" type="file" accept="image/*,application/pdf" class="app-hidden" />
+
+        <div id="ticketPreviewContainer" class="ocr-preview app-hidden">
+          <img id="ticketImagePreview" class="ocr-preview__img app-hidden" alt="Preview del ticket" />
+          <div id="ticketPdfPreview" class="ocr-preview__pdf app-hidden">
+            <i class="fa-solid fa-file-pdf"></i>
+            <span id="ticketPdfName"></span>
+          </div>
+        </div>
 
         <button class="action-btn action-btn--primary mt-3" id="analyzeTicketButton" type="button">
           <i class="fa-solid fa-wand-magic-sparkles"></i>
-          Analizar ticket
+          Analizar con IA
         </button>
+
+        <div id="ocrLoadingState" class="ocr-loading app-hidden mt-3">
+          <div class="ocr-loading__spinner"></div>
+          <span>Analizando ticket con Groq AI...</span>
+        </div>
+
+        <div id="ocrErrorState" class="ocr-error app-hidden mt-3">
+          <i class="fa-solid fa-circle-exclamation"></i>
+          <span id="ocrErrorMessage">No se pudo analizar el ticket.</span>
+        </div>
 
         <article class="ocr-result app-hidden mt-3" id="ocrResultCard">
           <h3 class="info-card__title">
             <i class="fa-solid fa-check-circle accent"></i>
-            Datos detectados
+            Datos detectados · <span id="ocrConfidenceBadge" class="ocr-confidence"></span>
           </h3>
           <div class="ocr-result__rows" id="ocrResultRows"></div>
+          <p class="text-muted mt-2" style="font-size:0.8rem;">
+            <i class="fa-solid fa-pencil"></i>
+            Podés corregir cualquier campo en el formulario antes de guardar.
+          </p>
         </article>
       </article>
     </section>

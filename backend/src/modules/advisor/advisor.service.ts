@@ -25,6 +25,7 @@ import { CreateAdvisorRecommendationDto } from "./dto/create-advisor-recommendat
 import { UpdateRecommendationDto } from "./dto/update-recommendation.dto";
 import { UpdateAdvisorProfileDto } from "./dto/update-advisor-profile.dto";
 import { GetAdvisorProfileDto } from "./dto/get-advisor-profile.dto";
+import { AssignClientProfileDto } from "./dto/assign-client-profile.dto";
 
 interface AssignmentRow {
   cliente_id: string;
@@ -43,7 +44,7 @@ interface UserRow {
 interface ClientProfileRow {
   usuario_id: string;
   telefono: string | null;
-  ciudad: string | null;
+  pais: string | null;
   ocupacion: string | null;
   ingreso_estimado: number | string | null;
   objetivo_financiero: string | null;
@@ -318,7 +319,7 @@ export class AdvisorService {
     return {
       ...summary,
       phone: profile?.telefono ?? null,
-      city: profile?.ciudad ?? null,
+      country: profile?.pais ?? null,
       occupation: profile?.ocupacion ?? null,
       monthlyIncome: this.toNumber(profile?.ingreso_estimado, 0),
       savingsGoal: this.toNumber(profile?.ahorro_objetivo, 0),
@@ -402,6 +403,62 @@ export class AdvisorService {
     return {
       data: expenses,
       pagination: this.buildPagination(count || 0, page, limit),
+    };
+  }
+
+  async assignClientProfile(
+    user: JwtPayload,
+    clientId: string,
+    dto: AssignClientProfileDto,
+  ) {
+    const payload = this.ensureAdvisor(user);
+    await this.ensureAssignment(payload.sub, clientId);
+
+    const { data: profileRow, error: profileError } = await this.supabase
+      .from("perfiles_de_gasto")
+      .select("id, nombre, activo")
+      .eq("id", dto.profileId)
+      .single();
+
+    if (profileError || !profileRow) {
+      throw new NotFoundException("Perfil de gasto no encontrado");
+    }
+
+    if (!profileRow.activo) {
+      throw new BadRequestException("El perfil seleccionado no esta activo");
+    }
+
+    const now = new Date().toISOString();
+
+    const { error: closeError } = await this.supabase
+      .from("clasificacion_de_perfil")
+      .update({ vigente_hasta: now })
+      .eq("cliente_id", clientId)
+      .is("vigente_hasta", null);
+
+    if (closeError) {
+      throw new InternalServerErrorException("No se pudo cerrar el perfil previo");
+    }
+
+    const { error: insertError } = await this.supabase
+      .from("clasificacion_de_perfil")
+      .insert({
+        cliente_id: clientId,
+        perfil_id: dto.profileId,
+        asesor_id: payload.sub,
+        motivo: dto.reason || null,
+        vigente_desde: now,
+      });
+
+    if (insertError) {
+      throw new InternalServerErrorException("No se pudo asignar el perfil");
+    }
+
+    return {
+      clientId,
+      profileId: profileRow.id,
+      profileName: profileRow.nombre,
+      assignedAt: now,
     };
   }
 
@@ -1330,7 +1387,7 @@ export class AdvisorService {
     const { data, error } = await this.supabase
       .from("perfiles_usuarios")
       .select(
-        "usuario_id, telefono, ciudad, ocupacion, ingreso_estimado, objetivo_financiero, moneda_preferida, ahorro_objetivo, umbral_alerta, tema, notificar_email, notificar_push",
+        "usuario_id, telefono, pais, ocupacion, ingreso_estimado, objetivo_financiero, moneda_preferida, ahorro_objetivo, umbral_alerta, tema, notificar_email, notificar_push",
       )
       .eq("usuario_id", clientId)
       .maybeSingle();

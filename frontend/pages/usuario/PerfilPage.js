@@ -76,7 +76,7 @@ export class PerfilPage extends PageController {
     this._setInputValue("#profileFullName", this.profile.fullName);
     this._setInputValue("#profileEmail", this.profile.email);
     this._setInputValue("#profilePhone", this.profile.phone);
-    this._setInputValue("#profileCity", this.profile.city);
+    this._setInputValue("#profileCountry", this.profile.country);
     this._setInputValue("#profileOccupation", this.profile.occupation);
     this._setInputValue("#profileCurrency", this.profile.currency || "ARS");
     this._setInputValue("#profileMonthlyIncome", String(this.profile.monthlyIncome));
@@ -132,7 +132,7 @@ export class PerfilPage extends PageController {
       fullName: currentUser?.fullName || "",
       email: currentUser?.email || "",
       phone: "",
-      city: "",
+      country: "",
       occupation: "",
       monthlyIncome: 0,
       savingsGoal: 0,
@@ -175,7 +175,7 @@ export class PerfilPage extends PageController {
       fullName: payload?.fullName || "",
       email: payload?.email || "",
       phone: payload?.phone || "",
-      city: payload?.city || "",
+      country: payload?.country || "",
       occupation: payload?.occupation || "",
       monthlyIncome: Number(payload?.monthlyIncome) || 0,
       savingsGoal: Number(payload?.savingsGoal) || 0,
@@ -235,7 +235,7 @@ export class PerfilPage extends PageController {
     return {
       fullName: this._getValue("#profileFullName"),
       phone: this._getValue("#profilePhone"),
-      city: this._getValue("#profileCity"),
+      country: this._getValue("#profileCountry"),
       occupation: this._getValue("#profileOccupation"),
       currency: this._getValue("#profileCurrency").toUpperCase(),
       monthlyIncome: Number(this._getValue("#profileMonthlyIncome") || 0),

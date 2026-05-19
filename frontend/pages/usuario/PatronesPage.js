@@ -28,6 +28,7 @@ export class PatronesPage extends PageController {
     if (this.data) {
       this._renderHighlights();
       this._renderStats();
+      this._renderTopMerchants();
       this._renderCategoryList();
       this._renderUnusualAlerts();
       this._initCharts();
@@ -37,7 +38,7 @@ export class PatronesPage extends PageController {
   async _loadConsumptionAnalysis() {
     try {
       this.isLoading = true;
-      const analysisData = await apiClient.get("/users/me/consumption-analysis?monthsBack=12");
+      const analysisData = await apiClient.get("/users/me/consumption-analysis?monthsBack=6");
       
       if (!analysisData) {
         throw new Error("No data received from server");
@@ -99,16 +100,32 @@ export class PatronesPage extends PageController {
 
     // Construir stats
     const stats = [];
-    const total = highlights.totalExpense || 0;
-    const avg = highlights.averageExpense || 0;
+    const latestMonth = monthlyEvo.length ? monthlyEvo[monthlyEvo.length - 1] : null;
+    const latestMonthLabel = latestMonth
+      ? (() => {
+          const [year, month] = latestMonth.month.split("-");
+          return new Date(Number(year), Number(month) - 1).toLocaleDateString("es-ES", {
+            month: "long",
+          });
+        })()
+      : null;
+
+    const total = latestMonth?.totalExpense ?? highlights.totalExpense ?? 0;
+    const avg = latestMonth?.averagePerTransaction ?? highlights.averageExpense ?? 0;
     const maxExp = highlights.maxExpense || 0;
     const transCount = highlights.transactionCount || 0;
+    const totalSubtitle = latestMonth
+      ? `Último mes (${latestMonthLabel})`
+      : "Período analizado";
+    const avgSubtitle = latestMonth
+      ? `Promedio por transacción en ${latestMonthLabel}`
+      : "Promedio de gastos";
 
     stats.push({
-      label: "Gasto Total",
+      label: "Gasto del último mes",
       value: total,
       format: "currency",
-      subtitle: "Período analizado",
+      subtitle: totalSubtitle,
       trendValue: 0,
       trendDirection: "stable",
       trendLabel: "",
@@ -119,7 +136,7 @@ export class PatronesPage extends PageController {
       label: "Promedio por Transacción",
       value: avg,
       format: "currency",
-      subtitle: "Promedio de gastos",
+      subtitle: avgSubtitle,
       trendValue: 0,
       trendDirection: "stable",
       trendLabel: "",
@@ -170,28 +187,33 @@ export class PatronesPage extends PageController {
 
     const values = monthlyEvo.map((entry) => entry.totalExpense || 0);
 
-    // Construir evolución por categoría (top 3)
+    // Mapa de colores por categoría (consistente con donut)
+    const palette = ["#3ad5c7", "#21b6d7", "#f6a40a", "#9952dd", "#e04697"];
+    const categoryColorMap = {};
+    categories.forEach((cat, i) => { categoryColorMap[cat.label] = cat.color; });
+
+    // Evolución real por categoría×mes (datos del backend)
+    const catMonthly = apiData.categoryMonthlyEvolution || { months: [], series: [] };
+    const catEvoLabels = catMonthly.months.map((m) => {
+      const [year, month] = m.split("-");
+      return new Date(year, parseInt(month) - 1).toLocaleDateString("es-ES", { month: "short", year: "2-digit" });
+    });
     const categoryEvolution = {
-      labels: labels,
-      series: categoryDist.slice(0, 3).map((cat, idx) => {
-        const colors = ["#3ad5c7", "#21b6d7", "#f6a40a"];
-        // Para simplificar: distribuir proporcionalmente cada mes
-        const avgPerMonth = (cat.amount / (monthlyEvo.length || 1));
-        return {
-          name: cat.categoryName || `Cat ${idx + 1}`,
-          color: colors[idx % colors.length],
-          values: monthlyEvo.map(() => avgPerMonth),
-        };
-      }),
+      labels: catEvoLabels,
+      series: catMonthly.series.map((s, i) => ({
+        name: s.name,
+        color: categoryColorMap[s.name] || palette[i % palette.length],
+        values: s.amounts,
+      })),
     };
 
     // Construir gastos inusuales para chart (top 5)
-    const unusualLabels = unusualExp.slice(0, 5).map((exp) => exp.category || "Otros");
-    const unusualExpected = unusualExp.slice(0, 5).map((exp) => {
-      // Estimado basado en z-score
-      return exp.amount / Math.max(exp.anomalyScore || 1, 0.1);
-    });
-    const unusualDetected = unusualExp.slice(0, 5).map((exp) => exp.amount);
+    const unusualTop = unusualExp.slice(0, 6);
+    const unusualLabels = unusualTop.map((exp) => `${exp.category || 'Otros'} (${exp.merchant || ''})`);
+    const unusualExpected = unusualTop.map((exp) => exp.categoryMean || 0);
+    const unusualDetected = unusualTop.map((exp) => exp.amount);
+
+    const topMerchants = (highlights.topMerchants || []);
 
     return {
       highlights: pageHighlights && pageHighlights.length > 0 ? pageHighlights : [{
@@ -203,17 +225,18 @@ export class PatronesPage extends PageController {
       stats,
       categories,
       monthlyEvolution: { labels, values },
+      topMerchants,
       categoryEvolution,
       unusualExpenses: {
         labels: unusualLabels,
         expected: unusualExpected,
         detected: unusualDetected,
         alerts: unusualExp.map((exp) => ({
-          title: `${exp.category} (${exp.reason === "HIGH_ZSCORE" ? "Alta" : "Percentil"})`,
+          title: `${exp.merchant || exp.category}`,
           date: new Date(exp.date).toLocaleDateString("es-ES"),
-          expected: exp.amount / Math.max(exp.anomalyScore || 1, 0.1),
+          expected: exp.categoryMean || 0,
           detected: exp.amount,
-          delta: `Score: ${(exp.anomalyScore || 0).toFixed(2)}`,
+          delta: `Score: ${(exp.anomalyScore || 0).toFixed(2)} · Z: ${(exp.zScore || 0).toFixed(1)}`,
           severity: exp.anomalyScore > 0.7 ? "high" : "medium",
         })),
       },
@@ -267,6 +290,33 @@ export class PatronesPage extends PageController {
       .join("");
   }
 
+  _renderTopMerchants() {
+    const container = this.element.querySelector("#patternsTopMerchants");
+    if (!container) return;
+
+    const merchants = this.data.topMerchants || [];
+    if (merchants.length === 0) {
+      container.innerHTML = `<p class="text-muted">Sin datos suficientes.</p>`;
+      return;
+    }
+
+    const maxCount = merchants[0].count;
+    container.innerHTML = merchants
+      .map(
+        (m, i) => `
+        <div class="patterns-merchant-row">
+          <span class="patterns-merchant-rank">#${i + 1}</span>
+          <span class="patterns-merchant-name">${m.merchant}</span>
+          <div class="patterns-merchant-bar-track">
+            <div class="patterns-merchant-bar-fill" style="width:${Math.round((m.count / maxCount) * 100)}%"></div>
+          </div>
+          <span class="patterns-merchant-count">${m.count} ${m.count === 1 ? "vez" : "veces"}</span>
+        </div>
+      `,
+      )
+      .join("");
+  }
+
   _renderCategoryList() {
     const container = this.element.querySelector("#patternsCategoryList");
     if (!container) {
@@ -275,12 +325,10 @@ export class PatronesPage extends PageController {
 
     container.innerHTML = this.data.categories
       .map((item) => {
-        const colorToken = this._toToken(item.label);
-
         return `
           <article class="patterns-category-item">
             <div class="patterns-category-item__left">
-              <span class="patterns-color-dot patterns-color-dot--${colorToken}"></span>
+              <span class="patterns-color-dot" style="background:${item.color}"></span>
               <strong>${item.label}</strong>
             </div>
             <div class="patterns-category-item__right">
@@ -299,14 +347,22 @@ export class PatronesPage extends PageController {
       return;
     }
 
+    if (!this.data.unusualExpenses.alerts.length) {
+      container.innerHTML = `<p class="text-muted">No se detectaron gastos inusuales en el período.</p>`;
+      return;
+    }
     container.innerHTML = this.data.unusualExpenses.alerts
       .map((alert) => {
+        const badgeLabel = alert.severity === 'high' ? 'Alto' : 'Moderado';
         return `
           <article class="patterns-unusual-alert patterns-unusual-alert--${alert.severity}">
-            <h3>${alert.title}</h3>
-            <p>Fecha ${alert.date}</p>
-            <p>Esperado: ${formatCurrency(alert.expected)}</p>
-            <p>Detectado: ${formatCurrency(alert.detected)}</p>
+            <div class="patterns-unusual-alert__header">
+              <h3 class="patterns-unusual-alert__title">${alert.title}</h3>
+              <span class="patterns-unusual-alert__badge patterns-unusual-alert__badge--${alert.severity}">${badgeLabel}</span>
+            </div>
+            <p>📅 ${alert.date}</p>
+            <p>Esperado: <strong>${formatCurrency(alert.expected)}</strong></p>
+            <p>Detectado: <strong>${formatCurrency(alert.detected)}</strong></p>
             <p class="patterns-unusual-alert__delta">${alert.delta}</p>
           </article>
         `;
@@ -344,16 +400,20 @@ export class PatronesPage extends PageController {
               data: this.data.categories.map((item) => item.percentage),
               backgroundColor: this.data.categories.map((item) => item.color),
               borderColor: this.chartColors.border,
-              borderWidth: 3,
+              borderWidth: 2,
+              hoverOffset: 6,
             },
           ],
         },
         options: {
-          cutout: "48%",
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: "68%",
           plugins: {
-            legend: {
-              labels: {
-                color: this.chartColors.label,
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => ` ${ctx.label}: ${ctx.raw}%`,
               },
             },
           },
@@ -411,35 +471,55 @@ export class PatronesPage extends PageController {
       return;
     }
 
+    const { labels: catLabels, series: catSeries } = this.data.categoryEvolution;
+
+    if (!catLabels.length || !catSeries.length) {
+      canvas.closest(".chart-card").innerHTML +=
+        `<p class="text-muted mt-2" style="font-size:0.85rem">Sin datos suficientes para mostrar evolución por categoría.</p>`;
+      return;
+    }
+
     this.charts.push(
       new window.Chart(canvas, {
-        type: "line",
+        type: "bar",
         data: {
-          labels: this.data.categoryEvolution.labels,
-          datasets: this.data.categoryEvolution.series.map((series) => {
-            return {
-              label: series.name,
-              data: series.values,
-              borderColor: series.color,
-              backgroundColor: "transparent",
-              tension: 0.3,
-            };
-          }),
+          labels: catLabels,
+          datasets: catSeries.map((s) => ({
+            label: s.name,
+            data: s.values,
+            backgroundColor: s.color + "bb",
+            borderColor: s.color,
+            borderWidth: 1,
+            borderRadius: 2,
+            stack: "month",
+          })),
         },
         options: {
+          responsive: true,
+          maintainAspectRatio: false,
           scales: {
             x: {
-              ticks: { color: this.chartColors.label },
+              stacked: true,
+              ticks: { color: this.chartColors.label, maxRotation: 45 },
               grid: { color: this.chartColors.grid },
             },
             y: {
-              ticks: { color: this.chartColors.label },
+              stacked: true,
+              ticks: {
+                color: this.chartColors.label,
+                callback: (v) => "$" + Number(v).toLocaleString("es-AR"),
+              },
               grid: { color: this.chartColors.grid },
             },
           },
           plugins: {
             legend: {
-              labels: { color: this.chartColors.label },
+              labels: { color: this.chartColors.label, boxWidth: 12, font: { size: 11 } },
+            },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => ` ${ctx.dataset.label}: ${formatCurrency(ctx.raw)}`,
+              },
             },
           },
         },

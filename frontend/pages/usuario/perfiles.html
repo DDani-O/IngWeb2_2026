@@ -3,10 +3,14 @@
 
   <main class="app-main app-main--wide perfiles-main">
     <section class="section-block perfiles-hero">
-      <h1 class="text-gradient">Conoce tus Perfiles</h1>
+      <h1 class="text-gradient">Perfiles financieros</h1>
       <p class="text-muted mt-2">
-        Descubre los 3 tipos de consumidores y como puedes transitar entre ellos segun tus habitos de gasto.
+        Explora los perfiles financieros definidos por tu asesor y aprende que habitos caracterizan a cada uno.
       </p>
+      <div class="profile-hero-pill">
+        <span>🔎 Guia rapida de perfiles</span>
+        <span>Asignacion solo por asesor</span>
+      </div>
     </section>
 
     <section class="perfiles-stack" id="profilesGrid"></section>
@@ -18,14 +22,7 @@
       </h2>
       <div class="table-responsive">
         <table class="table-shell" id="profilesComparisonTable">
-          <thead>
-            <tr>
-              <th>Metrica</th>
-              <th>Dracula</th>
-              <th>Equilibrista</th>
-              <th>Espiritu Libre</th>
-            </tr>
-          </thead>
+          <thead id="profilesComparisonHead"></thead>
           <tbody id="profilesComparisonBody"></tbody>
         </table>
       </div>
@@ -34,10 +31,10 @@
     <section class="section-block perfiles-cta">
       <h2 class="section-title">
         <i class="fa-solid fa-rocket accent"></i>
-        Quieres cambiar de perfil?
+        Como se asignan los perfiles?
       </h2>
       <p class="text-muted mb-3">
-        Tu perfil se actualiza automaticamente segun tus habitos de consumo. Sigue los consejos anteriores para llegar al perfil que deseas.
+        Los perfiles de gasto son definidos por tu asesor o sugeridos automaticamente a partir de tu analitica. Esta pantalla es informativa y te ayuda a entender cada perfil y sus habitos.
       </p>
       <div class="d-flex flex-wrap gap-2">
         <button class="action-btn action-btn--primary js-dashboard-back" type="button">

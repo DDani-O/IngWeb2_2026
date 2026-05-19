@@ -6,6 +6,7 @@
   grid-template-columns: 1.1fr 0.42fr 1fr;
 }
 
+
 .dashboard-calendar {
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-lg);
@@ -46,11 +47,40 @@
   gap: 12px;
 }
 
+.profile-highlight--compact {
+  padding: 14px;
+  border-radius: 14px;
+  gap: 10px;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--color-secondary) 10%, transparent), var(--surface-card));
+}
+
+.profile-highlight--compact .section-title {
+  font-size: 1.05rem;
+}
+
+.profile-highlight--compact .profile-highlight__tags {
+  margin-top: 6px;
+}
+
+.profile-highlight--compact .profile-tag {
+  font-size: 0.7rem;
+  padding: 4px 8px;
+}
+
 .profile-highlight__tags {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
   margin-top: 10px;
+}
+
+.profile-highlight__name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+  color: var(--color-primary);
+  text-shadow: 0 0 12px color-mix(in srgb, var(--color-primary) 45%, transparent);
 }
 
 .profile-tag {

@@ -20,6 +20,7 @@ import { AdvisorMessagesQueryDto } from "./dto/advisor-messages-query.dto";
 import { AdvisorRecommendationsQueryDto } from "./dto/advisor-recommendations-query.dto";
 import { CreateAdvisorMessageDto } from "./dto/create-advisor-message.dto";
 import { CreateAdvisorRecommendationDto } from "./dto/create-advisor-recommendation.dto";
+import { AssignClientProfileDto } from "./dto/assign-client-profile.dto";
 import { UpdateRecommendationDto } from "./dto/update-recommendation.dto";
 import { UpdateAdvisorProfileDto } from "./dto/update-advisor-profile.dto";
 import { ConsumptionAnalyticsService } from "../analytics/services/consumption-analytics.service";
@@ -150,6 +151,15 @@ export class AdvisorController {
 
     const months = monthsBack ? parseInt(monthsBack, 10) : 12;
     return this.consumptionAnalytics.getConsumptionAnalysis(clientId, months);
+  }
+
+  @Patch("clients/:clientId/profile")
+  assignClientProfile(
+    @CurrentUser() user: JwtPayload,
+    @Param("clientId", new ParseUUIDPipe()) clientId: string,
+    @Body() dto: AssignClientProfileDto,
+  ) {
+    return this.advisorService.assignClientProfile(user, clientId, dto);
   }
 
   @Get("risk-assessment")

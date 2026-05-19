@@ -82,15 +82,22 @@ export class ConsumptionAnalyticsService {
       const periodStart = new Date();
       periodStart.setMonth(periodStart.getMonth() - monthsBack);
 
-      return plainToInstance(ConsumptionAnalysisDto, {
+      // 6b. Evolución por categoría×mes
+      const categoryMonthlyEvolution = await this._getCategoryMonthlyEvolution(
+        clientId,
+        monthsBack,
+      );
+
+      return {
         highlights,
         categoryDistribution,
         monthlyEvolution,
         unusualExpenses,
+        categoryMonthlyEvolution,
         periodStart: periodStart.toISOString().split('T')[0],
         periodEnd: periodEnd.toISOString().split('T')[0],
         generatedAt: Date.now(),
-      });
+      } as ConsumptionAnalysisDto;
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
       if (error instanceof BadRequestException) throw error;
@@ -110,6 +117,7 @@ export class ConsumptionAnalyticsService {
   ): Promise<ConsumptionHighlightsDto> {
     const monthsAgo = new Date();
     monthsAgo.setMonth(monthsAgo.getMonth() - monthsBack);
+    const dateFrom = monthsAgo.toISOString().slice(0, 10);
 
     const { data, error } = await this.supabase
       .from('gastos')
@@ -123,7 +131,7 @@ export class ConsumptionAnalyticsService {
       `,
       )
       .eq('cliente_id', clientId)
-      .gte('creado_en', monthsAgo.toISOString())
+      .gte('fecha_gasto', dateFrom)
       .order('fecha_gasto', { ascending: false });
 
     if (error) {
@@ -137,10 +145,10 @@ export class ConsumptionAnalyticsService {
         transactionCount: 0,
         uniqueCategories: 0,
         maxExpense: 0,
-        mostFrequentMerchant: null,
-        dayOfHighestExpense: 0,
         minExpense: 0,
         uniqueMerchants: 0,
+        dayOfHighestExpense: 0,
+        topMerchants: [],
       };
     }
 
@@ -167,7 +175,7 @@ export class ConsumptionAnalyticsService {
       ? Number(Object.entries(expensesByDay).sort(([, a], [, b]) => b - a)[0][0])
       : 0;
 
-    // Comercio más frecuente
+    // Top 5 comercios por frecuencia
     const merchantFrequency = data.reduce(
       (acc, e) => {
         acc[e.comercio] = (acc[e.comercio] || 0) + 1;
@@ -176,11 +184,12 @@ export class ConsumptionAnalyticsService {
       {} as Record<string, number>,
     );
 
-    const mostFrequentMerchant = Object.entries(merchantFrequency).sort(
-      ([, a], [, b]) => b - a,
-    )[0]?.[0] ?? null;
+    const topMerchants = Object.entries(merchantFrequency)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5)
+      .map(([merchant, count]) => ({ merchant, count }));
 
-    // Categorías únicas
+    // Categorías y comercios únicos
     const uniqueCategories = new Set(data.map((e) => e.categoria_id)).size;
     const uniqueMerchants = Object.keys(merchantFrequency).length;
 
@@ -190,10 +199,10 @@ export class ConsumptionAnalyticsService {
       transactionCount: data.length,
       uniqueCategories,
       maxExpense: Number(maxExpense.toFixed(2)),
-      mostFrequentMerchant,
-      dayOfHighestExpense,
       minExpense: Number(minExpense.toFixed(2)),
       uniqueMerchants,
+      dayOfHighestExpense,
+      topMerchants,
     };
   }
 
@@ -206,6 +215,7 @@ export class ConsumptionAnalyticsService {
   ): Promise<CategoryDistributionDto[]> {
     const monthsAgo = new Date();
     monthsAgo.setMonth(monthsAgo.getMonth() - monthsBack);
+    const dateFrom = monthsAgo.toISOString().slice(0, 10);
 
     const { data, error } = await this.supabase
       .from('gastos')
@@ -220,7 +230,7 @@ export class ConsumptionAnalyticsService {
       `,
       )
       .eq('cliente_id', clientId)
-      .gte('creado_en', monthsAgo.toISOString());
+      .gte('fecha_gasto', dateFrom);
 
     if (error) {
       throw new BadRequestException('Error al obtener categorías');
@@ -289,12 +299,13 @@ export class ConsumptionAnalyticsService {
   ): Promise<MonthlyEvolutionEntryDto[]> {
     const monthsAgo = new Date();
     monthsAgo.setMonth(monthsAgo.getMonth() - monthsBack);
+    const dateFrom = monthsAgo.toISOString().slice(0, 10);
 
     const { data, error } = await this.supabase
       .from('gastos')
       .select('monto, fecha_gasto')
       .eq('cliente_id', clientId)
-      .gte('creado_en', monthsAgo.toISOString())
+      .gte('fecha_gasto', dateFrom)
       .order('fecha_gasto', { ascending: true });
 
     if (error) {
@@ -369,6 +380,72 @@ export class ConsumptionAnalyticsService {
   }
 
   /**
+   * Evolución mensual desglosada por categoría (top 5)
+   */
+  private async _getCategoryMonthlyEvolution(
+    clientId: string,
+    monthsBack: number,
+  ): Promise<{ months: string[]; series: { name: string; amounts: number[] }[] }> {
+    const monthsAgo = new Date();
+    monthsAgo.setMonth(monthsAgo.getMonth() - monthsBack);
+    const dateFrom = monthsAgo.toISOString().slice(0, 10);
+
+    const { data, error } = await this.supabase
+      .from('gastos')
+      .select(
+        `
+        monto,
+        fecha_gasto,
+        categoria_id,
+        categorias_de_gasto (nombre)
+      `,
+      )
+      .eq('cliente_id', clientId)
+      .gte('fecha_gasto', dateFrom)
+      .order('fecha_gasto', { ascending: true });
+
+    if (error || !data || data.length === 0) return { months: [], series: [] };
+
+    const monthSet = new Set<string>();
+    const categoryMap = new Map<
+      string,
+      { name: string; monthlyTotals: Map<string, number>; total: number }
+    >();
+
+    data.forEach((expense: any) => {
+      const date = new Date(expense.fecha_gasto);
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      const categoryId = expense.categoria_id;
+      const categoryName = expense.categorias_de_gasto?.nombre || 'Otros';
+      const amount = Number(expense.monto);
+
+      monthSet.add(monthKey);
+
+      if (!categoryMap.has(categoryId)) {
+        categoryMap.set(categoryId, { name: categoryName, monthlyTotals: new Map(), total: 0 });
+      }
+
+      const cat = categoryMap.get(categoryId)!;
+      cat.monthlyTotals.set(monthKey, (cat.monthlyTotals.get(monthKey) || 0) + amount);
+      cat.total += amount;
+    });
+
+    const months = Array.from(monthSet).sort();
+
+    const series = Array.from(categoryMap.values())
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 5)
+      .map((cat) => ({
+        name: cat.name,
+        amounts: months.map((m) =>
+          Number((cat.monthlyTotals.get(m) || 0).toFixed(2)),
+        ),
+      }));
+
+    return { months, series };
+  }
+
+  /**
    * Detectar gastos inusuales
    */
   private async _getUnusualExpenses(
@@ -377,6 +454,7 @@ export class ConsumptionAnalyticsService {
   ): Promise<UnusualExpenseDto[]> {
     const monthsAgo = new Date();
     monthsAgo.setMonth(monthsAgo.getMonth() - monthsBack);
+    const dateFrom = monthsAgo.toISOString().slice(0, 10);
 
     const { data, error } = await this.supabase
       .from('gastos')
@@ -391,7 +469,7 @@ export class ConsumptionAnalyticsService {
       `,
       )
       .eq('cliente_id', clientId)
-      .gte('creado_en', monthsAgo.toISOString())
+      .gte('fecha_gasto', dateFrom)
       .order('fecha_gasto', { ascending: false });
 
     if (error) {
@@ -412,17 +490,16 @@ export class ConsumptionAnalyticsService {
 
     const unusual = await this.anomalyDetection.detectAnomalies(expenses);
 
-    return unusual.map((u) =>
-      plainToInstance(UnusualExpenseDto, {
-        expenseId: u.id,
-        merchant: u.merchant,
-        amount: u.amount,
-        category: u.categoryName,
-        date: u.date,
-        zScore: Number(u.zScore.toFixed(2)),
-        reason: u.reason,
-        anomalyScore: Number(u.anomalyScore.toFixed(2)),
-      }),
-    );
+    return unusual.map((u) => ({
+      expenseId: u.id,
+      merchant: u.merchant,
+      amount: u.amount,
+      category: u.categoryName,
+      date: u.date,
+      zScore: Number(u.zScore.toFixed(2)),
+      reason: u.reason,
+      anomalyScore: Number(u.anomalyScore.toFixed(2)),
+      categoryMean: u.categoryMean,
+    }));
   }
 }

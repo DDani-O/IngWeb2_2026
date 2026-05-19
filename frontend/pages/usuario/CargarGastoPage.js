@@ -5,27 +5,17 @@ import { getInitials } from "../../utils/helpers.js";
 
 const DRAFT_STORAGE_KEY = "fintrack.userExpenseDraft.v1";
 const DEFAULT_PAYMENT_METHODS = ["Debito", "Credito", "Efectivo", "Transferencia"];
-const DEFAULT_OCR_SAMPLE = {
-  merchant: "Supermercado Central",
-  amount: 18500,
-  category: "Alimentacion",
-  paymentMethod: "Debito",
-  date: "2026-04-16",
-  description: "Compra semanal con ticket OCR",
-};
 
 export class CargarGastoPage extends PageController {
   constructor(element, options = {}) {
     super(element, options);
     this.categories = [];
     this.categoryMap = new Map();
-    this.formData = {
-      categories: [],
-      paymentMethods: [...DEFAULT_PAYMENT_METHODS],
-      suggestedMerchants: [],
-      ocrSample: { ...DEFAULT_OCR_SAMPLE },
-    };
+    this.paymentMethods = [...DEFAULT_PAYMENT_METHODS];
+    this.suggestedMerchants = [];
     this.recentExpenses = [];
+    this.currentTicketId = null;
+    this.ocrAnalysis = null;
   }
 
   render() {
@@ -52,6 +42,7 @@ export class CargarGastoPage extends PageController {
     const clearButton = this.element.querySelector("#clearExpenseFormButton");
     const analyzeButton = this.element.querySelector("#analyzeTicketButton");
     const fileInput = this.element.querySelector("#expenseTicketFile");
+    const dropzone = this.element.querySelector("#ticketDropzone");
 
     this.listen(form, "submit", (event) => this._handleFormSubmit(event));
     this.listen(form, "input", () => this._persistDraft());
@@ -62,12 +53,28 @@ export class CargarGastoPage extends PageController {
 
     this.listen(fileInput, "change", () => {
       const selectedFile = fileInput?.files?.[0];
-      this._setText(
-        "#ticketFileName",
-        selectedFile
-          ? `Archivo seleccionado: ${selectedFile.name}`
-          : "Arrastra una imagen o selecciona un archivo"
-      );
+      if (selectedFile) {
+        this._updateFileSelection(selectedFile);
+      }
+    });
+
+    this.listen(dropzone, "dragover", (event) => {
+      event.preventDefault();
+      dropzone.classList.add("ticket-dropzone--active");
+    });
+    this.listen(dropzone, "dragleave", () => {
+      dropzone.classList.remove("ticket-dropzone--active");
+    });
+    this.listen(dropzone, "drop", (event) => {
+      event.preventDefault();
+      dropzone.classList.remove("ticket-dropzone--active");
+      const droppedFile = event.dataTransfer?.files?.[0];
+      if (droppedFile && fileInput) {
+        const dt = new DataTransfer();
+        dt.items.add(droppedFile);
+        fileInput.files = dt.files;
+        this._updateFileSelection(droppedFile);
+      }
     });
 
     this._bindDashboardBackButtons();
@@ -98,7 +105,7 @@ export class CargarGastoPage extends PageController {
     if (paymentSelect) {
       paymentSelect.innerHTML = [
         '<option value="">Seleccionar metodo</option>',
-        ...this.formData.paymentMethods.map(
+        ...this.paymentMethods.map(
           (method) => `<option value="${method}">${method}</option>`
         ),
       ].join("");
@@ -111,7 +118,7 @@ export class CargarGastoPage extends PageController {
       return;
     }
 
-    datalist.innerHTML = this.formData.suggestedMerchants
+    datalist.innerHTML = this.suggestedMerchants
       .map((merchant) => `<option value="${merchant}"></option>`)
       .join("");
   }
@@ -156,18 +163,33 @@ export class CargarGastoPage extends PageController {
     try {
       const payload = this._readFormValues();
       const notes = this._buildNotes(payload);
+      let response;
 
-      const response = await apiClient.post("/expenses", {
-        amount: payload.amount,
-        merchant: payload.merchant,
-        categoryId: payload.categoryId,
-        date: payload.date,
-        notes,
-      });
+      if (this.currentTicketId) {
+        response = await apiClient.post(
+          `/tickets/${this.currentTicketId}/confirm`,
+          {
+            comercio: payload.merchant,
+            fecha: payload.date,
+            monto: payload.amount,
+            categoryId: payload.categoryId,
+            descripcion: notes || undefined,
+          },
+        );
+        this.currentTicketId = null;
+        this.ocrAnalysis = null;
+      } else {
+        response = await apiClient.post("/expenses", {
+          amount: payload.amount,
+          merchant: payload.merchant,
+          categoryId: payload.categoryId,
+          date: payload.date,
+          notes,
+        });
+      }
 
       const formatted = this._mapExpenseToUi(response);
       this.recentExpenses.unshift(formatted);
-
       if (this.recentExpenses.length > 6) {
         this.recentExpenses.pop();
       }
@@ -180,63 +202,182 @@ export class CargarGastoPage extends PageController {
     } catch (error) {
       this.options.showToast?.(
         error.message || "No se pudo registrar el gasto.",
-        "warning"
+        "warning",
       );
     }
   }
 
-  _analyzeTicket() {
+  async _analyzeTicket() {
     const fileInput = this.element.querySelector("#expenseTicketFile");
     const selectedFile = fileInput?.files?.[0];
 
     if (!selectedFile) {
-      this.options.showToast?.("Selecciona una imagen de ticket para analizar.", "warning");
+      this.options.showToast?.(
+        "Seleccioná una imagen o PDF del ticket para analizar.",
+        "warning",
+      );
       return;
     }
 
-    const sample = this.formData.ocrSample;
-    const categoryId = this._findCategoryIdByName(sample.category);
+    this._setOcrLoading(true);
+    this._showOcrResult(null);
+    this._showOcrError(null);
 
-    this._setInputValue("#expenseMerchant", sample.merchant);
-    this._setInputValue("#expenseAmount", String(sample.amount));
-    this._setInputValue("#expenseCategory", categoryId || "");
-    this._setInputValue("#expensePaymentMethod", sample.paymentMethod);
-    this._setInputValue("#expenseDate", sample.date);
-    this._setInputValue(
-      "#expenseDescription",
-      `${sample.description} · Archivo: ${selectedFile.name}`
-    );
+    try {
+      const formData = new FormData();
+      formData.append("file", selectedFile);
 
-    this._showOcrResult(sample, selectedFile.name);
-    this._persistDraft();
+      const response = await apiClient.postFile("/tickets/upload", formData);
 
-    this.options.showToast?.("Ticket analizado. Verifica los datos antes de guardar.", "success");
+      this.currentTicketId = response.ticketId;
+      this.ocrAnalysis = response.analysis;
+
+      const analysis = response.analysis;
+      const categoryId =
+        analysis.categoriaSugeridaId ||
+        this._findCategoryIdByName(analysis.categoriaSugeridaNombre);
+
+      if (analysis.comercioDetectado) {
+        this._setInputValue("#expenseMerchant", analysis.comercioDetectado);
+      }
+      if (analysis.montoDetectado != null) {
+        this._setInputValue("#expenseAmount", String(analysis.montoDetectado));
+      }
+      if (categoryId) {
+        this._setInputValue("#expenseCategory", categoryId);
+      }
+      if (analysis.fechaDetectada) {
+        this._setInputValue("#expenseDate", analysis.fechaDetectada);
+      }
+
+      this._showOcrResult(analysis, selectedFile.name);
+      this._persistDraft();
+      this.options.showToast?.(
+        "Ticket analizado correctamente. Revisá los datos antes de guardar.",
+        "success",
+      );
+    } catch (error) {
+      this.currentTicketId = null;
+      this.ocrAnalysis = null;
+      this._showOcrError(error.message || "No se pudo analizar el ticket.");
+      this.options.showToast?.(
+        error.message || "No se pudo analizar el ticket.",
+        "danger",
+      );
+    } finally {
+      this._setOcrLoading(false);
+    }
   }
 
-  _showOcrResult(data, fileName = "") {
+  _showOcrResult(analysis, fileName = "") {
     const card = this.element.querySelector("#ocrResultCard");
     const rows = this.element.querySelector("#ocrResultRows");
+    const badge = this.element.querySelector("#ocrConfidenceBadge");
 
     if (!card || !rows) {
       return;
     }
 
-    if (!data) {
+    if (!analysis) {
       card.classList.add("app-hidden");
       rows.innerHTML = "";
       return;
     }
 
-    rows.innerHTML = `
-      <div class="ocr-result__row"><span>Archivo</span><strong>${fileName}</strong></div>
-      <div class="ocr-result__row"><span>Comercio</span><strong>${data.merchant}</strong></div>
-      <div class="ocr-result__row"><span>Monto</span><strong>${formatCurrency(data.amount)}</strong></div>
-      <div class="ocr-result__row"><span>Categoria</span><strong>${data.category}</strong></div>
-      <div class="ocr-result__row"><span>Metodo</span><strong>${data.paymentMethod}</strong></div>
-      <div class="ocr-result__row"><span>Fecha</span><strong>${data.date}</strong></div>
-    `;
+    const confianza = analysis.confianciaGeneral ?? 0;
+    if (badge) {
+      const level =
+        confianza >= 75 ? "alta" : confianza >= 45 ? "media" : "baja";
+      badge.textContent = `Confianza ${confianza}%`;
+      badge.className = `ocr-confidence ocr-confidence--${level}`;
+    }
+
+    const rowData = [
+      { label: "Archivo", value: fileName || "—" },
+      {
+        label: "Comercio",
+        value: analysis.comercioDetectado || "No detectado",
+      },
+      {
+        label: "Monto",
+        value:
+          analysis.montoDetectado != null
+            ? formatCurrency(analysis.montoDetectado)
+            : "No detectado",
+      },
+      {
+        label: "Categoria sugerida",
+        value: analysis.categoriaSugeridaNombre || "No detectada",
+      },
+      { label: "Fecha", value: analysis.fechaDetectada || "No detectada" },
+    ];
+
+    rows.innerHTML = rowData
+      .map(
+        (row) =>
+          `<div class="ocr-result__row"><span>${row.label}</span><strong>${row.value}</strong></div>`,
+      )
+      .join("");
 
     card.classList.remove("app-hidden");
+  }
+
+  _updateFileSelection(file) {
+    this._setText("#ticketFileName", `Archivo: ${file.name}`);
+
+    const previewContainer = this.element.querySelector(
+      "#ticketPreviewContainer",
+    );
+    const imgPreview = this.element.querySelector("#ticketImagePreview");
+    const pdfPreview = this.element.querySelector("#ticketPdfPreview");
+    const pdfName = this.element.querySelector("#ticketPdfName");
+
+    if (!previewContainer) return;
+
+    previewContainer.classList.remove("app-hidden");
+
+    if (file.type === "application/pdf") {
+      imgPreview?.classList.add("app-hidden");
+      pdfPreview?.classList.remove("app-hidden");
+      if (pdfName) pdfName.textContent = file.name;
+    } else {
+      pdfPreview?.classList.add("app-hidden");
+      imgPreview?.classList.remove("app-hidden");
+      if (imgPreview) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          imgPreview.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+  }
+
+  _setOcrLoading(loading) {
+    const loadingEl = this.element.querySelector("#ocrLoadingState");
+    const analyzeBtn = this.element.querySelector("#analyzeTicketButton");
+
+    if (loadingEl) {
+      loadingEl.classList.toggle("app-hidden", !loading);
+    }
+    if (analyzeBtn) {
+      analyzeBtn.disabled = loading;
+    }
+  }
+
+  _showOcrError(message) {
+    const errorEl = this.element.querySelector("#ocrErrorState");
+    const msgEl = this.element.querySelector("#ocrErrorMessage");
+
+    if (!errorEl) return;
+
+    if (!message) {
+      errorEl.classList.add("app-hidden");
+      return;
+    }
+
+    if (msgEl) msgEl.textContent = message;
+    errorEl.classList.remove("app-hidden");
   }
 
   _persistDraft() {
@@ -267,7 +408,17 @@ export class CargarGastoPage extends PageController {
     const form = this.element.querySelector("#userExpenseForm");
     form?.reset();
     localStorage.removeItem(DRAFT_STORAGE_KEY);
+
+    this.currentTicketId = null;
+    this.ocrAnalysis = null;
+
     this._showOcrResult(null);
+    this._showOcrError(null);
+
+    const previewContainer = this.element.querySelector("#ticketPreviewContainer");
+    if (previewContainer) previewContainer.classList.add("app-hidden");
+    this._setText("#ticketFileName", "Arrastra una imagen o PDF, o hace click para seleccionar");
+
     this._setDateIfEmpty();
   }
 
@@ -336,7 +487,7 @@ export class CargarGastoPage extends PageController {
         .map((expense) => expense.merchant)
         .filter((value) => value && value.length > 0)
     );
-    this.formData.suggestedMerchants = Array.from(unique).slice(0, 8);
+    this.suggestedMerchants = Array.from(unique).slice(0, 8);
     this._renderMerchantSuggestions();
   }
 
@@ -351,7 +502,7 @@ export class CargarGastoPage extends PageController {
         "Sin categoria",
       paymentMethod: this._extractPaymentMethod(expense.notes),
       date: expense.date,
-      status: expense.ticketImageUrl ? "Pendiente" : "Validado",
+      status: expense.origin === "ticket" ? "OCR Confirmado" : "Validado",
       note: expense.notes || "",
     };
   }

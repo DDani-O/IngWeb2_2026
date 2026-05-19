@@ -62,6 +62,7 @@ export class AnomalyDetectionService {
           zScore,
           reason,
           anomalyScore: Math.min(1, anomalyScore),
+          categoryMean: Number(mean.toFixed(2)),
         });
       }
     });
