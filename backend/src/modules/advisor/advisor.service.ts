@@ -906,15 +906,22 @@ export class AdvisorService {
       updateData.notificar_push = dto.notifyPush;
     }
 
-    // Realizar actualización
+    // Realizar upsert (insert si no existe, update si existe)
+    const upsertData = {
+      ...updateData,
+      usuario_id: payload.sub,
+    };
+
     const { error } = await this.supabase
       .from('perfiles_asesores')
-      .update(updateData)
-      .eq('usuario_id', payload.sub);
+      .upsert(upsertData, {
+        onConflict: 'usuario_id',
+        ignoreDuplicates: false,
+      });
 
     if (error) {
-      console.error('Error updating advisor profile:', error);
-      throw new InternalServerErrorException('Error al actualizar el perfil');
+      console.error('Error upserting advisor profile:', error);
+      throw new InternalServerErrorException(`Error al actualizar el perfil: ${error.message} (code: ${error.code})`);
     }
 
     // Retornar perfil actualizado

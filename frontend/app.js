@@ -38,6 +38,13 @@ function initializeApplication() {
   eventBus.on(EVENTS.ROUTER.CHANGED, ({ path }) => {
     registerCurrentTabRoute(path);
   });
+
+  // Escuchar actualizaciones de usuario para sincronizar nombre en todas las páginas
+  eventBus.on(EVENTS.AUTH.USER_UPDATED, ({ user }) => {
+    if (user?.fullName) {
+      updateShellUserName(user.fullName);
+    }
+  });
 }
 
 function configureRouter() {
@@ -382,6 +389,49 @@ function getOrCreateTabId() {
   const generated = `tab-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
   sessionStorage.setItem(TAB_ID_STORAGE_KEY, generated);
   return generated;
+}
+
+/**
+ * Actualiza el nombre del usuario en el shell (topbar y sidebar)
+ * después de que el usuario edite su perfil.
+ * @param {string} fullName - Nombre completo del usuario
+ */
+function updateShellUserName(fullName) {
+  if (!fullName) return;
+
+  // Usuario: topbar y sidebar
+  const userTopbarName = document.querySelector("#userTopbarName");
+  const userSidebarName = document.querySelector("#userSidebarName");
+  const userSidebarInitials = document.querySelector("#userSidebarInitials");
+
+  if (userTopbarName) userTopbarName.textContent = fullName;
+  if (userSidebarName) userSidebarName.textContent = fullName;
+  if (userSidebarInitials) {
+    const initials = fullName
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
+    userSidebarInitials.textContent = initials || "JP";
+  }
+
+  // Asesor: topbar y sidebar
+  const advisorTopbarName = document.querySelector("#advisorTopbarName");
+  const advisorSidebarName = document.querySelector("#advisorSidebarName");
+  const advisorSidebarInitials = document.querySelector("#advisorSidebarInitials");
+
+  if (advisorTopbarName) advisorTopbarName.textContent = fullName;
+  if (advisorSidebarName) advisorSidebarName.textContent = fullName;
+  if (advisorSidebarInitials) {
+    const initials = fullName
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
+    advisorSidebarInitials.textContent = initials || "MR";
+  }
 }
 
 function readTabRegistry() {

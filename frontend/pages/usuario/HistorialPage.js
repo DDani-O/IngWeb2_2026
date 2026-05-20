@@ -30,12 +30,14 @@ export class HistorialPage extends PageController {
     const searchInput = this.element.querySelector("#historySearchInput");
     const categoryFilter = this.element.querySelector("#historyCategoryFilter");
     const statusFilter = this.element.querySelector("#historyStatusFilter");
+    const dateFilter = this.element.querySelector("#historyDateFilter");
     const sortFilter = this.element.querySelector("#historySortFilter");
     const tableBody = this.element.querySelector("#historyTableBody");
 
     this.listen(searchInput, "input", () => this._applyFilters());
     this.listen(categoryFilter, "change", () => this._applyFilters());
     this.listen(statusFilter, "change", () => this._applyFilters());
+    this.listen(dateFilter, "change", () => this._applyFilters());
     this.listen(sortFilter, "change", () => this._applyFilters());
 
     this.listen(tableBody, "click", (event) => this._handleTableAction(event));
@@ -61,6 +63,7 @@ export class HistorialPage extends PageController {
     const search = this._getValue("#historySearchInput").toLowerCase();
     const category = this._getValue("#historyCategoryFilter") || "Todas";
     const status = this._getValue("#historyStatusFilter") || "Todas";
+    const dateFilter = this._getValue("#historyDateFilter") || "todas";
     const sort = this._getValue("#historySortFilter") || "reciente";
 
     let result = [...this.expenses];
@@ -80,6 +83,41 @@ export class HistorialPage extends PageController {
 
     if (status !== "Todas") {
       result = result.filter((expense) => expense.status === status);
+    }
+
+    // Filtro por período de fecha
+    if (dateFilter !== "todas") {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+      result = result.filter((expense) => {
+        // Parsear la fecha del gasto (formato YYYY-MM-DD)
+        const [year, month, day] = expense.date.split("-").map(Number);
+        const expenseDate = new Date(year, month - 1, day); // month es 0-indexed
+
+        if (dateFilter === "semana") {
+          // Esta semana (lunes a domingo)
+          // Calcular el lunes de esta semana
+          const dayOfWeek = today.getDay(); // 0 = domingo, 1 = lunes, ..., 6 = sábado
+          const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+          const monday = new Date(today);
+          monday.setDate(today.getDate() - daysFromMonday);
+
+          // Calcular el domingo de esta semana
+          const sunday = new Date(monday);
+          sunday.setDate(monday.getDate() + 6);
+
+          return expenseDate >= monday && expenseDate <= sunday;
+        } else if (dateFilter === "mes") {
+          // Este mes
+          return expenseDate.getMonth() === today.getMonth() &&
+                 expenseDate.getFullYear() === today.getFullYear();
+        } else if (dateFilter === "anio") {
+          // Este año
+          return expenseDate.getFullYear() === today.getFullYear();
+        }
+        return true;
+      });
     }
 
     if (sort === "monto-desc") {

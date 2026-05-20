@@ -45,6 +45,7 @@ export const EVENTS = {
     REGISTER: "auth:register",
     ROLE_SELECTED: "auth:roleSelected",
     SESSION_EXPIRED: "auth:sessionExpired",
+    USER_UPDATED: "auth:userUpdated",
   },
   ROUTER: {
     NAVIGATE: "router:navigate",

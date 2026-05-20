@@ -125,6 +125,14 @@ export class AsesorPerfilPage extends PageController {
       const payload = this._readFormValues();
       const response = await apiClient.patch("/advisor/profile", payload);
       this._applyProfile(response);
+
+      // Sincronizar el nombre actualizado en AuthManager para todas las páginas
+      if (this.options.authManager && response?.fullName) {
+        this.options.authManager.updateUserData({
+          fullName: response.fullName,
+        });
+      }
+
       this.options.showToast?.("Perfil actualizado exitosamente", "success");
     } catch (error) {
       console.error("Error al guardar perfil:", error);

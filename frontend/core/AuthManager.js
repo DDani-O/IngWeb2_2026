@@ -156,6 +156,30 @@ export class AuthManager {
   }
 
   /**
+   * Actualiza los datos del usuario actual en memoria y localStorage.
+   * Usar después de editar el perfil para sincronizar en todas las páginas.
+   */
+  updateUserData(updatedFields) {
+    if (!this.currentUser) {
+      return;
+    }
+
+    const updatedUser = {
+      ...this.currentUser,
+      ...updatedFields,
+    };
+
+    this.currentUser = updatedUser;
+    localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(updatedUser));
+
+    stateManager.patch({
+      user: updatedUser,
+    });
+
+    eventBus.emit(EVENTS.AUTH.USER_UPDATED, { user: updatedUser });
+  }
+
+  /**
    * Retorna el rol actual o null si no hay sesion.
    */
   getCurrentRole() {

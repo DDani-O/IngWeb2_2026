@@ -76,6 +76,7 @@ export class PerfilPage extends PageController {
     this._setInputValue("#profilePhone", this.profile.phone);
     this._setInputValue("#profileCountry", this.profile.country);
     this._setInputValue("#profileOccupation", this.profile.occupation);
+    this._setInputValue("#profileDescription", this.profile.description);
     this._setInputValue("#profileCurrency", this.profile.currency || "ARS");
     this._setInputValue("#profileMonthlyIncome", String(this.profile.monthlyIncome));
     this._setInputValue("#profileSavingsGoal", String(this.profile.savingsGoal));
@@ -105,10 +106,22 @@ export class PerfilPage extends PageController {
 
     try {
       const payload = this._readFormValues();
+      console.log('[PerfilPage] Payload enviado al backend:', payload);
       const response = await apiClient.patch("/users/me", payload);
-      this._applyProfile(this._mapProfile(response));
+      console.log('[PerfilPage] Respuesta del backend:', response);
+      const updatedProfile = this._mapProfile(response);
+      this._applyProfile(updatedProfile);
+
+      // Sincronizar el nombre actualizado en AuthManager para todas las páginas
+      if (this.options.authManager && updatedProfile.fullName) {
+        this.options.authManager.updateUserData({
+          fullName: updatedProfile.fullName,
+        });
+      }
+
       this.options.showToast?.("Perfil actualizado correctamente.", "success");
     } catch (error) {
+      console.error('[PerfilPage] Error al guardar perfil:', error);
       this.options.showToast?.(
         error.message || "No se pudo actualizar el perfil.",
         "warning"
@@ -132,6 +145,7 @@ export class PerfilPage extends PageController {
       phone: "",
       country: "",
       occupation: "",
+      description: "",
       monthlyIncome: 0,
       savingsGoal: 0,
       alertThreshold: 0,
@@ -185,6 +199,7 @@ export class PerfilPage extends PageController {
       memberSince: this._formatMonthYear(payload?.createdAt),
       lastLogin: this._formatDateTime(payload?.lastLogin),
       advisorName: payload?.advisorName || "",
+      description: payload?.description || "",
     };
   }
 
@@ -235,6 +250,7 @@ export class PerfilPage extends PageController {
       phone: this._getValue("#profilePhone"),
       country: this._getValue("#profileCountry"),
       occupation: this._getValue("#profileOccupation"),
+      description: this._getValue("#profileDescription"),
       currency: this._getValue("#profileCurrency").toUpperCase(),
       monthlyIncome: Number(this._getValue("#profileMonthlyIncome") || 0),
       savingsGoal: Number(this._getValue("#profileSavingsGoal") || 0),

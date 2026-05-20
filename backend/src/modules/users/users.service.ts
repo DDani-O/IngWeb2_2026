@@ -20,6 +20,7 @@ interface UserRow {
   rol: "cliente" | "asesor";
   email: string | null;
   foto_perfil_url: string | null;
+  biografia: string | null;
   creado_en: string;
   ultimo_acceso: string | null;
 }
@@ -120,6 +121,7 @@ export class UsersService {
         notifyEmail: profile?.notificar_email ?? true,
         notifyPush: profile?.notificar_push ?? false,
         financialGoal: profile?.objetivo_financiero ?? null,
+        description: userRow.biografia ?? null,
       };
     }
 
@@ -142,8 +144,7 @@ export class UsersService {
     if (payload.role === "cliente") {
       if (
         dto.licenseNumber !== undefined ||
-        dto.specialty !== undefined ||
-        dto.description !== undefined
+        dto.specialty !== undefined
       ) {
         throw new BadRequestException("Campos no permitidos para el rol cliente");
       }
@@ -171,6 +172,9 @@ export class UsersService {
     }
     if (dto.avatarUrl !== undefined) {
       userUpdates.foto_perfil_url = dto.avatarUrl;
+    }
+    if (dto.description !== undefined) {
+      userUpdates.biografia = dto.description;
     }
 
     if (Object.keys(userUpdates).length > 0) {
@@ -222,13 +226,25 @@ export class UsersService {
       }
 
       if (Object.keys(profileUpdates).length > 0) {
+        console.log('[updateMe] Profile updates payload:', profileUpdates);
+
+        // Primero intentamos hacer upsert (insert si no existe, update si existe)
+        // Necesitamos incluir usuario_id para el caso de insert
+        const upsertData = {
+          ...profileUpdates,
+          usuario_id: payload.sub,
+        };
+
         const { error } = await this.supabase
           .from("perfiles_usuarios")
-          .update(profileUpdates)
-          .eq("usuario_id", payload.sub);
+          .upsert(upsertData, {
+            onConflict: 'usuario_id',
+            ignoreDuplicates: false,
+          });
 
         if (error) {
-          throw new InternalServerErrorException("No se pudo actualizar el perfil");
+          console.error('[updateMe] Supabase error upserting perfiles_usuarios:', error);
+          throw new InternalServerErrorException(`Error al actualizar perfil: ${error.message} (code: ${error.code})`);
         }
       }
     } else {
@@ -245,16 +261,25 @@ export class UsersService {
       }
 
       if (Object.keys(advisorUpdates).length > 0) {
+        // Usar upsert para crear el perfil del asesor si no existe
+        const upsertData = {
+          ...advisorUpdates,
+          usuario_id: payload.sub,
+        };
+
         const { error } = await this.supabase
           .from("perfiles_asesores")
-          .update(advisorUpdates)
-          .eq("usuario_id", payload.sub);
+          .upsert(upsertData, {
+            onConflict: 'usuario_id',
+            ignoreDuplicates: false,
+          });
 
         if (error) {
+          console.error('[updateMe] Supabase error upserting perfiles_asesores:', error);
           if (this.isUniqueViolation(error)) {
             throw new ConflictException("La matricula ya esta registrada");
           }
-          throw new InternalServerErrorException("No se pudo actualizar el perfil");
+          throw new InternalServerErrorException(`Error al actualizar perfil: ${error.message} (code: ${error.code})`);
         }
       }
     }
@@ -454,7 +479,7 @@ export class UsersService {
   private async fetchUserRow(userId: string): Promise<UserRow> {
     const { data, error } = await this.supabase
       .from("usuarios")
-      .select("id, nombre_completo, rol, email, foto_perfil_url, creado_en, ultimo_acceso")
+      .select("id, nombre_completo, rol, email, foto_perfil_url, biografia, creado_en, ultimo_acceso")
       .eq("id", userId)
       .single();
 
