@@ -98,7 +98,7 @@ export class AdvisorService {
     const now = new Date();
     const oneYearAgo = this.addMonths(now, -12);
     const startOfMonth = this.startOfMonth(now);
-    const tomorrow = this.addDays(now, 1);
+    const endOfMonth = this.endOfMonth(now);
 
     const [
       clientRows,
@@ -110,8 +110,8 @@ export class AdvisorService {
     ] = await Promise.all([
       this.fetchClientRows(clientIds),
       this.fetchActiveProfileMap(clientIds),
-      this.fetchExpensesByRange(clientIds, this.formatDate(oneYearAgo), this.formatDate(tomorrow)),
-      this.fetchExpensesByRange(clientIds, this.formatDate(startOfMonth), this.formatDate(tomorrow)),
+      this.fetchExpensesByRange(clientIds, this.formatDate(oneYearAgo), this.formatDate(now)),
+      this.fetchExpensesByRange(clientIds, this.formatDate(startOfMonth), this.formatDate(endOfMonth)),
       this.fetchLastExpenseMap(clientIds),
       this.fetchRecommendationRows(payload.sub),
     ]);
@@ -1058,6 +1058,10 @@ export class AdvisorService {
     return new Date(date.getFullYear(), date.getMonth(), 1);
   }
 
+  private endOfMonth(date: Date) {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0);
+  }
+
   private addMonths(date: Date, months: number) {
     const updated = new Date(date.getTime());
     updated.setMonth(updated.getMonth() + months);
@@ -1309,7 +1313,7 @@ export class AdvisorService {
       .select("cliente_id, monto, fecha_gasto")
       .in("cliente_id", clientIds)
       .gte("fecha_gasto", from)
-      .lt("fecha_gasto", to);
+      .lte("fecha_gasto", to);
 
     if (error) {
       throw new InternalServerErrorException("No se pudieron cargar los gastos");
