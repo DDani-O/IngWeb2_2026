@@ -2,6 +2,7 @@ import { Transform, Type } from "class-transformer";
 import {
   IsArray,
   IsEnum,
+  IsIn,
   IsNumber,
   IsOptional,
   IsString,
@@ -30,13 +31,11 @@ export class CreateAdvisorRecommendationDto {
   @MaxLength(1000)
   content!: string;
 
-  @Transform(({ value }) => (typeof value === "string" ? value.toLowerCase() : value))
-  @IsEnum(AdvisorRecommendationType)
+  @IsIn(["sugerencia", "alerta", "observacion"])
   type!: AdvisorRecommendationType;
 
   @IsOptional()
-  @Transform(({ value }) => (typeof value === "string" ? value.toLowerCase() : value))
-  @IsEnum(AdvisorRecommendationPriority)
+  @IsIn(["alta", "media", "baja"])
   priority?: AdvisorRecommendationPriority;
 
   @IsOptional()

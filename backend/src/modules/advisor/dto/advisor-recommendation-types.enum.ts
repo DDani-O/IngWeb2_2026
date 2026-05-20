@@ -1,7 +1,7 @@
 export enum AdvisorRecommendationType {
+  Sugerencia = "sugerencia",
   Alerta = "alerta",
-  Consejo = "consejo",
-  Felicitacion = "felicitacion",
+  Observacion = "observacion",
 }
 
 export enum AdvisorRecommendationPriority {

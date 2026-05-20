@@ -529,9 +529,9 @@ export class AsesorDashboardPage extends PageController {
     if (normalized.includes("alerta") || normalized.includes("presupuesto")) {
       return "alerta";
     }
-    if (normalized.includes("felicitacion")) {
-      return "felicitacion";
+    if (normalized.includes("observacion")) {
+      return "observacion";
     }
-    return "consejo";
+    return "sugerencia";
   }
 }

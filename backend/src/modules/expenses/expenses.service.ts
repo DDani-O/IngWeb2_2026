@@ -392,6 +392,7 @@ export class ExpensesService {
       date: expense.fecha_gasto,
       notes: expense.descripcion,
       ticketImageUrl: expense.ticket_principal_id || null,
+      ocrEstado: expense.ocr_estado || null,
       userId: expense.cliente_id,
       createdAt: expense.creado_en,
     };

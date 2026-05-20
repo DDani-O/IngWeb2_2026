@@ -473,10 +473,10 @@ export class AsesorClientesPage extends PageController {
     if (normalized === "alerta") {
       return "alerta";
     }
-    if (normalized === "felicitacion") {
-      return "felicitacion";
+    if (normalized === "observacion") {
+      return "observacion";
     }
-    return "consejo";
+    return "sugerencia";
   }
 
 }

@@ -164,7 +164,11 @@ export class HistorialPage extends PageController {
               <span class="badge-soft ${
                 expense.status === "Validado"
                   ? "badge-soft--success"
-                  : "badge-soft--warning"
+                  : expense.status === "Error"
+                    ? "badge-soft--danger"
+                    : expense.status === "Procesando"
+                      ? "badge-soft--info"
+                      : "badge-soft--warning"
               }">${expense.status}</span>
             </td>
             <td>
@@ -260,6 +264,17 @@ export class HistorialPage extends PageController {
   }
 
   _mapExpenseToUi(expense) {
+    // Determinar estado basado en ocrEstado del backend
+    // Valores posibles: 'procesando', 'procesado', 'error', null
+    let status = "Validado";
+    if (expense.ocrEstado === "procesando") {
+      status = "Procesando";
+    } else if (expense.ocrEstado === "error") {
+      status = "Error";
+    } else if (expense.ticketImageUrl && !expense.ocrEstado) {
+      status = "Pendiente";
+    }
+
     return {
       id: expense.id,
       date: expense.date,
@@ -267,7 +282,7 @@ export class HistorialPage extends PageController {
       category: expense.categoryName || "Sin categoria",
       amount: Number(expense.amount) || 0,
       paymentMethod: this._extractPaymentMethod(expense.notes),
-      status: expense.ticketImageUrl ? "Pendiente" : "Validado",
+      status: status,
       note: expense.notes || "",
     };
   }

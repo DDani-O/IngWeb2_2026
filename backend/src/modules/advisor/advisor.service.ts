@@ -96,31 +96,21 @@ export class AdvisorService {
     }
 
     const now = new Date();
-    const startOfMonth = this.startOfMonth(now);
-    const startOfPrevMonth = this.startOfMonth(this.addMonths(now, -1));
+    const oneYearAgo = this.addMonths(now, -12);
     const tomorrow = this.addDays(now, 1);
-    const lastWeek = this.addDays(now, -6);
 
     const [
       clientRows,
       profileMap,
-      currentMonthRows,
-      previousMonthRows,
+      yearlyRows,
       lastExpenseMap,
       recommendationRows,
-      dailyRows,
     ] = await Promise.all([
       this.fetchClientRows(clientIds),
       this.fetchActiveProfileMap(clientIds),
-      this.fetchExpensesByRange(clientIds, this.formatDate(startOfMonth), this.formatDate(tomorrow)),
-      this.fetchExpensesByRange(
-        clientIds,
-        this.formatDate(startOfPrevMonth),
-        this.formatDate(startOfMonth),
-      ),
+      this.fetchExpensesByRange(clientIds, this.formatDate(oneYearAgo), this.formatDate(tomorrow)),
       this.fetchLastExpenseMap(clientIds),
       this.fetchRecommendationRows(payload.sub),
-      this.fetchExpensesByRange(clientIds, this.formatDate(lastWeek), this.formatDate(tomorrow)),
     ]);
 
     const emailMap = new Map<string, string | null>();
@@ -130,8 +120,8 @@ export class AdvisorService {
       clientRows,
       emailMap,
       profileMap,
-      currentMonthRows,
-      previousMonthRows,
+      yearlyRows,
+      [],
       lastExpenseMap,
       new Map(),
       now,
@@ -139,8 +129,8 @@ export class AdvisorService {
 
     const stats = this.buildStats(
       clients,
-      currentMonthRows,
-      previousMonthRows,
+      yearlyRows,
+      [],
       assignments,
       clientIds,
     );
@@ -149,7 +139,7 @@ export class AdvisorService {
 
     const recommendations = this.buildRecommendationSummary(recommendationRows);
 
-    const charts = this.buildCharts(profileMap, currentMonthRows, dailyRows);
+    const charts = this.buildCharts(profileMap, yearlyRows, []);
 
     return {
       advisor: {
@@ -186,20 +176,14 @@ export class AdvisorService {
     }
 
     const now = new Date();
-    const startOfMonth = this.startOfMonth(now);
-    const startOfPrevMonth = this.startOfMonth(this.addMonths(now, -1));
+    const oneYearAgo = this.addMonths(now, -12);
     const tomorrow = this.addDays(now, 1);
 
-    const [clientRows, profileMap, currentMonthRows, previousMonthRows, lastExpenseMap] =
+    const [clientRows, profileMap, yearlyRows, lastExpenseMap] =
       await Promise.all([
         this.fetchClientRows(clientIds),
         this.fetchActiveProfileMap(clientIds),
-        this.fetchExpensesByRange(clientIds, this.formatDate(startOfMonth), this.formatDate(tomorrow)),
-        this.fetchExpensesByRange(
-          clientIds,
-          this.formatDate(startOfPrevMonth),
-          this.formatDate(startOfMonth),
-        ),
+        this.fetchExpensesByRange(clientIds, this.formatDate(oneYearAgo), this.formatDate(tomorrow)),
         this.fetchLastExpenseMap(clientIds),
       ]);
 
@@ -209,8 +193,8 @@ export class AdvisorService {
       clientRows,
       emailMap,
       profileMap,
-      currentMonthRows,
-      previousMonthRows,
+      yearlyRows,
+      [],
       lastExpenseMap,
       new Map(),
       now,
@@ -275,18 +259,12 @@ export class AdvisorService {
     ]);
 
     const now = new Date();
-    const startOfMonth = this.startOfMonth(now);
-    const startOfPrevMonth = this.startOfMonth(this.addMonths(now, -1));
+    const oneYearAgo = this.addMonths(now, -12);
     const tomorrow = this.addDays(now, 1);
 
-    const [currentRows, previousRows, lastExpenseMap] =
+    const [yearlyRows, lastExpenseMap] =
       await Promise.all([
-        this.fetchExpensesByRange([clientId], this.formatDate(startOfMonth), this.formatDate(tomorrow)),
-        this.fetchExpensesByRange(
-          [clientId],
-          this.formatDate(startOfPrevMonth),
-          this.formatDate(startOfMonth),
-        ),
+        this.fetchExpensesByRange([clientId], this.formatDate(oneYearAgo), this.formatDate(tomorrow)),
         this.fetchLastExpenseMap([clientId]),
       ]);
 
@@ -296,8 +274,8 @@ export class AdvisorService {
       [clientRow],
       emailMap,
       new Map([[clientId, activeProfile]]),
-      currentRows,
-      previousRows,
+      yearlyRows,
+      [],
       lastExpenseMap,
       new Map(),
       now,
@@ -344,7 +322,7 @@ export class AdvisorService {
     let request = this.supabase
       .from("gastos")
       .select(
-        "id, cliente_id, categoria_id, comercio, fecha_gasto, monto, descripcion, ticket_principal_id, creado_en, categoria:categoria_id (nombre), ticket:ticket_principal_id (url_archivo)",
+        "id, cliente_id, categoria_id, comercio, fecha_gasto, monto, descripcion, ticket_principal_id, ocr_estado, ocr_confianza, creado_en, categoria:categoria_id (nombre), ticket:ticket_principal_id (url_archivo)",
         { count: "exact" },
       )
       .eq("cliente_id", clientId)
@@ -385,6 +363,8 @@ export class AdvisorService {
       date: row.fecha_gasto,
       notes: row.descripcion ?? null,
       ticketImageUrl: row.ticket?.url_archivo ?? null,
+      ocrEstado: row.ocr_estado ?? null,
+      ocrConfianza: row.ocr_confianza ?? null,
       userId: row.cliente_id,
       createdAt: row.creado_en,
     }));
@@ -966,8 +946,8 @@ export class AdvisorService {
     // Get all clients with their expense info
     const clients = await this.fetchClientRows(clientIds);
     const now = new Date();
-    const thisPeriodStart = this.addMonths(now, -1);
-    const lastPeriodStart = this.addMonths(thisPeriodStart, -1);
+    const thisPeriodStart = this.addMonths(now, -6);  // últimos 6 meses
+    const lastPeriodStart = this.addMonths(thisPeriodStart, -6);  // 6 meses anteriores
 
     const thisPeriodExpenses = await this.fetchExpensesByRange(
       clientIds,
@@ -1167,9 +1147,9 @@ export class AdvisorService {
   private buildRecommendationTitle(type: AdvisorRecommendationType, content: string) {
     const fallback = type === AdvisorRecommendationType.Alerta
       ? "Alerta financiera"
-      : type === AdvisorRecommendationType.Felicitacion
-        ? "Felicitacion"
-        : "Recomendacion financiera";
+      : type === AdvisorRecommendationType.Observacion
+        ? "Observacion"
+        : "Sugerencia financiera";
 
     const trimmed = content.trim();
     if (trimmed.length >= 3) {
@@ -1341,7 +1321,7 @@ export class AdvisorService {
       return new Map<string, string>();
     }
 
-    const start = this.formatDate(this.addDays(new Date(), -120));
+    const start = this.formatDate(this.addMonths(new Date(), -12));
 
     const { data, error } = await this.supabase
       .from("gastos")
@@ -1722,21 +1702,21 @@ export class AdvisorService {
     if (type === AdvisorRecommendationType.Alerta) {
       return "alerta";
     }
-    if (type === AdvisorRecommendationType.Felicitacion) {
-      return "felicitacion";
+    if (type === AdvisorRecommendationType.Observacion) {
+      return "observacion";
     }
-    return "consejo";
+    return "sugerencia";
   }
 
   private mapRecommendationTypeFromDb(value: string | null) {
-    const normalized = (value || "consejo").toLowerCase();
+    const normalized = (value || "sugerencia").toLowerCase();
     if (normalized === "alerta") {
       return "alerta";
     }
-    if (normalized === "felicitacion") {
-      return "felicitacion";
+    if (normalized === "observacion") {
+      return "observacion";
     }
-    return "consejo";
+    return "sugerencia";
   }
 
   private mapPriority(value: string | null) {
