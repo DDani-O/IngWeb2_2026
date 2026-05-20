@@ -18,6 +18,7 @@ interface UserRow {
   id: string;
   nombre_completo: string;
   rol: "cliente" | "asesor";
+  email: string | null;
   foto_perfil_url: string | null;
   creado_en: string;
   ultimo_acceso: string | null;
@@ -41,6 +42,9 @@ interface AdvisorProfileRow {
   matricula: string | null;
   especialidad: string | null;
   descripcion: string | null;
+  telefono: string | null;
+  pais: string | null;
+  capacidad_maxima: number | null;
 }
 
 interface RecommendationRow {
@@ -78,7 +82,7 @@ export class UsersService {
 
     const base = {
       id: userRow.id,
-      email: payload.email,
+      email: userRow.email,
       fullName: userRow.nombre_completo,
       role: this.mapRole(userRow.rol),
       avatarUrl: userRow.foto_perfil_url,
@@ -126,6 +130,9 @@ export class UsersService {
       licenseNumber: advisorProfile?.matricula ?? null,
       specialty: advisorProfile?.especialidad ?? null,
       description: advisorProfile?.descripcion ?? null,
+      phone: advisorProfile?.telefono ?? null,
+      country: advisorProfile?.pais ?? null,
+      maxCapacity: advisorProfile?.capacidad_maxima ?? 5,
     };
   }
 
@@ -447,7 +454,7 @@ export class UsersService {
   private async fetchUserRow(userId: string): Promise<UserRow> {
     const { data, error } = await this.supabase
       .from("usuarios")
-      .select("id, nombre_completo, rol, foto_perfil_url, creado_en, ultimo_acceso")
+      .select("id, nombre_completo, rol, email, foto_perfil_url, creado_en, ultimo_acceso")
       .eq("id", userId)
       .single();
 
@@ -477,7 +484,7 @@ export class UsersService {
   private async fetchAdvisorProfile(userId: string): Promise<AdvisorProfileRow | null> {
     const { data, error } = await this.supabase
       .from("perfiles_asesores")
-      .select("matricula, especialidad, descripcion")
+      .select("matricula, especialidad, descripcion, telefono, pais, capacidad_maxima")
       .eq("usuario_id", userId)
       .maybeSingle();
 
@@ -686,11 +693,11 @@ export class UsersService {
   }
 
   private mapType(value: string | null) {
-    const normalized = (value || "sugerencia").toLowerCase();
+    const normalized = (value || "consejo").toLowerCase();
     if (normalized === "alerta") {
       return "alerta";
     }
-    if (normalized === "observacion") {
+    if (normalized === "felicitacion") {
       return "felicitacion";
     }
     return "consejo";

@@ -36,19 +36,6 @@ Eso deja claro que hay que revisar toda esa parte del perfil.
 
 ## Deuda tecnica
 
-### 7. `analisis_de_consumo` — tabla sin escritura activa
-
-**Descripcion:** La tabla `analisis_de_consumo` existe en la BD pero el servicio actual calcula analytics dinamicamente desde `gastos`. La tabla no se llena desde la API.
-
-**Opciones:**
-- A) Deprecar gradualmente: marcar como legacy, no hacer nuevas queries
-- B) Agregar un job periodico (cron) que calcule y persista snapshots para metricas historicas
-
-**Recomendacion:** Mantener sin cambios hasta que se necesite performance o historial a largo plazo. No eliminar aun (constraints y RLS activas).
-
-### 8. Reportes del asesor (`/advisor/reports`)
-
-**Descripcion:** El endpoint `/advisor/reports` retorna datos calculados en el servicio. Revisar si hay datos que deberian venir de la BD y no estan siendo consultados correctamente.
 
 ### 9. Pantalla de perfiles del asesor (`/asesor/perfil`)
 

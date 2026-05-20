@@ -13,8 +13,6 @@ export class PerfilPage extends PageController {
 
   render() {
     this._resetViewPosition();
-    this._renderSummary();
-    this._fillFormValues();
     this._syncShellUser(this.profile.fullName);
     this._loadProfile();
   }

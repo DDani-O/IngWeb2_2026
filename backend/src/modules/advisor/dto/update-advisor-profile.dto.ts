@@ -6,6 +6,7 @@ import {
   Max,
   MaxLength,
   IsInt,
+  IsBoolean,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -15,6 +16,11 @@ import { Type } from 'class-transformer';
  * Campos editables: specialty, description, maxCapacity, phone, country
  */
 export class UpdateAdvisorProfileDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  fullName?: string;
+
   @IsOptional()
   @IsString()
   @MaxLength(120)
@@ -41,4 +47,14 @@ export class UpdateAdvisorProfileDto {
   @IsString()
   @MaxLength(80)
   country?: string;
+
+  @IsOptional()
+  @Type(() => Boolean)
+  @IsBoolean()
+  notifyEmail?: boolean;
+
+  @IsOptional()
+  @Type(() => Boolean)
+  @IsBoolean()
+  notifyPush?: boolean;
 }

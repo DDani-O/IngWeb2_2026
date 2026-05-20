@@ -80,7 +80,7 @@ export class AdvisorService {
         advisor: {
           id: payload.sub,
           name: advisorRow.nombre_completo,
-          email: payload.email,
+          email: advisorRow.email,
           photo: advisorRow.foto_perfil_url,
           role: "asesor",
           totalClients: 0,
@@ -155,7 +155,7 @@ export class AdvisorService {
       advisor: {
         id: payload.sub,
         name: advisorRow.nombre_completo,
-        email: payload.email,
+        email: advisorRow.email,
         photo: advisorRow.foto_perfil_url,
         role: "asesor",
         totalClients: clientIds.length,
@@ -818,7 +818,7 @@ export class AdvisorService {
     // Obtener datos de usuario
     const { data: userRow, error: userError } = await this.supabase
       .from('usuarios')
-      .select('id, nombre_completo, email, foto_perfil_url, creado_en, actualizado_en')
+      .select('id, nombre_completo, email, foto_perfil_url, biografia, creado_en, actualizado_en')
       .eq('id', payload.sub)
       .single();
 
@@ -832,15 +832,17 @@ export class AdvisorService {
     return {
       id: advisorRow.id,
       userId: advisorRow.usuario_id,
-      email: payload.email,
+      email: userRow.email || payload.email,
       fullName: userRow.nombre_completo,
       licenseNumber: advisorRow.matricula,
       specialty: advisorRow.especialidad,
-      description: advisorRow.descripcion,
+      description: userRow.biografia || advisorRow.descripcion,
       maxCapacity: advisorRow.capacidad_maxima,
       activeClientsCount,
       phone: advisorRow.telefono,
       country: advisorRow.pais,
+      notifyEmail: advisorRow.notificar_email ?? true,
+      notifyPush: advisorRow.notificar_push ?? false,
       photo: userRow.foto_perfil_url,
       createdAt: advisorRow.creado_en,
       updatedAt: advisorRow.actualizado_en,
@@ -857,7 +859,24 @@ export class AdvisorService {
   ): Promise<GetAdvisorProfileDto> {
     const payload = this.ensureAdvisor(user);
 
-    // Validación: capacidad debe ser al menos 1
+    // 1. Actualizar tabla 'usuarios' si se incluye fullName o description
+    if (dto.fullName !== undefined || dto.description !== undefined) {
+      const userUpdateData: Record<string, any> = {};
+      if (dto.fullName !== undefined) userUpdateData.nombre_completo = dto.fullName;
+      if (dto.description !== undefined) userUpdateData.biografia = dto.description;
+
+      const { error: userUpdateError } = await this.supabase
+        .from('usuarios')
+        .update(userUpdateData)
+        .eq('id', payload.sub);
+
+      if (userUpdateError) {
+        console.error('Error updating advisor in usuarios:', userUpdateError);
+        throw new InternalServerErrorException('Error al actualizar los datos del usuario');
+      }
+    }
+
+    // 2. Validación: capacidad debe ser al menos 1
     if (dto.maxCapacity !== undefined && dto.maxCapacity < 1) {
       throw new BadRequestException('La capacidad debe ser al menos 1');
     }
@@ -872,13 +891,6 @@ export class AdvisorService {
       updateData.descripcion = dto.description;
     }
     if (dto.maxCapacity !== undefined) {
-      // Validar que no sea menor a clientes activos actuales
-      const activeCount = await this.countActiveClientsForAdvisor(payload.sub);
-      if (dto.maxCapacity < activeCount) {
-        throw new BadRequestException(
-          `Capacidad mínima debe ser al menos ${activeCount} (clientes activos actuales)`,
-        );
-      }
       updateData.capacidad_maxima = dto.maxCapacity;
     }
     if (dto.phone !== undefined) {
@@ -886,6 +898,12 @@ export class AdvisorService {
     }
     if (dto.country !== undefined) {
       updateData.pais = dto.country;
+    }
+    if (dto.notifyEmail !== undefined) {
+      updateData.notificar_email = dto.notifyEmail;
+    }
+    if (dto.notifyPush !== undefined) {
+      updateData.notificar_push = dto.notifyPush;
     }
 
     // Realizar actualización
@@ -1157,7 +1175,7 @@ export class AdvisorService {
   private async fetchAdvisorRow(advisorId: string): Promise<UserRow> {
     const { data, error } = await this.supabase
       .from("usuarios")
-      .select("id, nombre_completo, foto_perfil_url, email, estado, creado_en")
+      .select("id, nombre_completo, foto_perfil_url, email, estado, biografia, creado_en")
       .eq("id", advisorId)
       .single();
 
@@ -1171,7 +1189,7 @@ export class AdvisorService {
   private async fetchUserRow(userId: string): Promise<UserRow> {
     const { data, error } = await this.supabase
       .from("usuarios")
-      .select("id, nombre_completo, foto_perfil_url, email, estado, creado_en")
+      .select("id, nombre_completo, foto_perfil_url, email, estado, biografia, creado_en")
       .eq("id", userId)
       .single();
 
@@ -1698,17 +1716,17 @@ export class AdvisorService {
       return "alerta";
     }
     if (type === AdvisorRecommendationType.Felicitacion) {
-      return "observacion";
+      return "felicitacion";
     }
-    return "sugerencia";
+    return "consejo";
   }
 
   private mapRecommendationTypeFromDb(value: string | null) {
-    const normalized = (value || "sugerencia").toLowerCase();
+    const normalized = (value || "consejo").toLowerCase();
     if (normalized === "alerta") {
       return "alerta";
     }
-    if (normalized === "observacion") {
+    if (normalized === "felicitacion") {
       return "felicitacion";
     }
     return "consejo";

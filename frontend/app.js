@@ -290,15 +290,18 @@ function configureRouter() {
     }),
     createAdvisorRoute({
       path: ROUTES.ADVISOR_REPORTES,
-      templateUrl: "./pages/asesor/reportes.html",
-      pageModulePath: "./pages/asesor/AsesorReportesPage.js",
-      pageExportName: "AsesorReportesPage",
+      templateUrl: "./pages/public/placeholder.html",
+      pageModulePath: "./pages/public/PlaceholderPage.js",
+      pageExportName: "PlaceholderPage",
       footerText: "FinTrack 2026 · Reportes del asesor",
-      shellOptionsExtra: (context) => ({
-        activeSection: context.query.section || "comisiones",
-      }),
       pageOptions: (context) => ({
-        query: context.query,
+        query: {
+          title: "Módulo de Reportes en Desarrollo",
+          description: "La visualización detallada de comisiones y reportes operativos se encuentra en mantenimiento programado. Por favor, contacta a administración para obtener copias impresas.",
+          icon: "fa-chart-pie",
+          ctaText: "Volver al Dashboard",
+          ctaUrl: ROUTES.ADVISOR_DASHBOARD,
+        },
       }),
     }),
     createAdvisorRoute({

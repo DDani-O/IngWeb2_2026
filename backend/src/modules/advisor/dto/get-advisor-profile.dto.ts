@@ -14,6 +14,8 @@ export class GetAdvisorProfileDto {
   activeClientsCount!: number; // ← CALCULADO con COUNT()
   phone!: string | null;
   country!: string | null;
+  notifyEmail!: boolean;
+  notifyPush!: boolean;
   photo!: string | null;
   createdAt!: string;
   updatedAt!: string;

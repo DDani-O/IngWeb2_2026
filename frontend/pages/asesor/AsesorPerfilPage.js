@@ -1,7 +1,7 @@
+import { apiClient } from "../../core/APIClient.js";
 import { PageController } from "../../core/PageController.js";
-import {
-  ROUTES,
-} from "../../utils/constants.js";
+import { ROUTES } from "../../utils/constants.js";
+import { STORAGE_KEYS } from "../../utils/constants.js";
 import { getInitials } from "../../utils/helpers.js";
 
 export class AsesorPerfilPage extends PageController {
@@ -16,31 +16,12 @@ export class AsesorPerfilPage extends PageController {
     this.isLoading = true;
     
     try {
-      // Cargar perfil desde API
-      await this._loadProfileFromAPI();
-      this._renderSummary();
-      this._fillFormValues();
-      this._setText("#advisorTopbarName", this.profile.fullName);
+      await this._loadProfile();
     } catch (error) {
       console.error("Error cargando perfil:", error);
       this.options.showToast?.("Error al cargar el perfil", "error");
     } finally {
       this.isLoading = false;
-    }
-  }
-
-  async _loadProfileFromAPI() {
-    const apiClient = this.options.apiClient;
-    if (!apiClient) {
-      throw new Error("API Client no disponible");
-    }
-
-    try {
-      const response = await apiClient.get("/advisor/profile");
-      this.profile = response;
-    } catch (error) {
-      console.error("Error en API:", error);
-      throw error;
     }
   }
 
@@ -57,8 +38,24 @@ export class AsesorPerfilPage extends PageController {
 
     this._bindLogoutButtons({
       role: "asesor",
-      toastMessage: "Sesion de asesor finalizada.",
+      toastMessage: "Sesión de asesor finalizada.",
     });
+  }
+
+  async _loadProfile() {
+    try {
+      const response = await apiClient.get("/advisor/profile");
+      this._applyProfile(response);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  _applyProfile(profile) {
+    this.profile = profile;
+    this._renderSummary();
+    this._fillFormValues();
+    this._syncShellUser(this.profile.fullName);
   }
 
   _renderSummary() {
@@ -69,9 +66,7 @@ export class AsesorPerfilPage extends PageController {
     this._setText("#advisorProfileSummaryEmail", this.profile.email);
 
     const meta = this.element.querySelector("#advisorProfileMetaList");
-    if (!meta) {
-      return;
-    }
+    if (!meta) return;
 
     meta.innerHTML = `
       <article class="profile-meta-item">
@@ -79,7 +74,7 @@ export class AsesorPerfilPage extends PageController {
         <strong>${this.profile.specialty || "-"}</strong>
       </article>
       <article class="profile-meta-item">
-        <span>Matricula</span>
+        <span>Matrícula</span>
         <strong>${this.profile.licenseNumber || "-"}</strong>
       </article>
       <article class="profile-meta-item">
@@ -87,12 +82,12 @@ export class AsesorPerfilPage extends PageController {
         <strong>${this.profile.activeClientsCount || 0}</strong>
       </article>
       <article class="profile-meta-item">
-        <span>Capacidad maxima</span>
+        <span>Capacidad máxima</span>
         <strong>${this.profile.maxCapacity || "-"}</strong>
       </article>
       <article class="profile-meta-item">
-        <span>Pais</span>
-        <strong>${this.profile.country || "-"}</strong>
+        <span>Miembro desde</span>
+        <strong>${this._formatMonthYear(this.profile.createdAt)}</strong>
       </article>
     `;
   }
@@ -100,14 +95,21 @@ export class AsesorPerfilPage extends PageController {
   _fillFormValues() {
     if (!this.profile) return;
 
-    this._setInputValue("#advisorProfileFullName", this.profile.fullName);
-    this._setInputValue("#advisorProfileEmail", this.profile.email);
+    this._setInputValue("#advisorProfileFullName", this.profile.fullName || "");
+    this._setInputValue("#advisorProfileEmail", this.profile.email || "");
     this._setInputValue("#advisorProfilePhone", this.profile.phone || "");
     this._setInputValue("#advisorProfileCountry", this.profile.country || "");
     this._setInputValue("#advisorProfileSpecialty", this.profile.specialty || "");
+    this._setInputValue("#advisorProfileLicense", this.profile.licenseNumber || "");
     this._setInputValue("#advisorProfileDescription", this.profile.description || "");
     this._setInputValue("#advisorProfileActiveClients", String(this.profile.activeClientsCount || 0));
     this._setInputValue("#advisorProfileMaxClients", String(this.profile.maxCapacity || 5));
+
+    const notifyEmail = this.element.querySelector("#advisorProfileNotifyEmail");
+    if (notifyEmail) notifyEmail.checked = Boolean(this.profile.notifyEmail);
+
+    const notifyPush = this.element.querySelector("#advisorProfileNotifyPush");
+    if (notifyPush) notifyPush.checked = Boolean(this.profile.notifyPush);
   }
 
   async _handleSave(event) {
@@ -119,20 +121,10 @@ export class AsesorPerfilPage extends PageController {
       return;
     }
 
-    const apiClient = this.options.apiClient;
-    if (!apiClient) {
-      this.options.showToast?.("Error: API Client no disponible", "error");
-      return;
-    }
-
-    const updateData = this._readFormValues();
-
     try {
-      const response = await apiClient.patch("/advisor/profile", updateData);
-      this.profile = response;
-      
-      this._renderSummary();
-      this._setText("#advisorTopbarName", this.profile.fullName);
+      const payload = this._readFormValues();
+      const response = await apiClient.patch("/advisor/profile", payload);
+      this._applyProfile(response);
       this.options.showToast?.("Perfil actualizado exitosamente", "success");
     } catch (error) {
       console.error("Error al guardar perfil:", error);
@@ -142,12 +134,8 @@ export class AsesorPerfilPage extends PageController {
 
   async _handleReset() {
     try {
-      // Recargar desde API
-      await this._loadProfileFromAPI();
-      this._renderSummary();
-      this._fillFormValues();
-      this._setText("#advisorTopbarName", this.profile.fullName);
-      this.options.showToast?.("Perfil restaurado a valores guardados", "warning");
+      await this._loadProfile();
+      this.options.showToast?.("Perfil sincronizado con el servidor.", "warning");
     } catch (error) {
       console.error("Error al restaurar perfil:", error);
       this.options.showToast?.("Error al restaurar el perfil", "error");
@@ -156,11 +144,29 @@ export class AsesorPerfilPage extends PageController {
 
   _readFormValues() {
     return {
+      fullName: this._getValue("#advisorProfileFullName"),
       specialty: this._getValue("#advisorProfileSpecialty"),
       description: this._getValue("#advisorProfileDescription"),
       maxCapacity: Number(this._getValue("#advisorProfileMaxClients") || 5),
       phone: this._getValue("#advisorProfilePhone"),
       country: this._getValue("#advisorProfileCountry"),
+      notifyEmail: Boolean(this.element.querySelector("#advisorProfileNotifyEmail")?.checked),
+      notifyPush: Boolean(this.element.querySelector("#advisorProfileNotifyPush")?.checked),
+      // Nota: email y licenseNumber son readonly en el formulario
     };
+  }
+
+  _syncShellUser(fullName) {
+    this._setText("#advisorTopbarName", fullName);
+    this._setText("#advisorSidebarName", fullName);
+    this._setText("#advisorSidebarInitials", getInitials(fullName) || "MR");
+  }
+
+  _formatMonthYear(value) {
+    if (!value) return "-";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "-";
+    const label = date.toLocaleDateString("es-AR", { month: "long", year: "numeric" });
+    return label.charAt(0).toUpperCase() + label.slice(1);
   }
 }
