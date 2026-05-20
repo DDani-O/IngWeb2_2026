@@ -87,7 +87,7 @@ export class AdvisorService {
         },
         calendar,
         alerts: [],
-        stats: this.buildStats([], [], [], assignments, []),
+        stats: this.buildStats([], [], 0, assignments),
         clients: [],
         inbox: [],
         recommendations: this.buildRecommendationSummary([]),
@@ -97,18 +97,21 @@ export class AdvisorService {
 
     const now = new Date();
     const oneYearAgo = this.addMonths(now, -12);
+    const startOfMonth = this.startOfMonth(now);
     const tomorrow = this.addDays(now, 1);
 
     const [
       clientRows,
       profileMap,
       yearlyRows,
+      monthlyRows,
       lastExpenseMap,
       recommendationRows,
     ] = await Promise.all([
       this.fetchClientRows(clientIds),
       this.fetchActiveProfileMap(clientIds),
       this.fetchExpensesByRange(clientIds, this.formatDate(oneYearAgo), this.formatDate(tomorrow)),
+      this.fetchExpensesByRange(clientIds, this.formatDate(startOfMonth), this.formatDate(tomorrow)),
       this.fetchLastExpenseMap(clientIds),
       this.fetchRecommendationRows(payload.sub),
     ]);
@@ -129,10 +132,9 @@ export class AdvisorService {
 
     const stats = this.buildStats(
       clients,
-      yearlyRows,
-      [],
+      monthlyRows,
+      clientIds.length,
       assignments,
-      clientIds,
     );
 
     const alerts = this.buildAlerts(clients, recommendationRows, now);
@@ -1464,21 +1466,17 @@ export class AdvisorService {
 
   private buildStats(
     clients: Array<{ status: string; totalSpent: number; averageSpend: number }>,
-    currentRows: ExpenseRow[],
-    previousRows: ExpenseRow[],
+    monthlyRows: ExpenseRow[],
+    totalClients: number,
     assignments: AssignmentRow[],
-    clientIds: string[],
   ) {
     const activeClients = clients.filter((client) => client.status === "activo").length;
-    const totalSpent = clients.reduce((sum, client) => sum + client.totalSpent, 0);
-    const averagePerClient = activeClients > 0 ? totalSpent / activeClients : 0;
-
-    const totalCurrent = this.sumRows(currentRows);
-    const totalPrevious = this.sumRows(previousRows);
-    const totalTrend = this.calculateChangePercent(totalCurrent, totalPrevious);
-
-    const avgPrevious = clientIds.length > 0 ? totalPrevious / clientIds.length : 0;
-    const avgTrend = this.calculateChangePercent(averagePerClient, avgPrevious);
+    
+    // Gasto total del mes actual (suma de todos los gastos del mes)
+    const monthlyTotal = this.sumRows(monthlyRows);
+    
+    // Gasto promedio mensual por cliente = total mensual ÷ cantidad de clientes asignados
+    const averagePerClient = totalClients > 0 ? monthlyTotal / totalClients : 0;
 
     const newAssignments = assignments.filter((assignment) => {
       const assignedAt = new Date(assignment.asignado_en);
@@ -1500,21 +1498,21 @@ export class AdvisorService {
       },
       {
         label: "Gasto total mensual",
-        value: totalSpent,
+        value: monthlyTotal,
         icon: "fa-chart-line",
         emoji: "📈",
-        trendValue: Math.abs(totalTrend),
-        trendDirection: totalTrend >= 0 ? "up" : "down",
-        trendLabel: "vs mes anterior",
+        trendValue: 0,
+        trendDirection: "up",
+        trendLabel: "mes actual",
       },
       {
-        label: "Gasto promedio por cliente",
+        label: "Gasto promedio mensual por cliente",
         value: averagePerClient,
         icon: "fa-user-clock",
         emoji: "📌",
-        trendValue: Math.abs(avgTrend),
-        trendDirection: avgTrend >= 0 ? "up" : "down",
-        trendLabel: "vs mes anterior",
+        trendValue: 0,
+        trendDirection: "up",
+        trendLabel: "mes actual",
       },
     ];
   }
