@@ -11,13 +11,14 @@ import { html } from "../../utils/html.js";
  * PUT /auth/profile. El tema visual es una preferencia local (ThemeManager).
  */
 export class PerfilPage extends PageController {
+  static template = "./pages/cliente/perfil.html";
+
   constructor(element, options = {}) {
     super(element, options);
     this.user = null;
   }
 
   render() {
-    this._resetViewPosition();
     this._setInputValue("#profileTheme", themeManager.getTheme());
 
     this._loadData(async () => {
@@ -29,7 +30,6 @@ export class PerfilPage extends PageController {
       this.user = user;
       this._renderSummary();
       this._fillFormValues();
-      this._syncShellUser(user.fullName);
     });
   }
 
@@ -41,7 +41,6 @@ export class PerfilPage extends PageController {
     this.listen(resetButton, "click", () => this._handleReset());
 
     this._bindDashboardBackButtons();
-    this._bindLogoutButtons();
   }
 
   _renderSummary() {
@@ -106,7 +105,6 @@ export class PerfilPage extends PageController {
     if (user && this._isAlive()) {
       this.user = user;
       this._renderSummary();
-      this._syncShellUser(user.fullName);
     }
   }
 
@@ -130,9 +128,4 @@ export class PerfilPage extends PageController {
     };
   }
 
-  _syncShellUser(fullName) {
-    this._setText("#userTopbarName", fullName);
-    this._setText("#userSidebarName", fullName);
-    this._setText("#userSidebarInitials", getInitials(fullName));
-  }
 }

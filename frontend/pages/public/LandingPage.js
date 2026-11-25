@@ -1,15 +1,12 @@
 import { Component } from "../../core/Component.js";
-import {
-  LANDING_CONTENT,
-  ROLES,
-  UI_LAYOUT,
-  UI_TIMING,
-} from "../../utils/constants.js";
-import { renderStars } from "../../utils/helpers.js";
+import { LANDING_CONTENT, ROLES, UI_LAYOUT, UI_TIMING } from "../../utils/constants.js";
+import { isSafeRelativeUrl, parseQueryString, renderStars } from "../../utils/helpers.js";
 import { validateLoginForm, validateRegisterForm } from "../../utils/validators.js";
 import { html } from "../../utils/html.js";
 
 export class LandingPage extends Component {
+  static template = "./pages/public/landing.html";
+
   constructor(element, options = {}) {
     super(element, options);
     this.activeTestimonialIndex = 0;
@@ -37,6 +34,7 @@ export class LandingPage extends Component {
     this._wireLandingInteractions();
     this._wireAuthFlows();
     this._startTestimonialsAutoplay();
+    this._openModalFromQuery(this.options.query);
 
     this.listen(document, "visibilitychange", () => {
       if (document.hidden) {
@@ -46,6 +44,20 @@ export class LandingPage extends Component {
 
       this._startTestimonialsAutoplay();
     });
+  }
+
+  /**
+   * El router la llama cuando solo cambia la query (p. ej. #/?modal=login estando en la landing).
+   */
+  onRouteUpdate(to) {
+    this.options.query = to.query;
+    this._openModalFromQuery(to.query);
+  }
+
+  _openModalFromQuery(query = {}) {
+    if (query.modal === "login" || query.modal === "register") {
+      this.openAuthModal(query.modal);
+    }
   }
 
   openAuthModal(mode = "login") {
@@ -214,9 +226,19 @@ export class LandingPage extends Component {
     });
   }
 
+  /**
+   * Después de entrar vuelve a la ruta que se había pedido (`next`) o al inicio del rol.
+   * Si `next` es de otro rol, el guard del router lo redirige al inicio que corresponde.
+   */
   _navigateByRole(role) {
-    const route = this.options.authManager.getDefaultRouteForRole(role);
-    this.options.router?.navigate(route);
+    const next = this.options.query?.next;
+    if (next && isSafeRelativeUrl(next)) {
+      const [path, queryString = ""] = next.split("?");
+      this.options.router?.navigate(path, parseQueryString(queryString));
+      return;
+    }
+
+    this.options.router?.navigate(this.options.authManager.getDefaultRouteForRole(role));
   }
 
   _scrollToLandingSection(targetId) {

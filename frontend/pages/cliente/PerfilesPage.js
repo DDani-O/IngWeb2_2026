@@ -1,7 +1,6 @@
 import { PageController } from "../../core/PageController.js";
 import { findSpendingProfileContent } from "../../content/spendingProfiles.js";
 import { profileService } from "../../services/profile.service.js";
-import { getInitials } from "../../utils/helpers.js";
 import { html } from "../../utils/html.js";
 
 const COMPARISON_ROWS = [
@@ -17,14 +16,9 @@ const COMPARISON_ROWS = [
  * el sistema a partir de sus gastos: acá solo se muestra, no se elige.
  */
 export class PerfilesPage extends PageController {
+  static template = "./pages/cliente/perfiles.html";
+
   render() {
-    this._resetViewPosition();
-
-    const userName = this.options.authManager?.getCurrentUser()?.fullName || "";
-    this._setText("#userTopbarName", userName);
-    this._setText("#userSidebarName", userName);
-    this._setText("#userSidebarInitials", getInitials(userName));
-
     this._loadData(async () => {
       const [catalog, user] = await Promise.all([profileService.listSpendingProfiles(), profileService.getMine()]);
       if (!this._isAlive()) {
@@ -43,7 +37,6 @@ export class PerfilesPage extends PageController {
 
   attachEvents() {
     this._bindDashboardBackButtons();
-    this._bindLogoutButtons();
   }
 
   _renderProfiles(profiles, assignedId) {

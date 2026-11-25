@@ -9,14 +9,14 @@ import { html } from "../../utils/html.js";
  * (usuarios + perfiles_asesores: matricula, especialidad, descripcion).
  */
 export class AsesorPerfilPage extends PageController {
+  static template = "./pages/asesor/perfil.html";
+
   constructor(element, options = {}) {
     super(element, options);
     this.user = null;
   }
 
   render() {
-    this._resetViewPosition();
-
     this._loadData(async () => {
       const user = await profileService.getMine();
       if (!this._isAlive()) {
@@ -26,7 +26,6 @@ export class AsesorPerfilPage extends PageController {
       this.user = user;
       this._renderSummary();
       this._fillFormValues();
-      this._setText("#advisorTopbarName", user.fullName);
     });
   }
 
@@ -37,11 +36,6 @@ export class AsesorPerfilPage extends PageController {
     this.listen(this.element.querySelector("#resetAdvisorProfileButton"), "click", () => this._handleReset());
     this.listen(this.element.querySelector("#backToAdvisorDashboardFromProfile"), "click", () => {
       this.options.router?.navigate(ROUTES.ADVISOR_DASHBOARD);
-    });
-
-    this._bindLogoutButtons({
-      role: ROLES.ADVISOR,
-      toastMessage: "Sesion de asesor finalizada.",
     });
   }
 
@@ -102,7 +96,6 @@ export class AsesorPerfilPage extends PageController {
     if (user && this._isAlive()) {
       this.user = user;
       this._renderSummary();
-      this._setText("#advisorTopbarName", user.fullName);
     }
   }
 

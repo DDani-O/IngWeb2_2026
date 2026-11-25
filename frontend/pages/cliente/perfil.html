@@ -1,96 +1,89 @@
-<div class="app-page page-user-perfil">
-  <div id="userTopbarSlot"></div>
+<div class="app-page-content page-user-perfil">
+  <section class="hero-panel user-perfil-hero">
+    <h1 class="text-gradient">Perfil de Cuenta</h1>
+    <p class="text-muted mt-2">
+      Administra tus datos personales y preferencias financieras para recibir recomendaciones mas precisas.
+    </p>
+  </section>
 
-  <main class="app-main app-main--wide user-perfil-main">
-    <section class="hero-panel user-perfil-hero">
-      <h1 class="text-gradient">Perfil de Cuenta</h1>
-      <p class="text-muted mt-2">
-        Administra tus datos personales y preferencias financieras para recibir recomendaciones mas precisas.
-      </p>
-    </section>
+  <section class="user-profile-grid">
+    <article class="section-block user-profile-summary">
+      <div class="user-profile-avatar" id="profileAvatarInitials"></div>
+      <h2 id="profileSummaryName"></h2>
+      <p class="text-muted" id="profileSummaryEmail"></p>
 
-    <section class="user-profile-grid">
-      <article class="section-block user-profile-summary">
-        <div class="user-profile-avatar" id="profileAvatarInitials"></div>
-        <h2 id="profileSummaryName"></h2>
-        <p class="text-muted" id="profileSummaryEmail"></p>
+      <div class="profile-meta-list mt-3" id="profileMetaList"></div>
 
-        <div class="profile-meta-list mt-3" id="profileMetaList"></div>
+      <div class="d-flex flex-wrap gap-2 mt-3">
+        <a class="action-btn action-btn--ghost" href="#/cliente/perfiles">
+          <i class="fa-solid fa-user-shield"></i>
+          Ver perfiles de gasto
+        </a>
+        <a class="action-btn action-btn--ghost" href="#/cliente/recomendaciones">
+          <i class="fa-solid fa-lightbulb"></i>
+          Revisar recomendaciones
+        </a>
+      </div>
+    </article>
+
+    <article class="section-block">
+      <h2 class="section-title">
+        <i class="fa-solid fa-id-card accent"></i>
+        Datos personales y preferencias
+      </h2>
+
+      <form id="userProfileForm" class="user-profile-form" novalidate>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label" for="profileFullName">Nombre completo</label>
+            <input id="profileFullName" name="fullName" class="form-control" required />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="profileEmail">Email</label>
+            <input id="profileEmail" name="email" type="email" class="form-control" readonly aria-describedby="profileEmailHint" />
+            <small class="text-muted" id="profileEmailHint">Es el email de acceso a la cuenta.</small>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="profileOccupation">Ocupacion</label>
+            <input id="profileOccupation" name="occupation" class="form-control" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="profileEstimatedIncome">Ingreso mensual estimado</label>
+            <input id="profileEstimatedIncome" name="estimatedIncome" type="number" min="0" class="form-control" />
+          </div>
+          <div class="col-12">
+            <label class="form-label" for="profileFinancialGoal">Objetivo financiero</label>
+            <input id="profileFinancialGoal" name="financialGoal" class="form-control" placeholder="Ej: juntar un fondo de emergencia" />
+          </div>
+          <div class="col-12">
+            <label class="form-label" for="profileBio">Sobre mi</label>
+            <textarea id="profileBio" name="bio" rows="2" class="form-control"></textarea>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="profileTheme">Tema visual</label>
+            <select id="profileTheme" name="theme" class="form-select">
+              <option value="dark">Oscuro</option>
+              <option value="light">Claro</option>
+            </select>
+          </div>
+        </div>
 
         <div class="d-flex flex-wrap gap-2 mt-3">
-          <a class="action-btn action-btn--ghost" href="#/cliente/perfiles">
-            <i class="fa-solid fa-user-shield"></i>
-            Ver perfiles de gasto
-          </a>
-          <a class="action-btn action-btn--ghost" href="#/cliente/recomendaciones">
-            <i class="fa-solid fa-lightbulb"></i>
-            Revisar recomendaciones
-          </a>
+          <button class="action-btn action-btn--primary" type="submit">
+            <i class="fa-solid fa-floppy-disk"></i>
+            Guardar cambios
+          </button>
+          <button class="action-btn action-btn--ghost" id="resetUserProfileButton" type="button">
+            <i class="fa-solid fa-rotate-left"></i>
+            Descartar cambios
+          </button>
+          <button class="action-btn action-btn--ghost js-dashboard-back" type="button">
+            <i class="fa-solid fa-arrow-left"></i>
+            Volver al Dashboard
+          </button>
         </div>
-      </article>
+      </form>
+    </article>
+  </section>
 
-      <article class="section-block">
-        <h2 class="section-title">
-          <i class="fa-solid fa-id-card accent"></i>
-          Datos personales y preferencias
-        </h2>
-
-        <form id="userProfileForm" class="user-profile-form" novalidate>
-          <div class="row g-3">
-            <div class="col-md-6">
-              <label class="form-label" for="profileFullName">Nombre completo</label>
-              <input id="profileFullName" name="fullName" class="form-control" required />
-            </div>
-            <div class="col-md-6">
-              <label class="form-label" for="profileEmail">Email</label>
-              <input id="profileEmail" name="email" type="email" class="form-control" readonly aria-describedby="profileEmailHint" />
-              <small class="text-muted" id="profileEmailHint">Es el email de acceso a la cuenta.</small>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label" for="profileOccupation">Ocupacion</label>
-              <input id="profileOccupation" name="occupation" class="form-control" />
-            </div>
-            <div class="col-md-6">
-              <label class="form-label" for="profileEstimatedIncome">Ingreso mensual estimado</label>
-              <input id="profileEstimatedIncome" name="estimatedIncome" type="number" min="0" class="form-control" />
-            </div>
-            <div class="col-12">
-              <label class="form-label" for="profileFinancialGoal">Objetivo financiero</label>
-              <input id="profileFinancialGoal" name="financialGoal" class="form-control" placeholder="Ej: juntar un fondo de emergencia" />
-            </div>
-            <div class="col-12">
-              <label class="form-label" for="profileBio">Sobre mi</label>
-              <textarea id="profileBio" name="bio" rows="2" class="form-control"></textarea>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label" for="profileTheme">Tema visual</label>
-              <select id="profileTheme" name="theme" class="form-select">
-                <option value="dark">Oscuro</option>
-                <option value="light">Claro</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="d-flex flex-wrap gap-2 mt-3">
-            <button class="action-btn action-btn--primary" type="submit">
-              <i class="fa-solid fa-floppy-disk"></i>
-              Guardar cambios
-            </button>
-            <button class="action-btn action-btn--ghost" id="resetUserProfileButton" type="button">
-              <i class="fa-solid fa-rotate-left"></i>
-              Descartar cambios
-            </button>
-            <button class="action-btn action-btn--ghost js-dashboard-back" type="button">
-              <i class="fa-solid fa-arrow-left"></i>
-              Volver al Dashboard
-            </button>
-          </div>
-        </form>
-      </article>
-    </section>
-
-    <div id="appFooterSlot"></div>
-  </main>
-
-  <div id="userSidebarSlot"></div>
 </div>

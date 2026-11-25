@@ -1,91 +1,82 @@
 import { EVENTS } from "../utils/constants.js";
-import { eventBus } from "./EventBus.js";
 import { buildHash, parseQueryString } from "../utils/helpers.js";
+import { eventBus } from "./EventBus.js";
+import { loadTemplate } from "./templateLoader.js";
 
+/**
+ * Router SPA por hash.
+ *
+ * Responde una sola pregunta: según la URL, qué layout y qué página se muestran.
+ * - Tabla de rutas declarativa (routes.js) con rutas anidadas, `meta` y parámetros `:id`.
+ * - Un guard global (`beforeEach`) que decide con `to.meta` antes de entrar.
+ * - Layouts persistentes: el layout se monta una vez y solo cambia la página del outlet.
+ * - Ruta "no encontrada" mostrada en el lugar, sin redirect.
+ */
 export class Router {
   /**
-   * Inicializa el router hash-based con contenedor de render y caches.
+   * @param {object} config
+   * @param {object[]} config.routes tabla de rutas (ver routes.js)
+   * @param {string} config.outlet selector del contenedor principal
+   * @param {Object<string, () => object>} config.layouts fábricas de layout por clave
+   * @param {object} config.notFound ruta a mostrar cuando ninguna coincide
+   * @param {(to: object) => object} [config.pageOptions] opciones extra que recibe cada página
    */
-  constructor({ viewSelector = "#route-view" } = {}) {
-    this.routes = new Map();
-    this.notFoundRoute = null;
-    this.templateCache = new Map();
-    this.viewSelector = viewSelector;
-    this.viewElement = document.querySelector(this.viewSelector);
-    this.currentRoute = null;
-    this.currentCleanup = null;
-    this.started = false;
+  constructor({ routes = [], outlet = "#route-view", layouts = {}, notFound = null, pageOptions = () => ({}) } = {}) {
+    this.records = this._flatten(routes);
+    this.notFound = notFound ? this._normalize(notFound, { path: "", layout: "public", meta: {} }) : null;
+    this.container = document.querySelector(outlet);
+    this.layoutFactories = layouts;
+    this.pageOptions = pageOptions;
 
+    this.current = null;
+    this.currentPage = null;
+    this.layout = null;
+    this.layoutKey = null;
+
+    this._guards = [];
+    this._listeners = new Set();
+    this._navigationId = 0;
     this._handleHashChange = this._handleHashChange.bind(this);
   }
 
   /**
-   * Registra una ruta individual en el mapa interno.
+   * Registra un guard global. Devuelve true para entrar o un destino de redirección
+   * (string o { path, query }).
    */
-  register(route) {
-    this.routes.set(route.path, route);
+  beforeEach(guard) {
+    this._guards.push(guard);
     return this;
   }
 
   /**
-   * Registra multiples rutas de una sola vez.
+   * Suscribe una función a cada cambio de ruta completado. Devuelve la desuscripción.
    */
-  registerMany(routes = []) {
-    routes.forEach((route) => this.register(route));
-    return this;
+  onChange(listener) {
+    this._listeners.add(listener);
+    return () => this._listeners.delete(listener);
   }
 
-  /**
-   * Define la ruta fallback para paths no reconocidos.
-   */
-  setNotFoundRoute(route) {
-    this.notFoundRoute = route;
-    return this;
-  }
-
-  /**
-   * Inicia escucha de cambios de hash y activa ruta actual.
-   */
   start() {
-    if (this.started) {
-      return;
-    }
-
-    this.started = true;
     window.addEventListener("hashchange", this._handleHashChange);
     this._handleHashChange();
   }
 
-  /**
-   * Detiene la escucha de eventos de navegacion por hash.
-   */
   stop() {
     window.removeEventListener("hashchange", this._handleHashChange);
-    this.started = false;
   }
 
   /**
-   * Parsea el hash actual y devuelve path, query y ruta completa.
-   */
-  parseHash(hashValue = window.location.hash) {
-    const hash = String(hashValue || "").replace(/^#/, "");
-    const normalized = hash || "/";
-
-    const [pathPart, queryPart = ""] = normalized.split("?");
-    const path = pathPart.startsWith("/") ? pathPart : `/${pathPart}`;
-
-    return {
-      path,
-      query: parseQueryString(queryPart),
-      fullPath: normalized,
-    };
-  }
-
-  /**
-   * Navega hacia una ruta hash, con opcion de reemplazar historial.
+   * Navegación programática.
+   * @param {string} path
+   * @param {object} query
+   * @param {{replace?: boolean}} options replace evita agregar una entrada al historial
    */
   navigate(path, query = {}, { replace = false } = {}) {
     const nextHash = buildHash(path, query);
+
+    if (nextHash === window.location.hash) {
+      return;
+    }
 
     if (replace) {
       window.location.replace(nextHash);
@@ -95,67 +86,187 @@ export class Router {
     window.location.hash = nextHash;
   }
 
-  /**
-   * Handler principal de cambio de hash que dispara activacion de ruta.
-   */
-  async _handleHashChange() {
-    const payload = this.parseHash();
-    await this._activate(payload);
+  // ---------- Tabla de rutas ----------
+
+  _normalize(route, parent) {
+    const fullPath = route.path === "*" ? "*" : joinPaths(parent.path, route.path);
+    return {
+      ...route,
+      path: fullPath,
+      segments: fullPath === "*" ? [] : splitPath(fullPath),
+      layout: route.layout || parent.layout || "public",
+      meta: { ...parent.meta, ...(route.meta || {}) },
+    };
   }
 
-  /**
-   * Activa una ruta: valida permisos, limpia vista previa y renderiza.
-   */
-  async _activate(payload) {
-    const route = this.routes.get(payload.path) || this.notFoundRoute;
-
-    if (!route) {
-      return;
-    }
-
-    const context = {
-      ...payload,
-      route,
-      router: this,
-      mountNode: this.viewElement,
-      state: {},
-    };
-
-    const canEnter = await this._canEnter(route, context);
-    if (!canEnter.allowed) {
-      this.navigate(canEnter.redirectPath, canEnter.redirectQuery || {});
-      return;
-    }
-
-    await this._cleanupCurrent();
-    this._cleanupOverlayArtifacts();
-
-    try {
-      if (route.templateUrl && this.viewElement) {
-        const template = await this._loadTemplate(route.templateUrl);
-        this.viewElement.innerHTML = template;
-      }
-
-      if (typeof route.onEnter === "function") {
-        this.currentCleanup = await route.onEnter(context);
-      }
-    } catch (error) {
-      this._renderActivationError(error);
-    }
-
-    this.currentRoute = route;
-
-    eventBus.emit(EVENTS.ROUTER.CHANGED, {
-      path: payload.path,
-      query: payload.query,
+  _flatten(routes, parent = { path: "", layout: null, meta: {} }) {
+    return routes.flatMap((route) => {
+      const record = this._normalize(route, parent);
+      return route.children ? this._flatten(route.children, record) : [record];
     });
   }
 
+  _match(path) {
+    const parts = splitPath(path);
+
+    for (const record of this.records) {
+      if (record.segments.length !== parts.length) {
+        continue;
+      }
+
+      const params = {};
+      const matches = record.segments.every((segment, index) => {
+        if (segment.startsWith(":")) {
+          params[segment.slice(1)] = decodeURIComponent(parts[index]);
+          return true;
+        }
+        return segment === parts[index];
+      });
+
+      if (matches) {
+        return { record, params };
+      }
+    }
+
+    return this.notFound ? { record: this.notFound, params: {} } : null;
+  }
+
+  _parseHash() {
+    const raw = String(window.location.hash || "").replace(/^#/, "") || "/";
+    const [pathPart, queryPart = ""] = raw.split("?");
+    const path = pathPart.startsWith("/") ? pathPart : `/${pathPart}`;
+    return { path, query: parseQueryString(queryPart), fullPath: raw.startsWith("/") ? raw : `/${raw}` };
+  }
+
+  // ---------- Activación ----------
+
+  async _handleHashChange() {
+    const navigationId = ++this._navigationId;
+    const location = this._parseHash();
+    const match = this._match(location.path);
+
+    if (!match) {
+      return;
+    }
+
+    const to = { ...location, params: match.params, route: match.record, meta: match.record.meta, title: match.record.title || "" };
+
+    for (const guard of this._guards) {
+      const redirect = normalizeGuardResult(await guard(to, this.current));
+      if (redirect) {
+        this.navigate(redirect.path, redirect.query, { replace: true });
+        return;
+      }
+    }
+
+    // Misma ruta y mismos parámetros: la página puede actualizarse sin remontarse.
+    if (this._canReuse(to)) {
+      this.current = to;
+      this.layout?.setActive?.(to);
+      await this.currentPage.onRouteUpdate(to);
+      this._notify(to);
+      return;
+    }
+
+    try {
+      await this._ensureLayout(to.route.layout);
+      const PageClass = await to.route.page();
+      const template = await loadTemplate(PageClass.template);
+
+      // Si mientras tanto se pidió otra ruta, esta activación se descarta.
+      if (navigationId !== this._navigationId) {
+        return;
+      }
+
+      this._destroyPage();
+      this._cleanupModals();
+
+      const outlet = this.layout.outlet;
+      outlet.innerHTML = template;
+      this.layout.setActive?.(to);
+      window.scrollTo(0, 0);
+
+      this.currentPage = new PageClass(outlet, {
+        ...this.pageOptions(to),
+        params: to.params,
+        query: to.query,
+        ...(to.route.props || {}),
+      });
+      this.currentPage.mount();
+      this.current = to;
+      this._notify(to);
+    } catch (error) {
+      if (navigationId === this._navigationId) {
+        this._renderActivationError(error);
+      }
+    }
+  }
+
+  _canReuse(to) {
+    return Boolean(
+      this.current &&
+        this.currentPage &&
+        to.route === this.current.route &&
+        to.route.reuseOnQueryChange &&
+        typeof this.currentPage.onRouteUpdate === "function" &&
+        JSON.stringify(to.params) === JSON.stringify(this.current.params)
+    );
+  }
+
+  async _ensureLayout(layoutKey) {
+    if (this.layout && this.layoutKey === layoutKey) {
+      return;
+    }
+
+    this._destroyPage();
+    this.layout?.destroy();
+    this._cleanupOverlayArtifacts();
+
+    const factory = this.layoutFactories[layoutKey];
+    if (!factory) {
+      throw new Error(`No hay un layout registrado para "${layoutKey}".`);
+    }
+
+    this.layout = factory();
+    this.layoutKey = layoutKey;
+    await this.layout.mount(this.container);
+  }
+
+  _destroyPage() {
+    this.currentPage?.destroy();
+    this.currentPage = null;
+  }
+
+  _notify(to) {
+    if (to.title) {
+      document.title = `${to.title} · FinTrack`;
+    }
+
+    eventBus.emit(EVENTS.ROUTER.CHANGED, { path: to.path, query: to.query, params: to.params });
+    this._listeners.forEach((listener) => listener(to));
+  }
+
   /**
-   * Muestra un aviso en la vista cuando falla la carga de una ruta (template o modulo).
+   * Bootstrap deja el backdrop y bloquea el scroll si se navega con un modal abierto.
    */
+  _cleanupModals() {
+    document.querySelectorAll(".modal-backdrop").forEach((backdrop) => backdrop.remove());
+    document.body.classList.remove("modal-open");
+    document.body.style.removeProperty("overflow");
+    document.body.style.removeProperty("padding-right");
+  }
+
+  /**
+   * Al cambiar de layout (p. ej. logout desde el menú móvil) también puede quedar el offcanvas abierto.
+   */
+  _cleanupOverlayArtifacts() {
+    this._cleanupModals();
+    document.querySelectorAll(".offcanvas-backdrop").forEach((backdrop) => backdrop.remove());
+  }
+
   _renderActivationError(error) {
-    if (!this.viewElement) {
+    const target = this.layout?.outlet || this.container;
+    if (!target) {
       return;
     }
 
@@ -175,107 +286,34 @@ export class Router {
 
     card.append(title, description);
     container.append(card);
-    this.viewElement.replaceChildren(container);
+    target.replaceChildren(container);
+  }
+}
+
+function splitPath(path) {
+  return String(path).split("/").filter(Boolean);
+}
+
+function joinPaths(base, path) {
+  if (path.startsWith("/")) {
+    return path;
   }
 
-  /**
-   * Limpia backdrops/overlays residuales para evitar bloqueos de scroll.
-   */
-  _cleanupOverlayArtifacts() {
-    if (typeof document === "undefined") {
-      return;
-    }
+  return `/${[...splitPath(base), ...splitPath(path)].join("/")}`;
+}
 
-    document
-      .querySelectorAll(".offcanvas-backdrop, .modal-backdrop")
-      .forEach((backdrop) => backdrop.remove());
-
-    document.querySelectorAll(".offcanvas.show, .modal.show").forEach((overlay) => {
-      overlay.classList.remove("show");
-      overlay.setAttribute("aria-hidden", "true");
-      overlay.style.removeProperty("display");
-    });
-
-    const body = document.body;
-    if (body) {
-      body.classList.remove("modal-open");
-      body.style.removeProperty("overflow");
-      body.style.removeProperty("padding-right");
-      body.removeAttribute("data-bs-overflow");
-      body.removeAttribute("data-bs-padding-right");
-    }
-
-    const html = document.documentElement;
-    if (html) {
-      html.style.removeProperty("overflow");
-      html.style.removeProperty("padding-right");
-    }
+function normalizeGuardResult(result) {
+  if (result === true || result === undefined || result === null) {
+    return null;
   }
 
-  /**
-   * Ejecuta guard de entrada de ruta y normaliza respuesta de autorizacion.
-   */
-  async _canEnter(route, context) {
-    if (typeof route.beforeEnter !== "function") {
-      return { allowed: true };
-    }
-
-    const result = await route.beforeEnter(context);
-
-    if (result === true || result === undefined || result === null) {
-      return { allowed: true };
-    }
-
-    if (result === false) {
-      return { allowed: false, redirectPath: "/" };
-    }
-
-    if (typeof result === "string") {
-      return { allowed: false, redirectPath: result };
-    }
-
-    if (typeof result === "object" && result.path) {
-      return {
-        allowed: false,
-        redirectPath: result.path,
-        redirectQuery: result.query || {},
-      };
-    }
-
-    return { allowed: false, redirectPath: "/" };
+  if (typeof result === "string") {
+    return { path: result, query: {} };
   }
 
-  /**
-   * Ejecuta cleanup de la ruta anterior (si existe).
-   */
-  async _cleanupCurrent() {
-    if (typeof this.currentCleanup === "function") {
-      await this.currentCleanup();
-    }
-
-    this.currentCleanup = null;
+  if (typeof result === "object" && result.path) {
+    return { path: result.path, query: result.query || {} };
   }
 
-  /**
-   * Carga plantilla remota y la cachea para navegacion mas rapida.
-   */
-  async _loadTemplate(templateUrl) {
-    if (this.templateCache.has(templateUrl)) {
-      return this.templateCache.get(templateUrl);
-    }
-
-    const response = await fetch(templateUrl, {
-      headers: {
-        "Cache-Control": "no-cache",
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`No se pudo cargar la plantilla ${templateUrl}`);
-    }
-
-    const html = await response.text();
-    this.templateCache.set(templateUrl, html);
-    return html;
-  }
+  return { path: "/", query: {} };
 }

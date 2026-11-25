@@ -4,6 +4,8 @@ import { isSafeRelativeUrl } from "../../utils/helpers.js";
 import { html } from "../../utils/html.js";
 
 export class PlaceholderPage extends Component {
+  static template = "./pages/public/placeholder.html";
+
   static DEFAULTS = {
     query: {},
   };

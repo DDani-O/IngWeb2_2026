@@ -1,6 +1,6 @@
 import { RECOMMENDATION_PRIORITIES, RECOMMENDATION_TYPES } from "../../utils/constants.js";
 import { html } from "../../utils/html.js";
-import { loadTemplate, renderTemplate } from "../core/templateLoader.js";
+import { loadTemplate, renderTemplate } from "../../core/templateLoader.js";
 
 const ADVISOR_RECOMMENDATION_MODAL_TEMPLATE =
   "./components/modals/advisor-recommendation-modal.html";

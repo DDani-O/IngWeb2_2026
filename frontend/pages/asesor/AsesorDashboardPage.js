@@ -1,9 +1,13 @@
 import { PageController } from "../../core/PageController.js";
-import { fillRecommendationClients, readRecommendationForm } from "../../components/modals/AdvisorRecommendationModal.js";
+import {
+  fillRecommendationClients,
+  mountAdvisorRecommendationModal,
+  readRecommendationForm,
+} from "../../components/modals/AdvisorRecommendationModal.js";
 import { analysisService } from "../../services/analysis.service.js";
 import { clientsService } from "../../services/clients.service.js";
 import { recommendationsService } from "../../services/recommendations.service.js";
-import { RISK_LEVELS, ROLES, ROUTES } from "../../utils/constants.js";
+import { RISK_LEVELS, ROUTES } from "../../utils/constants.js";
 import { formatCurrency, formatDaysAgo } from "../../utils/formatters.js";
 import { buildHash, getInitials } from "../../utils/helpers.js";
 import { html } from "../../utils/html.js";
@@ -16,6 +20,8 @@ const BOARD_ITEMS_PER_COLUMN = 3;
  * Dashboard del asesor: estado de la cartera, clientes asignados y últimas recomendaciones enviadas.
  */
 export class AsesorDashboardPage extends PageController {
+  static template = "./pages/asesor/dashboard.html";
+
   constructor(element, options = {}) {
     super(element, options);
     this.clients = [];
@@ -25,17 +31,17 @@ export class AsesorDashboardPage extends PageController {
   render() {
     const fullName = this.options.authManager?.getCurrentUser()?.fullName || "";
     const firstName = fullName.split(" ")[0] || fullName;
-
-    this._setText("#advisorTopbarName", fullName);
     this._setText("#advisorWelcomeTitle", firstName ? `Hola, ${firstName}!` : "Hola!");
     this._renderCalendar();
     this._syncClientsView();
+    const modalReady = this._mountRecommendationModal();
 
     this._loadData(async () => {
       const [summary, clients, sent] = await Promise.all([
         analysisService.getAdvisorSummary(),
         clientsService.list(),
         recommendationsService.listSent({ limit: 10 }),
+        modalReady,
       ]);
       if (!this._isAlive()) {
         return;
@@ -60,14 +66,20 @@ export class AsesorDashboardPage extends PageController {
       this._showModal(`#${MODAL_PREFIX}Modal`);
     });
 
+  }
+
+  /**
+   * Inserta el modal de nueva recomendación en su slot y engancha el envío del formulario.
+   */
+  async _mountRecommendationModal() {
+    await mountAdvisorRecommendationModal(this.element, {
+      slotSelector: "#advisorRecommendationModalSlot",
+      idPrefix: MODAL_PREFIX,
+    });
+
     this.listen(this.element.querySelector(`#${MODAL_PREFIX}Form`), "submit", (event) => {
       event.preventDefault();
       this._handleCreateRecommendation(event.target);
-    });
-
-    this._bindLogoutButtons({
-      role: ROLES.ADVISOR,
-      toastMessage: "Sesion de asesor finalizada.",
     });
   }
 

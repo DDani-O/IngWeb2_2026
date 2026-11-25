@@ -90,6 +90,15 @@
   gap: 18px;
 }
 
+/*
+ * El outlet del layout y la raíz de cada página no generan caja propia: así las secciones
+ * de la página siguen siendo hijas directas de .app-main y conservan su gap.
+ */
+.app-outlet,
+.app-page-content {
+  display: contents;
+}
+
 .app-main--wide {
   max-width: var(--container-max);
   margin: 0 auto;

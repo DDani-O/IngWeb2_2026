@@ -14,6 +14,8 @@ const ALERT_ICONS = { danger: "⚠️", warning: "📈", success: "✅", info: "
  * Dashboard del cliente: resumen del mes, alertas, perfil asignado, gráficos y ranking de comercios.
  */
 export class DashboardPage extends PageController {
+  static template = "./pages/cliente/dashboard.html";
+
   constructor(element, options = {}) {
     super(element, options);
     this.charts = [];
@@ -24,7 +26,6 @@ export class DashboardPage extends PageController {
     const shortName = userName.split(" ")[0] || userName;
 
     this._setText("#userWelcomeTitle", shortName ? `Hola, ${shortName}!` : "Hola!");
-    this._setText("#userTopbarName", userName);
     this._setText(
       "#userWelcomeSubtitle",
       "Tu resumen financiero esta listo. Explora tus patrones de gasto y descubre como mejorar tu economia personal."
@@ -52,7 +53,6 @@ export class DashboardPage extends PageController {
   }
 
   attachEvents() {
-    this._bindLogoutButtons();
   }
 
   _renderCalendar() {

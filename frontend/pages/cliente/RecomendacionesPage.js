@@ -2,7 +2,6 @@ import { PageController } from "../../core/PageController.js";
 import { recommendationsService } from "../../services/recommendations.service.js";
 import { RECOMMENDATION_PRIORITIES, RECOMMENDATION_TYPES } from "../../utils/constants.js";
 import { formatDate } from "../../utils/formatters.js";
-import { getInitials } from "../../utils/helpers.js";
 import { html } from "../../utils/html.js";
 
 const PRIORITY_WEIGHT = { alta: 3, media: 2, baja: 1 };
@@ -13,6 +12,8 @@ const PRIORITY_TONE = { alta: "danger", media: "warning", baja: "success" };
  * Modelo alineado con recomendaciones_financieras: titulo, mensaje, tipo, prioridad, origen, leida.
  */
 export class RecomendacionesPage extends PageController {
+  static template = "./pages/cliente/recomendaciones.html";
+
   constructor(element, options = {}) {
     super(element, options);
     this.recommendations = [];
@@ -20,15 +21,6 @@ export class RecomendacionesPage extends PageController {
   }
 
   render() {
-    this._resetViewPosition();
-
-    const currentUser = this.options.authManager?.getCurrentUser();
-    const userName = currentUser?.fullName || "";
-
-    this._setText("#userTopbarName", userName);
-    this._setText("#userSidebarName", userName);
-    this._setText("#userSidebarInitials", getInitials(userName));
-
     this._loadData(async () => {
       const recommendations = await recommendationsService.listMine();
       if (!this._isAlive()) {
@@ -55,7 +47,6 @@ export class RecomendacionesPage extends PageController {
     this.listen(groups, "click", (event) => this._handleCardAction(event));
 
     this._bindDashboardBackButtons();
-    this._bindLogoutButtons();
   }
 
   _applyFilters() {

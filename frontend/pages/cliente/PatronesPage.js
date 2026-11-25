@@ -2,7 +2,7 @@ import { PageController } from "../../core/PageController.js";
 import { analysisService } from "../../services/analysis.service.js";
 import { CHART_PALETTE_SIZE } from "../../utils/constants.js";
 import { formatCurrency, formatDate, formatMonth, formatTrendLabel, formatWeekday } from "../../utils/formatters.js";
-import { getChartPalette, getChartThemeColors, getInitials } from "../../utils/helpers.js";
+import { getChartPalette, getChartThemeColors } from "../../utils/helpers.js";
 import { html } from "../../utils/html.js";
 
 /** Cantidad de categorías que se muestran en el gráfico de evolución por categoría. */
@@ -13,19 +13,16 @@ const EVOLUTION_TOP_CATEGORIES = 4;
  * evolución en el tiempo y gastos inusuales, calculados por el backend.
  */
 export class PatronesPage extends PageController {
+  static template = "./pages/cliente/patrones.html";
+
   constructor(element, options = {}) {
     super(element, options);
     this.charts = [];
   }
 
   render() {
-    this._resetViewPosition();
-
     const userName = this.options.authManager?.getCurrentUser()?.fullName || "";
     this._setText("#patternsUserName", userName);
-    this._setText("#userTopbarName", userName);
-    this._setText("#userSidebarName", userName);
-    this._setText("#userSidebarInitials", getInitials(userName));
 
     this._loadData(async () => {
       const analysis = await analysisService.getMine();
@@ -43,7 +40,6 @@ export class PatronesPage extends PageController {
 
   attachEvents() {
     this._bindDashboardBackButtons();
-    this._bindLogoutButtons();
   }
 
   _renderHighlights(analysis) {

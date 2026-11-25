@@ -1,8 +1,12 @@
 import { PageController } from "../../core/PageController.js";
-import { fillRecommendationClients, readRecommendationForm } from "../../components/modals/AdvisorRecommendationModal.js";
+import {
+  fillRecommendationClients,
+  mountAdvisorRecommendationModal,
+  readRecommendationForm,
+} from "../../components/modals/AdvisorRecommendationModal.js";
 import { clientsService } from "../../services/clients.service.js";
 import { recommendationsService } from "../../services/recommendations.service.js";
-import { RISK_LEVELS, ROLES, ROUTES, UI_TIMING } from "../../utils/constants.js";
+import { RISK_LEVELS, ROUTES, UI_TIMING } from "../../utils/constants.js";
 import { formatCurrency, formatDate, formatDaysAgo } from "../../utils/formatters.js";
 import { debounce, getInitials } from "../../utils/helpers.js";
 import { html } from "../../utils/html.js";
@@ -13,6 +17,8 @@ const MODAL_PREFIX = "advisorClientRecommendation";
  * Clientes asignados al asesor (consigna §3: visualizar usuarios y generar recomendaciones).
  */
 export class AsesorClientesPage extends PageController {
+  static template = "./pages/asesor/clientes.html";
+
   constructor(element, options = {}) {
     super(element, options);
     this.clients = [];
@@ -22,12 +28,11 @@ export class AsesorClientesPage extends PageController {
   }
 
   render() {
-    this._resetViewPosition();
-    this._setText("#advisorTopbarName", this.options.authManager?.getCurrentUser()?.fullName || "");
     this._syncView();
+    const modalReady = this._mountRecommendationModal();
 
     this._loadData(async () => {
-      const clients = await clientsService.list();
+      const [clients] = await Promise.all([clientsService.list(), modalReady]);
       if (!this._isAlive()) {
         return;
       }
@@ -52,18 +57,24 @@ export class AsesorClientesPage extends PageController {
     this.listen(this.element.querySelector("#clientsTableBody"), "click", (event) => this._handleAction(event));
 
     this.listen(this.element.querySelector("#openClientRecommendationButton"), "click", () => this._openRecommendationModal());
-    this.listen(this.element.querySelector(`#${MODAL_PREFIX}Form`), "submit", (event) => {
-      event.preventDefault();
-      this._handleCreateRecommendation(event.target);
-    });
 
     this.listen(this.element.querySelector("#backToAdvisorDashboardButton"), "click", () => {
       this.options.router?.navigate(ROUTES.ADVISOR_DASHBOARD);
     });
+  }
 
-    this._bindLogoutButtons({
-      role: ROLES.ADVISOR,
-      toastMessage: "Sesion de asesor finalizada.",
+  /**
+   * Inserta el modal de nueva recomendación en su slot y engancha el envío del formulario.
+   */
+  async _mountRecommendationModal() {
+    await mountAdvisorRecommendationModal(this.element, {
+      slotSelector: "#advisorClientRecommendationModalSlot",
+      idPrefix: MODAL_PREFIX,
+    });
+
+    this.listen(this.element.querySelector(`#${MODAL_PREFIX}Form`), "submit", (event) => {
+      event.preventDefault();
+      this._handleCreateRecommendation(event.target);
     });
   }
 

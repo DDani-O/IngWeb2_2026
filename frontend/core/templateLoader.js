@@ -1,4 +1,4 @@
-import { SafeHtml, escapeHtml } from "../../utils/html.js";
+import { SafeHtml, escapeHtml } from "../utils/html.js";
 
 const templateCache = new Map();
 

@@ -4,13 +4,14 @@ Antes de escribir código leer `PrincipiosDesarrollo.md` (SOLID, nomenclatura, a
 
 ## Estructura
 
-- `index.html` + `app.js` — bootstrap: inicializa `ThemeManager`, `AuthManager`, configura el `Router` (rutas por hash, guards por rol) y monta los shells.
-- `core/` — singletons y clases base: `Router`, `EventBus`, `StateManager`, `AuthManager` (sesión en `localStorage`, delega en `auth.service`), `APIClient` (único punto de red; driver `mock` o `http` según `API_CONFIG` en `utils/constants.js`), `Component`, `PageController` (incluye `_loadData`/`_runAction` para carga, errores y acciones), `ThemeManager`.
+- `index.html` + `app.js` — bootstrap: inicializa `ThemeManager` y `AuthManager`, crea el `Router` con los layouts y el guard global por rol, y maneja la sesión expirada.
+- `routes.js` — tabla de rutas declarativa (rutas anidadas por rol, `meta.role`, título, `:params`, import diferido). Para agregar una página: crear `pages/<rol>/NombrePage.js` con `static template = "./pages/<rol>/nombre.html"` y sumar la ruta acá.
+- `core/` — singletons y clases base: `Router` (layouts persistentes, guard `beforeEach`, 404 en el lugar), `TabRegistry`, `templateLoader`, `EventBus`, `StateManager`, `AuthManager` (sesión en `localStorage`, delega en `auth.service`), `APIClient` (único punto de red; driver `mock` o `http` según `API_CONFIG` en `utils/constants.js`), `Component`, `PageController` (incluye `_loadData`/`_runAction` para carga, errores y acciones), `ThemeManager`.
 - `services/` — un servicio por dominio (`auth`, `profile`, `categories`, `expenses`, `tickets`, `recommendations`, `analysis`, `clients`) y `adapters.js`, la **única** capa que traduce el contrato en español de la API al modelo de la UI.
 - `mocks/` — backend simulado (`mockServer.js`, `seed.js`, `analytics.js`) con el mismo contrato que NestJS (spec §10). Guarda sus datos en `localStorage` (`fintrack.mockDb`).
 - `content/` — contenido estático que no vive en la BD (textos y comparativa de los perfiles de gasto).
 - `pages/<rol>/` — cada pantalla = `nombre.html` (template, kebab-case) + `NombrePage.js` (controlador, PascalCase). Roles: `public/`, `cliente/`, `asesor/`.
-- `components/` — `layout/`, `navigation/` (shells de usuario y asesor), `modals/`, `core/templateLoader.js`.
+- `components/` — `layout/` (`AppLayout` por rol con topbar, sidebar y footer; `PublicLayout`) y `modals/`. Las páginas no tocan el DOM del layout: el nombre del usuario se actualiza con el evento `profile:updated`.
 - `assets/css/` — `global.css`, `layouts.css`, `themes/` (light/dark), `components/<pagina>.css`.
 - `utils/` — `constants.js` (`ROUTES`, `ROLES`, `EVENTS`, `UI_TIMING`, `API_CONFIG`, enums de la BD), `formatters.js`, `helpers.js`, `validators.js`, `html.js` (plantillas con escapado por defecto: todo `innerHTML` con datos usa `html\`...\``).
 

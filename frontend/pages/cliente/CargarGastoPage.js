@@ -4,7 +4,6 @@ import { expensesService } from "../../services/expenses.service.js";
 import { ticketsService } from "../../services/tickets.service.js";
 import { EXPENSE_ORIGINS, STORAGE_KEYS } from "../../utils/constants.js";
 import { formatCurrency, formatDate, todayIsoDate } from "../../utils/formatters.js";
-import { getInitials } from "../../utils/helpers.js";
 import { html } from "../../utils/html.js";
 
 const RECENT_LIMIT = 6;
@@ -15,6 +14,8 @@ const EMPTY_FILE_TEXT = "Selecciona una imagen del ticket";
  * que precompleta el formulario para que el cliente lo revise antes de guardar.
  */
 export class CargarGastoPage extends PageController {
+  static template = "./pages/cliente/cargar-gasto.html";
+
   constructor(element, options = {}) {
     super(element, options);
     // Resultado del OCR: si existe al guardar, el gasto queda con origen "ticket".
@@ -24,13 +25,6 @@ export class CargarGastoPage extends PageController {
   }
 
   render() {
-    this._resetViewPosition();
-
-    const userName = this.options.authManager?.getCurrentUser()?.fullName || "";
-    this._setText("#userTopbarName", userName);
-    this._setText("#userSidebarName", userName);
-    this._setText("#userSidebarInitials", getInitials(userName));
-
     this._loadData(async () => {
       const [categories, recent] = await Promise.all([
         categoriesService.list(),
@@ -67,7 +61,6 @@ export class CargarGastoPage extends PageController {
     });
 
     this._bindDashboardBackButtons();
-    this._bindLogoutButtons();
   }
 
   _renderCategoryOptions(categories) {

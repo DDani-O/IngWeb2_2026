@@ -509,7 +509,7 @@ Cada fase termina con el front funcionando (checklist manual del README + recorr
 - Criterio de salida: pasar de `driver: "mock"` a `"http"` no toca ninguna página.
 - Como quedó implementado: el mock es un backend simulado detrás de `APIClient` (`mocks/mockServer.js`), con el mismo contrato, tokens, 401/403/422 y persistencia en `localStorage`. El análisis de consumo y la asignación automática de perfil se calculan de verdad en `mocks/analytics.js` (son la referencia de lo que tiene que hacer el backend). Las rutas quedaron en inglés porque la consigna fija `/auth/login`, `/expenses` y `/tickets/upload`; los cuerpos van en español.
 
-### Fase 2 — Router y layouts
+### Fase 2 — Router y layouts · ✅ completada (25/11/2026)
 - `routes.js` declarativo, `beforeEach` por `meta.role`, parámetros `:id`, 404 en el lugar, `next` para volver después del login.
 - `AppLayout` persistente por rol (reemplaza `UserShell`/`AdvisorShell` y los 4 fragmentos); se quitan los slots de los templates, los `_setText` del shell y `_bindLogoutButtons`.
 - `core/TabRegistry.js` (decisión 3); se eliminan los globales `window.fintrack*`.

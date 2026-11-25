@@ -3,7 +3,7 @@ import { categoriesService } from "../../services/categories.service.js";
 import { expensesService } from "../../services/expenses.service.js";
 import { EXPENSE_ORIGINS, UI_TIMING } from "../../utils/constants.js";
 import { formatCurrency, formatDate } from "../../utils/formatters.js";
-import { debounce, getInitials } from "../../utils/helpers.js";
+import { debounce } from "../../utils/helpers.js";
 import { html } from "../../utils/html.js";
 
 /**
@@ -11,6 +11,8 @@ import { html } from "../../utils/html.js";
  * El filtrado lo resuelve la API (GET /expenses con query).
  */
 export class HistorialPage extends PageController {
+  static template = "./pages/cliente/historial.html";
+
   constructor(element, options = {}) {
     super(element, options);
     this.expenses = [];
@@ -18,13 +20,6 @@ export class HistorialPage extends PageController {
   }
 
   render() {
-    this._resetViewPosition();
-
-    const userName = this.options.authManager?.getCurrentUser()?.fullName || "";
-    this._setText("#userTopbarName", userName);
-    this._setText("#userSidebarName", userName);
-    this._setText("#userSidebarInitials", getInitials(userName));
-
     this._loadData(async () => {
       const categories = await categoriesService.list();
       if (!this._isAlive()) {
@@ -45,7 +40,6 @@ export class HistorialPage extends PageController {
     this.listen(this.element.querySelector("#historyTableBody"), "click", (event) => this._handleTableAction(event));
 
     this._bindDashboardBackButtons();
-    this._bindLogoutButtons();
   }
 
   _renderCategoryOptions(categories) {

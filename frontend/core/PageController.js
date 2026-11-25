@@ -1,4 +1,4 @@
-import { ROLES, ROUTES, UI_TIMING } from "../utils/constants.js";
+import { ROUTES } from "../utils/constants.js";
 import { Component } from "./Component.js";
 
 export class PageController extends Component {
@@ -61,10 +61,8 @@ export class PageController extends Component {
   }
 
   _showStatus(kind, message, onRetry = null) {
-    const main = this.element.querySelector(".app-main");
-    if (!main) {
-      return;
-    }
+    // Se ubica después del primer bloque de la página (el encabezado).
+    const anchor = this.element.querySelector(".app-page-content") || this.element;
 
     if (!this._statusElement) {
       this._statusElement = document.createElement("div");
@@ -89,7 +87,7 @@ export class PageController extends Component {
     }
 
     if (!status.isConnected) {
-      main.insertBefore(status, main.children[1] || null);
+      anchor.insertBefore(status, anchor.children[1] || null);
     }
   }
 
@@ -102,18 +100,6 @@ export class PageController extends Component {
     super.destroy();
   }
 
-
-  /**
-   * Restaura la posicion de scroll global y del contenedor principal de rutas.
-   */
-  _resetViewPosition() {
-    window.scrollTo(0, 0);
-
-    const routeContainer = document.querySelector("#appRouteContainer");
-    if (routeContainer) {
-      routeContainer.scrollTop = 0;
-    }
-  }
 
   /**
    * Actualiza texto de un nodo si existe en el arbol del componente.
@@ -143,61 +129,21 @@ export class PageController extends Component {
   }
 
   /**
-   * Vincula listeners para los botones comunes de cierre de sesion por rol.
-   */
-  _bindLogoutButtons({ role = ROLES.CLIENT, toastMessage } = {}) {
-    const selectors =
-      role === ROLES.ADVISOR
-        ? ["#advisorLogoutButton", "#advisorLogoutButtonMobile"]
-        : ["#userLogoutButton", "#userLogoutButtonMobile"];
-
-    selectors.forEach((selector) => {
-      const button = this.element.querySelector(selector);
-      this.listen(button, "click", () => {
-        this._handleLogout({ toastMessage });
-      });
-    });
-  }
-
-  /**
-   * Cierra sesion y redirige al home con modal login.
-   */
-  _handleLogout({ toastMessage = "Sesion finalizada correctamente." } = {}) {
-    this.options.authManager?.logout();
-    this.options.showToast?.(toastMessage, "success");
-    this.options.router?.navigate(ROUTES.HOME, { modal: "login" });
-  }
-
-  /**
-   * Vincula botones comunes de retorno al dashboard del cliente.
+   * Vincula los botones .js-dashboard-back: vuelven al dashboard y, si ya está abierto
+   * en otra pestaña, cierran esta (ver core/TabRegistry.js).
    */
   _bindDashboardBackButtons(route = ROUTES.CLIENT_DASHBOARD) {
     this.element.querySelectorAll(".js-dashboard-back").forEach((button) => {
-      this.listen(button, "click", (event) => this._handleBackToRoute(event, route));
-    });
-  }
-
-  /**
-   * Mantiene el flujo existente: cerrar pestana secundaria o navegar en la actual.
-   */
-  _handleBackToRoute(event, route) {
-    event.preventDefault();
-
-    // Si el destino ya está abierto en otra pestaña, esta pestaña secundaria se cierra.
-    // window.close() puede fallar (pestaña con historial); en ese caso se navega en el lugar.
-    if (this.options.hasRouteOpenInOtherTab?.(route)) {
-      window.close();
-
-      window.setTimeout(() => {
-        if (!window.closed) {
-          this.options.router?.navigate(route);
+      this.listen(button, "click", (event) => {
+        event.preventDefault();
+        const navigate = (target) => this.options.router?.navigate(target);
+        if (this.options.tabRegistry) {
+          this.options.tabRegistry.returnTo(route, navigate);
+        } else {
+          navigate(route);
         }
-      }, UI_TIMING.TAB_CLOSE_FALLBACK_MS);
-
-      return;
-    }
-
-    this.options.router?.navigate(route);
+      });
+    });
   }
 
   /**

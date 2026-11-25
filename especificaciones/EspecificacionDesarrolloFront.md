@@ -133,136 +133,44 @@ Documento complementario obligatorio para estilos y responsive: **`ReglasCSS`**
 
 ### Estructura Completa
 
-```
-frontend/
-│
-├── PrincipiosDesarrollo.md          # Guía de principios (LEER PRIMERO)
-├── ReglasCSS.md                     # Reglas operativas CSS/responsive vigentes
-├── index.html                       # HTML principal - entry point
-├── app.js                           # JavaScript entry point - inicialización
-│
-├── assets/                          # Recursos estáticos (desacoplados)
-│   │
-│   ├── css/
-│   │   ├── global.css              # Variables CSS, resets, utilidades
-│   │   ├── layouts.css             # Grillas, containers, espacios
-│   │   └── themes/
-│   │       ├── light.css           # Variables tema claro
-│   │       └── dark.css            # Variables tema oscuro
-│   │
-│   └── img/
-│       ├── logos/                  # Logos de la app
-│       ├── icons/                  # Iconos custom
-│       └── backgrounds/            # Imágenes de fondo
-│
-├── core/                            # ARQUITECTURA BASE DEL SISTEMA
-│   │
-│   ├── Component.js                # 🔷 Clase base universal para todos
-│   │                               #    - Ciclo de vida (render, attachEvents, destroy)
-│   │                               #    - Manejo de opciones y validación
-│   │                               #    - Sistema de logging interno
-│   │
-│   ├── EventBus.js                 # 🔶 Sistema de eventos global (Singleton)
-│   │                               #    - on(event, callback)
-│   │                               #    - emit(event, data)
-│   │                               #    - off(event, callback)
-│   │
-│   ├── Router.js                   # 🔶 Enrutador SPA (Singleton)
-│   │                               #    - navigate(page, params)
-│   │                               #    - Historial de navegación
-│   │                               #    - Hash-based routing
-│   │
-│   ├── APIClient.js                # 🔶 Cliente HTTP (Singleton)
-│   │                               #    - GET, POST, PUT, DELETE
-│   │                               #    - Manejo de headers y autenticación
-│   │                               #    - Control de errores
-│   │
-│   ├── StateManager.js             # 🔶 Gestor de estado global (Singleton)
-│   │                               #    - Estado compartido de la app
-│   │                               #    - Getters y setters
-│   │                               #    - Emite eventos al cambiar
-│   │
-│   ├── AuthManager.js              # 🔶 Gestión de autenticación (Singleton)
-│   │                               #    - Login, logout, registro
-│   │                               #    - Manejo de tokens JWT
-│   │                               #    - Verificación de sesión
-│   │
-│   └── ThemeManager.js             # 🔶 Gestión de temas (Singleton)
-│                                   #    - Cambiar tema light/dark
-│                                   #    - Persistencia en localStorage
-│
-├── components/                      # COMPONENTES REUTILIZABLES
-│   │                               # Estructura a definir en siguiente fase
-│   └── [Componentes personalizados van aquí]
-│
-├── utils/                           # UTILIDADES Y HELPERS
-│   │
-│   ├── helpers.js                  # Funciones utilitarias generales
-│   │                               # - DOM manipulation
-│   │                               # - Array/Object utilities
-│   │                               # - Timing utilities
-│   │
-│   ├── validators.js               # Validaciones de datos
-│   │                               # - isValidEmail()
-│   │                               # - isValidPassword()
-│   │                               # - isValidAmount()
-│   │                               # - etc.
-│   │
-│   ├── formatters.js               # Formatos de presentación
-│   │                               # - formatCurrency(amount)
-│   │                               # - formatDate(date)
-│   │                               # - formatTime(time)
-│   │
-│   └── constants.js                # Constantes y enums globales
-│                                   # - API URLs
-│                                   # - Event names
-│                                   # - Error messages
-│                                   # - Colores, tamaños, etc.
-│
-└── pages/                           # PÁGINAS/VISTAS DE LA APLICACIÓN
-    │                               # Cada página = 1 archivo HTML + 1 archivo JS
-    │
-    ├── auth/                        # 🔓 FLUJO DE AUTENTICACIÓN
-    │   ├── login.html              # Formulario de login
-    │   ├── LoginPage.js            # Controlador de login
-    │   │
-    │   ├── registro-usuario.html   # Formulario de registro (usuario regular)
-    │   ├── RegistroUsuarioPage.js  # Controlador de registro usuario
-    │   │
-    │   ├── elegir-perfil.html      # Selección de rol (usuario vs asesor)
-    │   └── ElegirPerfilPage.js     # Controlador de elección de perfil
-    │
-    ├── cliente/                     # 👤 PÁGINAS DEL CLIENTE
-    │   ├── dashboard.html          # Panel principal del usuario
-    │   ├── DashboardPage.js        # Controlador dashboard usuario
-    │   │
-    │   ├── cargar-gasto.html       # Formulario de carga de gasto
-    │   ├── CargarGastoPage.js      # Controlador de carga
-    │   │
-    │   ├── historial.html          # Listado histórico de gastos
-    │   ├── HistorialPage.js        # Controlador de historial
-    │   │
-    │   ├── patrones.html           # Análisis de patrones de consumo
-    │   ├── PatronesPage.js         # Controlador de patrones
-    │   │
-    │   ├── perfil.html             # Perfil del usuario
-    │   ├── PerfilPage.js           # Controlador de perfil
-    │   │
-    │   ├── perfiles.html           # Perfiles de gasto (clasificaciones)
-    │   ├── PerfilesPage.js         # Controlador de perfiles
-    │   │
-    │   ├── recomendaciones.html    # Recomendaciones financieras
-    │   └── RecomendacionesPage.js  # Controlador de recomendaciones
-    │
-    ├── asesor/                      # 💼 PÁGINAS DEL ASESOR FINANCIERO
-    │   ├── dashboard.html          # Panel de asesor (clientes y análisis)
-    │   └── AsesorDashboardPage.js  # Controlador dashboard asesor
-    │
-    └── public/                      # 🌐 PÁGINAS PÚBLICAS
-        ├── landing.html            # Página de bienvenida/marketing
-        └── LandingPage.js          # Controlador de landing
+Estructura vigente (actualizada en la Fase 2 del refactor; ver `DiagnosticoRefactor.md` §7).
 
 ```
+frontend/
+├── index.html                # Entry point: CSS, Bootstrap y Chart.js por CDN, contenedor #route-view
+├── app.js                    # Arranque: tema, sesión, router (layouts + guard global), eventos de sesión
+├── routes.js                 # Tabla de rutas declarativa (fuente de verdad de la navegación)
+├── PrincipiosDesarrollo.md   # Guía de principios
+├── ReglasCSS.md              # Reglas operativas CSS/responsive vigentes
+│
+├── core/                     # Infraestructura
+│   ├── Router.js             # Router por hash: rutas anidadas, :params, beforeEach, layouts persistentes, 404
+│   ├── TabRegistry.js        # Pestañas abiertas ("volver al dashboard" cierra la pestaña secundaria)
+│   ├── templateLoader.js     # Carga y caché de templates HTML + renderTemplate con escapado
+│   ├── Component.js          # Base de ciclo de vida (render, attachEvents, listen, destroy)
+│   ├── PageController.js     # Base de páginas: _loadData, _runAction, helpers de DOM y modales
+│   ├── APIClient.js          # Único punto de red (driver mock/http)
+│   ├── AuthManager.js        # Sesión (delega en services/auth.service.js)
+│   ├── EventBus.js · StateManager.js · ThemeManager.js
+│
+├── services/                 # Un servicio por dominio + adapters.js (API en español ↔ UI)
+├── mocks/                    # Backend simulado con el contrato de la §10
+├── content/                  # Contenido estático (perfiles de gasto)
+│
+├── components/
+│   ├── layout/               # AppLayout (topbar + sidebar + footer, por rol) y PublicLayout
+│   └── modals/               # Modal de nueva recomendación del asesor
+│
+├── pages/                    # Cada página = NombrePage.js (con `static template`) + nombre.html
+│   ├── public/               # landing, placeholder / ruta no encontrada
+│   ├── cliente/              # dashboard, cargar-gasto, historial, patrones, recomendaciones, perfil, perfiles
+│   └── asesor/               # dashboard, clientes, perfil
+│
+├── assets/css/               # global.css (tokens), layouts.css, themes/, components/<pagina>.css
+└── utils/                    # constants, formatters, helpers, validators, html (escapado)
+```
+
+Los templates de las páginas internas **no** incluyen topbar, sidebar ni footer: los pone el layout. Su raíz es `<div class="app-page-content page-…">` (con `display: contents`).
 
 ### Convenciones de Nombres
 
@@ -452,9 +360,12 @@ SpecificComponent (componentes finales)
 - `StateManager` - Un único estado global
 - `AuthManager` - Una única sesión de usuario
 - `ThemeManager` - Una única configuración de tema
-- `APIClient` - Un único cliente HTTP
+- `APIClient` - Un único cliente HTTP (se exporta la instancia `apiClient`)
+- `TabRegistry` - Un único registro de pestañas (instancia `tabRegistry`)
 
-**Implementación:** Constructor privado con método `getInstance()`
+El `Router` **no** es singleton: se crea una vez en `app.js` con su configuración y se inyecta a las páginas.
+
+**Implementación:** se exporta una instancia única del módulo (`export const eventBus = …`); algunas clases además tienen `getInstance()`.
 
 **Beneficio:** Acceso centralizado, consistencia global
 
@@ -1346,32 +1257,41 @@ Spec detallada: `paginasFront/03-AsesorDashboard.md`.
 
 ### 11.5 Rutas y Navegación
 
-**URLs (hash-based):** fuente de verdad en `frontend/utils/constants.js` (`ROUTES`) y en la configuración del router en `frontend/app.js` (en la Fase 2 pasa a `frontend/routes.js`).
+**Fuente de verdad:** `frontend/routes.js` (los paths base están en `ROUTES`, `frontend/utils/constants.js`).
 
-| Página | Ruta | Rol |
-|--------|------|-----|
-| Landing | `#/` | público |
-| Login (modal) | `#/?modal=login` | público |
-| Registro (modal) | `#/?modal=register` | público |
-| Dashboard del cliente | `#/cliente/dashboard` | cliente |
-| Cargar Gasto | `#/cliente/cargar-gasto` | cliente |
-| Historial | `#/cliente/historial` | cliente |
-| Patrones | `#/cliente/patrones` | cliente |
-| Recomendaciones | `#/cliente/recomendaciones` | cliente |
-| Perfil de cuenta | `#/cliente/perfil` | cliente |
-| Perfiles de gasto | `#/cliente/perfiles` | cliente |
-| Dashboard Asesor | `#/asesor/dashboard` | asesor |
-| Mis Clientes | `#/asesor/clientes` | asesor |
-| Perfil del Asesor | `#/asesor/perfil` | asesor |
-| Placeholder | `#/utils/placeholder?title=…` | público |
-| Ruta inexistente | cualquier otra (se muestra la página "Ruta no encontrada" en la misma URL) | público |
+| Página | Ruta | Layout | Rol |
+|--------|------|--------|-----|
+| Landing | `#/` (`?modal=login` · `?modal=register` · `&next=<ruta>`) | public | público |
+| Placeholder | `#/utils/placeholder?title=…` | public | público |
+| Dashboard del cliente | `#/cliente/dashboard` | client | cliente |
+| Cargar Gasto | `#/cliente/cargar-gasto` | client | cliente |
+| Historial | `#/cliente/historial` | client | cliente |
+| Patrones | `#/cliente/patrones` | client | cliente |
+| Recomendaciones | `#/cliente/recomendaciones` | client | cliente |
+| Perfil de cuenta | `#/cliente/perfil` | client | cliente |
+| Perfiles de gasto | `#/cliente/perfiles` | client | cliente |
+| Dashboard Asesor | `#/asesor/dashboard` | advisor | asesor |
+| Mis Clientes | `#/asesor/clientes` | advisor | asesor |
+| Perfil del Asesor | `#/asesor/perfil` | advisor | asesor |
+| Ruta inexistente | cualquier otra: "Ruta no encontrada" en la misma URL | public | público |
 
-**Implementación:** Hash-based routing en `Router.js`
+**Funcionamiento del router (`core/Router.js`):**
+1. Cambia el hash → se busca la ruta (coincidencia por segmentos, con parámetros `:id`).
+2. Guard global `beforeEach` (en `app.js`): si la ruta tiene `meta.role` y no hay sesión → `#/?modal=login&next=<ruta>`; si el rol no coincide → dashboard del rol. Los redirects usan `replace` (no agregan entradas al historial).
+3. Si cambia el layout (public · client · advisor), se desmonta el anterior y se monta el nuevo **una sola vez**; navegar entre páginas del mismo rol no lo vuelve a montar.
+4. Se destruye la página anterior, se carga el template de la nueva en el `outlet` del layout y se monta. Si mientras tanto se pidió otra ruta, la activación se descarta.
+5. Si la ruta tiene `reuseOnQueryChange` y solo cambió la query, se llama `page.onRouteUpdate(to)` sin remontar (la landing lo usa para abrir el modal).
+6. El layout marca el link activo (`aria-current="page"`), actualiza el footer y el título del documento.
+
+La sesión se restaura (`authManager.init()`) antes de `router.start()`. El guard es experiencia de usuario: la seguridad la impone el backend validando el token.
 
 ```javascript
-router.navigate('cliente/dashboard')  // Cambia a #/cliente/dashboard
-router.navigate('/')                  // Cambia a #/
+router.navigate(ROUTES.CLIENT_HISTORIAL);                 // #/cliente/historial
+router.navigate(ROUTES.HOME, { modal: "login" });         // #/?modal=login
+router.navigate(ROUTES.ADVISOR_DASHBOARD, {}, { replace: true });
 ```
+
+**Pestañas nuevas** (`core/TabRegistry.js`): desde el dashboard, los links a secciones de detalle o análisis abren en pestaña nueva; la navegación principal no. "Volver al Dashboard" cierra la pestaña secundaria si el dashboard ya está abierto en otra.
 
 ---
 
