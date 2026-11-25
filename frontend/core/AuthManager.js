@@ -1,12 +1,6 @@
-import {
-  EVENTS,
-  MOCK_AUTH_USERS,
-  ROLES,
-  ROUTES,
-  STORAGE_KEYS,
-  UI_TIMING,
-} from "../utils/constants.js";
-import { sleep } from "../utils/helpers.js";
+import { EVENTS, ROLES, ROUTES, STORAGE_KEYS } from "../utils/constants.js";
+import { authService } from "../services/auth.service.js";
+import { apiClient } from "./APIClient.js";
 import { stateManager } from "./StateManager.js";
 import { eventBus } from "./EventBus.js";
 
@@ -21,6 +15,7 @@ export class AuthManager {
 
     this.currentUser = null;
     this.token = null;
+    apiClient.setTokenProvider(() => this.token);
 
     AuthManager.instance = this;
   }
@@ -59,67 +54,38 @@ export class AuthManager {
   }
 
   /**
-   * Valida credenciales contra datos mock y crea sesion activa.
-   * Puede reemplazarse por llamada real a backend sin cambiar consumidores.
+   * Inicia sesión contra la API (POST /auth/login) y persiste la sesión.
+   * @param {{email: string, password: string}} credentials
+   * @returns {Promise<object>} usuario autenticado (modelo UI)
    */
   async login(credentials) {
-    await sleep(UI_TIMING.AUTH_LOGIN_DELAY_MS);
-
-    const match = MOCK_AUTH_USERS.find((user) => {
-      return (
-        user.email.toLowerCase() === String(credentials.email).toLowerCase() &&
-        user.password === credentials.password
-      );
-    });
-
-    if (!match) {
-      throw new Error("Email o contrasena invalida.");
-    }
-
-    const user = {
-      id: match.id,
-      role: match.role,
-      fullName: match.fullName,
-      email: match.email,
-      profile: match.profile,
-    };
-
-    const token = `mock-token-${user.id}-${Date.now()}`;
+    const { token, user } = await authService.login(credentials);
     this._persistSession(user, token);
-
     eventBus.emit(EVENTS.AUTH.LOGIN, { user });
     return user;
   }
 
   /**
-   * Registra un usuario nuevo en flujo mock y lo autentica automaticamente.
+   * Registra una cuenta (POST /auth/register) y deja la sesión iniciada.
+   * @param {object} form datos del formulario de registro (modelo UI)
    */
-  async register(payload) {
-    await sleep(UI_TIMING.AUTH_REGISTER_DELAY_MS);
-
-    const existing = MOCK_AUTH_USERS.find((user) => {
-      return user.email.toLowerCase() === String(payload.email).toLowerCase();
-    });
-
-    if (existing) {
-      throw new Error("El email ya se encuentra registrado.");
-    }
-
-    const role = payload.role === ROLES.ADVISOR ? ROLES.ADVISOR : ROLES.CLIENT;
-    const user = {
-      id: `new-${Date.now()}`,
-      role,
-      fullName: payload.fullName,
-      email: payload.email,
-      // El perfil de gasto lo asigna el sistema; al registrarse arranca en el perfil base.
-      profile: role === ROLES.ADVISOR ? "Asesor" : "Equilibrista",
-    };
-
-    const token = `mock-token-${user.id}`;
-
+  async register(form) {
+    const { token, user } = await authService.register(form);
     this._persistSession(user, token);
     eventBus.emit(EVENTS.AUTH.REGISTER, { user });
     return user;
+  }
+
+  /**
+   * Reemplaza los datos del usuario en sesión (por ejemplo, después de editar el perfil).
+   * @param {object} user
+   */
+  updateCurrentUser(user) {
+    if (!user || !this.token) {
+      return;
+    }
+
+    this._persistSession(user, this.token);
   }
 
   /**

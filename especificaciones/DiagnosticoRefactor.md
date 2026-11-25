@@ -499,7 +499,7 @@ Cada fase termina con el front funcionando (checklist manual del README + recorr
 - Escapado por defecto: helper `html` y `escapeHtml`, aplicado en `renderTemplate` y en todos los `innerHTML` con datos (O-01).
 - Documentos: D-01, D-02, D-03, D-08, D-11 y las specs de páginas afectadas por las eliminaciones.
 
-### Fase 1 — Capa de servicios (desbloquea el backend)
+### Fase 1 — Capa de servicios (desbloquea el backend) · ✅ completada (25/11/2026)
 - `services/*.service.js` (`auth`, `expenses`, `categories`, `tickets`, `recommendations`, `analysis`, `clients`, `profile`) con API `async`, driver mock y driver HTTP intercambiables; los mocks pasan de `constants.js` a `mocks/` y **en español, con la forma de la API**, para que el adaptador se ejercite desde el día uno.
 - `services/adapters.js`: español (API) → modelo de la UI.
 - `APIClient`: `FormData`, errores normalizados, 401 → `auth:sessionExpired`, `BASE_URL` por entorno. `AuthManager` delega en `auth.service`.
@@ -507,6 +507,7 @@ Cada fase termina con el front funcionando (checklist manual del README + recorr
 - Estados de carga y error mínimos en las páginas.
 - Spec §10 reescrita: endpoints en español, respuesta única `{ token, usuario }` para login y registro, rol `cliente`, errores `{ error, mensaje, codigo }`.
 - Criterio de salida: pasar de `driver: "mock"` a `"http"` no toca ninguna página.
+- Como quedó implementado: el mock es un backend simulado detrás de `APIClient` (`mocks/mockServer.js`), con el mismo contrato, tokens, 401/403/422 y persistencia en `localStorage`. El análisis de consumo y la asignación automática de perfil se calculan de verdad en `mocks/analytics.js` (son la referencia de lo que tiene que hacer el backend). Las rutas quedaron en inglés porque la consigna fija `/auth/login`, `/expenses` y `/tickets/upload`; los cuerpos van en español.
 
 ### Fase 2 — Router y layouts
 - `routes.js` declarativo, `beforeEach` por `meta.role`, parámetros `:id`, 404 en el lugar, `next` para volver después del login.

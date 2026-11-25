@@ -825,297 +825,185 @@ DashboardPage {
 
 ## 10. ENDPOINTS DEL BACKEND
 
-### Base URL
+> Contrato vigente desde la Fase 1 del refactor (`DiagnosticoRefactor.md` §6, decisión 6). El backend NestJS lo implementa tal cual; el front lo consume desde `frontend/services/*.service.js` y lo traduce al modelo de la UI en `frontend/services/adapters.js`. El backend simulado `frontend/mocks/mockServer.js` implementa exactamente este contrato.
 
-```
-http://api.fintrack.local/v1
-```
+### Convenciones
 
-### 10.1 Autenticación
+- **Rutas en inglés** (las fija la consigna: `/auth/login`, `/expenses`, `/tickets/upload`); **cuerpos en español**, con los mismos nombres de columna que la BD.
+- Base URL: `API_CONFIG.BASE_URLS` en `frontend/utils/constants.js` (`local` = `http://localhost:3000`; `production` se completa al hacer el deploy).
+- Autenticación: header `Authorization: Bearer <token>` (JWT). Todas las rutas requieren token salvo login y registro.
+- Roles: `cliente` y `asesor`. Una ruta de otro rol responde **403**.
+- Fechas de gasto: `AAAA-MM-DD`. Timestamps: ISO 8601. Montos: número (ARS).
+- **Errores** (4xx/5xx), siempre con este cuerpo:
 
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| **POST** | `/auth/register` | Registrar nuevo usuario |
-| **POST** | `/auth/login` | Login (retorna JWT token) |
-| **POST** | `/auth/logout` | Logout |
-| **GET** | `/auth/me` | Obtener usuario autenticado |
-| **PUT** | `/auth/profile` | Actualizar perfil de usuario |
-
-#### POST `/auth/register`
-```javascript
-Request:
-{
-  email: "usuario@example.com",
-  password: "SecurePass123",
-  nombre: "Juan",
-  apellido: "Pérez",
-  perfil: "cliente" // o "asesor"
-}
-
-Response (201):
-{
-  id: 1,
-  email: "usuario@example.com",
-  nombre: "Juan",
-  perfil: "cliente",
-  token: "eyJhbGc..."
-}
+```json
+{ "error": true, "mensaje": "Descripcion legible", "codigo": "VALIDACION", "detalles": { "campos": ["monto"] } }
 ```
 
-#### POST `/auth/login`
-```javascript
-Request:
-{
-  email: "usuario@example.com",
-  password: "SecurePass123"
-}
+| Estado | `codigo` | Cuándo |
+|---|---|---|
+| 401 | `CREDENCIALES_INVALIDAS` | Login con email o contraseña incorrectos |
+| 401 | `NO_AUTENTICADO` | Token ausente, inválido o vencido (el front cierra la sesión) |
+| 403 | `PROHIBIDO` | Rol incorrecto o cliente no asignado al asesor |
+| 404 | `NO_ENCONTRADO` | Recurso inexistente o ajeno |
+| 409 | `EMAIL_DUPLICADO` | Registro con un email existente |
+| 422 | `VALIDACION` | Datos inválidos (`detalles.campos` lista los campos) |
+| 500 | `ERROR_INTERNO` | Error no controlado |
 
-Response (200):
+### Objetos comunes
+
+**Usuario** (`usuarios` + `perfiles_usuarios` o `perfiles_asesores`):
+
+```json
 {
-  token: "eyJhbGc...",
-  user: {
-    id: 1,
-    email: "usuario@example.com",
-    nombre: "Juan",
-    perfil: "cliente"
+  "id": "uuid", "email": "cliente@fintrack.local", "rol": "cliente",
+  "nombre_completo": "Juan Perez", "biografia": "", "foto_perfil_url": null,
+  "estado": "activo", "creado_en": "2025-10-21T12:00:00.000Z",
+  "perfil_cliente": {
+    "ocupacion": "Disenador UX", "ingreso_estimado": 285000, "objetivo_financiero": "Fondo de emergencia",
+    "perfil_de_gasto": { "id": "uuid", "nombre": "Equilibrista Cosmico", "descripcion": "..." },
+    "asesor": { "id": "uuid", "nombre_completo": "Maria Rodriguez" }
   }
 }
 ```
 
-#### GET `/auth/me`
-```javascript
-Headers:
-Authorization: Bearer <token>
+Para un asesor, en lugar de `perfil_cliente` viene `perfil_asesor: { matricula, especialidad, descripcion, clientes_asignados }`. `perfil_de_gasto` es el registro vigente de `clasificacion_de_perfil` (puede ser `null`).
 
-Response (200):
+**Gasto** (`gastos`):
+
+```json
 {
-  id: 1,
-  email: "usuario@example.com",
-  nombre: "Juan",
-  apellido: "Pérez",
-  perfil: "cliente",
-  createdAt: "2026-01-15T10:00:00Z"
+  "id": "uuid", "comercio": "Supermercado Central", "fecha_gasto": "2026-11-24", "monto": 18500,
+  "descripcion": "", "origen": "manual", "moneda": "ARS",
+  "categoria": { "id": "uuid", "nombre": "Alimentacion", "icono": "🛒" },
+  "ticket_principal_id": null, "creado_en": "...", "actualizado_en": "..."
 }
 ```
 
-### 10.2 Gastos
+**Recomendación** (`recomendaciones_financieras`):
 
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| **GET** | `/expenses` | Listar gastos del usuario |
-| **GET** | `/expenses/:id` | Obtener gasto específico |
-| **POST** | `/expenses` | Crear nuevo gasto |
-| **PUT** | `/expenses/:id` | Actualizar gasto |
-| **DELETE** | `/expenses/:id` | Eliminar gasto |
-| **POST** | `/expenses/filter` | Filtrar gastos |
-
-#### GET `/expenses?page=1&limit=20`
-```javascript
-Response (200):
+```json
 {
-  total: 150,
-  page: 1,
-  limit: 20,
-  data: [
-    {
-      id: 1,
-      monto: 45.50,
-      comercio: "Supermercado X",
-      categoria: "alimentos",
-      fecha: "2026-04-18",
-      descripcion: "Compra semanal",
-      usuarioId: 1
-    },
-    // ... más gastos
-  ]
+  "id": "uuid", "titulo": "Reduce gastos en streaming", "mensaje": "...",
+  "tipo": "sugerencia", "prioridad": "alta", "origen": "asesor",
+  "leida": false, "leida_en": null, "creado_en": "...",
+  "asesor": { "id": "uuid", "nombre_completo": "Maria Rodriguez" },
+  "cliente": { "id": "uuid", "nombre_completo": "Juan Perez" }
 }
 ```
 
-#### POST `/expenses`
-```javascript
-Request:
+`tipo`: `sugerencia` · `alerta` · `observacion`. `prioridad`: `baja` · `media` · `alta`. `origen`: `sistema` · `asesor` (`asesor` es `null` si lo generó el sistema).
+
+### 10.1 Autenticación y perfil
+
+| Método | Ruta | Rol | Cuerpo | Respuesta |
+|---|---|---|---|---|
+| POST | `/auth/register` | público | `{ nombre_completo, email, password, rol, matricula?, especialidad? }` (`matricula` y `especialidad` obligatorios si `rol = asesor`) | **201** `{ token, usuario }` |
+| POST | `/auth/login` | público | `{ email, password }` | **200** `{ token, usuario }` |
+| GET | `/auth/me` | ambos | — | **200** `usuario` |
+| PUT | `/auth/profile` | ambos | cliente: `{ nombre_completo, biografia?, ocupacion?, ingreso_estimado?, objetivo_financiero? }` · asesor: `{ nombre_completo, biografia?, matricula, especialidad, descripcion? }` | **200** `usuario` |
+
+El email no se modifica desde el perfil. Un cliente que se registra queda asignado a un asesor (regla del backend).
+
+### 10.2 Catálogos
+
+| Método | Ruta | Rol | Respuesta |
+|---|---|---|---|
+| GET | `/categories` | ambos | **200** `[{ id, nombre, icono }]` |
+| GET | `/spending-profiles` | ambos | **200** `[{ id, nombre, descripcion }]` |
+
+### 10.3 Gastos (cliente)
+
+| Método | Ruta | Cuerpo / query | Respuesta |
+|---|---|---|---|
+| GET | `/expenses` | query opcional: `busqueda`, `categoria_id`, `origen`, `desde`, `hasta`, `orden` (`fecha` · `monto_desc` · `monto_asc`), `limite` | **200** `{ datos: [gasto], total }` |
+| GET | `/expenses/:id` | — | **200** `gasto` |
+| POST | `/expenses` | `{ comercio, fecha_gasto, monto, categoria_id, descripcion?, origen?, ticket_id? }` | **201** `gasto` |
+| PUT | `/expenses/:id` | mismos campos (parcial) | **200** `gasto` |
+| DELETE | `/expenses/:id` | — | **204** |
+
+Validaciones: `monto > 0`, `fecha_gasto` con formato `AAAA-MM-DD`, `categoria_id` existente, `origen` en `manual` · `ticket` (por defecto `manual`). Un cliente solo ve y modifica sus gastos.
+
+### 10.4 Tickets / OCR (cliente)
+
+| Método | Ruta | Cuerpo | Respuesta |
+|---|---|---|---|
+| POST | `/tickets/upload` | `multipart/form-data` con el campo `archivo` (imagen) | **201** `{ ticket: { id, nombre_archivo, estado_procesamiento }, analisis: { comercio_detectado, fecha_detectada, monto_detectado, categoria_sugerida: { id, nombre } \| null, confianza_general } }` |
+
+El backend guarda la imagen (`tickets`), la envía al servicio de OCR/IA, persiste el resultado (`analisis_ocr`) y lo devuelve en la misma respuesta. El front precompleta el formulario y, al guardar, manda `POST /expenses` con `origen: "ticket"` y `ticket_id`.
+
+### 10.5 Recomendaciones
+
+| Método | Ruta | Rol | Cuerpo / query | Respuesta |
+|---|---|---|---|---|
+| GET | `/recommendations` | cliente | — | **200** `[recomendacion]` (propias, más recientes primero) |
+| PUT | `/recommendations/:id/read` | cliente | — | **200** `recomendacion` (`leida = true`, `leida_en`) |
+| GET | `/recommendations/sent` | asesor | query `limite` | **200** `[recomendacion]` enviadas por el asesor |
+| POST | `/recommendations` | asesor | `{ cliente_id, titulo, mensaje, tipo, prioridad }` | **201** `recomendacion` (`origen = asesor`); 403 si el cliente no está asignado |
+
+### 10.6 Análisis de consumo
+
+| Método | Ruta | Rol | Respuesta |
+|---|---|---|---|
+| GET | `/analysis/me` | cliente | **200** `analisis` |
+| GET | `/analysis/clients/:id` | asesor | **200** `analisis` del cliente (403 si no está asignado) |
+| GET | `/analysis/advisor/summary` | asesor | **200** `resumen_asesor` |
+
+**`analisis`** (alimenta Dashboard, Patrones y, en la Fase 5, el análisis por cliente del asesor):
+
+```json
 {
-  monto: 45.50,
-  comercio: "Supermercado X",
-  categoria: "alimentos",
-  fecha: "2026-04-18",
-  descripcion: "Compra semanal"
-}
-
-Response (201):
-{
-  id: 1,
-  monto: 45.50,
-  comercio: "Supermercado X",
-  categoria: "alimentos",
-  fecha: "2026-04-18",
-  usuarioId: 1,
-  createdAt: "2026-04-18T15:30:00Z"
-}
-```
-
-### 10.3 Tickets/OCR
-
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| **POST** | `/tickets/upload` | Subir imagen de ticket |
-| **POST** | `/tickets/analyze` | Analizar ticket con IA |
-| **GET** | `/tickets/:id` | Obtener ticket procesado |
-
-#### POST `/tickets/upload`
-```javascript
-Request (FormData):
-{
-  file: <File> // Imagen del ticket
-}
-
-Response (201):
-{
-  id: 1,
-  fileName: "ticket_001.jpg",
-  uploadedAt: "2026-04-18T15:30:00Z",
-  status: "pending" // pending, analyzing, completed, failed
-}
-```
-
-#### POST `/tickets/analyze`
-```javascript
-Request:
-{
-  ticketId: 1
-}
-
-Response (200):
-{
-  id: 1,
-  extractedData: {
-    monto: 45.50,
-    comercio: "Supermercado X",
-    fecha: "2026-04-18",
-    categoria: null // opcional
-  },
-  confidence: 0.95,
-  status: "completed"
-}
-```
-
-### 10.4 Categorías
-
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| **GET** | `/categories` | Listar todas las categorías |
-
-#### GET `/categories`
-```javascript
-Response (200):
-{
-  data: [
-    { id: 1, nombre: "Alimentos", icono: "🍔" },
-    { id: 2, nombre: "Transporte", icono: "🚗" },
-    { id: 3, nombre: "Entretenimiento", icono: "🎬" },
-    // ... más categorías
-  ]
+  "cliente_id": "uuid",
+  "periodo": { "desde": "2026-05-01", "hasta": "2026-11-25" },
+  "gasto_mes_actual": 135880, "gasto_mes_anterior_a_la_fecha": 56900, "variacion_mes_anterior": 139,
+  "gasto_promedio_mensual": 101005, "cantidad_gastos": 97,
+  "categoria_dominante": { "id": "uuid", "nombre": "Alimentacion", "porcentaje": 41 },
+  "comercio_mas_frecuente": { "comercio": "Supermercado Central", "cantidad": 18 },
+  "dia_mayor_gasto": 5,
+  "gastos_por_categoria": [{ "categoria_id": "uuid", "categoria": "Alimentacion", "monto": 250000, "porcentaje": 41 }],
+  "gastos_por_mes": [{ "mes": "2026-11", "monto": 135880 }],
+  "gastos_por_mes_y_categoria": [{ "mes": "2026-11", "categoria": "Alimentacion", "monto": 60000 }],
+  "gastos_por_dia": [{ "fecha": "2026-11-25", "monto": 7200 }],
+  "ranking_comercios": [{ "comercio": "Supermercado Central", "monto": 120000, "cantidad": 18 }],
+  "gastos_inusuales": [{ "gasto_id": "uuid", "comercio": "...", "categoria": "...", "fecha_gasto": "...", "monto": 23400, "promedio_categoria": 9060, "desvio_porcentaje": 158 }],
+  "alertas": [{ "nivel": "danger", "titulo": "...", "descripcion": "..." }],
+  "perfil_de_gasto": { "id": "uuid", "nombre": "Equilibrista Cosmico", "descripcion": "..." },
+  "nivel_riesgo": "medio",
+  "ultimo_gasto_fecha": "2026-11-24"
 }
 ```
 
-### 10.5 Análisis (Solo Asesor)
+Reglas de cálculo (las implementa hoy el mock en `frontend/mocks/analytics.js` y el backend debe reproducirlas):
+- `gastos_por_mes`: últimos 7 meses incluido el actual. `gastos_por_dia`: últimos 14 días. `ranking_comercios`: top 5 por monto.
+- `variacion_mes_anterior`: mes en curso contra el mes anterior **hasta el mismo día** (porcentaje; `null` si no hay datos).
+- `gasto_promedio_mensual`: promedio de los meses completos anteriores con gastos.
+- `dia_mayor_gasto`: 0 = domingo … 6 = sábado.
+- **Gasto inusual**: gasto de los últimos 30 días que supera en más de 35% el promedio de su categoría (con al menos 3 gastos previos en esa categoría).
+- `alertas.nivel`: `danger` · `warning` · `success` · `info`.
+- **Perfil de gasto** (asignado automáticamente, sin intervención del cliente): participación de las categorías discrecionales (Entretenimiento, Suscripciones, Otros) en los últimos 3 meses, comparada con `perfiles_de_gasto.criterio_regla.discrecional_max` (Drácula Nocturno < 10%, Equilibrista Cósmico < 30%, Espíritu Libre el resto). El resultado se guarda en `clasificacion_de_perfil`.
+- `nivel_riesgo`: `alto` si hay 2 o más gastos inusuales o la variación supera 25%; `medio` si hay 1 o la variación supera 10%; `bajo` en otro caso.
 
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| **GET** | `/analysis/user/:userId` | Análisis general de usuario |
-| **GET** | `/analysis/patterns/:userId` | Patrones de consumo |
+**`resumen_asesor`**:
 
-#### GET `/analysis/user/:userId`
-```javascript
-Headers:
-Authorization: Bearer <asesor_token>
-
-Response (200):
+```json
 {
-  usuarioId: 1,
-  gastoTotal: 5000.00,
-  gastoPromedio: 150.00,
-  categoriaDestacada: "alimentos",
-  periodoAnalisis: "ultimo_mes"
+  "asesor_id": "uuid", "clientes_activos": 8, "clientes_con_alertas": 5,
+  "recomendaciones_enviadas": 7, "recomendaciones_leidas": 3,
+  "alertas": [{ "nivel": "danger", "titulo": "5 clientes con gastos inusuales", "descripcion": "..." }],
+  "distribucion_por_perfil": [{ "perfil": "Equilibrista Cosmico", "cantidad": 3 }],
+  "gasto_por_perfil": [{ "perfil": "Equilibrista Cosmico", "monto": 320000 }],
+  "actividad_mensual": [{ "mes": "2026-11", "clientes_activos": 8 }]
 }
 ```
 
-#### GET `/analysis/patterns/:userId`
-```javascript
-Headers:
-Authorization: Bearer <asesor_token>
+### 10.7 Clientes (asesor)
 
-Response (200):
-{
-  usuarioId: 1,
-  patrones: [
-    {
-      tipo: "gasto_diario_promedio",
-      valor: 150.00
-    },
-    {
-      tipo: "categoria_mas_gastada",
-      valor: "alimentos"
-    },
-    {
-      tipo: "dia_pico_gasto",
-      valor: "viernes"
-    }
-  ]
-}
-```
+| Método | Ruta | Respuesta |
+|---|---|---|
+| GET | `/clients` | **200** `[resumen_cliente]` de los clientes asignados (`asignaciones_de_clientes` activas) |
+| GET | `/clients/:id` | **200** `resumen_cliente` + `usuario` (403 si no está asignado) |
 
-### 10.6 Usuarios (Solo Asesor/Admin)
-
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| **GET** | `/admin/users` | Listar todos los usuarios |
-| **GET** | `/admin/users/:id` | Detalles de usuario específico |
-
-#### GET `/admin/users?page=1&limit=20`
-```javascript
-Headers:
-Authorization: Bearer <asesor_token>
-
-Response (200):
-{
-  total: 45,
-  page: 1,
-  limit: 20,
-  data: [
-    {
-      id: 1,
-      email: "usuario@example.com",
-      nombre: "Juan",
-      perfil: "cliente",
-      createdAt: "2026-01-15T10:00:00Z",
-      gastosTotales: 5000.00
-    },
-    // ... más usuarios
-  ]
-}
-```
-
-### 10.7 Manejo de Errores
-
-Todos los endpoints retornan errores en formato:
-
-```javascript
-Response (4xx/5xx):
-{
-  error: true,
-  message: "Descripción del error",
-  code: "ERROR_CODE",
-  details: {} // opcional
-}
-```
-
-**Códigos de error comunes:**
-- `401 Unauthorized` - Token inválido o expirado
-- `403 Forbidden` - Sin permiso para acceder
-- `404 Not Found` - Recurso no existe
-- `422 Unprocessable Entity` - Datos inválidos
-- `500 Internal Server Error` - Error del servidor
+**`resumen_cliente`**: `{ id, nombre_completo, email, estado, perfil_de_gasto, gasto_promedio_mensual, gasto_mes_actual, variacion_mes_anterior, ultimo_gasto_fecha, gastos_inusuales (cantidad), nivel_riesgo }`.
 
 ---
 
@@ -1375,8 +1263,8 @@ DASHBOARD    DASHBOARD
 - Acciones: marcar como leída y ver detalle.
 
 **Datos:**
-- GET `/recomendaciones` → recomendaciones del cliente
-- PUT `/recomendaciones/:id/leida` → marcar como leída
+- GET `/recommendations` → recomendaciones del cliente
+- PUT `/recommendations/:id/read` → marcar como leída
 
 ---
 
@@ -1405,8 +1293,8 @@ DASHBOARD    DASHBOARD
 - Perfil asignado **automáticamente por el sistema** (`clasificacion_de_perfil`). El cliente no puede elegirlo.
 
 **Datos:**
-- GET `/perfiles-de-gasto` → catálogo
-- GET `/clientes/me/perfil` → perfil vigente
+- GET `/spending-profiles` → catálogo
+- GET `/auth/me` → `perfil_cliente.perfil_de_gasto` (perfil vigente)
 
 ---
 

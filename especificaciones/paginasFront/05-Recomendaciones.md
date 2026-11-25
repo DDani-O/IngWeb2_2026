@@ -47,10 +47,10 @@ Los valores válidos de `type` y `priority` están en `RECOMMENDATION_TYPES` y `
 
 ## INTERACCIÓN CON EL BACKEND
 
-- `GET /recomendaciones` — recomendaciones del cliente autenticado.
-- `PUT /recomendaciones/:id/leida` — marca una recomendación como leída (actualiza `leida` y `leida_en`).
+- `GET /recommendations` — recomendaciones del cliente autenticado.
+- `PUT /recommendations/:id/read` — marca una recomendación como leída (actualiza `leida` y `leida_en`).
 
-El contrato exacto (en español) se fija en `EspecificacionDesarrolloFront.md` §10 durante la Fase 1.
+Cuerpos y errores: `EspecificacionDesarrolloFront.md` §10.5.
 
 ## REGLAS DE COMPORTAMIENTO
 

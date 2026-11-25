@@ -31,6 +31,21 @@ function initializeApplication() {
   eventBus.on(EVENTS.ROUTER.CHANGED, ({ path }) => {
     registerCurrentTabRoute(path);
   });
+
+  // La API respondió 401 con un token enviado: la sesión ya no es válida.
+  eventBus.on(EVENTS.AUTH.SESSION_EXPIRED, () => {
+    if (!authManager.isAuthenticated()) {
+      return;
+    }
+
+    authManager.logout();
+    showToast("Tu sesion expiro. Volve a iniciar sesion.", "warning");
+    router.navigate(ROUTES.HOME, { modal: "login" });
+  });
+
+  eventBus.on(EVENTS.PROFILE.UPDATED, ({ user }) => {
+    authManager.updateCurrentUser(user);
+  });
 }
 
 function configureRouter() {

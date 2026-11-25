@@ -21,10 +21,10 @@ Página informativa con los 3 perfiles de consumo que usa FinTrack (extra opcion
 
 ## INTERACCIÓN CON EL BACKEND
 
-- `GET /perfiles-de-gasto` — catálogo.
-- `GET /clientes/me/perfil` — perfil vigente del cliente.
+- `GET /spending-profiles` — catálogo.
+- `GET /auth/me` — el perfil vigente viene en `perfil_cliente.perfil_de_gasto`.
 
-No hay endpoints de escritura: el cliente no modifica su perfil. El contrato exacto se fija en la spec general §10 durante la Fase 1.
+No hay endpoints de escritura: el cliente no modifica su perfil. La regla de asignación está en la spec general §10.6.
 
 ## METADATA
 

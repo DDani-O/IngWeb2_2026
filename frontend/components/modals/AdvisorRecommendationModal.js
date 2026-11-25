@@ -43,3 +43,38 @@ export async function mountAdvisorRecommendationModal(root, options = {}) {
     )}`,
   });
 }
+
+/**
+ * Carga los clientes en el selector del modal y preselecciona uno si se indica.
+ * @param {HTMLElement} root
+ * @param {string} idPrefix
+ * @param {{id: string, fullName: string}[]} clients
+ * @param {string} selectedId
+ */
+export function fillRecommendationClients(root, idPrefix, clients, selectedId = "") {
+  const select = root.querySelector(`#${idPrefix}Client`);
+  if (!select) {
+    return;
+  }
+
+  select.innerHTML = html`
+    <option value="">Seleccionar cliente</option>
+    ${clients.map((client) => html`<option value="${client.id}">${client.fullName}</option>`)}
+  `;
+  select.value = selectedId;
+}
+
+/**
+ * Lee el formulario del modal con el modelo que espera recommendationsService.create.
+ * @returns {{clientId, title, message, type, priority}}
+ */
+export function readRecommendationForm(root, idPrefix) {
+  const value = (suffix) => root.querySelector(`#${idPrefix}${suffix}`)?.value.trim() || "";
+  return {
+    clientId: value("Client"),
+    title: value("Title"),
+    type: value("Type"),
+    priority: value("Priority"),
+    message: value("Message"),
+  };
+}

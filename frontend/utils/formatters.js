@@ -69,3 +69,55 @@ export function formatTrendLabel(direction, value, label) {
   const arrow = direction === "up" ? "▲" : "▼";
   return `${arrow} ${value}% ${label}`;
 }
+
+/**
+ * Etiqueta corta de un mes "AAAA-MM" (ej: "nov 26").
+ */
+export function formatMonth(isoMonth, locale = APP_CONFIG.DEFAULT_LOCALE) {
+  const [year, month] = String(isoMonth).split("-").map(Number);
+  if (!year || !month) {
+    return "--";
+  }
+
+  return new Intl.DateTimeFormat(locale, { month: "short", year: "2-digit" }).format(new Date(year, month - 1, 1));
+}
+
+/**
+ * Nombre del día de la semana (0 = domingo, como Date.getDay()).
+ */
+export function formatWeekday(dayIndex, locale = APP_CONFIG.DEFAULT_LOCALE) {
+  if (dayIndex === null || dayIndex === undefined) {
+    return "--";
+  }
+
+  // 2023-01-01 fue domingo.
+  return new Intl.DateTimeFormat(locale, { weekday: "long" }).format(new Date(2023, 0, 1 + Number(dayIndex)));
+}
+
+/**
+ * Distancia en días desde una fecha "AAAA-MM-DD" hasta hoy (ej: "Hoy", "Hace 3 d").
+ */
+export function formatDaysAgo(dateValue) {
+  if (!dateValue) {
+    return "Sin gastos";
+  }
+
+  const date = toLocalDate(dateValue);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const days = Math.round((today - date) / 86400000);
+
+  if (days <= 0) {
+    return "Hoy";
+  }
+
+  return days === 1 ? "Ayer" : `Hace ${days} d`;
+}
+
+/**
+ * Fecha de hoy en formato "AAAA-MM-DD" (hora local), para inputs type="date".
+ */
+export function todayIsoDate() {
+  const today = new Date();
+  return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+}

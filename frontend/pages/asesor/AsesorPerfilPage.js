@@ -1,41 +1,41 @@
 import { PageController } from "../../core/PageController.js";
-import {
-  MOCK_ADVISOR_PROFILE_DETAILS,
-  ROLES,
-  ROUTES,
-  STORAGE_KEYS,
-} from "../../utils/constants.js";
+import { profileService } from "../../services/profile.service.js";
+import { ROLES, ROUTES } from "../../utils/constants.js";
 import { getInitials } from "../../utils/helpers.js";
 import { html } from "../../utils/html.js";
 
 /**
- * Perfil profesional del asesor. Campos de usuarios (nombre_completo) y
- * perfiles_asesores (matricula, especialidad, descripcion).
+ * Perfil profesional del asesor. Lee GET /auth/me y guarda con PUT /auth/profile
+ * (usuarios + perfiles_asesores: matricula, especialidad, descripcion).
  */
 export class AsesorPerfilPage extends PageController {
   constructor(element, options = {}) {
     super(element, options);
-    const userId = this.options.authManager?.getCurrentUser()?.id || "anonimo";
-    this.storageKey = `${STORAGE_KEYS.ADVISOR_PROFILE}.${userId}`;
-    this.baseProfile = this._buildBaseProfile();
-    this.profile = this._loadPersistedProfile();
+    this.user = null;
   }
 
   render() {
     this._resetViewPosition();
-    this._renderSummary();
-    this._fillFormValues();
-    this._setText("#advisorTopbarName", this.profile.fullName);
+
+    this._loadData(async () => {
+      const user = await profileService.getMine();
+      if (!this._isAlive()) {
+        return;
+      }
+
+      this.user = user;
+      this._renderSummary();
+      this._fillFormValues();
+      this._setText("#advisorTopbarName", user.fullName);
+    });
   }
 
   attachEvents() {
     const form = this.element.querySelector("#advisorProfileForm");
-    const resetButton = this.element.querySelector("#resetAdvisorProfileButton");
-    const backButton = this.element.querySelector("#backToAdvisorDashboardFromProfile");
 
     this.listen(form, "submit", (event) => this._handleSave(event));
-    this.listen(resetButton, "click", () => this._handleReset());
-    this.listen(backButton, "click", () => {
+    this.listen(this.element.querySelector("#resetAdvisorProfileButton"), "click", () => this._handleReset());
+    this.listen(this.element.querySelector("#backToAdvisorDashboardFromProfile"), "click", () => {
       this.options.router?.navigate(ROUTES.ADVISOR_DASHBOARD);
     });
 
@@ -46,9 +46,12 @@ export class AsesorPerfilPage extends PageController {
   }
 
   _renderSummary() {
-    this._setText("#advisorProfileAvatarInitials", getInitials(this.profile.fullName));
-    this._setText("#advisorProfileSummaryName", this.profile.fullName);
-    this._setText("#advisorProfileSummaryEmail", this.profile.email);
+    const { user } = this;
+    const advisor = user.advisor || {};
+
+    this._setText("#advisorProfileAvatarInitials", getInitials(user.fullName));
+    this._setText("#advisorProfileSummaryName", user.fullName);
+    this._setText("#advisorProfileSummaryEmail", user.email);
 
     const meta = this.element.querySelector("#advisorProfileMetaList");
     if (!meta) {
@@ -56,10 +59,10 @@ export class AsesorPerfilPage extends PageController {
     }
 
     const items = [
-      ["Especialidad", this.profile.specialty || "-"],
-      ["Matricula", this.profile.licenseNumber || "-"],
-      ["Clientes asignados", this.profile.assignedClients],
-      ["Miembro desde", this.profile.memberSince],
+      ["Especialidad", advisor.specialty || "-"],
+      ["Matricula", advisor.licenseNumber || "-"],
+      ["Clientes asignados", advisor.assignedClients ?? 0],
+      ["Miembro desde", user.createdAt ? new Date(user.createdAt).toLocaleDateString("es-AR", { month: "long", year: "numeric" }) : "-"],
     ];
 
     meta.innerHTML = html`${items.map(
@@ -73,14 +76,16 @@ export class AsesorPerfilPage extends PageController {
   }
 
   _fillFormValues() {
-    this._setInputValue("#advisorProfileFullName", this.profile.fullName);
-    this._setInputValue("#advisorProfileEmail", this.profile.email);
-    this._setInputValue("#advisorProfileSpecialty", this.profile.specialty);
-    this._setInputValue("#advisorProfileLicense", this.profile.licenseNumber);
-    this._setInputValue("#advisorProfileDescription", this.profile.description);
+    const { user } = this;
+    const advisor = user.advisor || {};
+    this._setInputValue("#advisorProfileFullName", user.fullName);
+    this._setInputValue("#advisorProfileEmail", user.email);
+    this._setInputValue("#advisorProfileSpecialty", advisor.specialty);
+    this._setInputValue("#advisorProfileLicense", advisor.licenseNumber);
+    this._setInputValue("#advisorProfileDescription", advisor.description);
   }
 
-  _handleSave(event) {
+  async _handleSave(event) {
     event.preventDefault();
 
     const form = this.element.querySelector("#advisorProfileForm");
@@ -89,59 +94,31 @@ export class AsesorPerfilPage extends PageController {
       return;
     }
 
-    this.profile = {
-      ...this.profile,
-      ...this._readFormValues(),
-    };
+    const user = await this._runAction(() => profileService.update(this._readFormValues(), ROLES.ADVISOR), {
+      button: form.querySelector('[type="submit"]'),
+      successMessage: "Perfil profesional actualizado.",
+    });
 
-    localStorage.setItem(this.storageKey, JSON.stringify(this.profile));
-
-    this._renderSummary();
-    this._setText("#advisorTopbarName", this.profile.fullName);
-    this.options.showToast?.("Perfil profesional actualizado.", "success");
+    if (user && this._isAlive()) {
+      this.user = user;
+      this._renderSummary();
+      this._setText("#advisorTopbarName", user.fullName);
+    }
   }
 
   _handleReset() {
-    this.profile = JSON.parse(JSON.stringify(this.baseProfile));
-    localStorage.removeItem(this.storageKey);
+    if (!this.user) {
+      return;
+    }
 
-    this._renderSummary();
     this._fillFormValues();
-    this._setText("#advisorTopbarName", this.profile.fullName);
-    this.options.showToast?.("Perfil restaurado a valores base.", "warning");
-  }
-
-  _buildBaseProfile() {
-    const currentAdvisor = this.options.authManager?.getCurrentUser();
-
-    return {
-      ...MOCK_ADVISOR_PROFILE_DETAILS,
-      fullName: currentAdvisor?.fullName || MOCK_ADVISOR_PROFILE_DETAILS.fullName,
-      email: currentAdvisor?.email || MOCK_ADVISOR_PROFILE_DETAILS.email,
-    };
-  }
-
-  _loadPersistedProfile() {
-    const raw = localStorage.getItem(this.storageKey);
-    if (!raw) {
-      return JSON.parse(JSON.stringify(this.baseProfile));
-    }
-
-    try {
-      return {
-        ...this.baseProfile,
-        ...JSON.parse(raw),
-        // El email es la credencial de la cuenta: no se edita desde el perfil.
-        email: this.baseProfile.email,
-      };
-    } catch {
-      return JSON.parse(JSON.stringify(this.baseProfile));
-    }
+    this.options.showToast?.("Se descartaron los cambios sin guardar.", "warning");
   }
 
   _readFormValues() {
     return {
       fullName: this._getValue("#advisorProfileFullName"),
+      bio: this.user?.bio || "",
       specialty: this._getValue("#advisorProfileSpecialty"),
       licenseNumber: this._getValue("#advisorProfileLicense"),
       description: this._getValue("#advisorProfileDescription"),

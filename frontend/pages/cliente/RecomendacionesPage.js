@@ -1,9 +1,6 @@
 import { PageController } from "../../core/PageController.js";
-import {
-  MOCK_RECOMMENDATIONS,
-  RECOMMENDATION_PRIORITIES,
-  RECOMMENDATION_TYPES,
-} from "../../utils/constants.js";
+import { recommendationsService } from "../../services/recommendations.service.js";
+import { RECOMMENDATION_PRIORITIES, RECOMMENDATION_TYPES } from "../../utils/constants.js";
 import { formatDate } from "../../utils/formatters.js";
 import { getInitials } from "../../utils/helpers.js";
 import { html } from "../../utils/html.js";
@@ -18,8 +15,8 @@ const PRIORITY_TONE = { alta: "danger", media: "warning", baja: "success" };
 export class RecomendacionesPage extends PageController {
   constructor(element, options = {}) {
     super(element, options);
-    this.recommendations = JSON.parse(JSON.stringify(MOCK_RECOMMENDATIONS.recommendations));
-    this.filteredRecommendations = [...this.recommendations];
+    this.recommendations = [];
+    this.filteredRecommendations = [];
   }
 
   render() {
@@ -32,7 +29,15 @@ export class RecomendacionesPage extends PageController {
     this._setText("#userSidebarName", userName);
     this._setText("#userSidebarInitials", getInitials(userName));
 
-    this._applyFilters();
+    this._loadData(async () => {
+      const recommendations = await recommendationsService.listMine();
+      if (!this._isAlive()) {
+        return;
+      }
+
+      this.recommendations = recommendations;
+      this._applyFilters();
+    });
   }
 
   attachEvents() {
@@ -148,7 +153,7 @@ export class RecomendacionesPage extends PageController {
     `;
   }
 
-  _handleCardAction(event) {
+  async _handleCardAction(event) {
     const actionTarget = event.target.closest("[data-action]");
     if (!actionTarget) {
       return;
@@ -160,9 +165,15 @@ export class RecomendacionesPage extends PageController {
     }
 
     if (actionTarget.dataset.action === "read") {
-      recommendation.read = true;
-      this.options.showToast?.("Recomendacion marcada como leida.", "success");
-      this._applyFilters();
+      const updated = await this._runAction(() => recommendationsService.markAsRead(recommendation.id), {
+        button: actionTarget,
+        successMessage: "Recomendacion marcada como leida.",
+      });
+
+      if (updated && this._isAlive()) {
+        this.recommendations = this.recommendations.map((item) => (item.id === updated.id ? updated : item));
+        this._applyFilters();
+      }
       return;
     }
 

@@ -17,8 +17,9 @@ El frontend esta construido como una SPA (Single Page Application) con JavaScrip
 - Control de acceso por rol:
 	- Cliente (`#/cliente/*`): dashboard, carga de gastos, historial, patrones, recomendaciones, perfil de cuenta y perfiles de gasto.
 	- Asesor (`#/asesor/*`): dashboard, clientes y perfil del asesor.
-- Autenticacion actual: mock (simulada), con persistencia de sesion en `localStorage`.
-- Datos actuales: mock (simulados), preparados para conectar un backend real despues.
+- Datos: las paginas piden todo a servicios (`frontend/services/`), que hablan con la API a traves de `APIClient`.
+- Backend simulado: mientras el backend NestJS no este listo, `APIClient` usa `frontend/mocks/mockServer.js`, que responde con el mismo contrato (spec §10): login con token, roles, validaciones y errores. Los datos (gastos de 7 meses generados a partir de la fecha actual, recomendaciones, clientes) se guardan en `localStorage` bajo la clave `fintrack.mockDb`; para volver a los datos iniciales, borrar esa clave desde las herramientas del navegador.
+- Backend real: poner `API_CONFIG.DRIVER = "http"` en `frontend/utils/constants.js` y completar `API_CONFIG.BASE_URLS`. Para probar sin tocar codigo: `localStorage.setItem("fintrack.apiDriver", "http")` en la consola y recargar.
 
 Flujo general:
 

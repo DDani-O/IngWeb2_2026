@@ -1,28 +1,36 @@
 import { PageController } from "../../core/PageController.js";
 import { themeManager } from "../../core/ThemeManager.js";
-import { MOCK_USER_PROFILE_DETAILS, STORAGE_KEYS } from "../../utils/constants.js";
+import { profileService } from "../../services/profile.service.js";
+import { ROLES } from "../../utils/constants.js";
 import { formatCurrency } from "../../utils/formatters.js";
 import { getInitials } from "../../utils/helpers.js";
 import { html } from "../../utils/html.js";
 
 /**
- * Perfil de cuenta del cliente. Campos de usuarios (nombre_completo, biografia) y
- * perfiles_usuarios (ocupacion, ingreso_estimado, objetivo_financiero); el tema es preferencia local.
+ * Perfil de cuenta del cliente (consigna §4.1, edición de perfil). Lee GET /auth/me y guarda con
+ * PUT /auth/profile. El tema visual es una preferencia local (ThemeManager).
  */
 export class PerfilPage extends PageController {
   constructor(element, options = {}) {
     super(element, options);
-    const userId = this.options.authManager?.getCurrentUser()?.id || "anonimo";
-    this.storageKey = `${STORAGE_KEYS.CLIENT_PROFILE}.${userId}`;
-    this.baseProfile = this._buildBaseProfile();
-    this.profile = this._loadPersistedProfile();
+    this.user = null;
   }
 
   render() {
     this._resetViewPosition();
-    this._renderSummary();
-    this._fillFormValues();
-    this._syncShellUser(this.profile.fullName);
+    this._setInputValue("#profileTheme", themeManager.getTheme());
+
+    this._loadData(async () => {
+      const user = await profileService.getMine();
+      if (!this._isAlive()) {
+        return;
+      }
+
+      this.user = user;
+      this._renderSummary();
+      this._fillFormValues();
+      this._syncShellUser(user.fullName);
+    });
   }
 
   attachEvents() {
@@ -37,21 +45,23 @@ export class PerfilPage extends PageController {
   }
 
   _renderSummary() {
-    this._setText("#profileAvatarInitials", getInitials(this.profile.fullName));
-    this._setText("#profileSummaryName", this.profile.fullName);
-    this._setText("#profileSummaryEmail", this.profile.email);
+    const { user } = this;
+    this._setText("#profileAvatarInitials", getInitials(user.fullName));
+    this._setText("#profileSummaryName", user.fullName);
+    this._setText("#profileSummaryEmail", user.email);
 
     const metaList = this.element.querySelector("#profileMetaList");
     if (!metaList) {
       return;
     }
 
+    const client = user.client || {};
     const items = [
-      ["Perfil de gasto", this.profile.spendingProfile],
-      ["Ocupacion", this.profile.occupation || "-"],
-      ["Ingreso estimado", this.profile.estimatedIncome ? formatCurrency(this.profile.estimatedIncome) : "-"],
-      ["Asesor asignado", this.profile.advisorName || "Sin asignar"],
-      ["Miembro desde", this.profile.memberSince],
+      ["Perfil de gasto", client.spendingProfile?.name || "Sin asignar todavia"],
+      ["Ocupacion", client.occupation || "-"],
+      ["Ingreso estimado", client.estimatedIncome ? formatCurrency(client.estimatedIncome) : "-"],
+      ["Asesor asignado", client.advisor?.fullName || "Sin asignar"],
+      ["Miembro desde", user.createdAt ? new Date(user.createdAt).toLocaleDateString("es-AR", { month: "long", year: "numeric" }) : "-"],
     ];
 
     metaList.innerHTML = html`${items.map(
@@ -65,16 +75,18 @@ export class PerfilPage extends PageController {
   }
 
   _fillFormValues() {
-    this._setInputValue("#profileFullName", this.profile.fullName);
-    this._setInputValue("#profileEmail", this.profile.email);
-    this._setInputValue("#profileOccupation", this.profile.occupation);
-    this._setInputValue("#profileEstimatedIncome", this.profile.estimatedIncome ? String(this.profile.estimatedIncome) : "");
-    this._setInputValue("#profileFinancialGoal", this.profile.financialGoal);
-    this._setInputValue("#profileBio", this.profile.bio);
-    this._setInputValue("#profileTheme", this.profile.theme);
+    const { user } = this;
+    const client = user.client || {};
+    this._setInputValue("#profileFullName", user.fullName);
+    this._setInputValue("#profileEmail", user.email);
+    this._setInputValue("#profileOccupation", client.occupation);
+    this._setInputValue("#profileEstimatedIncome", client.estimatedIncome ? String(client.estimatedIncome) : "");
+    this._setInputValue("#profileFinancialGoal", client.financialGoal);
+    this._setInputValue("#profileBio", user.bio);
+    this._setInputValue("#profileTheme", themeManager.getTheme());
   }
 
-  _handleSave(event) {
+  async _handleSave(event) {
     event.preventDefault();
 
     const form = this.element.querySelector("#userProfileForm");
@@ -83,66 +95,35 @@ export class PerfilPage extends PageController {
       return;
     }
 
-    this.profile = {
-      ...this.profile,
-      ...this._readFormValues(),
-    };
+    const values = this._readFormValues();
+    themeManager.setTheme(values.theme);
 
-    localStorage.setItem(this.storageKey, JSON.stringify(this.profile));
-    themeManager.setTheme(this.profile.theme);
+    const user = await this._runAction(() => profileService.update(values, ROLES.CLIENT), {
+      button: form.querySelector('[type="submit"]'),
+      successMessage: "Perfil actualizado correctamente.",
+    });
 
-    this._renderSummary();
-    this._syncShellUser(this.profile.fullName);
-
-    this.options.showToast?.("Perfil actualizado correctamente.", "success");
+    if (user && this._isAlive()) {
+      this.user = user;
+      this._renderSummary();
+      this._syncShellUser(user.fullName);
+    }
   }
 
   _handleReset() {
-    this.profile = JSON.parse(JSON.stringify(this.baseProfile));
-    localStorage.removeItem(this.storageKey);
-    themeManager.setTheme(this.profile.theme);
+    if (!this.user) {
+      return;
+    }
 
-    this._renderSummary();
     this._fillFormValues();
-    this._syncShellUser(this.profile.fullName);
-
-    this.options.showToast?.("Perfil restaurado a valores base.", "warning");
-  }
-
-  _buildBaseProfile() {
-    const currentUser = this.options.authManager?.getCurrentUser();
-
-    return {
-      ...MOCK_USER_PROFILE_DETAILS,
-      fullName: currentUser?.fullName || MOCK_USER_PROFILE_DETAILS.fullName,
-      email: currentUser?.email || MOCK_USER_PROFILE_DETAILS.email,
-      theme: themeManager.getTheme(),
-    };
-  }
-
-  _loadPersistedProfile() {
-    const raw = localStorage.getItem(this.storageKey);
-    if (!raw) {
-      return JSON.parse(JSON.stringify(this.baseProfile));
-    }
-
-    try {
-      return {
-        ...this.baseProfile,
-        ...JSON.parse(raw),
-        // El email es la credencial de la cuenta: no se edita desde el perfil.
-        email: this.baseProfile.email,
-      };
-    } catch {
-      return JSON.parse(JSON.stringify(this.baseProfile));
-    }
+    this.options.showToast?.("Se descartaron los cambios sin guardar.", "warning");
   }
 
   _readFormValues() {
     return {
       fullName: this._getValue("#profileFullName"),
       occupation: this._getValue("#profileOccupation"),
-      estimatedIncome: Number(this._getValue("#profileEstimatedIncome") || 0),
+      estimatedIncome: this._getValue("#profileEstimatedIncome"),
       financialGoal: this._getValue("#profileFinancialGoal"),
       bio: this._getValue("#profileBio"),
       theme: this._getValue("#profileTheme") || "dark",

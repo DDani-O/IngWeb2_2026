@@ -80,24 +80,36 @@
   border-radius: 50%;
 }
 
-.patterns-color-dot--alimentacion {
-  background: var(--color-primary);
+.patterns-color-dot--c1 {
+  background: var(--chart-1);
 }
 
-.patterns-color-dot--transportes {
-  background: var(--color-info);
+.patterns-color-dot--c2 {
+  background: var(--chart-2);
 }
 
-.patterns-color-dot--entretenimiento {
-  background: var(--color-warning);
+.patterns-color-dot--c3 {
+  background: var(--chart-3);
 }
 
-.patterns-color-dot--servicios {
-  background: var(--color-secondary);
+.patterns-color-dot--c4 {
+  background: var(--chart-4);
 }
 
-.patterns-color-dot--otros {
-  background: var(--color-danger);
+.patterns-color-dot--c5 {
+  background: var(--chart-5);
+}
+
+.patterns-color-dot--c6 {
+  background: var(--chart-6);
+}
+
+.patterns-color-dot--c7 {
+  background: var(--chart-7);
+}
+
+.patterns-color-dot--c8 {
+  background: var(--chart-8);
 }
 
 .patterns-category-item__right {

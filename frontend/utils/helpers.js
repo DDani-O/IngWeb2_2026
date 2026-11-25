@@ -131,6 +131,15 @@ export function getCssVar(name, fallback = "") {
 }
 
 /**
+ * Paleta categórica de gráficos tomada de los tokens --chart-1 … --chart-N (global.css).
+ * @param {number} size
+ */
+export function getChartPalette(size = 8) {
+  const fallback = ["#39dfbf", "#31a8d4", "#f6b437", "#a78bfa", "#ff5d66", "#7dd87a", "#f08bd0", "#94a3b8"];
+  return Array.from({ length: size }, (_, index) => getCssVar(`--chart-${index + 1}`, fallback[index % fallback.length]));
+}
+
+/**
  * Devuelve una paleta de colores basada en variables del tema actual.
  * Pensada para unificar colores de graficos entre paginas.
  */

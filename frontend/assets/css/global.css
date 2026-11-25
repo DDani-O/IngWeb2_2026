@@ -87,6 +87,16 @@
 
   --chart-canvas-min-height: clamp(14rem, 31vh, 16.75rem);
   --chart-canvas-min-height-compact: clamp(13.5rem, 30vh, 16.25rem);
+  /* Paleta categórica de gráficos (la lee getChartPalette en utils/helpers.js). */
+  --chart-1: #39dfbf;
+  --chart-2: #31a8d4;
+  --chart-3: #f6b437;
+  --chart-4: #a78bfa;
+  --chart-5: #ff5d66;
+  --chart-6: #7dd87a;
+  --chart-7: #f08bd0;
+  --chart-8: #94a3b8;
+
   --kpi-card-min-height: clamp(11.5rem, 27vh, 13.125rem);
 }
 
