@@ -1,0 +1,20 @@
+# Dependencias y builds
+node_modules/
+dist/
+coverage/
+
+# Variables de entorno (nunca commitear secretos)
+.env
+.env.*
+!.env.example
+
+# Claude Code: config personal de cada uno
+.claude/settings.local.json
+CLAUDE.local.md
+
+# SO / editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log
