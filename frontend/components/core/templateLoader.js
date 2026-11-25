@@ -1,3 +1,5 @@
+import { SafeHtml, escapeHtml } from "../../utils/html.js";
+
 const templateCache = new Map();
 
 function normalizeTemplatePath(templatePath) {
@@ -30,17 +32,17 @@ export async function loadTemplate(templatePath) {
   return template;
 }
 
+/**
+ * Reemplaza los {{marcadores}} del template. Los valores se escapan salvo que
+ * sean SafeHtml (fragmentos generados con html`...`).
+ */
 export function renderTemplate(template, values = {}) {
   return String(template).replace(/{{\s*([\w.-]+)\s*}}/g, (_match, key) => {
-    return key in values ? String(values[key]) : "";
+    if (!(key in values)) {
+      return "";
+    }
+
+    const value = values[key];
+    return value instanceof SafeHtml ? value.value : escapeHtml(value);
   });
-}
-
-export function clearTemplateCache(templatePath) {
-  if (!templatePath) {
-    templateCache.clear();
-    return;
-  }
-
-  templateCache.delete(normalizeTemplatePath(templatePath));
 }

@@ -12,8 +12,8 @@
     <section class="section-block">
       <div class="history-toolbar">
         <div class="history-toolbar__search">
-          <label class="form-label" for="historySearchInput">Buscar comercio</label>
-          <input id="historySearchInput" class="form-control" placeholder="Ej: supermercado" />
+          <label class="form-label" for="historySearchInput">Buscar</label>
+          <input id="historySearchInput" class="form-control" placeholder="Comercio o descripcion" />
         </div>
 
         <div>
@@ -22,11 +22,11 @@
         </div>
 
         <div>
-          <label class="form-label" for="historyStatusFilter">Estado</label>
-          <select id="historyStatusFilter" class="form-select">
-            <option value="Todas">Todas</option>
-            <option value="Validado">Validado</option>
-            <option value="Pendiente">Pendiente</option>
+          <label class="form-label" for="historyOriginFilter">Origen</label>
+          <select id="historyOriginFilter" class="form-select">
+            <option value="Todos">Todos</option>
+            <option value="manual">Manual</option>
+            <option value="ticket">Ticket</option>
           </select>
         </div>
 
@@ -49,9 +49,8 @@
               <th>Fecha</th>
               <th>Comercio</th>
               <th>Categoria</th>
-              <th>Pago</th>
               <th>Monto</th>
-              <th>Estado</th>
+              <th>Origen</th>
               <th>Acciones</th>
             </tr>
           </thead>
@@ -66,7 +65,7 @@
       </article>
 
       <div class="d-flex flex-wrap gap-2 mt-3">
-        <a class="action-btn action-btn--ghost" href="#/usuario/cargar-gasto">
+        <a class="action-btn action-btn--ghost" href="#/cliente/cargar-gasto">
           <i class="fa-solid fa-circle-plus"></i>
           Cargar nuevo gasto
         </a>

@@ -84,12 +84,7 @@
 
   --floating-edge-gap: clamp(0.75rem, 1.8vw, 1.5rem);
   --floating-bottom-gap: calc(clamp(0.75rem, 2.8vh, 1.5rem) + env(safe-area-inset-bottom, 0px));
-  --chat-fab-size: clamp(3.1rem, 6.6vw, 3.5rem);
-  --floating-teaser-bottom-gap: calc(
-    var(--floating-bottom-gap) + var(--chat-fab-size) + clamp(0.5rem, 1.4vw, 0.9rem)
-  );
 
-  --chat-panel-max-height: clamp(15rem, 38vh, 20rem);
   --chart-canvas-min-height: clamp(14rem, 31vh, 16.75rem);
   --chart-canvas-min-height-compact: clamp(13.5rem, 30vh, 16.25rem);
   --kpi-card-min-height: clamp(11.5rem, 27vh, 13.125rem);

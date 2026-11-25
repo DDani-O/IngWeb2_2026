@@ -1,72 +1,36 @@
 import { ROUTES } from "../../utils/constants.js";
-import { getInitials } from "../../utils/helpers.js";
+import { buildHash, getInitials } from "../../utils/helpers.js";
+import { html } from "../../utils/html.js";
 import { loadTemplate, renderTemplate } from "../core/templateLoader.js";
 
 const USER_TOPBAR_TEMPLATE = "./components/layout/user-topbar.html";
 const USER_SIDEBAR_TEMPLATE = "./components/navigation/user-sidebar.html";
 const FOOTER_TEMPLATE = "./components/layout/app-footer-mini.html";
 
-function buildLink({ href, icon, label, classes = "", targetBlank = false }) {
-  const className = ["sidebar-link", classes].filter(Boolean).join(" ");
-  const targetAttr = targetBlank ? ' target="_blank"' : "";
+const NAVIGATION_LINKS = [
+  { route: ROUTES.CLIENT_DASHBOARD, icon: "fa-house", label: "Dashboard" },
+  { route: ROUTES.CLIENT_CARGAR_GASTO, icon: "fa-circle-plus", label: "Cargar Gasto" },
+  { route: ROUTES.CLIENT_HISTORIAL, icon: "fa-clock-rotate-left", label: "Historial de Gastos" },
+  { route: ROUTES.CLIENT_PATRONES, icon: "fa-chart-line", label: "Patrones de Consumo" },
+  { route: ROUTES.CLIENT_RECOMENDACIONES, icon: "fa-lightbulb", label: "Recomendaciones" },
+];
 
-  return `<a class="${className}" href="${href}"${targetAttr}><i class="fa-solid ${icon}"></i>${label}</a>`;
-}
+const ACTION_LINKS = [
+  { route: ROUTES.CLIENT_PERFIL, icon: "fa-id-card", label: "Perfil de Cuenta" },
+  { route: ROUTES.CLIENT_PERFILES, icon: "fa-user-tag", label: "Perfiles de Gasto" },
+];
 
-function buildNavigationLinks(activeRoute) {
-  const links = [
-    {
-      href: "#/usuario/dashboard",
-      icon: "fa-house",
-      label: "Dashboard",
-      classes: activeRoute === ROUTES.USER_DASHBOARD ? "active" : "js-dashboard-back",
-    },
-    {
-      href: "#/usuario/cargar-gasto",
-      icon: "fa-circle-plus",
-      label: "Cargar Gasto",
-      classes: activeRoute === ROUTES.USER_CARGAR_GASTO ? "active" : "",
-    },
-    {
-      href: "#/usuario/historial",
-      icon: "fa-clock-rotate-left",
-      label: "Historial de Gastos",
-      classes: activeRoute === ROUTES.USER_HISTORIAL ? "active" : "",
-    },
-    {
-      href: "#/usuario/patrones",
-      icon: "fa-chart-line",
-      label: "Patrones de Consumo",
-      classes: activeRoute === ROUTES.USER_PATRONES ? "active" : "",
-    },
-    {
-      href: "#/usuario/recomendaciones",
-      icon: "fa-lightbulb",
-      label: "Recomendaciones",
-      classes: activeRoute === ROUTES.USER_RECOMENDACIONES ? "active" : "",
-    },
-  ];
+/**
+ * Arma los links del sidebar marcando el activo. El link al dashboard lleva
+ * la clase js-dashboard-back para cerrar la pestaña secundaria si corresponde.
+ */
+function buildLinks(links, activeRoute) {
+  return links.map(({ route, icon, label }) => {
+    const isActive = route === activeRoute;
+    const extraClass = isActive ? "active" : route === ROUTES.CLIENT_DASHBOARD ? "js-dashboard-back" : "";
 
-  return links.map((link) => buildLink(link)).join("\n");
-}
-
-function buildActionLinks(activeRoute) {
-  const links = [
-    {
-      href: "#/usuario/perfil",
-      icon: "fa-id-card",
-      label: "Perfil de Cuenta",
-      classes: activeRoute === ROUTES.USER_PERFIL ? "active" : "",
-    },
-    {
-      href: "#/usuario/perfiles",
-      icon: "fa-user-pen",
-      label: "Perfiles de Gasto",
-      classes: activeRoute === ROUTES.USER_PERFILES ? "active" : "",
-    },
-  ];
-
-  return links.map((link) => buildLink(link)).join("\n");
+    return html`<a class="sidebar-link ${extraClass}" href="${buildHash(route)}"><i class="fa-solid ${icon}"></i>${label}</a>`;
+  });
 }
 
 async function mountTopbar(root, userName) {
@@ -90,9 +54,9 @@ async function mountSidebar(root, { userName, activeRoute }) {
   const template = await loadTemplate(USER_SIDEBAR_TEMPLATE);
   slot.innerHTML = renderTemplate(template, {
     userName,
-    userInitials: getInitials(userName) || "JP",
-    navigationLinks: buildNavigationLinks(activeRoute),
-    actionLinks: buildActionLinks(activeRoute),
+    userInitials: getInitials(userName),
+    navigationLinks: html`${buildLinks(NAVIGATION_LINKS, activeRoute)}`,
+    actionLinks: html`${buildLinks(ACTION_LINKS, activeRoute)}`,
   });
 }
 
@@ -108,9 +72,12 @@ async function mountFooter(root, footerText) {
   });
 }
 
+/**
+ * Monta topbar, sidebar y footer del cliente en los slots del template de la página.
+ */
 export async function mountUserShell(root, options = {}) {
-  const userName = options.userName || "Juan Perez";
-  const activeRoute = options.activeRoute || ROUTES.USER_DASHBOARD;
+  const userName = options.userName || "";
+  const activeRoute = options.activeRoute || ROUTES.CLIENT_DASHBOARD;
   const footerText = options.footerText || "FinTrack 2026";
 
   await Promise.all([

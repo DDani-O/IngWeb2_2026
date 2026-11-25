@@ -2,6 +2,7 @@ import { PageController } from "../../core/PageController.js";
 import { MOCK_CONSUMPTION_PATTERNS } from "../../utils/constants.js";
 import { formatCurrency } from "../../utils/formatters.js";
 import { getChartThemeColors, getInitials } from "../../utils/helpers.js";
+import { html } from "../../utils/html.js";
 
 export class PatronesPage extends PageController {
   constructor(element, options = {}) {
@@ -20,7 +21,7 @@ export class PatronesPage extends PageController {
     this._setText("#patternsUserName", userName);
     this._setText("#userTopbarName", userName);
     this._setText("#userSidebarName", userName);
-    this._setText("#userSidebarInitials", getInitials(userName) || "JP");
+    this._setText("#userSidebarInitials", getInitials(userName));
 
     this._renderHighlights();
     this._renderStats();
@@ -42,7 +43,7 @@ export class PatronesPage extends PageController {
 
     container.innerHTML = this.data.highlights
       .map((item) => {
-        return `
+        return html`
           <article class="patterns-insight patterns-insight--${item.type}">
             <h3 class="patterns-insight__title">${item.icon} ${item.title}</h3>
             <p class="patterns-insight__text">${item.text}</p>
@@ -60,7 +61,7 @@ export class PatronesPage extends PageController {
 
     container.innerHTML = this.data.stats
       .map((stat) => {
-        return `
+        return html`
           <article class="kpi-card patterns-kpi-card">
             <div class="kpi-card__head">
               <p class="kpi-card__label">${stat.icon} ${stat.label}</p>
@@ -86,7 +87,7 @@ export class PatronesPage extends PageController {
       .map((item) => {
         const colorToken = this._toToken(item.label);
 
-        return `
+        return html`
           <article class="patterns-category-item">
             <div class="patterns-category-item__left">
               <span class="patterns-color-dot patterns-color-dot--${colorToken}"></span>
@@ -110,7 +111,7 @@ export class PatronesPage extends PageController {
 
     container.innerHTML = this.data.unusualExpenses.alerts
       .map((alert) => {
-        return `
+        return html`
           <article class="patterns-unusual-alert patterns-unusual-alert--${alert.severity}">
             <h3>${alert.title}</h3>
             <p>Fecha ${alert.date}</p>

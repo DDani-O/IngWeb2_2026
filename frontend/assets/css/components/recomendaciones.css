@@ -46,9 +46,14 @@
   border-color: color-mix(in srgb, var(--color-success) 34%, transparent);
 }
 
-.recommendation-card--completada {
+.recommendation-card--leida {
   border-left-color: var(--color-primary);
   opacity: 0.9;
+}
+
+.recommendation-card--baja {
+  border-left-color: var(--color-info);
+  border-color: color-mix(in srgb, var(--color-info) 30%, transparent);
 }
 
 .recommendation-card__head {
@@ -69,76 +74,11 @@
   margin-bottom: 10px;
 }
 
-.recommendation-savings {
-  display: inline-flex;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--color-success) 20%, transparent);
-  border: 1px solid color-mix(in srgb, var(--color-success) 34%, transparent);
-  color: color-mix(in srgb, var(--color-success) 74%, #ffffff 26%);
-  font-size: 1rem;
-  font-weight: 700;
-}
-
-.recommendation-steps {
-  margin: 12px 0;
-  padding: 10px 0 0 18px;
-  border-left: 3px solid var(--border-strong);
-  color: var(--text-secondary);
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 1.04rem;
-}
-
 .recommendation-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 11px;
-}
-
-.recommendations-total {
-  text-align: center;
-  border-color: var(--border-strong);
-}
-
-.recommendations-total__label {
-  color: var(--color-primary);
-  font-size: 1.3rem;
-  font-weight: 700;
-}
-
-.recommendations-total__value {
-  font-family: var(--font-display);
-  font-size: clamp(2.2rem, 4vw, 3.2rem);
-  font-weight: 800;
-  line-height: 1.1;
-  margin: 6px 0 12px;
-}
-
-.summary-strip {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.summary-strip__item {
-  padding: 12px;
-}
-
-.summary-strip__label {
-  color: var(--text-muted);
-  font-size: 0.82rem;
-  margin-bottom: 4px;
-}
-
-.summary-strip__value {
-  font-family: var(--font-display);
-  font-size: 1.3rem;
-  font-weight: 700;
 }
 
 @media (max-width: 991px) {
@@ -152,12 +92,7 @@
     width: 100%;
   }
 
-  .summary-strip {
-    grid-template-columns: 1fr;
-  }
-
-  .recommendation-card__text,
-  .recommendation-steps {
+  .recommendation-card__text {
     font-size: 0.95rem;
   }
 }

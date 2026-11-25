@@ -130,15 +130,17 @@ export class Router {
     await this._cleanupCurrent();
     this._cleanupOverlayArtifacts();
 
-    if (typeof route.render === "function") {
-      await route.render(context);
-    } else if (route.templateUrl && this.viewElement) {
-      const template = await this._loadTemplate(route.templateUrl);
-      this.viewElement.innerHTML = template;
-    }
+    try {
+      if (route.templateUrl && this.viewElement) {
+        const template = await this._loadTemplate(route.templateUrl);
+        this.viewElement.innerHTML = template;
+      }
 
-    if (typeof route.onEnter === "function") {
-      this.currentCleanup = await route.onEnter(context);
+      if (typeof route.onEnter === "function") {
+        this.currentCleanup = await route.onEnter(context);
+      }
+    } catch (error) {
+      this._renderActivationError(error);
     }
 
     this.currentRoute = route;
@@ -147,6 +149,33 @@ export class Router {
       path: payload.path,
       query: payload.query,
     });
+  }
+
+  /**
+   * Muestra un aviso en la vista cuando falla la carga de una ruta (template o modulo).
+   */
+  _renderActivationError(error) {
+    if (!this.viewElement) {
+      return;
+    }
+
+    const container = document.createElement("main");
+    container.className = "placeholder-main";
+    const card = document.createElement("article");
+    card.className = "placeholder-card";
+    card.setAttribute("role", "alert");
+
+    const title = document.createElement("h1");
+    title.className = "placeholder-title";
+    title.textContent = "No pudimos cargar esta seccion";
+
+    const description = document.createElement("p");
+    description.className = "placeholder-description";
+    description.textContent = `${error?.message || "Error desconocido"}. Recarga la pagina para reintentar.`;
+
+    card.append(title, description);
+    container.append(card);
+    this.viewElement.replaceChildren(container);
   }
 
   /**

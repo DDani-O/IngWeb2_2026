@@ -5,13 +5,13 @@ import {
   getChartThemeColors,
 } from "../../utils/helpers.js";
 import { formatCurrency, formatTrendLabel } from "../../utils/formatters.js";
+import { html } from "../../utils/html.js";
 
 export class DashboardPage extends PageController {
   constructor(element, options = {}) {
     super(element, options);
     this.data = JSON.parse(JSON.stringify(MOCK_USER_DASHBOARD));
     this.charts = [];
-    this.chatModal = null;
   }
 
   render() {
@@ -38,42 +38,10 @@ export class DashboardPage extends PageController {
     this._renderProfileCard();
     this._renderSummaryCards();
     this._renderMerchants();
-    this._renderAdvisorMessage();
-    this._renderChatSeed();
     this._initCharts();
   }
 
   attachEvents() {
-    const openChatButton = this.element.querySelector("#openAdvisorChatButton");
-    const openChatBubble = this.element.querySelector("#openAdvisorChatBubble");
-    const closeTeaser = this.element.querySelector("#advisorTeaserClose");
-    const sendButton = this.element.querySelector("#advisorChatSendButton");
-    const input = this.element.querySelector("#advisorChatInput");
-
-    this.listen(openChatButton, "click", () => {
-      this._openChatModal();
-    });
-
-    this.listen(openChatBubble, "click", () => {
-      this._openChatModal();
-    });
-
-    this.listen(closeTeaser, "click", () => {
-      const teaser = this.element.querySelector("#advisorTeaserCard");
-      teaser?.classList.add("app-hidden");
-    });
-
-    this.listen(sendButton, "click", () => {
-      this._sendChatMessage();
-    });
-
-    this.listen(input, "keydown", (event) => {
-      if (event.key === "Enter") {
-        event.preventDefault();
-        this._sendChatMessage();
-      }
-    });
-
     this._bindLogoutButtons();
   }
 
@@ -94,7 +62,7 @@ export class DashboardPage extends PageController {
 
     container.innerHTML = this.data.alerts
       .map((alert) => {
-        return `
+        return html`
           <article class="alert-card alert-card--${alert.level}">
             <div>${alert.icon}</div>
             <div>
@@ -118,7 +86,7 @@ export class DashboardPage extends PageController {
         const trendClass =
           stat.trendDirection === "up" ? "kpi-card__trend--up" : "kpi-card__trend--down";
 
-        return `
+        return html`
           <article class="kpi-card">
             <div class="kpi-card__head">
               <p class="kpi-card__label">${stat.label}</p>
@@ -145,7 +113,7 @@ export class DashboardPage extends PageController {
 
     const { profileCard } = this.data;
 
-    container.innerHTML = `
+    container.innerHTML = html`
       <div>
         <h2 class="section-title mb-1">
           <i class="fa-solid fa-user-shield accent"></i>
@@ -154,15 +122,14 @@ export class DashboardPage extends PageController {
         <p class="text-muted">${profileCard.description}</p>
         <div class="profile-highlight__tags">
           ${profileCard.categories
-            .map((category) => `<span class="profile-tag">${category}</span>`)
-            .join("")}
+            .map((category) => html`<span class="profile-tag">${category}</span>`)}
         </div>
       </div>
       <a class="action-btn action-btn--ghost" href="${buildHash(
-        ROUTES.USER_PERFILES
+        ROUTES.CLIENT_PERFILES
       )}" target="_blank">
-        <i class="fa-solid fa-rotate"></i>
-        Cambiar perfil
+        <i class="fa-solid fa-user-tag"></i>
+        Ver perfiles de gasto
       </a>
     `;
   }
@@ -178,7 +145,7 @@ export class DashboardPage extends PageController {
         const link = buildHash(card.route);
         const openInNewTab = this._isSecondaryPageRoute(card.route);
 
-        return `
+        return html`
           <article class="summary-card">
             <h3 class="summary-card__title">
               <i class="fa-solid ${card.icon} accent"></i>
@@ -188,12 +155,11 @@ export class DashboardPage extends PageController {
             <div class="summary-card__list">
               ${card.items
                 .map((item) => {
-                  return `<div class="summary-card__row"><span>${item.label}</span><strong>${item.value}</strong></div>`;
-                })
-                .join("")}
+                  return html`<div class="summary-card__row"><span>${item.label}</span><strong>${item.value}</strong></div>`;
+                })}
             </div>
             <a class="action-btn action-btn--ghost mt-2" href="${link}" ${
-              openInNewTab ? 'target="_blank"' : ""
+              openInNewTab ? html`target="_blank"` : ""
             }>Ver detalle</a>
           </article>
         `;
@@ -203,11 +169,11 @@ export class DashboardPage extends PageController {
 
   _isSecondaryPageRoute(route) {
     return [
-      ROUTES.USER_HISTORIAL,
-      ROUTES.USER_PATRONES,
-      ROUTES.USER_PERFIL,
-      ROUTES.USER_PERFILES,
-      ROUTES.USER_RECOMENDACIONES,
+      ROUTES.CLIENT_HISTORIAL,
+      ROUTES.CLIENT_PATRONES,
+      ROUTES.CLIENT_PERFIL,
+      ROUTES.CLIENT_PERFILES,
+      ROUTES.CLIENT_RECOMENDACIONES,
     ].includes(route);
   }
 
@@ -219,7 +185,7 @@ export class DashboardPage extends PageController {
 
     container.innerHTML = this.data.charts.merchants
       .map((merchant) => {
-        return `
+        return html`
           <div class="merchant-item">
             <div class="merchant-item__left">
               <span>${merchant.icon}</span>
@@ -234,29 +200,6 @@ export class DashboardPage extends PageController {
       .join("");
   }
 
-  _renderAdvisorMessage() {
-    const container = this.element.querySelector("#advisorPanelMessage");
-    if (!container) {
-      return;
-    }
-
-    const { advisor } = this.data;
-    container.textContent = `${advisor.name} esta disponible ahora. Puedes pedir una guia rapida para optimizar tus gastos.`;
-  }
-
-  _renderChatSeed() {
-    const messages = this.element.querySelector("#advisorChatMessages");
-    if (!messages) {
-      return;
-    }
-
-    messages.innerHTML = `
-      <div class="chat-message chat-message--advisor">
-        Hola, soy ${this.data.advisor.name}. Estoy aqui para ayudarte a priorizar tus recomendaciones de esta semana.
-      </div>
-    `;
-  }
-
   _initCharts() {
     if (!window.Chart) {
       return;
@@ -267,8 +210,6 @@ export class DashboardPage extends PageController {
 
     const categoryCtx = this.element.querySelector("#userCategoryChart");
     const monthlyCtx = this.element.querySelector("#userMonthlyChart");
-    const dailyCtx = this.element.querySelector("#userDailyChart");
-
     if (categoryCtx) {
       this.charts.push(
         new window.Chart(categoryCtx, {
@@ -333,76 +274,6 @@ export class DashboardPage extends PageController {
         })
       );
     }
-
-    if (dailyCtx) {
-      this.charts.push(
-        new window.Chart(dailyCtx, {
-          type: "line",
-          data: {
-            labels: this.data.charts.dailyLabels,
-            datasets: [
-              {
-                label: "Gasto Diario",
-                data: this.data.charts.dailySeries,
-                borderColor: chartColors.info,
-                backgroundColor: "rgba(6, 182, 212, 0.2)",
-                fill: true,
-                tension: 0.35,
-              },
-            ],
-          },
-          options: {
-            scales: {
-              x: {
-                ticks: { color: chartColors.label },
-                grid: { color: chartColors.grid },
-              },
-              y: {
-                ticks: { color: chartColors.label },
-                grid: { color: chartColors.grid },
-              },
-            },
-            plugins: {
-              legend: {
-                labels: { color: chartColors.label },
-              },
-            },
-          },
-        })
-      );
-    }
-  }
-
-  _openChatModal() {
-    this.chatModal = this._showModal("#advisorChatModal");
-  }
-
-  _sendChatMessage() {
-    const input = this.element.querySelector("#advisorChatInput");
-    const messages = this.element.querySelector("#advisorChatMessages");
-
-    if (!input || !messages) {
-      return;
-    }
-
-    const message = input.value.trim();
-    if (!message) {
-      return;
-    }
-
-    const userBubble = document.createElement("div");
-    userBubble.className = "chat-message chat-message--user";
-    userBubble.textContent = message;
-    messages.appendChild(userBubble);
-
-    const answerBubble = document.createElement("div");
-    answerBubble.className = "chat-message chat-message--advisor";
-    answerBubble.textContent =
-      "Muy buena observacion. Te preparo una recomendacion puntual en base a tus datos recientes.";
-    messages.appendChild(answerBubble);
-
-    input.value = "";
-    messages.scrollTop = messages.scrollHeight;
   }
 
   _destroyCharts() {

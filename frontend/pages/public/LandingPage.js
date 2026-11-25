@@ -1,11 +1,13 @@
 import { Component } from "../../core/Component.js";
 import {
   LANDING_CONTENT,
-  TESTIMONIAL_AUTO_MS,
+  ROLES,
   UI_LAYOUT,
+  UI_TIMING,
 } from "../../utils/constants.js";
 import { renderStars } from "../../utils/helpers.js";
 import { validateLoginForm, validateRegisterForm } from "../../utils/validators.js";
+import { html } from "../../utils/html.js";
 
 export class LandingPage extends Component {
   constructor(element, options = {}) {
@@ -122,7 +124,7 @@ export class LandingPage extends Component {
   _wireAuthFlows() {
     const switchToRegister = this.element.querySelector("#switchToRegister");
     const switchToLogin = this.element.querySelector("#switchToLogin");
-    const roleUser = this.element.querySelector("#registerRoleUser");
+    const roleClient = this.element.querySelector("#registerRoleClient");
     const roleAdvisor = this.element.querySelector("#registerRoleAdvisor");
     const advisorFields = this.element.querySelector("#registerAdvisorFields");
 
@@ -141,7 +143,7 @@ export class LandingPage extends Component {
       advisorFields?.classList.toggle("app-hidden", !advisorEnabled);
     };
 
-    this.listen(roleUser, "change", updateAdvisorFields);
+    this.listen(roleClient, "change", updateAdvisorFields);
     this.listen(roleAdvisor, "change", updateAdvisorFields);
     updateAdvisorFields();
 
@@ -178,7 +180,7 @@ export class LandingPage extends Component {
       this._hideError("#registerError");
 
       const payload = {
-        role: roleAdvisor?.checked ? "asesor" : "usuario",
+        role: roleAdvisor?.checked ? ROLES.ADVISOR : ROLES.CLIENT,
         fullName: this.element.querySelector("#registerFullName")?.value || "",
         email: this.element.querySelector("#registerEmail")?.value || "",
         password: this.element.querySelector("#registerPassword")?.value || "",
@@ -242,7 +244,7 @@ export class LandingPage extends Component {
 
     navContainer.innerHTML = LANDING_CONTENT.nav
       .map((item) => {
-        return `<button class="landing-nav-link" data-scroll-target="${item.id}" type="button">${item.label}</button>`;
+        return html`<button class="landing-nav-link" data-scroll-target="${item.id}" type="button">${item.label}</button>`;
       })
       .join("");
   }
@@ -256,7 +258,7 @@ export class LandingPage extends Component {
     container.innerHTML = LANDING_CONTENT.brands
       .map((brand) => {
         const iconClass = brand.icon || "fa-circle";
-        return `
+        return html`
           <article class="landing-logo-item" aria-label="${brand.name}">
             <i class="fa-brands ${iconClass}" aria-hidden="true"></i>
             <span>${brand.name}</span>
@@ -274,7 +276,7 @@ export class LandingPage extends Component {
 
     container.innerHTML = LANDING_CONTENT.features
       .map((feature, index) => {
-        return `
+        return html`
           <article class="landing-card landing-card--feature">
             <span class="landing-card__icon">
               <i class="fa-solid ${feature.icon}"></i>
@@ -296,7 +298,7 @@ export class LandingPage extends Component {
 
     container.innerHTML = LANDING_CONTENT.advantages
       .map((item) => {
-        return `
+        return html`
           <article class="landing-adv">
             <h3 class="landing-card__title"><i class="fa-solid ${item.icon} accent"></i> ${item.title}</h3>
             <p class="landing-card__text">${item.text}</p>
@@ -323,7 +325,7 @@ export class LandingPage extends Component {
       ((this.activeTestimonialIndex % total) + total) % total;
     const featured = testimonials[this.activeTestimonialIndex];
 
-    container.innerHTML = `
+    container.innerHTML = html`
       <article class="landing-testimonial-carousel" aria-live="polite">
         <div class="landing-testimonial-carousel__controls">
           <button
@@ -355,9 +357,8 @@ export class LandingPage extends Component {
             .map((_, index) => {
               const activeClass =
                 index === this.activeTestimonialIndex ? "is-active" : "";
-              return `<span class="landing-testimonial-dot ${activeClass}"></span>`;
-            })
-            .join("")}
+              return html`<span class="landing-testimonial-dot ${activeClass}"></span>`;
+            })}
         </div>
       </article>
     `;
@@ -387,7 +388,7 @@ export class LandingPage extends Component {
       const nextIndex = (this.activeTestimonialIndex + 1) % total;
       this.activeTestimonialIndex = nextIndex;
       this._renderLandingTestimonials();
-    }, TESTIMONIAL_AUTO_MS);
+    }, UI_TIMING.TESTIMONIAL_AUTOPLAY_MS);
   }
 
   _stopTestimonialsAutoplay() {
@@ -407,17 +408,17 @@ export class LandingPage extends Component {
 
     container.innerHTML = LANDING_CONTENT.plans
       .map((plan) => {
-        return `
+        return html`
           <article class="landing-plan ${plan.highlighted ? "landing-plan--highlight" : ""}">
             ${
               plan.highlighted
-                ? '<span class="landing-plan__badge">MAS POPULAR</span>'
+                ? html`<span class="landing-plan__badge">MAS POPULAR</span>`
                 : ""
             }
             <h3 class="landing-card__title">${plan.name}</h3>
             <p class="landing-plan__price">${plan.price}<span>/mes</span></p>
             <p class="landing-card__text">${plan.subtitle}</p>
-            <ul>${plan.features.map((feature) => `<li>${feature}</li>`).join("")}</ul>
+            <ul>${plan.features.map((feature) => html`<li>${feature}</li>`)}</ul>
             <button class="action-btn action-btn--${
               plan.highlighted ? "primary" : "ghost"
             } mt-3 w-100 justify-content-center" type="button" data-auth-open="register">${plan.cta || "Empezar"}</button>

@@ -1,7 +1,8 @@
 import { PageController } from "../../core/PageController.js";
-import { MOCK_ADVISOR_DASHBOARD, ROUTES } from "../../utils/constants.js";
+import { MOCK_ADVISOR_DASHBOARD, ROLES, ROUTES } from "../../utils/constants.js";
 import { formatCurrency } from "../../utils/formatters.js";
 import { getInitials } from "../../utils/helpers.js";
+import { html } from "../../utils/html.js";
 
 export class AsesorClientesPage extends PageController {
   constructor(element, options = {}) {
@@ -17,7 +18,7 @@ export class AsesorClientesPage extends PageController {
     this._resetViewPosition();
 
     const currentAdvisor = this.options.authManager?.getCurrentUser();
-    const advisorName = currentAdvisor?.fullName || "Maria Rodriguez";
+    const advisorName = currentAdvisor?.fullName || "";
     this._setText("#advisorTopbarName", advisorName);
 
     this._renderRecommendationClientOptions();
@@ -59,7 +60,7 @@ export class AsesorClientesPage extends PageController {
     });
 
     this._bindLogoutButtons({
-      role: "asesor",
+      role: ROLES.ADVISOR,
       toastMessage: "Sesion de asesor finalizada.",
     });
   }
@@ -105,7 +106,7 @@ export class AsesorClientesPage extends PageController {
 
     cards.innerHTML = this.filteredClients
       .map((client) => {
-        return `
+        return html`
           <article class="advisor-client-card">
             <div class="advisor-client-head">
               <div class="d-flex gap-2 align-items-start">
@@ -147,7 +148,7 @@ export class AsesorClientesPage extends PageController {
 
     tableBody.innerHTML = this.filteredClients
       .map((client) => {
-        return `
+        return html`
           <tr>
             <td>
               <div class="advisor-table-client">
@@ -192,8 +193,8 @@ export class AsesorClientesPage extends PageController {
     tableWrap.classList.toggle("app-hidden", !showTable);
 
     toggle.innerHTML = showTable
-      ? '<i class="fa-solid fa-border-all"></i> Ver como cards'
-      : '<i class="fa-solid fa-table"></i> Ver como tabla';
+      ? html`<i class="fa-solid fa-border-all"></i> Ver como cards`
+      : html`<i class="fa-solid fa-table"></i> Ver como tabla`;
   }
 
   _handleAction(event) {
@@ -225,9 +226,9 @@ export class AsesorClientesPage extends PageController {
       return;
     }
 
-    select.innerHTML = `
+    select.innerHTML = html`
       <option value="">Seleccionar cliente</option>
-      ${this.clients.map((client) => `<option value="${client.id}">${client.name}</option>`).join("")}
+      ${this.clients.map((client) => html`<option value="${client.id}">${client.name}</option>`)}
     `;
   }
 
@@ -237,7 +238,7 @@ export class AsesorClientesPage extends PageController {
       return;
     }
 
-    content.innerHTML = `
+    content.innerHTML = html`
       <article class="history-detail-card">
         <p><strong>Cliente:</strong> ${client.name}</p>
         <p><strong>Perfil:</strong> ${client.profile}</p>
@@ -247,7 +248,6 @@ export class AsesorClientesPage extends PageController {
           client.changePercent >= 0 ? "+" : ""
         }${client.changePercent}%</p>
         <p><strong>Riesgo:</strong> ${client.risk}</p>
-        <p><strong>Mensajes sin leer:</strong> ${client.unreadMessages}</p>
       </article>
     `;
 

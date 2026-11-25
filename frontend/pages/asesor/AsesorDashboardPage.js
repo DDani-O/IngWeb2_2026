@@ -1,7 +1,8 @@
 import { PageController } from "../../core/PageController.js";
-import { MOCK_ADVISOR_DASHBOARD, ROUTES } from "../../utils/constants.js";
+import { MOCK_ADVISOR_DASHBOARD, ROLES } from "../../utils/constants.js";
 import { getInitials } from "../../utils/helpers.js";
 import { formatCurrency, formatTrendLabel } from "../../utils/formatters.js";
+import { html } from "../../utils/html.js";
 
 export class AsesorDashboardPage extends PageController {
   constructor(element, options = {}) {
@@ -23,7 +24,6 @@ export class AsesorDashboardPage extends PageController {
     this._renderAlerts();
     this._renderStats();
     this._renderClients();
-    this._renderInbox();
     this._renderRecommendations();
     this._renderRecommendationClientOptions();
     this._syncClientsView();
@@ -45,18 +45,8 @@ export class AsesorDashboardPage extends PageController {
       this._handleCreateRecommendation();
     });
 
-    const inboxList = this.element.querySelector("#advisorInboxList");
-    this.listen(inboxList, "click", (event) => this._handleInboxNavigation(event));
-    this.listen(inboxList, "keydown", (event) => {
-      if (event.key !== "Enter" && event.key !== " ") {
-        return;
-      }
-
-      this._handleInboxNavigation(event);
-    });
-
     this._bindLogoutButtons({
-      role: "asesor",
+      role: ROLES.ADVISOR,
       toastMessage: "Sesion de asesor finalizada.",
     });
   }
@@ -76,7 +66,7 @@ export class AsesorDashboardPage extends PageController {
 
     container.innerHTML = this.data.alerts
       .map((alert) => {
-        return `
+        return html`
           <article class="alert-card alert-card--${alert.level}">
             <div>${alert.icon}</div>
             <div>
@@ -97,7 +87,7 @@ export class AsesorDashboardPage extends PageController {
 
     container.innerHTML = this.data.stats
       .map((stat) => {
-        return `
+        return html`
           <article class="kpi-card">
             <div class="kpi-card__head">
               <p class="kpi-card__label">${stat.label}</p>
@@ -128,7 +118,7 @@ export class AsesorDashboardPage extends PageController {
 
     cardsContainer.innerHTML = this.data.clients
       .map((client) => {
-        return `
+        return html`
           <article class="advisor-client-card">
             <div class="advisor-client-head">
               <div class="d-flex gap-2 align-items-start">
@@ -140,12 +130,6 @@ export class AsesorDashboardPage extends PageController {
               </div>
               <span class="risk-pill risk-pill--${client.riskLevel}">${client.risk}</span>
             </div>
-
-            ${
-              client.unreadMessages
-                ? `<p class="advisor-client-unread"><i class="fa-solid fa-envelope"></i> ${client.unreadMessages} mensaje(s) sin leer</p>`
-                : ""
-            }
 
             <div class="advisor-client-metrics">
               <div>
@@ -174,7 +158,7 @@ export class AsesorDashboardPage extends PageController {
 
     tableBody.innerHTML = this.data.clients
       .map((client) => {
-        return `
+        return html`
           <tr>
             <td>
               <div class="advisor-table-client">
@@ -188,7 +172,6 @@ export class AsesorDashboardPage extends PageController {
             <td class="advisor-client-change advisor-client-change--${
               client.changePercent >= 0 ? "up" : "down"
             }">${client.changePercent >= 0 ? "+" : ""}${client.changePercent}%</td>
-            <td>${client.unreadMessages > 0 ? client.unreadMessages : "-"}</td>
             <td><span class="risk-pill risk-pill--${client.riskLevel}">${client.risk}</span></td>
             <td>
               <a class="action-btn action-btn--ghost" href="#/asesor/clientes">
@@ -196,41 +179,6 @@ export class AsesorDashboardPage extends PageController {
               </a>
             </td>
           </tr>
-        `;
-      })
-      .join("");
-  }
-
-  _renderInbox() {
-    const container = this.element.querySelector("#advisorInboxList");
-    if (!container) {
-      return;
-    }
-
-    container.innerHTML = this.data.inbox
-      .map((message) => {
-        const badge = message.type === "ticket" ? "TICKET" : "MENSAJE";
-        return `
-          <article
-            class="inbox-item ${message.unread ? "inbox-item--unread" : ""}"
-            data-message-id="${message.id}"
-            tabindex="0"
-            role="button"
-            aria-label="Abrir mensaje de ${message.from}"
-          >
-            <span class="avatar-badge">${getInitials(message.from)}</span>
-            <div>
-              <p class="inbox-title">
-                ${message.from}
-                <span class="inbox-badge">${badge}</span>
-              </p>
-              <p class="inbox-sub">${message.subject}</p>
-            </div>
-            <div class="text-end">
-              <p class="inbox-sub">${message.date}</p>
-              ${message.unread ? '<span class="badge-soft badge-soft--success">Nuevo</span>' : ""}
-            </div>
-          </article>
         `;
       })
       .join("");
@@ -244,7 +192,7 @@ export class AsesorDashboardPage extends PageController {
 
     container.innerHTML = this.data.recommendations
       .map((column) => {
-        return `
+        return html`
           <article class="advisor-rec-column">
             <div class="advisor-rec-column__head">
               <span>${column.icon}</span>
@@ -255,8 +203,7 @@ export class AsesorDashboardPage extends PageController {
             </div>
             <div class="advisor-rec-column__list">
               ${column.items
-                .map((item) => `<p><span>${item.clientName}</span><strong>${item.action}</strong></p>`)
-                .join("")}
+                .map((item) => html`<p><span>${item.clientName}</span><strong>${item.action}</strong></p>`)}
             </div>
           </article>
         `;
@@ -270,11 +217,10 @@ export class AsesorDashboardPage extends PageController {
       return;
     }
 
-    select.innerHTML = `
+    select.innerHTML = html`
       <option value="">Seleccionar cliente</option>
       ${this.data.clients
-        .map((client) => `<option value="${client.id}">${client.name}</option>`)
-        .join("")}
+        .map((client) => html`<option value="${client.id}">${client.name}</option>`)}
     `;
   }
 
@@ -292,8 +238,8 @@ export class AsesorDashboardPage extends PageController {
     tableWrap.classList.toggle("app-hidden", !showTable);
 
     toggle.innerHTML = showTable
-      ? '<i class="fa-solid fa-border-all"></i> Ver como Cards'
-      : '<i class="fa-solid fa-table"></i> Ver como Tabla';
+      ? html`<i class="fa-solid fa-border-all"></i> Ver como Cards`
+      : html`<i class="fa-solid fa-table"></i> Ver como Tabla`;
   }
 
   _openRecommendationModal() {
@@ -310,18 +256,6 @@ export class AsesorDashboardPage extends PageController {
     this.options.showToast?.("Recomendacion creada y enviada al cliente.", "success");
     this.recommendationModal?.hide();
     form.reset();
-  }
-
-  _handleInboxNavigation(event) {
-    const target = event.target.closest("[data-message-id]");
-    if (!target) {
-      return;
-    }
-
-    event.preventDefault();
-    this.options.router?.navigate(ROUTES.ADVISOR_INBOX, {
-      messageId: target.dataset.messageId,
-    });
   }
 
   _formatStatValue(stat) {

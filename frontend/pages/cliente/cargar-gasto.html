@@ -8,7 +8,7 @@
         Registra manualmente o analiza un ticket con OCR para completar el formulario en segundos.
       </p>
       <div class="d-flex flex-wrap gap-2 mt-3">
-        <a class="action-btn action-btn--ghost" href="#/usuario/historial">
+        <a class="action-btn action-btn--ghost" href="#/cliente/historial">
           <i class="fa-solid fa-clock-rotate-left"></i>
           Ir al Historial
         </a>
@@ -42,21 +42,8 @@
               <select id="expenseCategory" name="category" class="form-select" required></select>
             </div>
             <div class="col-md-6">
-              <label class="form-label" for="expensePaymentMethod">Metodo de pago</label>
-              <select id="expensePaymentMethod" name="paymentMethod" class="form-select" required></select>
-            </div>
-            <div class="col-md-6">
               <label class="form-label" for="expenseDate">Fecha</label>
               <input id="expenseDate" name="date" type="date" class="form-control" required />
-            </div>
-            <div class="col-md-6">
-              <label class="form-label" for="expenseReference">Referencia</label>
-              <input
-                id="expenseReference"
-                name="reference"
-                class="form-control"
-                placeholder="Ticket, factura o nota interna"
-              />
             </div>
             <div class="col-12">
               <label class="form-label" for="expenseDescription">Descripcion</label>
@@ -94,7 +81,7 @@
 
         <label class="ticket-dropzone" for="expenseTicketFile">
           <i class="fa-solid fa-cloud-arrow-up"></i>
-          <span id="ticketFileName">Arrastra una imagen o selecciona un archivo</span>
+          <span id="ticketFileName">Selecciona una imagen del ticket</span>
         </label>
         <input id="expenseTicketFile" type="file" accept="image/*" class="app-hidden" />
 

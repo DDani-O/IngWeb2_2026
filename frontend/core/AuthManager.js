@@ -1,6 +1,7 @@
 import {
   EVENTS,
   MOCK_AUTH_USERS,
+  ROLES,
   ROUTES,
   STORAGE_KEYS,
   UI_TIMING,
@@ -37,6 +38,13 @@ export class AuthManager {
 
     try {
       const parsed = JSON.parse(storedUser);
+
+      // Sesiones guardadas con un rol que ya no existe (p. ej. el antiguo "usuario") se descartan.
+      if (!Object.values(ROLES).includes(parsed?.role)) {
+        this.logout({ emitEvent: false });
+        return;
+      }
+
       this.currentUser = parsed;
       this.token = storedToken;
 
@@ -97,13 +105,14 @@ export class AuthManager {
       throw new Error("El email ya se encuentra registrado.");
     }
 
-    const role = payload.role === "asesor" ? "asesor" : "usuario";
+    const role = payload.role === ROLES.ADVISOR ? ROLES.ADVISOR : ROLES.CLIENT;
     const user = {
       id: `new-${Date.now()}`,
       role,
       fullName: payload.fullName,
       email: payload.email,
-      profile: role === "asesor" ? "Asesor" : "Equilibrista",
+      // El perfil de gasto lo asigna el sistema; al registrarse arranca en el perfil base.
+      profile: role === ROLES.ADVISOR ? "Asesor" : "Equilibrista",
     };
 
     const token = `mock-token-${user.id}`;
@@ -117,6 +126,11 @@ export class AuthManager {
    * Cierra sesion, limpia almacenamiento y opcionalmente emite evento.
    */
   logout({ emitEvent = true } = {}) {
+    const userId = this.currentUser?.id;
+    if (userId) {
+      localStorage.removeItem(`${STORAGE_KEYS.EXPENSE_DRAFT}.${userId}`);
+    }
+
     this.currentUser = null;
     this.token = null;
 
@@ -166,7 +180,7 @@ export class AuthManager {
    * Devuelve ruta inicial recomendada segun rol.
    */
   getDefaultRouteForRole(role) {
-    return role === "asesor" ? ROUTES.ADVISOR_DASHBOARD : ROUTES.USER_DASHBOARD;
+    return role === ROLES.ADVISOR ? ROUTES.ADVISOR_DASHBOARD : ROUTES.CLIENT_DASHBOARD;
   }
 
   /**

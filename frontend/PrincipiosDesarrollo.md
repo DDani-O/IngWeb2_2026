@@ -93,30 +93,21 @@ class Button {
 }
 ```
 
-✅ **BIEN** - Extensible mediante herencia:
+✅ **BIEN** - Variantes por props con valores por defecto (sin subclases por variante):
 ```javascript
-// Base abierta a extensión
+const BUTTON_VARIANTS = ["primary", "ghost"];
+
 class Button extends Component {
-  static DEFAULTS = { type: 'primary' };
-  
+  static DEFAULTS = { label: "", variant: "primary", type: "button" };
+
   render() {
-    const buttonClass = this.getButtonClass();
-    return `<button class="${buttonClass}">...</button>`;
-  }
-  
-  getButtonClass() {
-    return `btn btn-${this.options.type}`;
+    const variant = BUTTON_VARIANTS.includes(this.options.variant) ? this.options.variant : "primary";
+    this.element.innerHTML = html`<button class="action-btn action-btn--${variant}" type="${this.options.type}">${this.options.label}</button>`;
   }
 }
 
-// Extensión sin modificar la clase base
-class PrimaryButton extends Button {
-  static DEFAULTS = { type: 'primary' };
-}
-
-class DangerButton extends Button {
-  static DEFAULTS = { type: 'danger' };
-}
+// Una variante nueva es un valor nuevo de la prop (y su clase CSS), no una subclase.
+new Button(el, { label: "Eliminar", variant: "ghost" }).mount();
 ```
 
 **Beneficio:** Agregar nuevas funcionalidades sin tocar código existente
@@ -623,40 +614,27 @@ export class LoginForm extends Component {
 }
 ```
 
-### 5.2 Herencia para Reutilización
+### 5.2 Composición para Reutilización
+
+La reutilización se logra **componiendo** componentes chicos con props explícitas, no creando una subclase por cada variante (`EmailInput`, `PasswordInput`…). La herencia se usa solo para la base de ciclo de vida (`Component`).
 
 ```javascript
-// Base - Componente base para inputs
-class InputBase extends Component {
-  getInputHTML(type = 'text', placeholder = '') {
-    return `
-      <input 
-        type="${type}" 
-        class="form-control"
-        placeholder="${placeholder}"
-        id="${this.options.id}"
-        name="${this.options.name}"
-        ${this.options.required ? 'required' : ''}
-      >
-    `;
-  }
-  
-  getValue() {
-    return this.elemento.querySelector('input').value;
-  }
-}
+// Una molécula FormField parametrizada sirve para email, contraseña, texto, etc.
+const emailField = formField({ id: "loginEmail", name: "email", label: "Email", type: "email", required: true });
+const passwordField = formField({ id: "loginPassword", name: "password", label: "Contraseña", type: "password", required: true });
 
-// Específico - Input de email
-class EmailInput extends InputBase {
+// El organismo compone moléculas y avisa hacia arriba con un CustomEvent.
+class LoginForm extends Component {
   render() {
-    this.elemento.innerHTML = this.getInputHTML('email', 'Email...');
+    this.element.innerHTML = html`<form>${emailField}${passwordField}<button type="submit">Ingresar</button></form>`;
   }
-}
 
-// Específico - Input de contraseña
-class PasswordInput extends InputBase {
-  render() {
-    this.elemento.innerHTML = this.getInputHTML('password', '••••••••');
+  attachEvents() {
+    this.listen(this.element.querySelector("form"), "submit", (event) => {
+      event.preventDefault();
+      const data = Object.fromEntries(new FormData(event.target));
+      this.element.dispatchEvent(new CustomEvent("login-submit", { bubbles: true, detail: data }));
+    });
   }
 }
 ```
@@ -719,29 +697,30 @@ class LoginPage {
 
 ```javascript
 class Component {
-  constructor(selector, options = {}) {
-    this._listeners = {}; // Guardar referencias de listeners
+  constructor(elementOrSelector, options = {}) {
+    this._domListeners = []; // { target, eventName, handler, options }
   }
 
   /**
-   * Adjuntar evento con referencia
-   * (permite remover después en destroy)
+   * Registra un listener y guarda la referencia completa para poder quitarlo.
    */
-  _addEventListener(element, event, handler) {
-    const key = `${element.id}:${event}`;
-    this._listeners[key] = handler;
-    element.addEventListener(event, handler);
+  listen(target, eventName, handler, options) {
+    if (!target) {
+      return;
+    }
+
+    target.addEventListener(eventName, handler, options);
+    this._domListeners.push({ target, eventName, handler, options });
   }
 
   /**
-   * Limpiar todos los listeners
+   * Quita todos los listeners registrados (ver core/Component.js).
    */
   destroy() {
-    // Remover todos los event listeners adjuntados
-    Object.entries(this._listeners).forEach(([, handler]) => {
-      handler.target?.removeEventListener(handler.event, handler);
+    this._domListeners.forEach(({ target, eventName, handler, options }) => {
+      target.removeEventListener(eventName, handler, options);
     });
-    this._listeners = {};
+    this._domListeners = [];
   }
 }
 ```
@@ -913,7 +892,7 @@ stateManager.set('user', {
 
 ## 9. ESTILOS Y CSS
 
-Fuente normativa complementaria: `ReglasCSS` (raíz del repositorio). Si hay conflicto entre
+Fuente normativa complementaria: `frontend/ReglasCSS.md`. Si hay conflicto entre
 ejemplos antiguos y reglas operativas vigentes, prevalece `ReglasCSS`.
 
 ### 9.1 Desacoplamiento HTML/CSS

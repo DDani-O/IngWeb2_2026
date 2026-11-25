@@ -72,7 +72,7 @@ Documento complementario obligatorio para estilos y responsive: **`ReglasCSS`**
 ### Resumen Ejecutivo de Principios
 
 1. **Desacoplamiento Total** - Cada archivo JS, CSS e HTML independiente
-2. **Herencia antes que Composición** - Para reutilización en componentes
+2. **Composición antes que Herencia** - Las pantallas se arman componiendo componentes chicos con props y eventos; la herencia se reserva para la base de ciclo de vida (`Component`)
 3. **Patrón Single Responsibility** - Una clase = una responsabilidad
 4. **Eventos Desacoplados** - EventBus para comunicación entre módulos
 5. **Configuración Centralizada** - Constantes en `utils/constants.js`
@@ -137,7 +137,7 @@ Documento complementario obligatorio para estilos y responsive: **`ReglasCSS`**
 frontend/
 │
 ├── PrincipiosDesarrollo.md          # Guía de principios (LEER PRIMERO)
-├── ReglasCSS (en raíz del repo)     # Reglas operativas CSS/responsive vigentes
+├── ReglasCSS.md                     # Reglas operativas CSS/responsive vigentes
 ├── index.html                       # HTML principal - entry point
 ├── app.js                           # JavaScript entry point - inicialización
 │
@@ -232,7 +232,7 @@ frontend/
     │   ├── elegir-perfil.html      # Selección de rol (usuario vs asesor)
     │   └── ElegirPerfilPage.js     # Controlador de elección de perfil
     │
-    ├── usuario/                     # 👤 PÁGINAS DEL USUARIO REGULAR
+    ├── cliente/                     # 👤 PÁGINAS DEL CLIENTE
     │   ├── dashboard.html          # Panel principal del usuario
     │   ├── DashboardPage.js        # Controlador dashboard usuario
     │   │
@@ -849,7 +849,7 @@ Request:
   password: "SecurePass123",
   nombre: "Juan",
   apellido: "Pérez",
-  perfil: "usuario" // o "asesor"
+  perfil: "cliente" // o "asesor"
 }
 
 Response (201):
@@ -857,7 +857,7 @@ Response (201):
   id: 1,
   email: "usuario@example.com",
   nombre: "Juan",
-  perfil: "usuario",
+  perfil: "cliente",
   token: "eyJhbGc..."
 }
 ```
@@ -877,7 +877,7 @@ Response (200):
     id: 1,
     email: "usuario@example.com",
     nombre: "Juan",
-    perfil: "usuario"
+    perfil: "cliente"
   }
 }
 ```
@@ -893,7 +893,7 @@ Response (200):
   email: "usuario@example.com",
   nombre: "Juan",
   apellido: "Pérez",
-  perfil: "usuario",
+  perfil: "cliente",
   createdAt: "2026-01-15T10:00:00Z"
 }
 ```
@@ -1087,7 +1087,7 @@ Response (200):
       id: 1,
       email: "usuario@example.com",
       nombre: "Juan",
-      perfil: "usuario",
+      perfil: "cliente",
       createdAt: "2026-01-15T10:00:00Z",
       gastosTotales: 5000.00
     },
@@ -1253,11 +1253,11 @@ DASHBOARD    DASHBOARD
 
 ---
 
-### 11.3 Páginas del Usuario Regular
+### 11.3 Páginas del Cliente
 
 #### 11.3.1 Dashboard Usuario
 
-**Archivo:** `pages/usuario/dashboard.html` + `pages/usuario/DashboardPage.js`
+**Archivo:** `pages/cliente/dashboard.html` + `pages/cliente/DashboardPage.js`
 
 **Diseño:** 3 columnas (Sidebar + Main + Right Panel)
 
@@ -1285,7 +1285,7 @@ DASHBOARD    DASHBOARD
 
 #### 11.3.2 Cargar Gasto Page
 
-**Archivo:** `pages/usuario/cargar-gasto.html` + `pages/usuario/CargarGastoPage.js`
+**Archivo:** `pages/cliente/cargar-gasto.html` + `pages/cliente/CargarGastoPage.js`
 
 **2 Métodos de carga:**
 
@@ -1317,7 +1317,7 @@ DASHBOARD    DASHBOARD
 
 #### 11.3.3 Historial Gastos Page
 
-**Archivo:** `pages/usuario/historial.html` + `pages/usuario/HistorialPage.js`
+**Archivo:** `pages/cliente/historial.html` + `pages/cliente/HistorialPage.js`
 
 **Contenido:**
 - Filtros (barra superior):
@@ -1344,7 +1344,7 @@ DASHBOARD    DASHBOARD
 
 #### 11.3.4 Patrones de Consumo Page
 
-**Archivo:** `pages/usuario/patrones.html` + `pages/usuario/PatronesPage.js`
+**Archivo:** `pages/cliente/patrones.html` + `pages/cliente/PatronesPage.js`
 
 **Contenido:**
 - Período seleccionable (último mes, últimos 3 meses, año)
@@ -1367,56 +1367,46 @@ DASHBOARD    DASHBOARD
 
 #### 11.3.5 Recomendaciones Page
 
-**Archivo:** `pages/usuario/recomendaciones.html` + `pages/usuario/RecomendacionesPage.js`
+**Archivo:** `pages/cliente/recomendaciones.html` + `pages/cliente/RecomendacionesPage.js` · Spec detallada: `paginasFront/05-Recomendaciones.md`
 
 **Contenido:**
-- Lista de recomendaciones (pueden ser del sistema o asesor)
-- Cards de recomendación con:
-  - Título
-  - Descripción
-  - Categoría relacionada
-  - Nivel de prioridad (info, warning, danger)
-  - Fecha
+- Recomendaciones del sistema o del asesor, con el modelo de `recomendaciones_financieras`: título, mensaje, tipo (sugerencia/alerta/observación), prioridad (alta/media/baja), origen (sistema/asesor), fecha y leída.
+- Filtros por prioridad, tipo y estado de lectura; orden por fecha o prioridad.
+- Acciones: marcar como leída y ver detalle.
 
 **Datos:**
-- GET `/recommendations/{userId}` → recomendaciones
+- GET `/recomendaciones` → recomendaciones del cliente
+- PUT `/recomendaciones/:id/leida` → marcar como leída
 
 ---
 
 #### 11.3.6 Perfil Page
 
-**Archivo:** `pages/usuario/perfil.html` + `pages/usuario/PerfilPage.js`
+**Archivo:** `pages/cliente/perfil.html` + `pages/cliente/PerfilPage.js`
 
-**Contenido:**
-- Avatar (opcional)
-- Información del usuario:
-  - Nombre
-  - Email
-  - Teléfono
-  - Moneda preferida
-  - Tema (light/dark)
-- Botones:
-  - Editar perfil
-  - Cambiar contraseña
-  - Logout
+**Contenido (campos de `usuarios` y `perfiles_usuarios`):**
+- Nombre completo, ocupación, ingreso mensual estimado, objetivo financiero, biografía.
+- Email de acceso (solo lectura).
+- Tema visual (preferencia local, `ThemeManager`).
+- Resumen: perfil de gasto asignado, asesor asignado, miembro desde.
 
 **Datos:**
 - GET `/auth/me` → información del usuario
+- PUT `/auth/profile` → actualizar perfil
 
 ---
 
 #### 11.3.7 Perfiles de Gasto Page
 
-**Archivo:** `pages/usuario/perfiles.html` + `pages/usuario/PerfilesPage.js`
+**Archivo:** `pages/cliente/perfiles.html` + `pages/cliente/PerfilesPage.js` · Spec detallada: `paginasFront/04-PerfilesDeGasto.md`
 
 **Contenido:**
-- Sistema de clasificación del usuario:
-  - Perfil financiero generado por el sistema
-  - Ejemplos: "Consumidor equilibrado", "Consumidor ahorrador", etc.
-- Histórico de perfiles (opcional)
+- Catálogo informativo de los 3 perfiles y tabla comparativa.
+- Perfil asignado **automáticamente por el sistema** (`clasificacion_de_perfil`). El cliente no puede elegirlo.
 
 **Datos:**
-- GET `/analysis/user/{userId}` → perfil
+- GET `/perfiles-de-gasto` → catálogo
+- GET `/clientes/me/perfil` → perfil vigente
 
 ---
 
@@ -1449,31 +1439,49 @@ DASHBOARD    DASHBOARD
 **Interacciones:**
 - Click en cliente → abrir modal o navegar a página de detalles
 
+Spec detallada: `paginasFront/03-AsesorDashboard.md`.
+
+#### 11.4.2 Mis Clientes
+
+**Archivo:** `pages/asesor/clientes.html` + `pages/asesor/AsesorClientesPage.js`
+
+- Búsqueda y filtros por riesgo y estado, vista en tarjetas o tabla, detalle del cliente y envío de recomendaciones.
+- El análisis completo por cliente (`#/asesor/clientes/:id`) se agrega en la Fase 5 del refactor.
+
+#### 11.4.3 Perfil del Asesor
+
+**Archivo:** `pages/asesor/perfil.html` + `pages/asesor/AsesorPerfilPage.js`
+
+- Campos de `usuarios` y `perfiles_asesores`: nombre completo, especialidad, matrícula, descripción profesional. Email de acceso en solo lectura.
+
 ---
 
 ### 11.5 Rutas y Navegación
 
-**URLs (hash-based):**
+**URLs (hash-based):** fuente de verdad en `frontend/utils/constants.js` (`ROUTES`) y en la configuración del router en `frontend/app.js` (en la Fase 2 pasa a `frontend/routes.js`).
 
-| Página | Ruta |
-|--------|------|
-| Landing | `#/` |
-| Login (modal) | `#/?modal=login` |
-| Registro (modal) | `#/?modal=register` |
-| Dashboard Usuario | `#/usuario/dashboard` |
-| Cargar Gasto | `#/usuario/cargar-gasto` |
-| Historial | `#/usuario/historial` |
-| Patrones | `#/usuario/patrones` |
-| Recomendaciones | `#/usuario/recomendaciones` |
-| Perfil Usuario | `#/usuario/perfil` |
-| Perfiles Gasto | `#/usuario/perfiles` |
-| Dashboard Asesor | `#/asesor/dashboard` |
-| Placeholder | `#/utils/placeholder` |
+| Página | Ruta | Rol |
+|--------|------|-----|
+| Landing | `#/` | público |
+| Login (modal) | `#/?modal=login` | público |
+| Registro (modal) | `#/?modal=register` | público |
+| Dashboard del cliente | `#/cliente/dashboard` | cliente |
+| Cargar Gasto | `#/cliente/cargar-gasto` | cliente |
+| Historial | `#/cliente/historial` | cliente |
+| Patrones | `#/cliente/patrones` | cliente |
+| Recomendaciones | `#/cliente/recomendaciones` | cliente |
+| Perfil de cuenta | `#/cliente/perfil` | cliente |
+| Perfiles de gasto | `#/cliente/perfiles` | cliente |
+| Dashboard Asesor | `#/asesor/dashboard` | asesor |
+| Mis Clientes | `#/asesor/clientes` | asesor |
+| Perfil del Asesor | `#/asesor/perfil` | asesor |
+| Placeholder | `#/utils/placeholder?title=…` | público |
+| Ruta inexistente | cualquier otra (se muestra la página "Ruta no encontrada" en la misma URL) | público |
 
 **Implementación:** Hash-based routing en `Router.js`
 
 ```javascript
-router.navigate('usuario/dashboard')  // Cambia a #/usuario/dashboard
+router.navigate('cliente/dashboard')  // Cambia a #/cliente/dashboard
 router.navigate('/')                  // Cambia a #/
 ```
 
@@ -1498,7 +1506,7 @@ export class EventBus {
   // ...
 }
 
-// Archivo: pages/usuario/DashboardPage.js
+// Archivo: pages/cliente/DashboardPage.js
 import { EventBus } from '../../core/EventBus.js';
 import { APIClient } from '../../core/APIClient.js';
 // ...
@@ -1513,30 +1521,31 @@ import { APIClient } from '../../core/APIClient.js';
 **Token JWT:**
 ```javascript
 // Al login exitoso
-localStorage.setItem('authToken', response.token);
+localStorage.setItem('fintrack.authToken', response.token);
 
 // Al hacer requests
 headers: {
-  'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+  'Authorization': `Bearer ${localStorage.getItem('fintrack.authToken')}`
 }
 
 // Al logout
-localStorage.removeItem('authToken');
+localStorage.removeItem('fintrack.authToken');
 ```
 
 **Tema:**
 ```javascript
 // Guardar preferencia
-localStorage.setItem('theme', 'dark');
+localStorage.setItem('fintrack.theme', 'dark');
 
 // Cargar al iniciar
-const theme = localStorage.getItem('theme') || 'light';
+const theme = localStorage.getItem('fintrack.theme') || 'dark';
 themeManager.setTheme(theme);
 ```
 
 **Estado temporal:**
 ```javascript
-localStorage.setItem('formDraft', JSON.stringify(formData));
+// Claves por usuario: `${STORAGE_KEYS.EXPENSE_DRAFT}.${userId}` (ver STORAGE_KEYS en utils/constants.js)
+localStorage.setItem(`fintrack.expenseDraft.${userId}`, JSON.stringify(formData));
 ```
 
 ---

@@ -79,20 +79,6 @@
   border: 1px solid color-mix(in srgb, var(--color-danger) 34%, transparent);
 }
 
-.advisor-client-unread {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border-radius: 9px;
-  border: 1px solid color-mix(in srgb, var(--color-danger) 34%, transparent);
-  background: color-mix(in srgb, var(--color-danger) 16%, transparent);
-  color: color-mix(in srgb, var(--color-danger) 72%, #ffffff 28%);
-  font-size: 0.83rem;
-  font-weight: 700;
-  padding: 5px 9px;
-  margin-bottom: 10px;
-}
-
 .advisor-client-metrics {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -140,59 +126,6 @@
 .advisor-client-table th,
 .advisor-client-table td {
   white-space: nowrap;
-}
-
-.inbox-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.inbox-item {
-  border: 1px solid var(--border-soft);
-  border-radius: var(--radius-sm);
-  padding: 12px;
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 10px;
-  align-items: center;
-  background: var(--surface-2);
-  cursor: pointer;
-  transition: 180ms ease;
-}
-
-.inbox-item--unread {
-  border-color: var(--border-strong);
-}
-
-.inbox-item:hover,
-.inbox-item:focus-visible {
-  border-color: var(--border-strong);
-  box-shadow: var(--shadow-accent);
-  outline: none;
-}
-
-.inbox-title {
-  font-size: 1.04rem;
-  margin-bottom: 3px;
-}
-
-.inbox-sub {
-  font-size: 0.9rem;
-  color: var(--text-muted);
-}
-
-.inbox-badge {
-  display: inline-flex;
-  margin-left: 7px;
-  font-size: 0.66rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  padding: 3px 6px;
-  border-radius: 999px;
-  color: var(--color-primary);
-  border: 1px solid var(--border-strong);
-  background: var(--action-ghost-bg);
 }
 
 .advisor-recommendation-board {

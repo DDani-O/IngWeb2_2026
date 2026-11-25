@@ -90,27 +90,6 @@
   font-weight: 700;
 }
 
-.profile-tip-box {
-  padding: 12px;
-  margin-bottom: 12px;
-}
-
-.profile-tip-box h5 {
-  margin-bottom: 8px;
-  color: var(--color-primary);
-  font-size: 1rem;
-}
-
-.profile-tip-box ul {
-  margin: 0;
-  padding-left: 18px;
-  color: var(--text-muted);
-  font-size: 0.88rem;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
 .profile-active-badge {
   display: inline-flex;
   align-items: center;

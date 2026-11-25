@@ -10,11 +10,11 @@
             Tu resumen financiero esta listo.
           </p>
           <div class="d-flex flex-wrap gap-2 mt-3">
-            <a class="action-btn action-btn--primary" href="#/usuario/cargar-gasto">
+            <a class="action-btn action-btn--primary" href="#/cliente/cargar-gasto">
               <i class="fa-solid fa-receipt"></i>
               Cargar Gasto
             </a>
-            <a class="action-btn action-btn--ghost" href="#/usuario/historial">
+            <a class="action-btn action-btn--ghost" href="#/cliente/historial">
               <i class="fa-solid fa-clock-rotate-left"></i>
               Ver Historial
             </a>
@@ -59,7 +59,7 @@
         <article class="chart-card">
           <h3 class="info-card__title"><i class="fa-solid fa-chart-pie accent"></i>Gastos por Categoria</h3>
           <canvas id="userCategoryChart" aria-label="Grafico de gastos por categoria"></canvas>
-          <a class="chart-card__link" href="#/usuario/patrones" target="_blank">Ver mas detalles en Patrones de Consumo</a>
+          <a class="chart-card__link" href="#/cliente/patrones" target="_blank">Ver mas detalles en Patrones de Consumo</a>
         </article>
         <article class="chart-card">
           <h3 class="info-card__title"><i class="fa-solid fa-chart-bar accent"></i>Gasto Mensual</h3>
@@ -81,41 +81,4 @@
   </main>
 
   <div id="userSidebarSlot"></div>
-
-  <article class="advisor-teaser" id="advisorTeaserCard">
-    <div class="advisor-teaser__avatar">👩‍💼</div>
-    <div>
-      <h3>Tu Asesor Financiero</h3>
-      <p class="text-muted" id="advisorPanelMessage">Maria Rodriguez esta disponible ahora.</p>
-      <button class="action-btn action-btn--ghost mt-2" id="openAdvisorChatButton" type="button">
-        <i class="fa-solid fa-comment-dots"></i>
-        Iniciar Chat
-      </button>
-    </div>
-    <button class="advisor-teaser__close" id="advisorTeaserClose" type="button" aria-label="Cerrar">
-      <i class="fa-solid fa-xmark"></i>
-    </button>
-  </article>
-
-  <button class="user-chat-fab" id="openAdvisorChatBubble" type="button" aria-label="Abrir chat">
-    <i class="fa-solid fa-comments"></i>
-  </button>
-
-  <div class="modal fade" id="advisorChatModal" tabindex="-1" aria-labelledby="advisorChatModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content app-modal-surface">
-        <div class="modal-header">
-          <h5 class="modal-title" id="advisorChatModalLabel">Maria Rodriguez · Asesor Financiero</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-        </div>
-        <div class="modal-body">
-          <div class="chat-messages" id="advisorChatMessages"></div>
-          <div class="mt-2 d-flex gap-2">
-            <input type="text" id="advisorChatInput" class="form-control form-control-sm" placeholder="Escribe tu mensaje" />
-            <button class="action-btn action-btn--primary" id="advisorChatSendButton" type="button">Enviar</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 </div>

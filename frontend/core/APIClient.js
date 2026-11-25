@@ -1,5 +1,4 @@
 import { API_CONFIG, STORAGE_KEYS } from "../utils/constants.js";
-import { parseQueryString } from "../utils/helpers.js";
 
 export class APIClient {
   /**
@@ -87,14 +86,6 @@ export class APIClient {
     } finally {
       window.clearTimeout(timeoutId);
     }
-  }
-
-  /**
-   * Extrae parametros query desde un hash para reutilizarlos en rutas.
-   */
-  static parseHashQuery(hash) {
-    const [, query = ""] = String(hash).split("?");
-    return parseQueryString(query);
   }
 }
 

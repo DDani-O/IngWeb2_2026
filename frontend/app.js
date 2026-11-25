@@ -6,14 +6,11 @@ import { themeManager } from "./core/ThemeManager.js";
 import { mountAdvisorRecommendationModal } from "./components/modals/AdvisorRecommendationModal.js";
 import { mountAdvisorShell } from "./components/navigation/AdvisorShell.js";
 import { mountUserShell } from "./components/navigation/UserShell.js";
-import { EVENTS, ROUTES, UI_TIMING } from "./utils/constants.js";
+import { EVENTS, ROLES, ROUTES, STORAGE_KEYS, UI_TIMING } from "./utils/constants.js";
 
 const toastContainer = document.querySelector("#globalToastContainer");
-const TAB_REGISTRY_STORAGE_KEY = "fintrack.openTabs.v1";
-const TAB_ID_STORAGE_KEY = "fintrack.tabId";
 
 const router = new Router({ viewSelector: "#route-view" });
-let activeLandingPage = null;
 const currentTabId = getOrCreateTabId();
 
 initializeApplication();
@@ -30,10 +27,6 @@ function initializeApplication() {
   router.start();
 
   window.addEventListener("beforeunload", unregisterCurrentTab);
-
-  eventBus.on(EVENTS.ROUTER.NAVIGATE, ({ path, query }) => {
-    router.navigate(path, query);
-  });
 
   eventBus.on(EVENTS.ROUTER.CHANGED, ({ path }) => {
     registerCurrentTabRoute(path);
@@ -55,9 +48,8 @@ function configureRouter() {
     };
   };
 
-  const getUserName = () => authManager.getCurrentUser()?.fullName || "Juan Perez";
-  const getAdvisorName = () =>
-    authManager.getCurrentUser()?.fullName || "Maria Rodriguez";
+  const getClientName = () => authManager.getCurrentUser()?.fullName || "";
+  const getAdvisorName = () => authManager.getCurrentUser()?.fullName || "";
 
   const createProtectedRoute = ({
     path,
@@ -95,31 +87,21 @@ function configureRouter() {
     };
   };
 
-  const createUserRoute = ({
-    path,
-    templateUrl,
-    pageModulePath,
-    pageExportName,
-    footerText,
-    pageOptions,
-    beforePageMount,
-  }) => {
+  const createClientRoute = ({ path, templateUrl, pageModulePath, pageExportName, footerText }) => {
     return createProtectedRoute({
       path,
       templateUrl,
-      role: "usuario",
+      role: ROLES.CLIENT,
       shellMount: mountUserShell,
       shellOptions: () => ({
-        userName: getUserName(),
+        userName: getClientName(),
         activeRoute: path,
         footerText,
       }),
       pageModulePath,
       pageExportName,
-      beforePageMount,
-      pageOptions: (context) => ({
+      pageOptions: () => ({
         hasRouteOpenInOtherTab,
-        ...(pageOptions ? pageOptions(context) : {}),
       }),
     });
   };
@@ -130,53 +112,51 @@ function configureRouter() {
     pageModulePath,
     pageExportName,
     footerText,
-    shellOptionsExtra,
-    pageOptions,
     beforePageMount,
   }) => {
     return createProtectedRoute({
       path,
       templateUrl,
-      role: "asesor",
+      role: ROLES.ADVISOR,
       shellMount: mountAdvisorShell,
-      shellOptions: (context) => ({
+      shellOptions: () => ({
         advisorName: getAdvisorName(),
         activeRoute: path,
         footerText,
-        ...(shellOptionsExtra ? shellOptionsExtra(context) : {}),
       }),
       pageModulePath,
       pageExportName,
       beforePageMount,
-      pageOptions,
     });
   };
 
   const mountDashboardRecommendationModal = async (context) => {
     await mountAdvisorRecommendationModal(context.mountNode, {
       slotSelector: "#advisorRecommendationModalSlot",
-      modalId: "advisorRecommendationModal",
-      labelId: "advisorRecommendationModalLabel",
-      formId: "advisorRecommendationForm",
-      clientSelectId: "advisorRecommendationClient",
-      typeSelectId: "advisorRecommendationType",
-      descriptionId: "advisorRecommendationDescription",
-      savingsId: "advisorRecommendationSavings",
+      idPrefix: "advisorRecommendation",
     });
   };
 
   const mountClientsRecommendationModal = async (context) => {
     await mountAdvisorRecommendationModal(context.mountNode, {
       slotSelector: "#advisorClientRecommendationModalSlot",
-      modalId: "advisorClientRecommendationModal",
-      labelId: "advisorClientRecommendationModalLabel",
-      formId: "advisorClientRecommendationForm",
-      clientSelectId: "advisorClientRecommendationClient",
-      typeSelectId: "advisorClientRecommendationType",
-      descriptionId: "advisorClientRecommendationDescription",
-      savingsId: "advisorClientRecommendationSavings",
+      idPrefix: "advisorClientRecommendation",
     });
   };
+
+  const placeholderRoute = (path, fixedQuery = null) => ({
+    path,
+    templateUrl: "./pages/public/placeholder.html",
+    onEnter: async (context) => {
+      const module = await import("./pages/public/PlaceholderPage.js");
+      const page = new module.PlaceholderPage(context.mountNode, {
+        router,
+        query: fixedQuery || context.query,
+      });
+      page.mount();
+      return () => page.destroy();
+    },
+  });
 
   router.registerMany([
     {
@@ -191,68 +171,61 @@ function configureRouter() {
         });
 
         page.mount();
-        activeLandingPage = page;
 
         const modal = context.query.modal;
         if (modal === "login" || modal === "register") {
           page.openAuthModal(modal);
         }
 
-        return () => {
-          if (activeLandingPage === page) {
-            activeLandingPage = null;
-          }
-
-          page.destroy();
-        };
+        return () => page.destroy();
       },
     },
-    createUserRoute({
-      path: ROUTES.USER_DASHBOARD,
-      templateUrl: "./pages/usuario/dashboard.html",
-      pageModulePath: "./pages/usuario/DashboardPage.js",
+    createClientRoute({
+      path: ROUTES.CLIENT_DASHBOARD,
+      templateUrl: "./pages/cliente/dashboard.html",
+      pageModulePath: "./pages/cliente/DashboardPage.js",
       pageExportName: "DashboardPage",
-      footerText: "FinTrack 2026 · Dashboard usuario",
+      footerText: "FinTrack 2026 · Dashboard del cliente",
     }),
-    createUserRoute({
-      path: ROUTES.USER_CARGAR_GASTO,
-      templateUrl: "./pages/usuario/cargar-gasto.html",
-      pageModulePath: "./pages/usuario/CargarGastoPage.js",
+    createClientRoute({
+      path: ROUTES.CLIENT_CARGAR_GASTO,
+      templateUrl: "./pages/cliente/cargar-gasto.html",
+      pageModulePath: "./pages/cliente/CargarGastoPage.js",
       pageExportName: "CargarGastoPage",
       footerText: "FinTrack 2026 · Carga de gastos",
     }),
-    createUserRoute({
-      path: ROUTES.USER_HISTORIAL,
-      templateUrl: "./pages/usuario/historial.html",
-      pageModulePath: "./pages/usuario/HistorialPage.js",
+    createClientRoute({
+      path: ROUTES.CLIENT_HISTORIAL,
+      templateUrl: "./pages/cliente/historial.html",
+      pageModulePath: "./pages/cliente/HistorialPage.js",
       pageExportName: "HistorialPage",
       footerText: "FinTrack 2026 · Historial de gastos",
     }),
-    createUserRoute({
-      path: ROUTES.USER_PERFIL,
-      templateUrl: "./pages/usuario/perfil.html",
-      pageModulePath: "./pages/usuario/PerfilPage.js",
+    createClientRoute({
+      path: ROUTES.CLIENT_PERFIL,
+      templateUrl: "./pages/cliente/perfil.html",
+      pageModulePath: "./pages/cliente/PerfilPage.js",
       pageExportName: "PerfilPage",
-      footerText: "FinTrack 2026 · Perfil de usuario",
+      footerText: "FinTrack 2026 · Perfil del cliente",
     }),
-    createUserRoute({
-      path: ROUTES.USER_PATRONES,
-      templateUrl: "./pages/usuario/patrones.html",
-      pageModulePath: "./pages/usuario/PatronesPage.js",
+    createClientRoute({
+      path: ROUTES.CLIENT_PATRONES,
+      templateUrl: "./pages/cliente/patrones.html",
+      pageModulePath: "./pages/cliente/PatronesPage.js",
       pageExportName: "PatronesPage",
       footerText: "FinTrack 2026 · Patrones de consumo",
     }),
-    createUserRoute({
-      path: ROUTES.USER_PERFILES,
-      templateUrl: "./pages/usuario/perfiles.html",
-      pageModulePath: "./pages/usuario/PerfilesPage.js",
+    createClientRoute({
+      path: ROUTES.CLIENT_PERFILES,
+      templateUrl: "./pages/cliente/perfiles.html",
+      pageModulePath: "./pages/cliente/PerfilesPage.js",
       pageExportName: "PerfilesPage",
       footerText: "FinTrack 2026 · Perfiles de gasto",
     }),
-    createUserRoute({
-      path: ROUTES.USER_RECOMENDACIONES,
-      templateUrl: "./pages/usuario/recomendaciones.html",
-      pageModulePath: "./pages/usuario/RecomendacionesPage.js",
+    createClientRoute({
+      path: ROUTES.CLIENT_RECOMENDACIONES,
+      templateUrl: "./pages/cliente/recomendaciones.html",
+      pageModulePath: "./pages/cliente/RecomendacionesPage.js",
       pageExportName: "RecomendacionesPage",
       footerText: "FinTrack 2026 · Recomendaciones financieras",
     }),
@@ -273,65 +246,32 @@ function configureRouter() {
       beforePageMount: mountClientsRecommendationModal,
     }),
     createAdvisorRoute({
-      path: ROUTES.ADVISOR_INBOX,
-      templateUrl: "./pages/asesor/inbox.html",
-      pageModulePath: "./pages/asesor/AsesorInboxPage.js",
-      pageExportName: "AsesorInboxPage",
-      footerText: "FinTrack 2026 · Bandeja del asesor",
-      pageOptions: (context) => ({
-        query: context.query,
-      }),
-    }),
-    createAdvisorRoute({
-      path: ROUTES.ADVISOR_REPORTES,
-      templateUrl: "./pages/asesor/reportes.html",
-      pageModulePath: "./pages/asesor/AsesorReportesPage.js",
-      pageExportName: "AsesorReportesPage",
-      footerText: "FinTrack 2026 · Reportes del asesor",
-      shellOptionsExtra: (context) => ({
-        activeSection: context.query.section || "comisiones",
-      }),
-      pageOptions: (context) => ({
-        query: context.query,
-      }),
-    }),
-    createAdvisorRoute({
       path: ROUTES.ADVISOR_PERFIL,
       templateUrl: "./pages/asesor/perfil.html",
       pageModulePath: "./pages/asesor/AsesorPerfilPage.js",
       pageExportName: "AsesorPerfilPage",
       footerText: "FinTrack 2026 · Perfil del asesor",
     }),
-    {
-      path: ROUTES.PLACEHOLDER,
-      templateUrl: "./pages/public/placeholder.html",
-      onEnter: async (context) => {
-        const module = await import("./pages/public/PlaceholderPage.js");
-        const page = new module.PlaceholderPage(context.mountNode, {
-          router,
-          query: context.query,
-        });
-        page.mount();
-        return () => page.destroy();
-      },
-    },
+    placeholderRoute(ROUTES.PLACEHOLDER),
   ]);
 
-  router.setNotFoundRoute({
-    path: "*",
-    render: () => {
-      router.navigate(ROUTES.PLACEHOLDER, {
-        title: "Ruta no encontrada",
-        description:
-          "La ruta solicitada no existe en esta fase. Puedes volver al inicio o dashboard.",
-        icon: "fa-route",
-        ctaText: "Ir al Inicio",
-        ctaUrl: ROUTES.HOME,
-      });
-    },
-  });
+  // La ruta inexistente se muestra en el lugar (sin redirect), así "Volver" no deja atrapado al usuario.
+  router.setNotFoundRoute(
+    placeholderRoute("*", {
+      title: "Ruta no encontrada",
+      description: "La ruta solicitada no existe. Podes volver a la pagina anterior o ir al inicio.",
+      icon: "fa-route",
+      ctaText: "Ir al Inicio",
+      ctaUrl: ROUTES.HOME,
+    })
+  );
 }
 
+/**
+ * Muestra un aviso breve en el contenedor global de toasts.
+ * @param {string} message
+ * @param {"success"|"warning"|"danger"} variant
+ */
 function showToast(message, variant = "success") {
   if (!toastContainer) {
     return;
@@ -348,35 +288,19 @@ function showToast(message, variant = "success") {
   }, UI_TIMING.TOAST_DISMISS_MS);
 }
 
-window.fintrackRouter = router;
-window.fintrackNavigate = (path, query = {}) => {
-  router.navigate(path, query);
-};
-
-window.fintrackOpenModal = (mode = "login") => {
-  const normalizedMode = mode === "register" ? "register" : "login";
-
-  if (activeLandingPage) {
-    activeLandingPage.openAuthModal(normalizedMode);
-    return;
-  }
-
-  router.navigate(ROUTES.HOME, { modal: normalizedMode });
-};
-
 function getOrCreateTabId() {
-  const existing = sessionStorage.getItem(TAB_ID_STORAGE_KEY);
+  const existing = sessionStorage.getItem(STORAGE_KEYS.TAB_ID);
   if (existing) {
     return existing;
   }
 
   const generated = `tab-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-  sessionStorage.setItem(TAB_ID_STORAGE_KEY, generated);
+  sessionStorage.setItem(STORAGE_KEYS.TAB_ID, generated);
   return generated;
 }
 
 function readTabRegistry() {
-  const raw = localStorage.getItem(TAB_REGISTRY_STORAGE_KEY);
+  const raw = localStorage.getItem(STORAGE_KEYS.TAB_REGISTRY);
   if (!raw) {
     return {};
   }
@@ -390,7 +314,7 @@ function readTabRegistry() {
 }
 
 function writeTabRegistry(registry) {
-  localStorage.setItem(TAB_REGISTRY_STORAGE_KEY, JSON.stringify(registry));
+  localStorage.setItem(STORAGE_KEYS.TAB_REGISTRY, JSON.stringify(registry));
 }
 
 function registerCurrentTabRoute(path = "/") {

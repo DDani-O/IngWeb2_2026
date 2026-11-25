@@ -1,4 +1,4 @@
-import { PLACEHOLDER_PRESETS, ROUTES } from "./constants.js";
+import { html } from "./html.js";
 
 /**
  * Convierte una query string en objeto para simplificar lectura de parametros.
@@ -51,18 +51,6 @@ export function buildHash(path, query = {}) {
 }
 
 /**
- * Escapa caracteres HTML para prevenir inyecciones al renderizar texto dinamico.
- */
-export function sanitizeText(value = "") {
-  return String(value)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/\"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-/**
  * Limita un valor numerico a un rango minimo y maximo.
  */
 export function clamp(value, min, max) {
@@ -92,16 +80,6 @@ export function sleep(ms = 200) {
 }
 
 /**
- * Crea un nodo DOM desde un string HTML.
- * Puede aprovecharse para plantillas pequenas o componentes dinamicos.
- */
-export function createElementFromHTML(htmlString) {
-  const template = document.createElement("template");
-  template.innerHTML = htmlString.trim();
-  return template.content.firstElementChild;
-}
-
-/**
  * Valida que una URL sea relativa y segura para navegacion interna.
  */
 export function isSafeRelativeUrl(url = "") {
@@ -121,44 +99,11 @@ export function isSafeRelativeUrl(url = "") {
 }
 
 /**
- * Obtiene un preset de placeholder por nombre.
- * Sirve para centralizar textos/iconos de paginas no implementadas.
- */
-export function getPlaceholderPreset(presetName = "") {
-  return PLACEHOLDER_PRESETS[presetName] || null;
-}
-
-/**
- * Construye el hash de placeholder usando preset y overrides opcionales.
- * Si no existe preset, aplica una configuracion por defecto.
- */
-export function buildPlaceholderHashFromPreset(presetName, override = {}) {
-  const preset = getPlaceholderPreset(presetName);
-
-  if (!preset) {
-    return buildHash(ROUTES.PLACEHOLDER, {
-      title: "Pagina en Construccion",
-      description: "Estamos trabajando en esta seccion. Vuelve pronto.",
-      icon: "fa-hammer",
-      ctaText: "Volver al Inicio",
-      ctaUrl: ROUTES.HOME,
-    });
-  }
-
-  return buildHash(ROUTES.PLACEHOLDER, {
-    ...preset,
-    ...override,
-  });
-}
-
-/**
  * Renderiza estrellas HTML segun rating limitado entre 1 y 5.
  */
 export function renderStars(rating = 5) {
   const stars = clamp(rating, 1, 5);
-  return Array.from({ length: stars })
-    .map(() => '<i class="fa-solid fa-star"></i>')
-    .join("");
+  return html`${Array.from({ length: stars }).map(() => html`<i class="fa-solid fa-star"></i>`)}`;
 }
 
 /**

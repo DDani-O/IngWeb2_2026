@@ -11,18 +11,18 @@
 
     <section class="user-profile-grid">
       <article class="section-block user-profile-summary">
-        <div class="user-profile-avatar" id="profileAvatarInitials">JP</div>
-        <h2 id="profileSummaryName">Juan Perez</h2>
-        <p class="text-muted" id="profileSummaryEmail">usuario@fintrack.local</p>
+        <div class="user-profile-avatar" id="profileAvatarInitials"></div>
+        <h2 id="profileSummaryName"></h2>
+        <p class="text-muted" id="profileSummaryEmail"></p>
 
         <div class="profile-meta-list mt-3" id="profileMetaList"></div>
 
         <div class="d-flex flex-wrap gap-2 mt-3">
-          <a class="action-btn action-btn--ghost" href="#/usuario/perfiles">
+          <a class="action-btn action-btn--ghost" href="#/cliente/perfiles">
             <i class="fa-solid fa-user-shield"></i>
             Ver perfiles de gasto
           </a>
-          <a class="action-btn action-btn--ghost" href="#/usuario/recomendaciones">
+          <a class="action-btn action-btn--ghost" href="#/cliente/recomendaciones">
             <i class="fa-solid fa-lightbulb"></i>
             Revisar recomendaciones
           </a>
@@ -43,39 +43,24 @@
             </div>
             <div class="col-md-6">
               <label class="form-label" for="profileEmail">Email</label>
-              <input id="profileEmail" name="email" type="email" class="form-control" required />
-            </div>
-            <div class="col-md-6">
-              <label class="form-label" for="profilePhone">Telefono</label>
-              <input id="profilePhone" name="phone" class="form-control" />
-            </div>
-            <div class="col-md-6">
-              <label class="form-label" for="profileCity">Ciudad</label>
-              <input id="profileCity" name="city" class="form-control" />
+              <input id="profileEmail" name="email" type="email" class="form-control" readonly aria-describedby="profileEmailHint" />
+              <small class="text-muted" id="profileEmailHint">Es el email de acceso a la cuenta.</small>
             </div>
             <div class="col-md-6">
               <label class="form-label" for="profileOccupation">Ocupacion</label>
               <input id="profileOccupation" name="occupation" class="form-control" />
             </div>
             <div class="col-md-6">
-              <label class="form-label" for="profileCurrency">Moneda base</label>
-              <select id="profileCurrency" name="currency" class="form-select">
-                <option value="ARS">ARS</option>
-                <option value="USD">USD</option>
-                <option value="EUR">EUR</option>
-              </select>
+              <label class="form-label" for="profileEstimatedIncome">Ingreso mensual estimado</label>
+              <input id="profileEstimatedIncome" name="estimatedIncome" type="number" min="0" class="form-control" />
             </div>
-            <div class="col-md-4">
-              <label class="form-label" for="profileMonthlyIncome">Ingreso mensual</label>
-              <input id="profileMonthlyIncome" name="monthlyIncome" type="number" min="0" class="form-control" />
+            <div class="col-12">
+              <label class="form-label" for="profileFinancialGoal">Objetivo financiero</label>
+              <input id="profileFinancialGoal" name="financialGoal" class="form-control" placeholder="Ej: juntar un fondo de emergencia" />
             </div>
-            <div class="col-md-4">
-              <label class="form-label" for="profileSavingsGoal">Meta de ahorro</label>
-              <input id="profileSavingsGoal" name="savingsGoal" type="number" min="0" class="form-control" />
-            </div>
-            <div class="col-md-4">
-              <label class="form-label" for="profileAlertThreshold">Alerta de presupuesto (%)</label>
-              <input id="profileAlertThreshold" name="alertThreshold" type="number" min="10" max="100" class="form-control" />
+            <div class="col-12">
+              <label class="form-label" for="profileBio">Sobre mi</label>
+              <textarea id="profileBio" name="bio" rows="2" class="form-control"></textarea>
             </div>
             <div class="col-md-6">
               <label class="form-label" for="profileTheme">Tema visual</label>
@@ -83,18 +68,6 @@
                 <option value="dark">Oscuro</option>
                 <option value="light">Claro</option>
               </select>
-            </div>
-            <div class="col-md-6 d-flex align-items-end">
-              <div class="d-flex flex-column gap-2">
-                <label class="form-check-label">
-                  <input class="form-check-input me-2" id="profileNotifyEmail" type="checkbox" />
-                  Notificaciones por email
-                </label>
-                <label class="form-check-label">
-                  <input class="form-check-input me-2" id="profileNotifyPush" type="checkbox" />
-                  Alertas en tiempo real
-                </label>
-              </div>
             </div>
           </div>
 

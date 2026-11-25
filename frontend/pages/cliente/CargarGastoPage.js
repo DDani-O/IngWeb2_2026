@@ -1,12 +1,13 @@
 import { PageController } from "../../core/PageController.js";
 import {
+  EXPENSE_ORIGINS,
   MOCK_USER_EXPENSE_FORM,
   MOCK_USER_EXPENSE_HISTORY,
+  STORAGE_KEYS,
 } from "../../utils/constants.js";
-import { formatCurrency } from "../../utils/formatters.js";
+import { formatCurrency, formatDate } from "../../utils/formatters.js";
 import { getInitials } from "../../utils/helpers.js";
-
-const DRAFT_STORAGE_KEY = "fintrack.userExpenseDraft.v1";
+import { html } from "../../utils/html.js";
 
 export class CargarGastoPage extends PageController {
   constructor(element, options = {}) {
@@ -15,17 +16,21 @@ export class CargarGastoPage extends PageController {
     this.recentExpenses = JSON.parse(
       JSON.stringify(MOCK_USER_EXPENSE_HISTORY.expenses.slice(0, 6))
     );
+    // Archivo analizado por OCR: si existe al guardar, el gasto queda con origen "ticket".
+    this.analyzedFileName = null;
+    const userId = this.options.authManager?.getCurrentUser()?.id || "anonimo";
+    this.draftStorageKey = `${STORAGE_KEYS.EXPENSE_DRAFT}.${userId}`;
   }
 
   render() {
     this._resetViewPosition();
 
     const currentUser = this.options.authManager?.getCurrentUser();
-    const userName = currentUser?.fullName || "Juan Perez";
+    const userName = currentUser?.fullName || "";
 
     this._setText("#userTopbarName", userName);
     this._setText("#userSidebarName", userName);
-    this._setText("#userSidebarInitials", getInitials(userName) || "JP");
+    this._setText("#userSidebarInitials", getInitials(userName));
 
     this._renderSelectOptions();
     this._renderMerchantSuggestions();
@@ -53,7 +58,7 @@ export class CargarGastoPage extends PageController {
         "#ticketFileName",
         selectedFile
           ? `Archivo seleccionado: ${selectedFile.name}`
-          : "Arrastra una imagen o selecciona un archivo"
+          : "Selecciona una imagen del ticket"
       );
     });
 
@@ -63,22 +68,12 @@ export class CargarGastoPage extends PageController {
 
   _renderSelectOptions() {
     const categorySelect = this.element.querySelector("#expenseCategory");
-    const paymentSelect = this.element.querySelector("#expensePaymentMethod");
 
     if (categorySelect) {
       categorySelect.innerHTML = [
-        '<option value="">Seleccionar categoria</option>',
+        html`<option value="">Seleccionar categoria</option>`,
         ...this.formData.categories.map(
-          (category) => `<option value="${category}">${category}</option>`
-        ),
-      ].join("");
-    }
-
-    if (paymentSelect) {
-      paymentSelect.innerHTML = [
-        '<option value="">Seleccionar metodo</option>',
-        ...this.formData.paymentMethods.map(
-          (method) => `<option value="${method}">${method}</option>`
+          (category) => html`<option value="${category}">${category}</option>`
         ),
       ].join("");
     }
@@ -91,7 +86,7 @@ export class CargarGastoPage extends PageController {
     }
 
     datalist.innerHTML = this.formData.suggestedMerchants
-      .map((merchant) => `<option value="${merchant}"></option>`)
+      .map((merchant) => html`<option value="${merchant}"></option>`)
       .join("");
   }
 
@@ -103,19 +98,17 @@ export class CargarGastoPage extends PageController {
 
     container.innerHTML = this.recentExpenses
       .map((expense) => {
-        return `
+        return html`
           <article class="recent-expense-item">
             <div>
               <p class="recent-expense-item__title">${expense.merchant}</p>
-              <p class="recent-expense-item__meta">${expense.date} · ${expense.category}</p>
+              <p class="recent-expense-item__meta">${formatDate(expense.date)} · ${expense.category}</p>
             </div>
             <div class="text-end">
               <p class="recent-expense-item__amount">${formatCurrency(expense.amount)}</p>
               <span class="badge-soft ${
-                expense.status === "Validado"
-                  ? "badge-soft--success"
-                  : "badge-soft--warning"
-              }">${expense.status}</span>
+                expense.origin === "ticket" ? "badge-soft--success" : "badge-soft--warning"
+              }">${EXPENSE_ORIGINS[expense.origin] || expense.origin}</span>
             </div>
           </article>
         `;
@@ -136,7 +129,7 @@ export class CargarGastoPage extends PageController {
     this.recentExpenses.unshift({
       id: `exp-${Date.now()}`,
       ...payload,
-      status: "Pendiente",
+      origin: this.analyzedFileName ? "ticket" : "manual",
     });
 
     if (this.recentExpenses.length > 6) {
@@ -162,13 +155,13 @@ export class CargarGastoPage extends PageController {
     this._setInputValue("#expenseMerchant", sample.merchant);
     this._setInputValue("#expenseAmount", String(sample.amount));
     this._setInputValue("#expenseCategory", sample.category);
-    this._setInputValue("#expensePaymentMethod", sample.paymentMethod);
     this._setInputValue("#expenseDate", sample.date);
     this._setInputValue(
       "#expenseDescription",
       `${sample.description} · Archivo: ${selectedFile.name}`
     );
 
+    this.analyzedFileName = selectedFile.name;
     this._showOcrResult(sample, selectedFile.name);
     this._persistDraft();
 
@@ -189,24 +182,23 @@ export class CargarGastoPage extends PageController {
       return;
     }
 
-    rows.innerHTML = `
+    rows.innerHTML = html`
       <div class="ocr-result__row"><span>Archivo</span><strong>${fileName}</strong></div>
       <div class="ocr-result__row"><span>Comercio</span><strong>${data.merchant}</strong></div>
       <div class="ocr-result__row"><span>Monto</span><strong>${formatCurrency(data.amount)}</strong></div>
       <div class="ocr-result__row"><span>Categoria</span><strong>${data.category}</strong></div>
-      <div class="ocr-result__row"><span>Metodo</span><strong>${data.paymentMethod}</strong></div>
-      <div class="ocr-result__row"><span>Fecha</span><strong>${data.date}</strong></div>
+      <div class="ocr-result__row"><span>Fecha</span><strong>${formatDate(data.date)}</strong></div>
     `;
 
     card.classList.remove("app-hidden");
   }
 
   _persistDraft() {
-    localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(this._readFormValues()));
+    localStorage.setItem(this.draftStorageKey, JSON.stringify(this._readFormValues()));
   }
 
   _restoreDraft() {
-    const rawDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
+    const rawDraft = localStorage.getItem(this.draftStorageKey);
     if (!rawDraft) {
       return;
     }
@@ -216,19 +208,19 @@ export class CargarGastoPage extends PageController {
       this._setInputValue("#expenseMerchant", draft.merchant || "");
       this._setInputValue("#expenseAmount", draft.amount ? String(draft.amount) : "");
       this._setInputValue("#expenseCategory", draft.category || "");
-      this._setInputValue("#expensePaymentMethod", draft.paymentMethod || "");
       this._setInputValue("#expenseDate", draft.date || "");
-      this._setInputValue("#expenseReference", draft.reference || "");
       this._setInputValue("#expenseDescription", draft.description || "");
     } catch {
-      localStorage.removeItem(DRAFT_STORAGE_KEY);
+      localStorage.removeItem(this.draftStorageKey);
     }
   }
 
   _clearForm() {
     const form = this.element.querySelector("#userExpenseForm");
     form?.reset();
-    localStorage.removeItem(DRAFT_STORAGE_KEY);
+    localStorage.removeItem(this.draftStorageKey);
+    this.analyzedFileName = null;
+    this._setText("#ticketFileName", "Selecciona una imagen del ticket");
     this._showOcrResult(null);
     this._setDateIfEmpty();
   }
@@ -249,13 +241,9 @@ export class CargarGastoPage extends PageController {
       merchant: this.element.querySelector("#expenseMerchant")?.value.trim() || "",
       amount: Number(amountRaw),
       category: this.element.querySelector("#expenseCategory")?.value || "",
-      paymentMethod:
-        this.element.querySelector("#expensePaymentMethod")?.value || "",
       date: this.element.querySelector("#expenseDate")?.value || "",
-      reference: this.element.querySelector("#expenseReference")?.value.trim() || "",
       description:
         this.element.querySelector("#expenseDescription")?.value.trim() || "",
-      note: this.element.querySelector("#expenseDescription")?.value.trim() || "",
     };
   }
 }

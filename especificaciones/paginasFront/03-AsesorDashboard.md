@@ -1,13 +1,14 @@
 # Especificación: Dashboard de Asesor
 
+> Fase 0 del refactor (`../DiagnosticoRefactor.md` §6): se eliminaron la bandeja de entrada (inbox), los mensajes sin leer y la página de Reportes (comisiones, tareas, descargas) porque no forman parte de la consigna ni tienen respaldo en la BD. Las recomendaciones usan el modelo de `recomendaciones_financieras` (título, mensaje, tipo, prioridad; sin ahorro estimado). Los gráficos de la sección 8 se implementan en la Fase 3 y el análisis por cliente (`#/asesor/clientes/:id`), en la Fase 5.
+
 ## DESCRIPCIÓN GENERAL
 
-El Dashboard de Asesor es la página principal para asesores financieros después del login. Proporciona una vista de gestión de clientes asignados, seguimiento de gastos de cada cliente, inbox de mensajes con usuarios, análisis de comportamiento de gastos y recomendaciones financieras para ofrecer. Es el hub de control desde el cual el asesor gestiona sus responsabilidades y clientes.
+El Dashboard de Asesor es la página principal para asesores financieros después del login. Proporciona una vista de gestión de clientes asignados, seguimiento de gastos de cada cliente, análisis de comportamiento de gastos y recomendaciones financieras para ofrecer. Es el hub de control desde el cual el asesor gestiona sus responsabilidades y clientes.
 
 **Objetivos principales:**
 - Visualizar cartera de clientes asignados
 - Monitorear gastos y patrones de clientes
-- Gestionar comunicación con clientes (inbox)
 - Registrar y enviar recomendaciones financieras
 - Acceso rápido a análisis y reportes de clientes
 
@@ -20,7 +21,6 @@ El Dashboard de Asesor es la página principal para asesores financieros despué
 - **Breadcrumb o sección actual** (ej: "Dashboard de Asesor")
 - **Zona derecha:**
   - Icono de notificaciones (campana) con badge de contador
-  - Icono de mensajes/inbox con badge de no leídos
   - Icono de perfil/usuario (abre menú desplegable)
   - Menú desplegable: Ver Perfil, Configuración, Cerrar Sesión
 - **Tema:** Navbar oscura, consistente
@@ -29,10 +29,7 @@ El Dashboard de Asesor es la página principal para asesores financieros despué
 - **Items de navegación:**
   - Dashboard (icono home) - actual
   - Mis Clientes (icono people)
-  - Mis Recomendaciones (icono lightbulb)
-  - Inbox/Mensajes (icono envelope)
-  - Reportes (icono chart)
-  - Configuración (icono settings)
+  - Perfil del Asesor (icono user)
 - **Estado del item:** Resaltado si es página actual (color principal)
 - **Comportamiento:**
   - Desktop: Sidebar fija o colapsable
@@ -41,7 +38,7 @@ El Dashboard de Asesor es la página principal para asesores financieros despué
 
 ### 3. Sección Hero/Bienvenida
 - **Saludo personalizado:** "Hola, [Nombre del Asesor]"
-- **Subtítulo:** Información contextual (ej: "Tienes 3 nuevos mensajes")
+- **Subtítulo:** Información contextual (ej: "2 clientes con gastos inusuales")
 - **Elementos lado a lado:**
   - **Calendario pequeño:** Mes actual, permite ver y seleccionar fechas
   - **Alertas/Tareas:** Lista pequeña de tareas pendientes (ej: "Cliente X no registra gastos hace 5 días", "Recomendación pendiente de envío")
@@ -76,7 +73,7 @@ El Dashboard de Asesor es la página principal para asesores financieros despué
   - Gasto total del cliente este mes
   - Perfil de consumo del cliente
   - Estado (activo, inactivo, en espera)
-  - Botones: "Ver Detalle" (abre panel), "Enviar Mensaje"
+  - Botones: "Ver Detalle", "Enviar recomendación"
 - **Búsqueda/Filtros:**
   - Campo de búsqueda por nombre/email
   - Filtro por estado (activo, inactivo)
@@ -85,28 +82,13 @@ El Dashboard de Asesor es la página principal para asesores financieros despué
 - **Paginación/Scroll:** Si hay más de 10 clientes, paginar o lazy load
 - **Tema:** Tarjetas con borde sutil, foto destacada
 
-### 6. Sección de Inbox/Mensajes
-- **Título:** "Mensajes Recientes"
-- **Componente:** Lista scrollable de últimos 5-10 mensajes no leídos
-- **Cada mensaje (InboxItem) contiene:**
-  - Foto de cliente remitente
-  - Nombre del cliente
-  - Asunto/Primer línea del mensaje
-  - Fecha/hora
-  - Indicador de no leído (punto o badge)
-  - Botón: "Ver Conversación"
-- **Botón CTA al final:** "Ver todo inbox" (navega a `/asesor/inbox`)
-- **Tema:** Items apilados, último en la parte superior
-
 ### 7. Sección de Recomendaciones Recientes
 - **Título:** "Recomendaciones Registradas"
 - **Componente:** Grid o lista de últimas recomendaciones enviadas
 - **Cada tarjeta contiene:**
   - Nombre del cliente destino
-  - Tipo de recomendación (categoría)
-  - Monto potencial de ahorro
-  - Fecha enviada
-  - Estado (pendiente, vista, aceptada)
+  - Título de la recomendación
+  - Estado (sin leer / leída, según `leida`)
   - Botón: "Ver Detalles"
 - **Botón CTA al final:** "Crear Nueva Recomendación" (abre modal o navega)
 - **Tema:** Tarjetas compactas, estado con color indicador
@@ -157,12 +139,7 @@ El Dashboard de Asesor es la página principal para asesores financieros despué
 ### Tarjetas de Cliente
 - **Hover:** Sombra elevada, cambio sutil de color
 - **Click en "Ver Detalle":** Abre panel lateral o modal con detalles del cliente
-- **Click en "Enviar Mensaje":** Abre modal de composición de mensaje
-
-### Inbox Items
-- **Click:** Abre conversación con cliente
-- **Badge no leído:** Se actualiza al leer
-- **"Ver todo inbox":** Navega a página completa de inbox
+- **Click en "Enviar recomendación":** Abre el modal de crear recomendación con el cliente preseleccionado
 
 ### Gráficos
 - **Hover:** Tooltip con información exacta
@@ -172,9 +149,10 @@ El Dashboard de Asesor es la página principal para asesores financieros despué
 ### Modal de Crear Recomendación
 - **Campos:**
   - Selector de cliente
-  - Tipo de recomendación (dropdown)
-  - Descripción de la recomendación (textarea)
-  - Monto estimado de ahorro
+  - Título
+  - Tipo: `sugerencia` · `alerta` · `observacion` (enum `tipo_recomendacion`)
+  - Prioridad: `alta` · `media` · `baja` (enum `prioridad_recomendacion`, por defecto `media`)
+  - Mensaje (textarea)
   - Botón "Guardar y Enviar"
   - Botón "Cancelar"
 - **Validación:** Todos los campos requeridos
@@ -210,20 +188,12 @@ El Dashboard de Asesor es la página principal para asesores financieros despué
 - Promedio de gastos por cliente
 - Comparativas con mes anterior
 
-### Datos de Inbox (del Backend)
-- Lista de mensajes no leídos (últimos 10)
-- Remitente (cliente)
-- Asunto/Vista previa
-- Fecha/hora
-- Estado (leído/no leído)
-
 ### Datos de Recomendaciones (del Backend)
 - Lista de últimas recomendaciones
 - Cliente destino
-- Tipo de recomendación
-- Monto de ahorro potencial
+- Título, tipo y prioridad
 - Fecha enviada
-- Estado (pendiente, vista, aceptada)
+- Leída (sí/no)
 
 ### Datos para Gráficos (del Backend)
 - Distribución de clientes por perfil (conteo)
@@ -250,12 +220,8 @@ El Dashboard de Asesor es la página principal para asesores financieros despué
     { id, name, email, photo, profile, totalSpent, lastActivity, status },
     ...
   ],
-  "inbox": [
-    { id, fromClient: { name, photo }, subject, date, unread },
-    ...
-  ],
   "recommendations": [
-    { id, clientName, type, savingsAmount, dateSent, status },
+    { id, clientName, title, type, priority, dateSent, read },
     ...
   ],
   "charts": {
@@ -311,7 +277,6 @@ El Dashboard de Asesor es la página principal para asesores financieros despué
   - Stats cards: 3 columnas
   - Sección de clientes: Grid o tabla
   - Gráficos: 2-3 en una fila
-  - Sección inbox: Card con lista scrollable
 
 - **Tablet:**
   - Sidebar colapsable
@@ -326,7 +291,7 @@ El Dashboard de Asesor es la página principal para asesores financieros despué
   - Sección clientes: 1 tarjeta por fila
   - Gráficos: Stack vertical
   - Hero: Saludo pequeño, calendario oculto
-  - Inbox/Recomendaciones: Stack vertical
+  - Recomendaciones: Stack vertical
 
 ### Comportamiento táctil
 - Botones: Mínimo 44x44px
@@ -340,8 +305,8 @@ El Dashboard de Asesor es la página principal para asesores financieros despué
 
 ### Componentes de Base
 - **Button:** Acciones primaria, secundaria
-- **Card:** Contenedores para stats, clientes, mensajes
-- **Modal:** Para crear recomendaciones, enviar mensajes
+- **Card:** Contenedores para stats y clientes
+- **Modal:** Para crear recomendaciones
 - **FormInput:** Campos en modales
 - **Navbar:** Barra superior con notificaciones y perfil
 
@@ -350,7 +315,6 @@ El Dashboard de Asesor es la página principal para asesores financieros despué
 - **SummaryCard:** Tarjeta resumen pequeña
 - **ClientsList:** Componente lista de clientes con búsqueda/filtros
 - **AdvisorClientCard:** Tarjeta individual de cliente
-- **InboxItem:** Item de mensaje en inbox
 - **ChartComponent:** Wrapper para Chart.js (reutilizable)
 - **ProfileCard:** Card con datos de asesor/cliente
 
@@ -360,7 +324,7 @@ El Dashboard de Asesor es la página principal para asesores financieros despué
 - **Dropdown menu:** Para perfil de usuario
 - **Search/Filter:** Búsqueda y filtros en cliente list
 - **Badge:** Indicadores de estado (activo, inactivo, etc.)
-- **Modal:** Composición de mensajes, crear recomendaciones
+- **Modal:** Crear recomendaciones
 
 ---
 
@@ -370,7 +334,7 @@ El Dashboard de Asesor es la página principal para asesores financieros despué
 1. Asesor inicia sesión (login exitoso)
 2. Se redirecciona a `/asesor/dashboard`
 3. Carga el dashboard con datos
-4. Ve stats, lista de clientes, inbox, recomendaciones
+4. Ve stats, lista de clientes y recomendaciones
 5. Puede navegar a otras secciones vía sidebar
 
 ### Flujo 2: Gestionar Cliente
@@ -378,44 +342,22 @@ El Dashboard de Asesor es la página principal para asesores financieros despué
 2. Clickea "Ver Detalle" en una tarjeta de cliente
 3. Panel lateral se abre con información completa
 4. Ve gastos, perfiles, historial, últimas transacciones
-5. Puede enviar mensajes o crear recomendaciones
+5. Puede crear recomendaciones
 6. Cierra panel y retorna a lista
 
-### Flujo 3: Enviar Mensaje a Cliente
-1. Asesor clickea "Enviar Mensaje" en tarjeta de cliente
-2. Modal se abre con campo de composición
-3. Escribe mensaje
-4. Clickea "Enviar"
-5. Toast confirma envío
-6. Modal se cierra
-
-### Flujo 4: Crear Recomendación
+### Flujo 3: Crear Recomendación
 1. Asesor clickea "Crear Nueva Recomendación"
 2. Modal abre con formulario
 3. Selecciona cliente destino
-4. Selecciona tipo de recomendación
-5. Describe la recomendación
-6. Ingresa monto estimado de ahorro
-7. Clickea "Guardar y Enviar"
-8. Sistema guarda y envía notificación a cliente
-9. Modal se cierra, lista se actualiza
+4. Completa título, tipo y prioridad
+5. Escribe el mensaje
+6. Clickea "Guardar y Enviar"
+7. El sistema la guarda (queda sin leer para el cliente)
+8. Modal se cierra, lista se actualiza
 
-### Flujo 5: Ver Inbox
-1. Asesor clickea en icono de mensajes (badge visible)
-2. Navega a `/asesor/inbox`
-3. Ve lista completa de conversaciones
-4. Clickea en conversación
-5. Abre chat thread con cliente
-6. Puede responder mensajes
-7. Retorna a inbox
-
-### Flujo 6: Ver Recomendaciones
-1. Asesor clickea "Mis Recomendaciones" en sidebar
-2. Navega a `/asesor/recomendaciones`
-3. Ve grid/tabla de todas sus recomendaciones
-4. Puede filtrar por estado, cliente, tipo
-5. Clickea en recomendación para ver detalles
-6. Ve si fue vista o aceptada por cliente
+### Flujo 4: Ver Recomendaciones
+1. En la sección "Últimas Recomendaciones Enviadas" el asesor ve dos columnas: "Sin leer" y "Leídas"
+2. Cada ítem muestra el cliente y el título de la recomendación
 
 ---
 
@@ -424,16 +366,13 @@ El Dashboard de Asesor es la página principal para asesores financieros despué
 ### Consideraciones de Arquitectura
 - **Reutilización:** StatCardAdvanced, Card, Modal, Button usados múltiples veces
 - **Estado local:** Asesor autenticado, datos en memoria
-- **Composición:** Dashboard = Navbar + Sidebar + Hero + Stats + ClientsList + Inbox + Recommendations + Charts
+- **Composición:** Dashboard = Navbar + Sidebar + Hero + Stats + ClientsList + Recommendations + Charts
 - **Ciclo de vida:** Fetch datos al montar, actualizar en intervalos (opcional)
-- **Real-time:** Inbox/notificaciones pueden actualizarse en tiempo real (WebSocket opcional)
 
 ### Interacción con Backend
-- **GET /asesor/dashboard:** Todos los datos (asesor, stats, clientes, inbox, recomendaciones, charts)
+- **GET /asesor/dashboard:** Todos los datos (asesor, stats, clientes, recomendaciones, charts)
 - **GET /clientes:** Lista de clientes (con búsqueda/filtros)
 - **GET /clientes/:id:** Detalles de cliente específico
-- **POST /mensajes:** Enviar mensaje a cliente
-- **GET /mensajes:** Obtener conversación con cliente
 - **POST /recomendaciones:** Crear nueva recomendación
 - **GET /recomendaciones:** Lista de recomendaciones del asesor
 
@@ -471,7 +410,6 @@ El Dashboard de Asesor es la página principal para asesores financieros despué
 3. **Gráficos:** Actualizar en tiempo real si datos cambian
 4. **Notificaciones:** Toast popup en esquina inferior derecha
 5. **Errores:** Mostrar modal o alert con mensaje
-6. **Inbox sin leídos:** Actualizar badge en navbar en tiempo real
 7. **Cierre de sesión:** Limpiar localStorage y redirigir a login
 
 ---
@@ -479,7 +417,7 @@ El Dashboard de Asesor es la página principal para asesores financieros despué
 ## METADATA
 
 - **Route:** `/asesor/dashboard`
-- **HTTP Methods:** GET (fetch datos), POST (enviar mensajes, crear recomendaciones)
+- **HTTP Methods:** GET (fetch datos), POST (crear recomendaciones)
 - **Autenticación:** Requerida (rol: asesor)
 - **Roles permitidos:** Asesor financiero (no usuario regular)
 - **Tema:** Dark mode obligatorio

@@ -1,8 +1,4 @@
 export const APP_CONFIG = {
-  APP_NAME: "FinTrack",
-  APP_VERSION: "1.0.0",
-  USE_MOCK_API: true,
-  MOCK_DELAY_MS: 280,
   DEFAULT_THEME: "dark",
   DEFAULT_LOCALE: "es-AR",
   DEFAULT_CURRENCY: "ARS",
@@ -11,29 +7,39 @@ export const APP_CONFIG = {
 export const API_CONFIG = {
   BASE_URL: "http://api.fintrack.local/v1",
   TIMEOUT_MS: 8000,
-  RETRIES: 1,
 };
 
 export const STORAGE_KEYS = {
   AUTH_TOKEN: "fintrack.authToken",
   AUTH_USER: "fintrack.authUser",
   APP_THEME: "fintrack.theme",
-  ACTIVE_PROFILE: "fintrack.activeProfile",
+  // Las claves por usuario se completan con el id: `${CLAVE}.${userId}`.
+  CLIENT_PROFILE: "fintrack.clientProfile",
+  ADVISOR_PROFILE: "fintrack.advisorProfile",
+  EXPENSE_DRAFT: "fintrack.expenseDraft",
+  TAB_REGISTRY: "fintrack.openTabs.v1",
+  TAB_ID: "fintrack.tabId",
+};
+
+/**
+ * Roles de cuenta. "Usuario" es cualquier cuenta; el rol que registra gastos es "cliente".
+ */
+export const ROLES = {
+  CLIENT: "cliente",
+  ADVISOR: "asesor",
 };
 
 export const ROUTES = {
   HOME: "/",
-  USER_DASHBOARD: "/usuario/dashboard",
-  USER_CARGAR_GASTO: "/usuario/cargar-gasto",
-  USER_HISTORIAL: "/usuario/historial",
-  USER_PERFIL: "/usuario/perfil",
-  USER_PATRONES: "/usuario/patrones",
-  USER_PERFILES: "/usuario/perfiles",
-  USER_RECOMENDACIONES: "/usuario/recomendaciones",
+  CLIENT_DASHBOARD: "/cliente/dashboard",
+  CLIENT_CARGAR_GASTO: "/cliente/cargar-gasto",
+  CLIENT_HISTORIAL: "/cliente/historial",
+  CLIENT_PERFIL: "/cliente/perfil",
+  CLIENT_PATRONES: "/cliente/patrones",
+  CLIENT_PERFILES: "/cliente/perfiles",
+  CLIENT_RECOMENDACIONES: "/cliente/recomendaciones",
   ADVISOR_DASHBOARD: "/asesor/dashboard",
   ADVISOR_CLIENTES: "/asesor/clientes",
-  ADVISOR_INBOX: "/asesor/inbox",
-  ADVISOR_REPORTES: "/asesor/reportes",
   ADVISOR_PERFIL: "/asesor/perfil",
   PLACEHOLDER: "/utils/placeholder",
 };
@@ -43,11 +49,9 @@ export const EVENTS = {
     LOGIN: "auth:login",
     LOGOUT: "auth:logout",
     REGISTER: "auth:register",
-    ROLE_SELECTED: "auth:roleSelected",
     SESSION_EXPIRED: "auth:sessionExpired",
   },
   ROUTER: {
-    NAVIGATE: "router:navigate",
     CHANGED: "router:changed",
   },
   THEME: {
@@ -55,8 +59,6 @@ export const EVENTS = {
   },
   STATE: {
     CHANGED: "state:changed",
-    LOADING: "state:loading",
-    ERROR: "state:error",
   },
   EXPENSE: {
     CREATED: "expense:created",
@@ -66,75 +68,36 @@ export const EVENTS = {
   },
 };
 
-export const PLACEHOLDER_PRESETS = {
-  cargarGasto: {
-    title: "Cargar Gasto",
-    description:
-      "Esta seccion estara disponible en la proxima fase. Mientras tanto, usa el dashboard para explorar tus metricas.",
-    icon: "fa-receipt",
-    ctaText: "Ir al Dashboard",
-    ctaUrl: ROUTES.USER_DASHBOARD,
-  },
-  historial: {
-    title: "Historial de Gastos",
-    description:
-      "Estamos trabajando en tu historial completo con filtros avanzados y exportacion.",
-    icon: "fa-clock-rotate-left",
-    ctaText: "Ir al Dashboard",
-    ctaUrl: ROUTES.USER_DASHBOARD,
-  },
-  patrones: {
-    title: "Patrones de Consumo",
-    description:
-      "Estamos ajustando comparativas historicas avanzadas y deteccion de anomalias.",
-    icon: "fa-chart-pie",
-    ctaText: "Ver Patrones",
-    ctaUrl: ROUTES.USER_PATRONES,
-  },
-  perfil: {
-    title: "Perfil de Usuario",
-    description:
-      "Muy pronto podras editar tus datos y preferencias de cuenta desde esta seccion.",
-    icon: "fa-user-gear",
-    ctaText: "Ir al Dashboard",
-    ctaUrl: ROUTES.USER_DASHBOARD,
-  },
-  advisorClientes: {
-    title: "Mis Clientes",
-    description:
-      "Estamos preparando la gestion completa de cartera con vista detallada por cliente.",
-    icon: "fa-users",
-    ctaText: "Volver al Panel",
-    ctaUrl: ROUTES.ADVISOR_DASHBOARD,
-  },
-  advisorInbox: {
-    title: "Inbox de Asesor",
-    description:
-      "La bandeja completa de conversaciones estara disponible en la siguiente iteracion.",
-    icon: "fa-inbox",
-    ctaText: "Volver al Panel",
-    ctaUrl: ROUTES.ADVISOR_DASHBOARD,
-  },
-  advisorReportes: {
-    title: "Reportes de Asesor",
-    description:
-      "Estamos armando reportes descargables y paneles de seguimiento avanzado.",
-    icon: "fa-chart-column",
-    ctaText: "Volver al Panel",
-    ctaUrl: ROUTES.ADVISOR_DASHBOARD,
-  },
-};
-
-export const TESTIMONIAL_AUTO_MS = 5000;
-
 export const UI_LAYOUT = {
   LANDING_SCROLL_OFFSET: 12,
 };
 
 export const UI_TIMING = {
   TOAST_DISMISS_MS: 3200,
+  TESTIMONIAL_AUTOPLAY_MS: 5000,
+  TAB_CLOSE_FALLBACK_MS: 120,
   AUTH_LOGIN_DELAY_MS: 220,
   AUTH_REGISTER_DELAY_MS: 260,
+};
+
+/**
+ * Valores alineados con los ENUM de la BD (migrations/0001_init_schema.sql).
+ */
+export const RECOMMENDATION_TYPES = [
+  { value: "sugerencia", label: "Sugerencia" },
+  { value: "alerta", label: "Alerta" },
+  { value: "observacion", label: "Observacion" },
+];
+
+export const RECOMMENDATION_PRIORITIES = [
+  { value: "alta", label: "Alta" },
+  { value: "media", label: "Media" },
+  { value: "baja", label: "Baja" },
+];
+
+export const EXPENSE_ORIGINS = {
+  manual: "Manual",
+  ticket: "Ticket",
 };
 
 export const LANDING_CONTENT = {
@@ -245,7 +208,7 @@ export const LANDING_CONTENT = {
       highlighted: false,
       features: [
         "Todo lo del Plan Pro",
-        "Chat directo con tu asesor",
+        "Recomendaciones personalizadas de tu asesor",
         "Alertas de desvio en tiempo real",
         "Analisis de inversiones y ahorros",
       ],
@@ -257,9 +220,9 @@ export const LANDING_CONTENT = {
 export const MOCK_AUTH_USERS = [
   {
     id: "usr-001",
-    role: "usuario",
+    role: "cliente",
     fullName: "Juan Perez",
-    email: "usuario@fintrack.local",
+    email: "cliente@fintrack.local",
     password: "Fintrack2026*",
     profile: "Equilibrista",
   },
@@ -277,7 +240,7 @@ export const MOCK_USER_DASHBOARD = {
   user: {
     id: "usr-001",
     name: "Juan Perez",
-    email: "usuario@fintrack.local",
+    email: "cliente@fintrack.local",
     activeProfile: "Equilibrista",
   },
   calendar: {
@@ -378,19 +341,19 @@ export const MOCK_USER_DASHBOARD = {
         { label: "Entretenimiento", value: "15%" },
         { label: "+1 mas", value: "Ver detalle" },
       ],
-      route: ROUTES.USER_PATRONES,
+      route: ROUTES.CLIENT_PATRONES,
     },
     {
       title: "Recomendaciones",
-      subtitle: "3 activas para ti",
+      subtitle: "3 sin leer",
       icon: "fa-lightbulb",
       accent: "amber",
       items: [
-        { label: "Streaming", value: "+$450/mes" },
-        { label: "Comidas fuera", value: "+$300/mes" },
-        { label: "Suscripciones", value: "+$200/mes" },
+        { label: "Reduce gastos en streaming", value: "Alta" },
+        { label: "Reduce comidas fuera", value: "Alta" },
+        { label: "Revisa tus suscripciones", value: "Media" },
       ],
-      route: ROUTES.USER_RECOMENDACIONES,
+      route: ROUTES.CLIENT_RECOMENDACIONES,
     },
     {
       title: "Ultimos Gastos",
@@ -403,7 +366,7 @@ export const MOCK_USER_DASHBOARD = {
         { label: "Restaurante", value: "$8.450" },
         { label: "+1 mas", value: "Ver historial" },
       ],
-      route: ROUTES.USER_HISTORIAL,
+      route: ROUTES.CLIENT_HISTORIAL,
     },
   ],
   charts: {
@@ -425,19 +388,12 @@ export const MOCK_USER_DASHBOARD = {
       { name: "Netflix y Otros", spending: "$2.150", icon: "🎬" },
     ],
   },
-  advisor: {
-    name: "Maria Rodriguez",
-    title: "Asesor Financiero Senior",
-    avatar: "👩‍💼",
-    message:
-      "Estoy disponible para ayudarte a optimizar tus gastos y planificar tus proximos objetivos.",
-  },
 };
 
 export const MOCK_SPENDING_PROFILES = {
   user: {
     name: "Juan Perez",
-    email: "usuario@fintrack.local",
+    email: "cliente@fintrack.local",
     activeProfile: "Equilibrista",
   },
   profiles: [
@@ -455,13 +411,6 @@ export const MOCK_SPENDING_PROFILES = {
         "Evitas gastos hormiga a toda costa",
         "Presupuesto planificado mes a mes",
         "Perfectamente alineado con metas financieras",
-      ],
-      tips: [
-        "Reduce tus gastos discrecionales en un 30-40%",
-        "Elimina suscripciones innecesarias",
-        "Lleva un registro detallado de cada gasto",
-        "Establece un presupuesto mensual estricto",
-        "Crea alertas para gastos superiores a un monto fijo",
       ],
       comparison: {
         savingsRange: "40-50%",
@@ -486,13 +435,6 @@ export const MOCK_SPENDING_PROFILES = {
         "Presupuesto flexible pero responsable",
         "Buen control sin obsesionarse",
       ],
-      tips: [
-        "Continua siguiendo tu presupuesto flexible",
-        "Revisa regularmente categorias de gasto",
-        "Aumenta gradualmente tu fondo de emergencia",
-        "Considera invertir una parte de tus ahorros",
-        "Manten el seguimiento de tus metas financieras",
-      ],
       comparison: {
         savingsRange: "25-35%",
         controlLevel: "Equilibrado",
@@ -515,13 +457,6 @@ export const MOCK_SPENDING_PROFILES = {
         "Muchos gastos hormiga acumulados",
         "Presupuesto poco definido o inexistente",
         "Alto riesgo de endeudamiento",
-      ],
-      tips: [
-        "Identifica y elimina tus top 5 gastos innecesarios",
-        "Crea un presupuesto realista pero manejable",
-        "Reduce gastos discrecionales gradualmente",
-        "Establece un fondo de emergencia pequeno primero",
-        "Busca consejos personalizados de tu asesor",
       ],
       comparison: {
         savingsRange: "0-15%",
@@ -651,116 +586,66 @@ export const MOCK_CONSUMPTION_PATTERNS = {
 };
 
 export const MOCK_RECOMMENDATIONS = {
-  stats: {
-    totalSavingsPotential: 1150,
-    activeRecommendations: 4,
-    completedThisMonth: 3,
-    estimatedImpact: "15%",
-  },
   recommendations: [
     {
       id: "rec-001",
       title: "Reduce gastos en streaming",
-      priority: "Alta",
-      status: "Pendiente",
-      problem:
-        "Detectamos muchas pequenas compras frecuentes que, aunque parecen insignificantes, suman rapidamente. Estos gastos representan $3.450 del mes (7.6% de tu presupuesto).",
-      solution:
-        "Reduce tus gastos hormiga con limites diarios y seguimiento semanal.",
-      savingsPotential: 500,
-      implementationSteps: [
-        "Identifica tus compras hormiga (cafe, snacks, apps)",
-        "Lleva efectivo limitado para estos gastos",
-        "Establece un limite diario de $30",
-        "Realiza un seguimiento semanal",
-      ],
-      dateSent: "12 Abr",
+      message:
+        "Detectamos muchas compras chicas y frecuentes que suman $3.450 en el mes (7,6% de tu presupuesto). Fija un limite diario y revisalo cada semana.",
+      type: "sugerencia",
+      priority: "alta",
+      origin: "asesor",
       advisorName: "Maria Rodriguez",
-      advisorEmail: "asesor@fintrack.local",
-      icon: "🎯",
+      date: "2026-04-12",
+      read: false,
     },
     {
       id: "rec-002",
-      title: "Reduce comidas fuera de casa",
-      priority: "Alta",
-      status: "Pendiente",
-      problem:
-        "Este mes invertiste $8.450 en restaurantes. Si cocinases en casa mas frecuentemente, podrias preparar comidas nutritivas a una fraccion del costo.",
-      solution:
-        "Planifica tus comidas semanales y limita salidas a dos veces por semana.",
-      savingsPotential: 300,
-      implementationSteps: [
-        "Planifica comidas para la semana",
-        "Compra ingredientes en oferta local",
-        "Limita restaurantes a 2 veces/semana",
-        "Prepara lunch para el trabajo",
-      ],
-      dateSent: "10 Abr",
-      advisorName: "Maria Rodriguez",
-      advisorEmail: "asesor@fintrack.local",
-      icon: "🍕",
+      title: "Gasto elevado en comidas fuera de casa",
+      message:
+        "Este mes llevas $8.450 en restaurantes, un 40% mas que tu promedio. Planificar las comidas de la semana te ayuda a bajar este rubro.",
+      type: "alerta",
+      priority: "alta",
+      origin: "sistema",
+      advisorName: null,
+      date: "2026-04-10",
+      read: false,
     },
     {
       id: "rec-003",
       title: "Revisa tus suscripciones",
-      priority: "Media",
-      status: "Pendiente",
-      problem:
-        "Identificamos 5 suscripciones activas que podrian tener duplicadas o no estes usando. Varias plataformas de streaming pueden optimizarse.",
-      solution:
-        "Haz una limpieza mensual de suscripciones y comparte planes familiares si es posible.",
-      savingsPotential: 200,
-      implementationSteps: [
-        "Lista todas tus suscripciones activas",
-        "Elimina las que no uses mensualmente",
-        "Comparte cuentas familiares si es posible",
-        "Configura recordatorios de renovacion",
-      ],
-      dateSent: "08 Abr",
+      message:
+        "Tenes 5 suscripciones activas y algunas podrian estar duplicadas. Una limpieza mensual evita pagos que no usas.",
+      type: "sugerencia",
+      priority: "media",
+      origin: "asesor",
       advisorName: "Maria Rodriguez",
-      advisorEmail: "asesor@fintrack.local",
-      icon: "🎬",
+      date: "2026-04-08",
+      read: false,
     },
     {
       id: "rec-004",
-      title: "Optimiza tu transporte",
-      priority: "Media",
-      status: "Pendiente",
-      problem:
-        "Actualmente gastas $5.200 en transporte. Usar mas transporte publico o compartido podria reducir significativamente este monto.",
-      solution:
-        "Combina rutas de transporte publico y carpooling para reducir costos recurrentes.",
-      savingsPotential: 150,
-      implementationSteps: [
-        "Evalua rutas de transporte publico",
-        "Prueba apps de carpooling",
-        "Considera pase mensual si es mas barato",
-        "Combina transporte segun necesidad",
-      ],
-      dateSent: "03 Abr",
-      advisorName: "Maria Rodriguez",
-      advisorEmail: "asesor@fintrack.local",
-      icon: "🚗",
+      title: "Transporte estable",
+      message:
+        "Tu gasto en transporte se mantuvo estable los ultimos 3 meses. Combinar transporte publico y compartido puede reducirlo un poco mas.",
+      type: "observacion",
+      priority: "baja",
+      origin: "sistema",
+      advisorName: null,
+      date: "2026-04-03",
+      read: false,
     },
     {
       id: "rec-005",
-      title: "Fondo de emergencia completado",
-      priority: "Media",
-      status: "Completada",
-      problem:
-        "No contabas con un colchon financiero para imprevistos.",
-      solution:
-        "Lograste separar automaticamente un porcentaje fijo durante seis semanas.",
-      savingsPotential: 180,
-      implementationSteps: [
-        "Definiste objetivo inicial",
-        "Automatizaste transferencias",
-        "Mantuviste disciplina semanal",
-      ],
-      dateSent: "26 Mar",
+      title: "Buen ritmo de ahorro",
+      message:
+        "Separaste un porcentaje fijo de tus ingresos durante seis semanas seguidas. Mantener ese habito te da un colchon para imprevistos.",
+      type: "observacion",
+      priority: "media",
+      origin: "asesor",
       advisorName: "Maria Rodriguez",
-      advisorEmail: "asesor@fintrack.local",
-      icon: "🛟",
+      date: "2026-03-26",
+      read: true,
     },
   ],
 };
@@ -785,10 +670,10 @@ export const MOCK_ADVISOR_DASHBOARD = {
       level: "warning",
     },
     {
-      icon: "💬",
-      title: "7 mensajes sin leer",
-      description: "Pendientes en inbox de hoy.",
-      level: "success",
+      icon: "⚠️",
+      title: "2 clientes con gastos inusuales",
+      description: "Superaron en mas de un 35% su promedio historico en alguna categoria.",
+      level: "danger",
     },
     {
       icon: "⭐",
@@ -808,7 +693,7 @@ export const MOCK_ADVISOR_DASHBOARD = {
       trendLabel: "nuevos este mes",
     },
     {
-      label: "Efectividad Recomendaciones",
+      label: "Recomendaciones leidas",
       value: 60,
       format: "percent",
       suffix: "%",
@@ -841,7 +726,6 @@ export const MOCK_ADVISOR_DASHBOARD = {
       risk: "Bajo",
       riskLevel: "low",
       status: "activo",
-      unreadMessages: 2,
     },
     {
       id: "cli-002",
@@ -855,7 +739,6 @@ export const MOCK_ADVISOR_DASHBOARD = {
       risk: "Alto",
       riskLevel: "high",
       status: "activo",
-      unreadMessages: 1,
     },
     {
       id: "cli-003",
@@ -869,7 +752,6 @@ export const MOCK_ADVISOR_DASHBOARD = {
       risk: "Bajo",
       riskLevel: "low",
       status: "activo",
-      unreadMessages: 0,
     },
     {
       id: "cli-004",
@@ -883,7 +765,6 @@ export const MOCK_ADVISOR_DASHBOARD = {
       risk: "Medio",
       riskLevel: "medium",
       status: "activo",
-      unreadMessages: 0,
     },
     {
       id: "cli-005",
@@ -897,7 +778,6 @@ export const MOCK_ADVISOR_DASHBOARD = {
       risk: "Alto",
       riskLevel: "high",
       status: "activo",
-      unreadMessages: 1,
     },
     {
       id: "cli-006",
@@ -911,7 +791,6 @@ export const MOCK_ADVISOR_DASHBOARD = {
       risk: "Alto",
       riskLevel: "high",
       status: "activo",
-      unreadMessages: 3,
     },
     {
       id: "cli-007",
@@ -925,7 +804,6 @@ export const MOCK_ADVISOR_DASHBOARD = {
       risk: "Bajo",
       riskLevel: "low",
       status: "activo",
-      unreadMessages: 0,
     },
     {
       id: "cli-008",
@@ -939,77 +817,26 @@ export const MOCK_ADVISOR_DASHBOARD = {
       risk: "Bajo",
       riskLevel: "low",
       status: "activo",
-      unreadMessages: 0,
-    },
-  ],
-  inbox: [
-    {
-      id: "msg-001",
-      from: "Juan Perez",
-      subject: "Cual es tu recomendacion para reducir mis gastos de alimentacion?",
-      date: "Hace 15 min",
-      type: "mensaje",
-      unread: true,
-    },
-    {
-      id: "msg-002",
-      from: "Carlos Gonzalez",
-      subject: "He visto que mi gasto se incremento un 18%. Es normal?",
-      date: "Hace 2 h",
-      type: "ticket",
-      unread: true,
-    },
-    {
-      id: "msg-003",
-      from: "Fernanda Lopez",
-      subject: "Gracias por la recomendacion anterior. Ya implemente cambios.",
-      date: "Hace 5 h",
-      type: "mensaje",
-      unread: true,
-    },
-    {
-      id: "msg-004",
-      from: "Laura Martinez",
-      subject: "Quiero reducir mis gastos de entretenimiento. Que sugiere?",
-      date: "Hace 1 d",
-      type: "mensaje",
-      unread: false,
-    },
-    {
-      id: "msg-005",
-      from: "Sofia Torres",
-      subject: "Mi perfil cambio a Derrochador. Que significa?",
-      date: "Hace 2 d",
-      type: "ticket",
-      unread: false,
     },
   ],
   recommendations: [
     {
-      id: "adv-rec-001",
-      title: "Enviadas",
-      count: 1,
-      icon: "💡",
+      id: "adv-rec-unread",
+      title: "Sin leer",
+      count: 2,
+      icon: "📨",
       items: [
         { clientName: "Sofia Torres", action: "Implementa presupuesto semanal" },
+        { clientName: "Carlos Gonzalez", action: "Gasto elevado en entretenimiento" },
       ],
     },
     {
-      id: "adv-rec-002",
-      title: "Vistas",
-      count: 1,
-      icon: "💡",
-      items: [
-        { clientName: "Juan Perez", action: "Reduce gastos hormiga" },
-      ],
-    },
-    {
-      id: "adv-rec-003",
-      title: "Implementadas",
+      id: "adv-rec-read",
+      title: "Leidas",
       count: 2,
-      icon: "💡",
+      icon: "✅",
       items: [
-        { clientName: "Carlos Gonzalez", action: "Aumentar presupuesto de ahorro" },
+        { clientName: "Juan Perez", action: "Reduce gastos en streaming" },
         { clientName: "Laura Martinez", action: "Manten tu ahorro consistente" },
       ],
     },
@@ -1041,7 +868,6 @@ export const MOCK_USER_EXPENSE_FORM = {
     "Suscripciones",
     "Otros",
   ],
-  paymentMethods: ["Debito", "Credito", "Efectivo", "Transferencia"],
   suggestedMerchants: [
     "Supermercado Central",
     "Restaurante La Cocina",
@@ -1053,7 +879,6 @@ export const MOCK_USER_EXPENSE_FORM = {
     merchant: "Supermercado Central",
     amount: 18500,
     category: "Alimentacion",
-    paymentMethod: "Debito",
     date: "2026-04-16",
     description: "Compra semanal con ticket OCR",
   },
@@ -1067,9 +892,8 @@ export const MOCK_USER_EXPENSE_HISTORY = {
       merchant: "Supermercado Central",
       category: "Alimentacion",
       amount: 18500,
-      paymentMethod: "Debito",
-      status: "Validado",
-      note: "Compra principal semanal",
+      origin: "ticket",
+      description: "Compra principal semanal",
     },
     {
       id: "exp-002",
@@ -1077,9 +901,8 @@ export const MOCK_USER_EXPENSE_HISTORY = {
       merchant: "Restaurante La Cocina",
       category: "Entretenimiento",
       amount: 8450,
-      paymentMethod: "Credito",
-      status: "Validado",
-      note: "Cena sabado",
+      origin: "ticket",
+      description: "Cena sabado",
     },
     {
       id: "exp-003",
@@ -1087,9 +910,8 @@ export const MOCK_USER_EXPENSE_HISTORY = {
       merchant: "Subte Linea B",
       category: "Transporte",
       amount: 2200,
-      paymentMethod: "Debito",
-      status: "Pendiente",
-      note: "Recarga tarjeta",
+      origin: "manual",
+      description: "Recarga tarjeta",
     },
     {
       id: "exp-004",
@@ -1097,9 +919,8 @@ export const MOCK_USER_EXPENSE_HISTORY = {
       merchant: "Netflix",
       category: "Suscripciones",
       amount: 2900,
-      paymentMethod: "Credito",
-      status: "Validado",
-      note: "Plan mensual",
+      origin: "ticket",
+      description: "Plan mensual",
     },
     {
       id: "exp-005",
@@ -1107,9 +928,8 @@ export const MOCK_USER_EXPENSE_HISTORY = {
       merchant: "Farmacia Sur",
       category: "Salud",
       amount: 5100,
-      paymentMethod: "Debito",
-      status: "Validado",
-      note: "Medicacion",
+      origin: "ticket",
+      description: "Medicacion",
     },
     {
       id: "exp-006",
@@ -1117,9 +937,8 @@ export const MOCK_USER_EXPENSE_HISTORY = {
       merchant: "Libreria Centro",
       category: "Educacion",
       amount: 3600,
-      paymentMethod: "Efectivo",
-      status: "Pendiente",
-      note: "Material de estudio",
+      origin: "manual",
+      description: "Material de estudio",
     },
     {
       id: "exp-007",
@@ -1127,9 +946,8 @@ export const MOCK_USER_EXPENSE_HISTORY = {
       merchant: "Servicios Hogar",
       category: "Servicios",
       amount: 12300,
-      paymentMethod: "Transferencia",
-      status: "Validado",
-      note: "Factura de servicios",
+      origin: "ticket",
+      description: "Factura de servicios",
     },
     {
       id: "exp-008",
@@ -1137,9 +955,8 @@ export const MOCK_USER_EXPENSE_HISTORY = {
       merchant: "Cafe Estacion",
       category: "Alimentacion",
       amount: 1400,
-      paymentMethod: "Debito",
-      status: "Pendiente",
-      note: "Gasto hormiga",
+      origin: "manual",
+      description: "Gasto hormiga",
     },
     {
       id: "exp-009",
@@ -1147,138 +964,31 @@ export const MOCK_USER_EXPENSE_HISTORY = {
       merchant: "Uber",
       category: "Transporte",
       amount: 3200,
-      paymentMethod: "Credito",
-      status: "Validado",
-      note: "Regreso nocturno",
+      origin: "ticket",
+      description: "Regreso nocturno",
     },
   ],
 };
 
 export const MOCK_USER_PROFILE_DETAILS = {
   fullName: "Juan Perez",
-  email: "usuario@fintrack.local",
-  phone: "+54 9 11 5555 0198",
-  city: "Buenos Aires",
+  email: "cliente@fintrack.local",
   occupation: "Disenador UX",
-  monthlyIncome: 285000,
-  savingsGoal: 95000,
-  alertThreshold: 82,
-  currency: "ARS",
+  estimatedIncome: 285000,
+  financialGoal: "Juntar un fondo de emergencia de 3 meses de gastos",
+  bio: "",
   theme: "dark",
-  notifyEmail: true,
-  notifyPush: true,
   memberSince: "Octubre 2025",
-  lastLogin: "19 Abr 2026 · 09:42",
   advisorName: "Maria Rodriguez",
-};
-
-export const MOCK_ADVISOR_REPORTS = {
-  summary: {
-    activeClients: 8,
-    monthlyCommissions: 452000,
-    pendingTasks: 5,
-    reportsReady: 6,
-  },
-  commissions: [
-    {
-      month: "Enero 2026",
-      clientsServed: 7,
-      recommendationsSent: 23,
-      commissionAmount: 136000,
-      status: "Pagado",
-    },
-    {
-      month: "Febrero 2026",
-      clientsServed: 8,
-      recommendationsSent: 28,
-      commissionAmount: 148000,
-      status: "Pagado",
-    },
-    {
-      month: "Marzo 2026",
-      clientsServed: 8,
-      recommendationsSent: 31,
-      commissionAmount: 168000,
-      status: "En revision",
-    },
-  ],
-  tasks: [
-    {
-      id: "task-001",
-      title: "Seguimiento de gastos hormiga",
-      clientName: "Sofia Torres",
-      dueDate: "2026-04-21",
-      priority: "Alta",
-      status: "Pendiente",
-    },
-    {
-      id: "task-002",
-      title: "Revisar ticket OCR pendiente",
-      clientName: "Carlos Gonzalez",
-      dueDate: "2026-04-20",
-      priority: "Media",
-      status: "En progreso",
-    },
-    {
-      id: "task-003",
-      title: "Actualizar plan mensual",
-      clientName: "Juan Perez",
-      dueDate: "2026-04-24",
-      priority: "Alta",
-      status: "Pendiente",
-    },
-    {
-      id: "task-004",
-      title: "Validar recomendacion completada",
-      clientName: "Laura Martinez",
-      dueDate: "2026-04-19",
-      priority: "Baja",
-      status: "Completada",
-    },
-  ],
-  downloads: [
-    {
-      id: "download-001",
-      title: "Reporte de comisiones mensual",
-      description: "Detalle de comisiones por cliente y por recomendacion.",
-      format: "PDF",
-      updatedAt: "19 Abr 2026",
-      size: "1.4 MB",
-      section: "comisiones",
-    },
-    {
-      id: "download-002",
-      title: "Backlog de tareas activas",
-      description: "Listado de tareas pendientes con prioridad y fecha compromiso.",
-      format: "CSV",
-      updatedAt: "18 Abr 2026",
-      size: "320 KB",
-      section: "tareas",
-    },
-    {
-      id: "download-003",
-      title: "Resumen ejecutivo de cartera",
-      description: "Vista consolidada de clientes, riesgo y tendencia de gasto.",
-      format: "XLSX",
-      updatedAt: "17 Abr 2026",
-      size: "870 KB",
-      section: "descargas",
-    },
-  ],
+  spendingProfile: "Equilibrista Cosmico",
 };
 
 export const MOCK_ADVISOR_PROFILE_DETAILS = {
   fullName: "Maria Rodriguez",
   email: "asesor@fintrack.local",
-  phone: "+54 9 11 4444 1208",
-  city: "Cordoba",
   specialty: "Finanzas personales",
   licenseNumber: "A-12345",
-  yearsExperience: 9,
-  activeClients: 8,
-  maxClientLoad: 14,
-  notifyEmail: true,
-  notifyPush: true,
+  description: "Acompano a clientes en presupuesto mensual y control de gastos.",
+  assignedClients: 8,
   memberSince: "Mayo 2021",
-  lastReview: "18 Abr 2026 · 17:20",
 };

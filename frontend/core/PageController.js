@@ -1,4 +1,4 @@
-import { ROUTES } from "../utils/constants.js";
+import { ROLES, ROUTES, UI_TIMING } from "../utils/constants.js";
 import { Component } from "./Component.js";
 
 export class PageController extends Component {
@@ -44,9 +44,9 @@ export class PageController extends Component {
   /**
    * Vincula listeners para los botones comunes de cierre de sesion por rol.
    */
-  _bindLogoutButtons({ role = "usuario", toastMessage } = {}) {
+  _bindLogoutButtons({ role = ROLES.CLIENT, toastMessage } = {}) {
     const selectors =
-      role === "asesor"
+      role === ROLES.ADVISOR
         ? ["#advisorLogoutButton", "#advisorLogoutButtonMobile"]
         : ["#userLogoutButton", "#userLogoutButtonMobile"];
 
@@ -68,9 +68,9 @@ export class PageController extends Component {
   }
 
   /**
-   * Vincula botones comunes de retorno al dashboard del usuario.
+   * Vincula botones comunes de retorno al dashboard del cliente.
    */
-  _bindDashboardBackButtons(route = ROUTES.USER_DASHBOARD) {
+  _bindDashboardBackButtons(route = ROUTES.CLIENT_DASHBOARD) {
     this.element.querySelectorAll(".js-dashboard-back").forEach((button) => {
       this.listen(button, "click", (event) => this._handleBackToRoute(event, route));
     });
@@ -82,30 +82,21 @@ export class PageController extends Component {
   _handleBackToRoute(event, route) {
     event.preventDefault();
 
-    const isRouteOpenInAnotherTab =
-      this.options.hasRouteOpenInOtherTab?.(route) ||
-      (window.opener && !window.opener.closed);
-
-    if (isRouteOpenInAnotherTab) {
+    // Si el destino ya está abierto en otra pestaña, esta pestaña secundaria se cierra.
+    // window.close() puede fallar (pestaña con historial); en ese caso se navega en el lugar.
+    if (this.options.hasRouteOpenInOtherTab?.(route)) {
       window.close();
 
       window.setTimeout(() => {
         if (!window.closed) {
           this.options.router?.navigate(route);
         }
-      }, 120);
+      }, UI_TIMING.TAB_CLOSE_FALLBACK_MS);
 
       return;
     }
 
     this.options.router?.navigate(route);
-  }
-
-  /**
-   * Mantiene compatibilidad con controladores existentes.
-   */
-  _handleBackToDashboard(event) {
-    this._handleBackToRoute(event, ROUTES.USER_DASHBOARD);
   }
 
   /**

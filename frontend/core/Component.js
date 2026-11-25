@@ -56,17 +56,6 @@ export class Component {
   }
 
   /**
-   * Reemplaza el HTML del nodo raiz del componente.
-   */
-  setHTML(html = "") {
-    if (!this.element) {
-      return;
-    }
-
-    this.element.innerHTML = html;
-  }
-
-  /**
    * Registra listener DOM y lo guarda para cleanup automatico.
    */
   listen(target, eventName, handler, options) {

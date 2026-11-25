@@ -15,10 +15,17 @@ export function formatCurrency(value, currency = APP_CONFIG.DEFAULT_CURRENCY) {
 }
 
 /**
- * Formatea un numero como porcentaje simple para tarjetas, labels o badges.
+ * Convierte el valor a Date. Las fechas "AAAA-MM-DD" (columnas date de la BD) se
+ * interpretan en hora local: new Date("2026-04-12") las toma como UTC y en
+ * Argentina mostraría el día anterior.
  */
-export function formatPercent(value) {
-  return `${Number(value || 0)}%`;
+function toLocalDate(dateValue) {
+  if (typeof dateValue === "string" && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+    const [year, month, day] = dateValue.split("-").map(Number);
+    return new Date(year, month - 1, day);
+  }
+
+  return new Date(dateValue);
 }
 
 /**
@@ -26,7 +33,7 @@ export function formatPercent(value) {
  * Es util para historiales, listados y auditorias.
  */
 export function formatDate(dateValue, locale = APP_CONFIG.DEFAULT_LOCALE) {
-  const date = new Date(dateValue);
+  const date = toLocalDate(dateValue);
   if (Number.isNaN(date.getTime())) {
     return "Fecha invalida";
   }
@@ -43,7 +50,7 @@ export function formatDate(dateValue, locale = APP_CONFIG.DEFAULT_LOCALE) {
  * Puede reutilizarse en ejes de graficos o resumenes rapidos.
  */
 export function formatShortDate(dateValue, locale = APP_CONFIG.DEFAULT_LOCALE) {
-  const date = new Date(dateValue);
+  const date = toLocalDate(dateValue);
   if (Number.isNaN(date.getTime())) {
     return "--";
   }

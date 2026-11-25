@@ -49,7 +49,7 @@ Cambios:
 - En `patterns-kpi-card`, `min-height: 210px` paso a `var(--kpi-card-min-height)`.
 - En `recommendation-toolbar select`, `min-width` fijo paso a `min-inline-size` con `clamp` y en mobile ancho al 100%.
 
-### 4) Dashboard usuario: overlays y paneles flotantes
+### 4) Dashboard usuario: overlays y paneles flotantes (eliminados en la Fase 0)
 Archivo: `frontend/assets/css/components/dashboard-usuario.css`
 - `advisor-teaser`:
   - `right` y `bottom` migrados a tokens (`--floating-edge-gap`, `--floating-teaser-bottom-gap`).
@@ -104,6 +104,11 @@ Cambios:
 2. Componentes flotantes de usuario se posicionan con tokens y respetan safe-area.
 3. Scroll a secciones de landing mantiene compensacion dinamica sin numero magico local.
 4. Timeouts visuales y latencias mock pasan a constantes compartidas.
+
+## Cambios de la Fase 0 del refactor (25/11/2026)
+- Se eliminaron el teaser del asesor, el botón flotante de chat y el panel de chat (`dashboard-usuario.css`), junto con los tokens `--chat-fab-size`, `--chat-panel-max-height` y `--floating-teaser-bottom-gap`. Se conservan `--floating-edge-gap` y `--floating-bottom-gap` para los flotantes que queden (por ejemplo, el toast en la Fase 4).
+- Se eliminaron `asesor-inbox.css`, `asesor-reportes.css` y `asesor-perfil.css` (vacío), y las reglas de inbox, mensajes sin leer, ahorro potencial, pasos de implementación y guías de perfil.
+- La reformulación de estas reglas (escalas de espaciado y tipografía, breakpoints únicos) está planificada para la Fase 4 (`especificaciones/DiagnosticoRefactor.md` §7).
 
 ## Reglas para cambios futuros
 1. Si un valor de layout se repite 2 o mas veces, debe convertirse en token global.

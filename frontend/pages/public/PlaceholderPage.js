@@ -1,6 +1,7 @@
 import { Component } from "../../core/Component.js";
 import { ROUTES } from "../../utils/constants.js";
 import { isSafeRelativeUrl } from "../../utils/helpers.js";
+import { html } from "../../utils/html.js";
 
 export class PlaceholderPage extends Component {
   static DEFAULTS = {
@@ -65,7 +66,7 @@ export class PlaceholderPage extends Component {
     const faClass = this._normalizeFaClass(icon);
 
     if (faClass) {
-      iconElement.innerHTML = `<i class="fa-solid ${faClass}"></i>`;
+      iconElement.innerHTML = html`<i class="fa-solid ${faClass}"></i>`;
       return;
     }
 

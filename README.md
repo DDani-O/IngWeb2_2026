@@ -4,8 +4,8 @@
 
 FinTrack es una aplicacion web para educacion y acompanamiento financiero.
 
-- Perfil usuario: permite visualizar su situacion financiera, revisar perfiles de gasto y gestionar recomendaciones personalizadas.
-- Perfil asesor: permite monitorear clientes, revisar indicadores y crear recomendaciones.
+- Perfil cliente: registra gastos (manual o por ticket), ve su historial, patrones de consumo, el perfil de gasto que le asigna el sistema y las recomendaciones que recibe.
+- Perfil asesor: monitorea a sus clientes, revisa indicadores y les envia recomendaciones.
 - Objetivo: ayudar a mejorar habitos financieros con una experiencia clara, guiada y centrada en acciones concretas.
 
 ## 2) Como funciona el frontend
@@ -15,8 +15,8 @@ El frontend esta construido como una SPA (Single Page Application) con JavaScrip
 - Entrada principal: `index.html` carga la landing publica, modales de autenticacion y el bootstrap de la app.
 - Navegacion: el router interpreta rutas tipo `#/...` y carga la vista correspondiente sin recargar toda la pagina.
 - Control de acceso por rol:
-	- Usuario: acceso a dashboard, perfiles de gasto y recomendaciones.
-	- Asesor: acceso a dashboard de asesor.
+	- Cliente (`#/cliente/*`): dashboard, carga de gastos, historial, patrones, recomendaciones, perfil de cuenta y perfiles de gasto.
+	- Asesor (`#/asesor/*`): dashboard, clientes y perfil del asesor.
 - Autenticacion actual: mock (simulada), con persistencia de sesion en `localStorage`.
 - Datos actuales: mock (simulados), preparados para conectar un backend real despues.
 
@@ -73,8 +73,8 @@ http://localhost:5500
 
 ### Credenciales de prueba
 
-- Usuario:
-	- correo: `usuario@fintrack.local`
+- Cliente:
+	- correo: `cliente@fintrack.local`
 	- clave: `Fintrack2026*`
 - Asesor:
 	- correo: `asesor@fintrack.local`
@@ -84,12 +84,13 @@ http://localhost:5500
 
 1. Landing carga correctamente.
 2. Modal de login abre y cierra sin errores.
-3. Login de usuario redirige a dashboard de usuario.
+3. Login de cliente redirige a `#/cliente/dashboard`.
 4. Login de asesor redirige a dashboard de asesor.
 5. Sin sesion, rutas protegidas redirigen al inicio/login.
-6. En recomendaciones: probar filtros y acciones (completar/descartar).
-7. En perfiles: cambiar perfil y confirmar persistencia al recargar.
+6. En recomendaciones: probar filtros, "Marcar como leida" y "Ver detalle".
+7. En perfil de cuenta: editar datos y tema, guardar y confirmar persistencia al recargar. Perfiles de gasto es solo informativa (sin seleccion).
 8. Probar logout y confirmar regreso a landing.
+9. Una ruta inexistente (p. ej. `#/no-existe`) muestra "Ruta no encontrada" y "Volver Atras" regresa a la pagina anterior.
 
 ### Como detener el servidor
 

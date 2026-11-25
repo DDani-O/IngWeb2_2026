@@ -1,7 +1,8 @@
 import { PageController } from "../../core/PageController.js";
-import { MOCK_USER_EXPENSE_HISTORY } from "../../utils/constants.js";
-import { formatCurrency } from "../../utils/formatters.js";
+import { EXPENSE_ORIGINS, MOCK_USER_EXPENSE_HISTORY } from "../../utils/constants.js";
+import { formatCurrency, formatDate } from "../../utils/formatters.js";
 import { getInitials } from "../../utils/helpers.js";
+import { html } from "../../utils/html.js";
 
 export class HistorialPage extends PageController {
   constructor(element, options = {}) {
@@ -15,11 +16,11 @@ export class HistorialPage extends PageController {
     this._resetViewPosition();
 
     const currentUser = this.options.authManager?.getCurrentUser();
-    const userName = currentUser?.fullName || "Juan Perez";
+    const userName = currentUser?.fullName || "";
 
     this._setText("#userTopbarName", userName);
     this._setText("#userSidebarName", userName);
-    this._setText("#userSidebarInitials", getInitials(userName) || "JP");
+    this._setText("#userSidebarInitials", getInitials(userName));
 
     this._renderCategoryOptions();
     this._applyFilters();
@@ -28,13 +29,13 @@ export class HistorialPage extends PageController {
   attachEvents() {
     const searchInput = this.element.querySelector("#historySearchInput");
     const categoryFilter = this.element.querySelector("#historyCategoryFilter");
-    const statusFilter = this.element.querySelector("#historyStatusFilter");
+    const originFilter = this.element.querySelector("#historyOriginFilter");
     const sortFilter = this.element.querySelector("#historySortFilter");
     const tableBody = this.element.querySelector("#historyTableBody");
 
     this.listen(searchInput, "input", () => this._applyFilters());
     this.listen(categoryFilter, "change", () => this._applyFilters());
-    this.listen(statusFilter, "change", () => this._applyFilters());
+    this.listen(originFilter, "change", () => this._applyFilters());
     this.listen(sortFilter, "change", () => this._applyFilters());
 
     this.listen(tableBody, "click", (event) => this._handleTableAction(event));
@@ -51,15 +52,15 @@ export class HistorialPage extends PageController {
 
     const categories = [...new Set(this.expenses.map((expense) => expense.category))];
     categoryFilter.innerHTML = [
-      '<option value="Todas">Todas</option>',
-      ...categories.map((category) => `<option value="${category}">${category}</option>`),
+      html`<option value="Todas">Todas</option>`,
+      ...categories.map((category) => html`<option value="${category}">${category}</option>`),
     ].join("");
   }
 
   _applyFilters() {
     const search = this._getValue("#historySearchInput").toLowerCase();
     const category = this._getValue("#historyCategoryFilter") || "Todas";
-    const status = this._getValue("#historyStatusFilter") || "Todas";
+    const origin = this._getValue("#historyOriginFilter") || "Todos";
     const sort = this._getValue("#historySortFilter") || "reciente";
 
     let result = [...this.expenses];
@@ -68,7 +69,7 @@ export class HistorialPage extends PageController {
       result = result.filter((expense) => {
         return (
           expense.merchant.toLowerCase().includes(search) ||
-          expense.note.toLowerCase().includes(search)
+          (expense.description || "").toLowerCase().includes(search)
         );
       });
     }
@@ -77,8 +78,8 @@ export class HistorialPage extends PageController {
       result = result.filter((expense) => expense.category === category);
     }
 
-    if (status !== "Todas") {
-      result = result.filter((expense) => expense.status === status);
+    if (origin !== "Todos") {
+      result = result.filter((expense) => expense.origin === origin);
     }
 
     if (sort === "monto-desc") {
@@ -114,19 +115,16 @@ export class HistorialPage extends PageController {
 
     tableBody.innerHTML = this.filteredExpenses
       .map((expense) => {
-        return `
+        return html`
           <tr>
-            <td>${expense.date}</td>
+            <td>${formatDate(expense.date)}</td>
             <td>${expense.merchant}</td>
             <td>${expense.category}</td>
-            <td>${expense.paymentMethod}</td>
             <td>${formatCurrency(expense.amount)}</td>
             <td>
               <span class="badge-soft ${
-                expense.status === "Validado"
-                  ? "badge-soft--success"
-                  : "badge-soft--warning"
-              }">${expense.status}</span>
+                expense.origin === "ticket" ? "badge-soft--success" : "badge-soft--warning"
+              }">${EXPENSE_ORIGINS[expense.origin] || expense.origin}</span>
             </td>
             <td>
               <div class="history-row-actions">
@@ -179,15 +177,14 @@ export class HistorialPage extends PageController {
       return;
     }
 
-    content.innerHTML = `
+    content.innerHTML = html`
       <article class="history-detail-card">
         <p><strong>Comercio:</strong> ${expense.merchant}</p>
-        <p><strong>Fecha:</strong> ${expense.date}</p>
+        <p><strong>Fecha:</strong> ${formatDate(expense.date)}</p>
         <p><strong>Categoria:</strong> ${expense.category}</p>
-        <p><strong>Metodo:</strong> ${expense.paymentMethod}</p>
         <p><strong>Monto:</strong> ${formatCurrency(expense.amount)}</p>
-        <p><strong>Estado:</strong> ${expense.status}</p>
-        <p><strong>Nota:</strong> ${expense.note}</p>
+        <p><strong>Origen:</strong> ${EXPENSE_ORIGINS[expense.origin] || expense.origin}</p>
+        <p><strong>Descripcion:</strong> ${expense.description || "-"}</p>
       </article>
     `;
 

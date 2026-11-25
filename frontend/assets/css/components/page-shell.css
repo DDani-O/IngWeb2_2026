@@ -235,9 +235,7 @@
 }
 
 .profile-meta-item,
-.history-detail-card,
-.summary-strip__item,
-.profile-tip-box {
+.history-detail-card {
   border: 1px solid var(--border-soft);
   border-radius: var(--radius-md);
   background: var(--surface-1);
