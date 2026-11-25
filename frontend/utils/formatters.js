@@ -62,15 +62,6 @@ export function formatShortDate(dateValue, locale = APP_CONFIG.DEFAULT_LOCALE) {
 }
 
 /**
- * Construye una etiqueta de tendencia con flecha y porcentaje.
- * Pensada para indicadores comparativos (sube/baja).
- */
-export function formatTrendLabel(direction, value, label) {
-  const arrow = direction === "up" ? "▲" : "▼";
-  return `${arrow} ${value}% ${label}`;
-}
-
-/**
  * Etiqueta corta de un mes "AAAA-MM" (ej: "nov 26").
  */
 export function formatMonth(isoMonth, locale = APP_CONFIG.DEFAULT_LOCALE) {

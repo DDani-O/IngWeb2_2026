@@ -45,12 +45,6 @@ function persist() {
   localStorage.setItem(STORAGE_KEYS.MOCK_DB, JSON.stringify(db));
 }
 
-/** Vuelve la base simulada a su estado inicial (útil para demos). */
-export function resetMockDb() {
-  localStorage.removeItem(STORAGE_KEYS.MOCK_DB);
-  db = loadDb();
-}
-
 const newId = (prefix) => `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 const nowIso = () => new Date().toISOString();
 

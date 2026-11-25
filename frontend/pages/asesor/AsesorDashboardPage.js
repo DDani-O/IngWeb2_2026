@@ -1,23 +1,28 @@
 import { PageController } from "../../core/PageController.js";
-import {
-  fillRecommendationClients,
-  mountAdvisorRecommendationModal,
-  readRecommendationForm,
-} from "../../components/modals/AdvisorRecommendationModal.js";
+import { alertItem } from "../../components/molecules/alertItem.js";
+import { CLIENT_TABLE_COLUMNS, CLIENT_VIEW_MODES, clientCard } from "../../components/molecules/clientCard.js";
+import { dateCard } from "../../components/molecules/dateCard.js";
+import { infoCard } from "../../components/molecules/infoCard.js";
+import { mediaItem } from "../../components/molecules/mediaItem.js";
+import { emptyState } from "../../components/molecules/stateBlock.js";
+import { statCard } from "../../components/molecules/statCard.js";
+import { ChartCard } from "../../components/organisms/ChartCard.js";
+import { DataTable } from "../../components/organisms/DataTable.js";
+import { RecommendationDialog } from "../../components/organisms/RecommendationDialog.js";
+import { ViewToggle } from "../../components/organisms/ViewToggle.js";
 import { analysisService } from "../../services/analysis.service.js";
 import { clientsService } from "../../services/clients.service.js";
 import { recommendationsService } from "../../services/recommendations.service.js";
-import { RISK_LEVELS, ROUTES } from "../../utils/constants.js";
-import { formatCurrency, formatDaysAgo } from "../../utils/formatters.js";
-import { buildHash, getInitials } from "../../utils/helpers.js";
+import { ROUTES } from "../../utils/constants.js";
+import { formatMonth } from "../../utils/formatters.js";
+import { buildHash } from "../../utils/helpers.js";
 import { html } from "../../utils/html.js";
 
-const MODAL_PREFIX = "advisorRecommendation";
-const ALERT_ICONS = { danger: "⚠️", warning: "👥", success: "⭐", info: "📨" };
 const BOARD_ITEMS_PER_COLUMN = 3;
+const SENT_LIMIT = 10;
 
 /**
- * Dashboard del asesor: estado de la cartera, clientes asignados y últimas recomendaciones enviadas.
+ * Dashboard del asesor: estado de la cartera, clientes, análisis por perfil y recomendaciones enviadas.
  */
 export class AsesorDashboardPage extends PageController {
   static template = "./pages/asesor/dashboard.html";
@@ -25,269 +30,141 @@ export class AsesorDashboardPage extends PageController {
   constructor(element, options = {}) {
     super(element, options);
     this.clients = [];
-    this.clientsViewMode = "cards";
+    this.charts = {};
   }
 
   render() {
-    const fullName = this.options.authManager?.getCurrentUser()?.fullName || "";
-    const firstName = fullName.split(" ")[0] || fullName;
-    this._setText("#advisorWelcomeTitle", firstName ? `Hola, ${firstName}!` : "Hola!");
-    this._renderCalendar();
-    this._syncClientsView();
-    const modalReady = this._mountRecommendationModal();
+    const firstName = (this.options.authManager?.getCurrentUser()?.fullName || "").split(" ")[0];
+    this._setText("#advisorWelcome", firstName ? `Hola, ${firstName}!` : "Hola!");
+    this.element.querySelector("#advisorDate").innerHTML = dateCard();
+
+    this.mountChild(ViewToggle, "#advisorClientsView", { label: "Vista de clientes", value: "cards", modes: CLIENT_VIEW_MODES });
+    this.clientsTable = this.mountChild(DataTable, "#advisorClientsTable", {
+      columns: CLIENT_TABLE_COLUMNS,
+      caption: "Clientes asignados",
+      actions: [{ action: "manage", label: "Gestionar" }],
+      empty: { icon: "fa-users", title: "Todavia no tenes clientes asignados" },
+    });
+    this.dialog = this.mountChild(RecommendationDialog, "#advisorRecommendationDialog", { idPrefix: "advisorDashboardRec" });
 
     this._loadData(async () => {
       const [summary, clients, sent] = await Promise.all([
         analysisService.getAdvisorSummary(),
         clientsService.list(),
-        recommendationsService.listSent({ limit: 10 }),
-        modalReady,
+        recommendationsService.listSent({ limit: SENT_LIMIT }),
       ]);
       if (!this._isAlive()) {
         return;
       }
 
       this.clients = clients;
+      this.dialog.setRecipients(clients);
       this._renderAlerts(summary.alerts);
       this._renderStats(summary);
       this._renderClients();
+      this._renderCharts(summary);
       this._renderRecommendations(sent);
-      fillRecommendationClients(this.element, MODAL_PREFIX, clients);
     });
   }
 
   attachEvents() {
-    this.listen(this.element.querySelector("#advisorClientsViewToggle"), "click", () => {
-      this.clientsViewMode = this.clientsViewMode === "cards" ? "table" : "cards";
-      this._syncClientsView();
-    });
-
-    this.listen(this.element.querySelector("#openCreateRecommendationButton"), "click", () => {
-      this._showModal(`#${MODAL_PREFIX}Modal`);
-    });
-
-  }
-
-  /**
-   * Inserta el modal de nueva recomendación en su slot y engancha el envío del formulario.
-   */
-  async _mountRecommendationModal() {
-    await mountAdvisorRecommendationModal(this.element, {
-      slotSelector: "#advisorRecommendationModalSlot",
-      idPrefix: MODAL_PREFIX,
-    });
-
-    this.listen(this.element.querySelector(`#${MODAL_PREFIX}Form`), "submit", (event) => {
-      event.preventDefault();
-      this._handleCreateRecommendation(event.target);
-    });
-  }
-
-  _renderCalendar() {
-    const today = new Date();
-    const capitalize = (text) => text.charAt(0).toUpperCase() + text.slice(1);
-
-    this._setText("#advisorCalendarDay", String(today.getDate()));
-    this._setText("#advisorCalendarMonth", capitalize(today.toLocaleDateString("es-AR", { month: "long" })));
-    this._setText("#advisorCalendarYear", String(today.getFullYear()));
-    this._setText("#advisorCalendarDayName", capitalize(today.toLocaleDateString("es-AR", { weekday: "long" })));
+    this.listen(this.element, "view-change", (event) => this._showView(event.detail.value));
+    this.listen(this.element, "row-action", () => this.options.router?.navigate(ROUTES.ADVISOR_CLIENTES));
+    this.listen(this.element, "recommendation-submit", (event) => this._createRecommendation(event.detail.recommendation));
+    this.listen(this.element.querySelector('[data-action="new-recommendation"]'), "click", () => this.dialog.open());
   }
 
   _renderAlerts(alerts) {
-    const container = this.element.querySelector("#advisorAlertsList");
-    if (!container) {
-      return;
-    }
-
-    container.innerHTML = html`${alerts.map(
-      (alert) => html`
-        <article class="alert-card alert-card--${alert.level}">
-          <div>${ALERT_ICONS[alert.level] || "💡"}</div>
-          <div>
-            <h3 class="alert-card__title">${alert.title}</h3>
-            <p class="alert-card__description">${alert.description}</p>
-          </div>
-        </article>
-      `
-    )}`;
+    this.element.querySelector("#advisorAlerts").innerHTML = html`${alerts.map((alert) => alertItem({ title: alert.title, description: alert.description, tone: alert.level }))}`;
   }
 
   _renderStats(summary) {
-    const container = this.element.querySelector("#advisorStatsGrid");
-    if (!container) {
-      return;
-    }
-
-    const readRate = summary.sentRecommendations
-      ? Math.round((summary.readRecommendations / summary.sentRecommendations) * 100)
-      : 0;
-    const stats = [
-      { label: "Clientes Activos", emoji: "👥", value: String(summary.activeClients), subtitle: "Asignados a tu cartera" },
-      { label: "Recomendaciones leidas", emoji: "📈", value: `${readRate}%`, subtitle: `${summary.readRecommendations} de ${summary.sentRecommendations} enviadas` },
-      { label: "Clientes con gastos inusuales", emoji: "📌", value: String(summary.clientsWithAlerts), subtitle: "Requieren seguimiento" },
-    ];
-
-    container.innerHTML = html`${stats.map(
-      (stat) => html`
-        <article class="kpi-card">
-          <div class="kpi-card__head">
-            <p class="kpi-card__label">${stat.label}</p>
-            <span>${stat.emoji}</span>
-          </div>
-          <p class="kpi-card__value">${stat.value}</p>
-          <p class="kpi-card__sub">${stat.subtitle}</p>
-        </article>
-      `
-    )}`;
+    const readRate = summary.sentRecommendations ? Math.round((summary.readRecommendations / summary.sentRecommendations) * 100) : 0;
+    this.element.querySelector("#advisorStats").innerHTML = html`
+      ${statCard({ label: "Clientes activos", emoji: "👥", value: summary.activeClients, subtitle: "Asignados a tu cartera" })}
+      ${statCard({ label: "Recomendaciones leidas", emoji: "📈", value: readRate, format: "percent", subtitle: `${summary.readRecommendations} de ${summary.sentRecommendations} enviadas` })}
+      ${statCard({ label: "Clientes con gastos inusuales", emoji: "📌", value: summary.clientsWithAlerts, subtitle: "Requieren seguimiento" })}
+    `;
   }
 
   _renderClients() {
-    const cardsContainer = this.element.querySelector("#advisorClientsCards");
-    const tableBody = this.element.querySelector("#advisorClientsTableBody");
-
-    if (!cardsContainer || !tableBody) {
-      return;
-    }
-
     this._setText("#advisorClientsCount", String(this.clients.length));
-    const manageHref = buildHash(ROUTES.ADVISOR_CLIENTES);
+    const manage = [{ action: "manage", label: "Gestionar cliente", href: buildHash(ROUTES.ADVISOR_CLIENTES) }];
 
-    cardsContainer.innerHTML = html`${this.clients.map((client) => {
-      const risk = RISK_LEVELS[client.riskLevel] || RISK_LEVELS.bajo;
-      return html`
-        <article class="advisor-client-card">
-          <div class="advisor-client-head">
-            <div class="d-flex gap-2 align-items-start">
-              <span class="avatar-badge">${getInitials(client.fullName)}</span>
-              <div>
-                <p class="advisor-client-name">${client.fullName}</p>
-                <p class="advisor-client-mail">${client.spendingProfile?.name || "Sin perfil"}</p>
-              </div>
-            </div>
-            <span class="risk-pill risk-pill--${risk.cssModifier}">${risk.label}</span>
-          </div>
-
-          <div class="advisor-client-metrics">
-            <div>
-              <p>ULTIMO GASTO</p>
-              <strong>${formatDaysAgo(client.lastExpenseDate)}</strong>
-            </div>
-            <div>
-              <p>GASTO PROMEDIO</p>
-              <strong>${formatCurrency(client.monthlyAverage)}</strong>
-            </div>
-          </div>
-
-          ${this._changeLabel(client)}
-          <a class="action-btn action-btn--ghost mt-2" href="${manageHref}">
-            <i class="fa-solid fa-arrow-up-right-from-square"></i>
-            Gestionar cliente
-          </a>
-        </article>
-      `;
-    })}`;
-
-    tableBody.innerHTML = html`${this.clients.map((client) => {
-      const risk = RISK_LEVELS[client.riskLevel] || RISK_LEVELS.bajo;
-      return html`
-        <tr>
-          <td>
-            <div class="advisor-table-client">
-              <span class="avatar-badge">${getInitials(client.fullName)}</span>
-              <strong>${client.fullName}</strong>
-            </div>
-          </td>
-          <td>${client.spendingProfile?.name || "Sin perfil"}</td>
-          <td>${formatDaysAgo(client.lastExpenseDate)}</td>
-          <td>${formatCurrency(client.monthlyAverage)}</td>
-          <td>${this._changeLabel(client)}</td>
-          <td><span class="risk-pill risk-pill--${risk.cssModifier}">${risk.label}</span></td>
-          <td><a class="action-btn action-btn--ghost" href="${manageHref}">Gestionar</a></td>
-        </tr>
-      `;
-    })}`;
+    this.element.querySelector("#advisorClientsCards").innerHTML = this.clients.length
+      ? html`${this.clients.map((client) => clientCard({ client, actions: manage }))}`
+      : emptyState({ icon: "fa-users", title: "Todavia no tenes clientes asignados" });
+    this.clientsTable.update({ rows: this.clients });
   }
 
-  /** Variación del gasto vs. el mes anterior: subir es negativo (rojo). */
-  _changeLabel(client) {
-    if (client.changePercent === null || client.changePercent === undefined) {
-      return html`<p class="advisor-client-change">--</p>`;
-    }
+  _showView(view) {
+    this.element.querySelector("#advisorClientsCards").classList.toggle("app-hidden", view === "table");
+    this.element.querySelector("#advisorClientsTable").classList.toggle("app-hidden", view !== "table");
+  }
 
-    const direction = client.changePercent >= 0 ? "up" : "down";
-    return html`<p class="advisor-client-change advisor-client-change--${direction}">${client.changePercent >= 0 ? "+" : ""}${client.changePercent}%</p>`;
+  _renderCharts(summary) {
+    const charts = {
+      "#advisorProfileChart": {
+        title: "Clientes por perfil de gasto",
+        icon: "fa-chart-pie",
+        type: "doughnut",
+        labels: summary.profileDistribution.map((item) => item.profile),
+        datasets: [{ label: "Clientes", data: summary.profileDistribution.map((item) => item.count) }],
+      },
+      "#advisorSpendChart": {
+        title: "Gasto mensual por perfil",
+        icon: "fa-chart-column",
+        type: "bar",
+        valueFormat: "currency",
+        caption: "Suma del gasto promedio mensual de los clientes de cada perfil.",
+        labels: summary.spendByProfile.map((item) => item.profile),
+        datasets: [{ label: "Gasto", data: summary.spendByProfile.map((item) => item.amount) }],
+      },
+      "#advisorActivityChart": {
+        title: "Actividad de clientes (ultimos 7 meses)",
+        icon: "fa-chart-line",
+        type: "line",
+        caption: "Clientes que registraron al menos un gasto en el mes.",
+        labels: summary.monthlyActivity.map((item) => formatMonth(item.month)),
+        datasets: [{ label: "Clientes activos", data: summary.monthlyActivity.map((item) => item.activeClients) }],
+      },
+    };
+
+    Object.entries(charts).forEach(([selector, props]) => {
+      this.charts[selector] = this.charts[selector] ? this.charts[selector].update(props) : this.mountChild(ChartCard, selector, props);
+    });
   }
 
   _renderRecommendations(sent) {
-    const container = this.element.querySelector("#advisorRecommendationsList");
-    if (!container) {
-      return;
-    }
+    const column = (title, icon, items) =>
+      infoCard({
+        title,
+        icon,
+        subtitle: `${items.length} recomendaciones`,
+        body: items.length
+          ? html`<div class="media-list">${items.slice(0, BOARD_ITEMS_PER_COLUMN).map((item) => mediaItem({ title: item.title, subtitle: item.clientName }))}</div>`
+          : html`<p class="text-muted">Sin recomendaciones.</p>`,
+      });
 
-    const columns = [
-      { title: "Sin leer", icon: "📨", items: sent.filter((item) => !item.read) },
-      { title: "Leidas", icon: "✅", items: sent.filter((item) => item.read) },
-    ];
-
-    container.innerHTML = html`${columns.map(
-      (column) => html`
-        <article class="advisor-rec-column">
-          <div class="advisor-rec-column__head">
-            <span>${column.icon}</span>
-            <div>
-              <h3>${column.title}</h3>
-              <p>${column.items.length} recomendaciones</p>
-            </div>
-          </div>
-          <div class="advisor-rec-column__list">
-            ${column.items.length
-              ? column.items
-                  .slice(0, BOARD_ITEMS_PER_COLUMN)
-                  .map((item) => html`<p><span>${item.clientName}</span><strong>${item.title}</strong></p>`)
-              : html`<p><span>Sin recomendaciones</span></p>`}
-          </div>
-        </article>
-      `
-    )}`;
+    this.element.querySelector("#advisorRecommendations").innerHTML = html`
+      ${column("Sin leer", "fa-envelope", sent.filter((item) => !item.read))}
+      ${column("Leidas", "fa-envelope-open", sent.filter((item) => item.read))}
+    `;
   }
 
-  _syncClientsView() {
-    const cards = this.element.querySelector("#advisorClientsCards");
-    const tableWrap = this.element.querySelector("#advisorClientsTableWrap");
-    const toggle = this.element.querySelector("#advisorClientsViewToggle");
-
-    if (!cards || !tableWrap || !toggle) {
-      return;
-    }
-
-    const showTable = this.clientsViewMode === "table";
-    cards.classList.toggle("app-hidden", showTable);
-    tableWrap.classList.toggle("app-hidden", !showTable);
-
-    toggle.innerHTML = showTable
-      ? html`<i class="fa-solid fa-border-all"></i> Ver como Cards`
-      : html`<i class="fa-solid fa-table"></i> Ver como Tabla`;
-  }
-
-  async _handleCreateRecommendation(form) {
-    if (!form.checkValidity()) {
-      form.reportValidity();
-      return;
-    }
-
-    const created = await this._runAction(() => recommendationsService.create(readRecommendationForm(this.element, MODAL_PREFIX)), {
-      button: form.querySelector('[type="submit"]'),
+  async _createRecommendation(recommendation) {
+    this.dialog.setBusy(true);
+    const created = await this._runAction(() => recommendationsService.create(recommendation), {
       successMessage: "Recomendacion creada y enviada al cliente.",
     });
+    this.dialog.setBusy(false);
 
     if (!created || !this._isAlive()) {
       return;
     }
 
-    this._getModalInstance(`#${MODAL_PREFIX}Modal`)?.hide();
-    form.reset();
-
-    const sent = await this._runAction(() => recommendationsService.listSent({ limit: 10 }));
+    this.dialog.close();
+    const sent = await this._runAction(() => recommendationsService.listSent({ limit: SENT_LIMIT }));
     if (sent && this._isAlive()) {
       this._renderRecommendations(sent);
     }

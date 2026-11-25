@@ -1,77 +1,48 @@
-<div class="app-page-content page-user-dashboard">
-  <section class="hero-panel user-hero-panel">
-    <div class="hero-grid user-hero-grid">
+<div class="app-page-content page-cliente-dashboard">
+  <section class="hero-panel">
+    <div class="dashboard-hero">
       <div>
-        <h1 class="text-gradient" id="userWelcomeTitle">Hola, Juan</h1>
-        <p class="text-muted mt-2" id="userWelcomeSubtitle">
-          Tu resumen financiero esta listo.
+        <h1 class="text-gradient" id="dashboardWelcome">Hola!</h1>
+        <p class="text-muted mt-2">
+          Tu resumen financiero esta listo. Explora tus patrones de gasto y descubre como mejorar tu economia personal.
         </p>
-        <div class="d-flex flex-wrap gap-2 mt-3">
+        <div class="dashboard-hero__actions">
           <a class="action-btn action-btn--primary" href="#/cliente/cargar-gasto">
-            <i class="fa-solid fa-receipt"></i>
-            Cargar Gasto
+            <i class="fa-solid fa-receipt" aria-hidden="true"></i><span>Cargar Gasto</span>
           </a>
           <a class="action-btn action-btn--ghost" href="#/cliente/historial">
-            <i class="fa-solid fa-clock-rotate-left"></i>
-            Ver Historial
+            <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i><span>Ver Historial</span>
           </a>
         </div>
       </div>
-
-      <div class="dashboard-calendar">
-        <div class="dashboard-calendar__day" id="userCalendarDay">14</div>
-        <div class="dashboard-calendar__month" id="userCalendarMonth">Abril</div>
-        <div class="dashboard-calendar__meta" id="userCalendarYear">2026</div>
-        <div class="dashboard-calendar__meta" id="userCalendarDayName">Martes</div>
-      </div>
-
-      <div class="alert-stack" id="userAlertsList"></div>
+      <div id="dashboardDate"></div>
+      <div class="alert-list" id="dashboardAlerts" aria-live="polite"></div>
     </div>
   </section>
 
   <section class="section-block">
-    <h2 class="section-title">
-      <i class="fa-solid fa-chart-column accent"></i>
-      Tus Estadisticas de Consumo
-    </h2>
-    <div class="stat-grid" id="userStatsGrid"></div>
+    <h2 class="section-title"><i class="fa-solid fa-chart-column accent" aria-hidden="true"></i>Tus Estadisticas de Consumo</h2>
+    <div class="stat-grid" id="dashboardStats"></div>
   </section>
 
-  <section class="profile-highlight" id="userProfileCard"></section>
+  <section id="dashboardProfile"></section>
 
   <section class="section-block">
-    <h2 class="section-title">
-      <i class="fa-solid fa-eye accent"></i>
-      Resumenes Rapidos
-    </h2>
-    <div class="card-grid-3" id="userSummaryGrid"></div>
+    <h2 class="section-title"><i class="fa-solid fa-eye accent" aria-hidden="true"></i>Resumenes Rapidos</h2>
+    <div class="card-grid card-grid--3" id="dashboardSummaries"></div>
   </section>
 
   <section class="section-block">
-    <h2 class="section-title">
-      <i class="fa-solid fa-chart-line accent"></i>
-      Visualizaciones
-    </h2>
-    <div class="chart-grid-2 user-chart-grid">
-      <article class="chart-card">
-        <h3 class="info-card__title"><i class="fa-solid fa-chart-pie accent"></i>Gastos por Categoria</h3>
-        <canvas id="userCategoryChart" aria-label="Grafico de gastos por categoria"></canvas>
-        <a class="chart-card__link" href="#/cliente/patrones" target="_blank">Ver mas detalles en Patrones de Consumo</a>
-      </article>
-      <article class="chart-card">
-        <h3 class="info-card__title"><i class="fa-solid fa-chart-bar accent"></i>Gasto Mensual</h3>
-        <canvas id="userMonthlyChart" aria-label="Grafico mensual"></canvas>
-        <p class="text-muted mt-2">Ultimos 7 meses</p>
-      </article>
+    <h2 class="section-title"><i class="fa-solid fa-chart-line accent" aria-hidden="true"></i>Visualizaciones</h2>
+    <div class="chart-grid chart-grid--3">
+      <div class="chart-grid__wide" id="dashboardDailyChart"></div>
+      <div id="dashboardCategoryChart"></div>
+      <div id="dashboardMonthlyChart"></div>
     </div>
   </section>
 
   <section class="section-block">
-    <h2 class="section-title">
-      <i class="fa-solid fa-store accent"></i>
-      Comercios Mas Frecuentes
-    </h2>
-    <div class="merchant-list" id="userMerchantsList"></div>
+    <h2 class="section-title"><i class="fa-solid fa-store accent" aria-hidden="true"></i>Comercios Mas Frecuentes</h2>
+    <div class="media-list" id="dashboardMerchants"></div>
   </section>
-
 </div>

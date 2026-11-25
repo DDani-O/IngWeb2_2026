@@ -1,10 +1,21 @@
 import { PageController } from "../../core/PageController.js";
+import { badge } from "../../components/atoms/badge.js";
+import { keyValueList } from "../../components/molecules/keyValueList.js";
+import { DataTable } from "../../components/organisms/DataTable.js";
+import { FilterBar } from "../../components/organisms/FilterBar.js";
+import { Modal, confirmDialog } from "../../components/organisms/Modal.js";
 import { categoriesService } from "../../services/categories.service.js";
 import { expensesService } from "../../services/expenses.service.js";
-import { EXPENSE_ORIGINS, UI_TIMING } from "../../utils/constants.js";
+import { EXPENSE_ORIGINS } from "../../utils/constants.js";
 import { formatCurrency, formatDate } from "../../utils/formatters.js";
-import { debounce } from "../../utils/helpers.js";
-import { html } from "../../utils/html.js";
+
+const originBadge = (expense) => badge({ text: EXPENSE_ORIGINS[expense.origin] || expense.origin, tone: expense.origin === "ticket" ? "success" : "neutral" });
+
+const SORT_OPTIONS = [
+  { value: "fecha", label: "Mas reciente" },
+  { value: "monto_desc", label: "Monto mayor" },
+  { value: "monto_asc", label: "Monto menor" },
+];
 
 /**
  * Historial de gastos (consigna §4.4): listado con búsqueda, filtros, orden, detalle y borrado.
@@ -13,152 +24,100 @@ import { html } from "../../utils/html.js";
 export class HistorialPage extends PageController {
   static template = "./pages/cliente/historial.html";
 
-  constructor(element, options = {}) {
-    super(element, options);
-    this.expenses = [];
-    this._debouncedReload = debounce(() => this._reload(), UI_TIMING.SEARCH_DEBOUNCE_MS);
-  }
-
   render() {
+    this.filters = this.mountChild(FilterBar, "#historyFilters", {
+      idPrefix: "history",
+      ariaLabel: "Filtrar gastos",
+      fields: [
+        { type: "search", name: "search", label: "Buscar", placeholder: "Comercio o descripcion" },
+        { type: "select", name: "categoryId", label: "Categoria", options: [{ value: "", label: "Todas" }] },
+        { type: "select", name: "origin", label: "Origen", options: [{ value: "", label: "Todos" }, ...Object.entries(EXPENSE_ORIGINS).map(([value, label]) => ({ value, label }))] },
+        { type: "select", name: "sort", label: "Orden", options: SORT_OPTIONS },
+      ],
+    });
+    this.table = this.mountChild(DataTable, "#historyTable", {
+      caption: "Gastos registrados",
+      columns: [
+        { key: "date", label: "Fecha", render: (expense) => formatDate(expense.date) },
+        { key: "merchant", label: "Comercio" },
+        { key: "category", label: "Categoria" },
+        { key: "amount", label: "Monto", align: "end", render: (expense) => formatCurrency(expense.amount) },
+        { key: "origin", label: "Origen", render: originBadge },
+      ],
+      actions: [
+        { action: "detail", label: "Detalle" },
+        { action: "delete", label: "Eliminar", variant: "danger" },
+      ],
+      empty: { icon: "fa-magnifying-glass", title: "No encontramos gastos para esos filtros", message: "Proba con otra categoria o borra la busqueda." },
+    });
+    this.detailModal = this.mountChild(Modal, "#historyDetailModal", { title: "Detalle del gasto" });
+
     this._loadData(async () => {
       const categories = await categoriesService.list();
       if (!this._isAlive()) {
         return;
       }
 
-      this._renderCategoryOptions(categories);
+      this.filters.setOptions("categoryId", [{ value: "", label: "Todas" }, ...categories.map((category) => ({ value: category.id, label: category.name }))]);
       await this._fetchExpenses();
     });
   }
 
   attachEvents() {
-    this.listen(this.element.querySelector("#historySearchInput"), "input", () => this._debouncedReload());
-    ["#historyCategoryFilter", "#historyOriginFilter", "#historySortFilter"].forEach((selector) => {
-      this.listen(this.element.querySelector(selector), "change", () => this._reload());
-    });
-
-    this.listen(this.element.querySelector("#historyTableBody"), "click", (event) => this._handleTableAction(event));
-
+    this.listen(this.element, "filters-change", () => this._loadData(() => this._fetchExpenses()));
+    this.listen(this.element, "row-action", (event) => this._handleRowAction(event.detail));
     this._bindDashboardBackButtons();
   }
 
-  _renderCategoryOptions(categories) {
-    const select = this.element.querySelector("#historyCategoryFilter");
-    if (!select) {
-      return;
-    }
-
-    select.innerHTML = html`
-      <option value="">Todas</option>
-      ${categories.map((category) => html`<option value="${category.id}">${category.name}</option>`)}
-    `;
-  }
-
-  _currentFilters() {
-    return {
-      search: this._getValue("#historySearchInput"),
-      categoryId: this._getValue("#historyCategoryFilter"),
-      origin: this._getValue("#historyOriginFilter"),
-      sort: this._getValue("#historySortFilter") || "fecha",
-    };
-  }
-
   async _fetchExpenses() {
-    const { items, total } = await expensesService.list(this._currentFilters());
+    const { items, total } = await expensesService.list(this.filters.getValues());
     if (!this._isAlive()) {
       return;
     }
 
-    this.expenses = items;
-    this._renderTable(total);
+    this._setText("#historyCount", `${total} movimientos`);
+    this.table.update({ rows: items });
   }
 
-  _reload() {
-    return this._loadData(() => this._fetchExpenses());
-  }
-
-  _renderTable(total) {
-    const tableBody = this.element.querySelector("#historyTableBody");
-    const emptyState = this.element.querySelector("#historyEmptyState");
-
-    if (!tableBody || !emptyState) {
-      return;
-    }
-
-    this._setText("#historyCountLabel", `${total} movimientos`);
-    emptyState.classList.toggle("app-hidden", this.expenses.length > 0);
-
-    tableBody.innerHTML = html`${this.expenses.map(
-      (expense) => html`
-        <tr>
-          <td>${formatDate(expense.date)}</td>
-          <td>${expense.merchant}</td>
-          <td>${expense.category}</td>
-          <td>${formatCurrency(expense.amount)}</td>
-          <td>
-            <span class="badge-soft ${expense.origin === "ticket" ? "badge-soft--success" : "badge-soft--warning"}">${EXPENSE_ORIGINS[expense.origin] || expense.origin}</span>
-          </td>
-          <td>
-            <div class="history-row-actions">
-              <button class="action-btn action-btn--ghost" data-action="detail" data-id="${expense.id}" type="button">Detalle</button>
-              <button class="action-btn action-btn--ghost" data-action="delete" data-id="${expense.id}" type="button">Eliminar</button>
-            </div>
-          </td>
-        </tr>
-      `
-    )}`;
-  }
-
-  async _handleTableAction(event) {
-    const actionButton = event.target.closest("[data-action]");
-    if (!actionButton) {
-      return;
-    }
-
-    const expense = this.expenses.find((item) => item.id === actionButton.dataset.id);
+  async _handleRowAction({ action, row: expense, trigger }) {
     if (!expense) {
       return;
     }
 
-    if (actionButton.dataset.action === "detail") {
-      this._openDetailModal(expense);
+    if (action === "detail") {
+      this.detailModal.setContent(
+        keyValueList({
+          items: [
+            { label: "Comercio", value: expense.merchant },
+            { label: "Fecha", value: formatDate(expense.date) },
+            { label: "Categoria", value: expense.category },
+            { label: "Monto", value: formatCurrency(expense.amount) },
+            { label: "Origen", value: originBadge(expense) },
+            { label: "Descripcion", value: expense.description },
+          ],
+        })
+      );
+      this.detailModal.open();
       return;
     }
 
-    if (actionButton.dataset.action === "delete") {
-      const confirmed = window.confirm(`Se eliminara el gasto de ${expense.merchant}. Quieres continuar?`);
-      if (!confirmed) {
+    if (action === "delete") {
+      const confirmed = await confirmDialog({
+        title: "Eliminar gasto",
+        message: `Se eliminara el gasto de ${expense.merchant} por ${formatCurrency(expense.amount)}.`,
+        confirmLabel: "Eliminar",
+      });
+      if (!confirmed || !this._isAlive()) {
         return;
       }
 
       const removed = await this._runAction(() => expensesService.remove(expense.id).then(() => true), {
-        button: actionButton,
+        button: trigger,
         successMessage: "Gasto eliminado del historial.",
       });
-
       if (removed && this._isAlive()) {
-        this._reload();
+        this._loadData(() => this._fetchExpenses());
       }
     }
-  }
-
-  _openDetailModal(expense) {
-    const content = this.element.querySelector("#historyDetailContent");
-    if (!content) {
-      return;
-    }
-
-    content.innerHTML = html`
-      <article class="history-detail-card">
-        <p><strong>Comercio:</strong> ${expense.merchant}</p>
-        <p><strong>Fecha:</strong> ${formatDate(expense.date)}</p>
-        <p><strong>Categoria:</strong> ${expense.category}</p>
-        <p><strong>Monto:</strong> ${formatCurrency(expense.amount)}</p>
-        <p><strong>Origen:</strong> ${EXPENSE_ORIGINS[expense.origin] || expense.origin}</p>
-        <p><strong>Descripcion:</strong> ${expense.description || "-"}</p>
-      </article>
-    `;
-
-    this._showModal("#historyDetailModal");
   }
 }

@@ -1,0 +1,30 @@
+/* Organismo ViewToggle (mobile-first). Ver ViewToggle.js */
+.view-toggle {
+  display: inline-flex;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.view-toggle__option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.5rem;
+  padding: 0.4rem 0.85rem;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.view-toggle__option[aria-pressed="true"] {
+  background: var(--action-ghost-bg);
+  color: var(--color-primary);
+}
+
+.view-toggle__option:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}

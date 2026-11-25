@@ -1,0 +1,33 @@
+/* Molécula AlertItem (mobile-first). Ver alertItem.js */
+.alert-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.alert-item {
+  --alert-color: var(--color-info);
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.625rem;
+  align-items: start;
+  border-radius: var(--radius-md);
+  border: 1px solid color-mix(in srgb, var(--alert-color) 40%, transparent);
+  background: linear-gradient(120deg, color-mix(in srgb, var(--alert-color) 12%, transparent), var(--surface-2));
+  padding: 0.8rem;
+}
+
+.alert-item--success { --alert-color: var(--color-success); }
+.alert-item--warning { --alert-color: var(--color-warning); }
+.alert-item--danger { --alert-color: var(--color-danger); }
+
+.alert-item__title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.alert-item__description {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}

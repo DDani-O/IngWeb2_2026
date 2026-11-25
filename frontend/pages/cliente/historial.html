@@ -1,87 +1,25 @@
-<div class="app-page-content page-user-historial">
-  <section class="hero-panel user-historial-hero">
+<div class="app-page-content page-cliente-historial">
+  <section class="hero-panel">
     <h1 class="text-gradient">Historial de Gastos</h1>
     <p class="text-muted mt-2">
-      Consulta, filtra y revisa tus movimientos recientes para detectar oportunidades de ahorro.
+      Consulta, filtra y revisa tus movimientos para detectar oportunidades de ahorro.
     </p>
   </section>
 
   <section class="section-block">
-    <div class="history-toolbar">
-      <div class="history-toolbar__search">
-        <label class="form-label" for="historySearchInput">Buscar</label>
-        <input id="historySearchInput" class="form-control" placeholder="Comercio o descripcion" />
-      </div>
+    <div id="historyFilters"></div>
+    <p class="text-muted mt-3" id="historyCount" aria-live="polite">0 movimientos</p>
+    <div class="mt-2" id="historyTable"></div>
 
-      <div>
-        <label class="form-label" for="historyCategoryFilter">Categoria</label>
-        <select id="historyCategoryFilter" class="form-select"></select>
-      </div>
-
-      <div>
-        <label class="form-label" for="historyOriginFilter">Origen</label>
-        <select id="historyOriginFilter" class="form-select">
-          <option value="">Todos</option>
-          <option value="manual">Manual</option>
-          <option value="ticket">Ticket</option>
-        </select>
-      </div>
-
-      <div>
-        <label class="form-label" for="historySortFilter">Orden</label>
-        <select id="historySortFilter" class="form-select">
-          <option value="fecha">Mas reciente</option>
-          <option value="monto_desc">Monto mayor</option>
-          <option value="monto_asc">Monto menor</option>
-        </select>
-      </div>
-    </div>
-
-    <p class="text-muted mt-3" id="historyCountLabel">0 movimientos</p>
-
-    <div class="table-responsive mt-2">
-      <table class="table-shell user-history-table">
-        <thead>
-          <tr>
-            <th>Fecha</th>
-            <th>Comercio</th>
-            <th>Categoria</th>
-            <th>Monto</th>
-            <th>Origen</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody id="historyTableBody"></tbody>
-      </table>
-    </div>
-
-    <article class="history-empty app-hidden" id="historyEmptyState">
-      <i class="fa-solid fa-magnifying-glass"></i>
-      <h3>No encontramos resultados para esos filtros</h3>
-      <p class="text-muted">Prueba con otra categoria o elimina palabras de busqueda.</p>
-    </article>
-
-    <div class="d-flex flex-wrap gap-2 mt-3">
+    <div class="section-actions">
       <a class="action-btn action-btn--ghost" href="#/cliente/cargar-gasto">
-        <i class="fa-solid fa-circle-plus"></i>
-        Cargar nuevo gasto
+        <i class="fa-solid fa-circle-plus" aria-hidden="true"></i><span>Cargar nuevo gasto</span>
       </a>
       <button class="action-btn action-btn--primary js-dashboard-back" type="button">
-        <i class="fa-solid fa-arrow-left"></i>
-        Volver al Dashboard
+        <i class="fa-solid fa-arrow-left" aria-hidden="true"></i><span>Volver al Dashboard</span>
       </button>
     </div>
   </section>
 
-  <div class="modal fade" id="historyDetailModal" tabindex="-1" aria-labelledby="historyDetailModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content app-modal-surface">
-        <div class="modal-header">
-          <h5 class="modal-title" id="historyDetailModalLabel">Detalle del gasto</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-        </div>
-        <div class="modal-body" id="historyDetailContent"></div>
-      </div>
-    </div>
-  </div>
+  <div id="historyDetailModal"></div>
 </div>

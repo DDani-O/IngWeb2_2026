@@ -11,7 +11,7 @@ Antes de escribir código leer `PrincipiosDesarrollo.md` (SOLID, nomenclatura, a
 - `mocks/` — backend simulado (`mockServer.js`, `seed.js`, `analytics.js`) con el mismo contrato que NestJS (spec §10). Guarda sus datos en `localStorage` (`fintrack.mockDb`).
 - `content/` — contenido estático que no vive en la BD (textos y comparativa de los perfiles de gasto).
 - `pages/<rol>/` — cada pantalla = `nombre.html` (template, kebab-case) + `NombrePage.js` (controlador, PascalCase). Roles: `public/`, `cliente/`, `asesor/`.
-- `components/` — `layout/` (`AppLayout` por rol con topbar, sidebar y footer; `PublicLayout`) y `modals/`. Las páginas no tocan el DOM del layout: el nombre del usuario se actualiza con el evento `profile:updated`.
+- `components/` — biblioteca de componentes (Fase 3): `atoms/` y `molecules/` (funciones que devuelven HTML escapado), `organisms/` (clases `Component` que emiten `CustomEvent`), `layout/` (`AppLayout`, `PublicLayout`) y `feedback/` (toast). Cada uno con su CSS al lado; `components/components.css` los importa. Catálogo y API: spec §7. Las páginas componen estos componentes; no se escribe marcado repetido en las páginas.
 - `assets/css/` — `global.css`, `layouts.css`, `themes/` (light/dark), `components/<pagina>.css`.
 - `utils/` — `constants.js` (`ROUTES`, `ROLES`, `EVENTS`, `UI_TIMING`, `API_CONFIG`, enums de la BD), `formatters.js`, `helpers.js`, `validators.js`, `html.js` (plantillas con escapado por defecto: todo `innerHTML` con datos usa `html\`...\``).
 
@@ -22,7 +22,7 @@ Antes de escribir código leer `PrincipiosDesarrollo.md` (SOLID, nomenclatura, a
 - Las páginas solo usan **servicios** (`services/*.service.js`); nunca `APIClient`, `fetch` ni `mocks/` directo. Toda llamada de red pasa por `APIClient`.
 - Contrato de la API: `../especificaciones/EspecificacionDesarrolloFront.md` §10 (rutas en inglés, cuerpos en español). Si cambia, se ajustan el mock y `adapters.js` en el mismo cambio.
 - Rutas, eventos, timeouts y magic numbers van a `utils/constants.js` (todo timeout UI en `UI_TIMING`).
-- CSS: variables/tokens, nomenclatura BEM, sin estilos inline. Valores de layout repetidos → token global. Overlays con `env(safe-area-inset-bottom)`; alturas con `clamp()`.
+- CSS: variables/tokens, nomenclatura BEM, sin estilos inline. Los componentes nuevos son mobile-first (`min-width`). Valores de layout repetidos → token global. Overlays con `env(safe-area-inset-bottom)`; alturas con `clamp()`.
 - JSDoc en métodos públicos; métodos privados con prefijo `_`; manejo de errores con `try/catch`; sin `console.log` sobrante.
 - Para usar el backend real: `API_CONFIG.DRIVER = "http"` (o `localStorage.setItem("fintrack.apiDriver", "http")` para probar) y completar `API_CONFIG.BASE_URLS`. Ninguna página cambia.
 

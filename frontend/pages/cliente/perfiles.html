@@ -1,44 +1,30 @@
-<div class="app-page-content page-user-perfiles">
-  <section class="section-block perfiles-hero">
+<div class="app-page-content page-cliente-perfiles">
+  <section class="hero-panel">
     <h1 class="text-gradient">Conoce tus Perfiles</h1>
     <p class="text-muted mt-2">
       Conoce los 3 perfiles de consumo. FinTrack te asigna uno automaticamente a partir de tus gastos.
     </p>
   </section>
 
-  <section class="perfiles-stack" id="profilesGrid"></section>
+  <section class="perfiles-stack" id="profilesGrid" aria-live="polite"></section>
 
   <section class="section-block">
-    <h2 class="section-title">
-      <i class="fa-solid fa-table-list accent"></i>
-      Comparativa Rapida
-    </h2>
-    <div class="table-responsive">
-      <table class="table-shell" id="profilesComparisonTable">
-        <thead id="profilesComparisonHead"></thead>
-        <tbody id="profilesComparisonBody"></tbody>
-      </table>
-    </div>
+    <h2 class="section-title"><i class="fa-solid fa-table-list accent" aria-hidden="true"></i>Comparativa Rapida</h2>
+    <div id="profilesComparison"></div>
   </section>
 
-  <section class="section-block perfiles-cta">
-    <h2 class="section-title">
-      <i class="fa-solid fa-gears accent"></i>
-      Como se asigna tu perfil
-    </h2>
-    <p class="text-muted mb-3">
+  <section class="section-block">
+    <h2 class="section-title"><i class="fa-solid fa-gears accent" aria-hidden="true"></i>Como se asigna tu perfil</h2>
+    <p class="text-muted">
       El sistema analiza tus gastos registrados (categorias, montos y frecuencia) y actualiza tu perfil de forma automatica. No hace falta que hagas nada.
     </p>
-    <div class="d-flex flex-wrap gap-2">
+    <div class="section-actions">
       <button class="action-btn action-btn--primary js-dashboard-back" type="button">
-        <i class="fa-solid fa-arrow-left"></i>
-        Volver a mi Dashboard
+        <i class="fa-solid fa-arrow-left" aria-hidden="true"></i><span>Volver a mi Dashboard</span>
       </button>
-      <a class="action-btn action-btn--ghost" href="#/cliente/recomendaciones" target="_blank">
-        <i class="fa-solid fa-lightbulb"></i>
-        Ver Recomendaciones
+      <a class="action-btn action-btn--ghost" href="#/cliente/recomendaciones" target="_blank" rel="noopener">
+        <i class="fa-solid fa-lightbulb" aria-hidden="true"></i><span>Ver Recomendaciones</span>
       </a>
     </div>
   </section>
-
 </div>

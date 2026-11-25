@@ -1,108 +1,48 @@
-<div class="app-page-content page-user-cargar-gasto">
-  <section class="hero-panel user-cargar-hero">
+<div class="app-page-content page-cliente-cargar-gasto">
+  <section class="hero-panel">
     <h1 class="text-gradient">Cargar Nuevo Gasto</h1>
     <p class="text-muted mt-2">
-      Registra manualmente o analiza un ticket con OCR para completar el formulario en segundos.
+      Registra el gasto a mano o analiza la foto de un ticket para completar el formulario en segundos.
     </p>
-    <div class="d-flex flex-wrap gap-2 mt-3">
+    <div class="dashboard-hero__actions">
       <a class="action-btn action-btn--ghost" href="#/cliente/historial">
-        <i class="fa-solid fa-clock-rotate-left"></i>
-        Ir al Historial
+        <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i><span>Ir al Historial</span>
       </a>
       <button class="action-btn action-btn--primary js-dashboard-back" type="button">
-        <i class="fa-solid fa-arrow-left"></i>
-        Volver al Dashboard
+        <i class="fa-solid fa-arrow-left" aria-hidden="true"></i><span>Volver al Dashboard</span>
       </button>
     </div>
   </section>
 
-  <section class="user-cargar-grid">
-    <article class="section-block">
-      <h2 class="section-title">
-        <i class="fa-solid fa-pen-to-square accent"></i>
-        Carga Manual
-      </h2>
-
-      <form id="userExpenseForm" class="user-expense-form" novalidate>
-        <div class="row g-3">
-          <div class="col-md-7">
-            <label class="form-label" for="expenseMerchant">Comercio</label>
-            <input id="expenseMerchant" name="merchant" class="form-control" list="merchantSuggestions" required />
-            <datalist id="merchantSuggestions"></datalist>
-          </div>
-          <div class="col-md-5">
-            <label class="form-label" for="expenseAmount">Monto</label>
-            <input id="expenseAmount" name="amount" type="number" min="1" step="0.01" class="form-control" required />
-          </div>
-          <div class="col-md-6">
-            <label class="form-label" for="expenseCategory">Categoria</label>
-            <select id="expenseCategory" name="category" class="form-select" required></select>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label" for="expenseDate">Fecha</label>
-            <input id="expenseDate" name="date" type="date" class="form-control" required />
-          </div>
-          <div class="col-12">
-            <label class="form-label" for="expenseDescription">Descripcion</label>
-            <textarea
-              id="expenseDescription"
-              name="description"
-              rows="3"
-              class="form-control"
-              placeholder="Ej: compra semanal, combustible, etc."
-            ></textarea>
-          </div>
-        </div>
-
-        <div class="d-flex flex-wrap gap-2 mt-3">
+  <div class="two-column">
+    <section class="section-block">
+      <h2 class="section-title"><i class="fa-solid fa-pen-to-square accent" aria-hidden="true"></i>Datos del gasto</h2>
+      <form id="expenseForm" novalidate>
+        <div id="expenseFields"></div>
+        <datalist id="merchantSuggestions"></datalist>
+        <div class="section-actions">
           <button class="action-btn action-btn--primary" type="submit">
-            <i class="fa-solid fa-floppy-disk"></i>
-            Guardar gasto
+            <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i><span>Guardar gasto</span>
           </button>
-          <button class="action-btn action-btn--ghost" id="clearExpenseFormButton" type="button">
-            <i class="fa-solid fa-eraser"></i>
-            Limpiar formulario
+          <button class="action-btn action-btn--ghost" data-action="clear" type="button">
+            <i class="fa-solid fa-eraser" aria-hidden="true"></i><span>Limpiar formulario</span>
           </button>
         </div>
       </form>
-    </article>
+    </section>
 
-    <article class="section-block user-ocr-panel">
-      <h2 class="section-title">
-        <i class="fa-solid fa-receipt accent"></i>
-        Carga por Ticket (OCR)
-      </h2>
+    <section class="section-block">
+      <h2 class="section-title"><i class="fa-solid fa-receipt accent" aria-hidden="true"></i>Carga por Ticket (OCR)</h2>
       <p class="text-muted mb-3">
-        Sube una imagen del ticket para precompletar comercio, monto, fecha y categoria.
+        Subi una imagen del ticket: la IA detecta comercio, monto, fecha y categoria y completa el formulario.
       </p>
-
-      <label class="ticket-dropzone" for="expenseTicketFile">
-        <i class="fa-solid fa-cloud-arrow-up"></i>
-        <span id="ticketFileName">Selecciona una imagen del ticket</span>
-      </label>
-      <input id="expenseTicketFile" type="file" accept="image/*" class="app-hidden" />
-
-      <button class="action-btn action-btn--primary mt-3" id="analyzeTicketButton" type="button">
-        <i class="fa-solid fa-wand-magic-sparkles"></i>
-        Analizar ticket
-      </button>
-
-      <article class="ocr-result app-hidden mt-3" id="ocrResultCard">
-        <h3 class="info-card__title">
-          <i class="fa-solid fa-check-circle accent"></i>
-          Datos detectados
-        </h3>
-        <div class="ocr-result__rows" id="ocrResultRows"></div>
-      </article>
-    </article>
-  </section>
+      <div id="ticketUploader"></div>
+      <div class="mt-3" id="ocrResult" aria-live="polite"></div>
+    </section>
+  </div>
 
   <section class="section-block">
-    <h2 class="section-title">
-      <i class="fa-solid fa-clock accent"></i>
-      Ultimos gastos cargados
-    </h2>
-    <div class="recent-expense-list" id="recentExpenseList"></div>
+    <h2 class="section-title"><i class="fa-solid fa-clock accent" aria-hidden="true"></i>Ultimos gastos cargados</h2>
+    <div class="media-list" id="recentExpenses"></div>
   </section>
-
 </div>

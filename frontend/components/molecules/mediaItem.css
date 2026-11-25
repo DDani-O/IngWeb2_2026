@@ -1,0 +1,51 @@
+/* Molécula MediaItem (mobile-first). Ver mediaItem.js */
+.media-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.media-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  padding: 0.75rem;
+}
+
+.media-item--accent {
+  border-left: 3px solid var(--color-primary);
+  background: var(--surface-2);
+}
+
+.media-item__leading {
+  flex-shrink: 0;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.media-item__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.media-item__title {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.media-item__subtitle {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.media-item__trailing {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+  text-align: right;
+  font-weight: 700;
+}

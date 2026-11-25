@@ -1,36 +1,36 @@
 import { PageController } from "../../core/PageController.js";
+import { badge } from "../../components/atoms/badge.js";
+import { button } from "../../components/atoms/button.js";
+import { alertItem } from "../../components/molecules/alertItem.js";
+import { dateCard } from "../../components/molecules/dateCard.js";
+import { emptyState } from "../../components/molecules/stateBlock.js";
+import { infoCard } from "../../components/molecules/infoCard.js";
+import { keyValueList } from "../../components/molecules/keyValueList.js";
+import { mediaItem } from "../../components/molecules/mediaItem.js";
+import { recommendationLabels } from "../../components/molecules/recommendationCard.js";
+import { statCard } from "../../components/molecules/statCard.js";
+import { ChartCard } from "../../components/organisms/ChartCard.js";
 import { findSpendingProfileContent } from "../../content/spendingProfiles.js";
 import { analysisService } from "../../services/analysis.service.js";
 import { expensesService } from "../../services/expenses.service.js";
 import { recommendationsService } from "../../services/recommendations.service.js";
-import { RECOMMENDATION_PRIORITIES, ROUTES } from "../../utils/constants.js";
-import { formatCurrency, formatMonth, formatTrendLabel } from "../../utils/formatters.js";
-import { buildHash, getChartPalette, getChartThemeColors } from "../../utils/helpers.js";
+import { PRIORITY_TONES, ROUTES } from "../../utils/constants.js";
+import { formatCurrency, formatMonth, formatShortDate } from "../../utils/formatters.js";
+import { buildHash } from "../../utils/helpers.js";
 import { html } from "../../utils/html.js";
 
-const ALERT_ICONS = { danger: "⚠️", warning: "📈", success: "✅", info: "💡" };
-
 /**
- * Dashboard del cliente: resumen del mes, alertas, perfil asignado, gráficos y ranking de comercios.
+ * Dashboard del cliente: resumen del mes, alertas, perfil asignado, resúmenes, gráficos y
+ * ranking de comercios (consigna §4.4). Compone átomos, moléculas y ChartCard.
  */
 export class DashboardPage extends PageController {
   static template = "./pages/cliente/dashboard.html";
 
-  constructor(element, options = {}) {
-    super(element, options);
-    this.charts = [];
-  }
-
   render() {
-    const userName = this.options.authManager?.getCurrentUser()?.fullName || "";
-    const shortName = userName.split(" ")[0] || userName;
-
-    this._setText("#userWelcomeTitle", shortName ? `Hola, ${shortName}!` : "Hola!");
-    this._setText(
-      "#userWelcomeSubtitle",
-      "Tu resumen financiero esta listo. Explora tus patrones de gasto y descubre como mejorar tu economia personal."
-    );
-    this._renderCalendar();
+    const fullName = this.options.authManager?.getCurrentUser()?.fullName || "";
+    const firstName = fullName.split(" ")[0];
+    this._setText("#dashboardWelcome", firstName ? `Hola, ${firstName}!` : "Hola!");
+    this.element.querySelector("#dashboardDate").innerHTML = dateCard();
 
     this._loadData(async () => {
       const [analysis, recent, recommendations] = await Promise.all([
@@ -38,261 +38,145 @@ export class DashboardPage extends PageController {
         expensesService.list({ limit: 3 }),
         recommendationsService.listMine(),
       ]);
-
       if (!this._isAlive()) {
         return;
       }
 
       this._renderAlerts(analysis.alerts);
       this._renderStats(analysis);
-      this._renderProfileCard(analysis);
-      this._renderSummaryCards(analysis, recent.items, recommendations);
+      this._renderProfile(analysis);
+      this._renderSummaries(analysis, recent.items, recommendations);
       this._renderMerchants(analysis.merchantRanking);
-      this._initCharts(analysis);
+      this._renderCharts(analysis);
     });
   }
 
-  attachEvents() {
-  }
-
-  _renderCalendar() {
-    const today = new Date();
-    const capitalize = (text) => text.charAt(0).toUpperCase() + text.slice(1);
-
-    this._setText("#userCalendarDay", String(today.getDate()));
-    this._setText("#userCalendarMonth", capitalize(today.toLocaleDateString("es-AR", { month: "long" })));
-    this._setText("#userCalendarYear", String(today.getFullYear()));
-    this._setText("#userCalendarDayName", capitalize(today.toLocaleDateString("es-AR", { weekday: "long" })));
-  }
-
   _renderAlerts(alerts) {
-    const container = this.element.querySelector("#userAlertsList");
-    if (!container) {
-      return;
-    }
-
-    container.innerHTML = html`${alerts.map(
-      (alert) => html`
-        <article class="alert-card alert-card--${alert.level}">
-          <div>${ALERT_ICONS[alert.level] || "💡"}</div>
-          <div>
-            <h3 class="alert-card__title">${alert.title}</h3>
-            <p class="alert-card__description">${alert.description}</p>
-          </div>
-        </article>
-      `
-    )}`;
+    this.element.querySelector("#dashboardAlerts").innerHTML = html`${alerts.map((alert) => alertItem({ title: alert.title, description: alert.description, tone: alert.level }))}`;
   }
 
   _renderStats(analysis) {
-    const container = this.element.querySelector("#userStatsGrid");
-    if (!container) {
-      return;
-    }
-
-    const change = analysis.changeVsPreviousMonth;
-    const stats = [
-      {
-        label: "Gasto del mes",
-        emoji: "💸",
-        value: formatCurrency(analysis.totalThisMonth),
-        subtitle: "Mes en curso",
-        // Gastar más que el mes anterior es una tendencia negativa.
-        trend: change === null ? null : { direction: change > 0 ? "up" : "down", value: Math.abs(change), label: "vs. mismo periodo del mes anterior", good: change <= 0 },
-      },
-      { label: "Promedio mensual", emoji: "📊", value: formatCurrency(analysis.monthlyAverage), subtitle: "Ultimos 6 meses" },
-      {
-        label: "Categoria principal",
-        emoji: "🏷️",
-        value: analysis.dominantCategory?.name || "--",
-        subtitle: analysis.dominantCategory ? `${analysis.dominantCategory.percentage}% de tus gastos` : "Sin gastos registrados",
-      },
-      { label: "Gastos inusuales", emoji: "🔎", value: String(analysis.unusualExpenses.length), subtitle: "Ultimos 30 dias" },
-    ];
-
-    container.innerHTML = html`${stats.map(
-      (stat) => html`
-        <article class="kpi-card">
-          <div class="kpi-card__head">
-            <p class="kpi-card__label">${stat.label}</p>
-            <span>${stat.emoji}</span>
-          </div>
-          <p class="kpi-card__value">${stat.value}</p>
-          <p class="kpi-card__sub">${stat.subtitle}</p>
-          ${stat.trend
-            ? html`<p class="kpi-card__trend ${stat.trend.good ? "kpi-card__trend--up" : "kpi-card__trend--down"}">${formatTrendLabel(stat.trend.direction, stat.trend.value, stat.trend.label)}</p>`
-            : ""}
-        </article>
-      `
-    )}`;
-  }
-
-  _renderProfileCard(analysis) {
-    const container = this.element.querySelector("#userProfileCard");
-    if (!container) {
-      return;
-    }
-
-    const profile = analysis.spendingProfile;
-    const content = profile ? findSpendingProfileContent(profile.name) : null;
-    const topCategories = analysis.byCategory.slice(0, 4).map((item) => item.category);
-
-    container.innerHTML = html`
-      <div>
-        <h2 class="section-title mb-1">
-          <i class="fa-solid fa-user-shield accent"></i>
-          ${profile ? `Perfil Activo: ${profile.name}` : "Todavia no tenes un perfil asignado"}
-        </h2>
-        <p class="text-muted">${content?.description || profile?.description || "El sistema te asigna un perfil cuando registras tus primeros gastos."}</p>
-        <div class="profile-highlight__tags">
-          ${topCategories.map((category) => html`<span class="profile-tag">${category}</span>`)}
-        </div>
-      </div>
-      <a class="action-btn action-btn--ghost" href="${buildHash(ROUTES.CLIENT_PERFILES)}" target="_blank">
-        <i class="fa-solid fa-user-tag"></i>
-        Ver perfiles de gasto
-      </a>
+    this.element.querySelector("#dashboardStats").innerHTML = html`
+      ${statCard({ label: "Gasto del mes", emoji: "💸", value: analysis.totalThisMonth, format: "currency", subtitle: "Mes en curso", trend: { value: analysis.changeVsPreviousMonth, label: "vs. mismo periodo del mes anterior" } })}
+      ${statCard({ label: "Promedio mensual", emoji: "📊", value: analysis.monthlyAverage, format: "currency", subtitle: "Ultimos 6 meses" })}
+      ${statCard({ label: "Categoria principal", emoji: "🏷️", value: analysis.dominantCategory?.name || "--", format: "text", subtitle: analysis.dominantCategory ? `${analysis.dominantCategory.percentage}% de tus gastos` : "Sin gastos registrados" })}
+      ${statCard({ label: "Gastos inusuales", emoji: "🔎", value: analysis.unusualExpenses.length, subtitle: "Ultimos 30 dias" })}
     `;
   }
 
-  _renderSummaryCards(analysis, recentExpenses, recommendations) {
-    const container = this.element.querySelector("#userSummaryGrid");
-    if (!container) {
-      return;
-    }
+  _renderProfile(analysis) {
+    const profile = analysis.spendingProfile;
+    const content = profile ? findSpendingProfileContent(profile.name) : null;
 
+    this.element.querySelector("#dashboardProfile").innerHTML = infoCard({
+      highlight: true,
+      icon: "fa-user-shield",
+      title: profile ? `Perfil activo: ${profile.name}` : "Todavia no tenes un perfil asignado",
+      subtitle: content?.description || profile?.description || "El sistema te asigna un perfil cuando registras tus primeros gastos.",
+      body: html`<div class="tag-list">${analysis.byCategory.slice(0, 4).map((item) => badge({ text: item.category }))}</div>`,
+      footer: button({ label: "Ver perfiles de gasto", variant: "ghost", icon: "fa-user-tag", href: buildHash(ROUTES.CLIENT_PERFILES), newTab: true }),
+    });
+  }
+
+  _renderSummaries(analysis, recentExpenses, recommendations) {
     const unread = recommendations.filter((item) => !item.read);
-    const priorityLabel = (value) => RECOMMENDATION_PRIORITIES.find((item) => item.value === value)?.label || value;
+    const summary = ({ title, icon, subtitle, items, route }) =>
+      infoCard({
+        title,
+        icon,
+        subtitle,
+        body: items.length ? keyValueList({ items }) : html`<p class="text-muted">Sin datos todavia.</p>`,
+        // Detalle o análisis desde el dashboard: pestaña nueva (ver core/TabRegistry.js).
+        footer: button({ label: "Ver detalle", variant: "ghost", size: "sm", href: buildHash(route), newTab: true }),
+      });
 
-    const cards = [
-      {
+    this.element.querySelector("#dashboardSummaries").innerHTML = html`
+      ${summary({
         title: "Patrones de Consumo",
-        subtitle: "Donde se va tu dinero",
         icon: "fa-chart-pie",
+        subtitle: "Donde se va tu dinero",
         items: analysis.byCategory.slice(0, 3).map((item) => ({ label: item.category, value: `${item.percentage}%` })),
         route: ROUTES.CLIENT_PATRONES,
-      },
-      {
+      })}
+      ${summary({
         title: "Recomendaciones",
-        subtitle: unread.length ? `${unread.length} sin leer` : "Estas al dia",
         icon: "fa-lightbulb",
-        items: unread.slice(0, 3).map((item) => ({ label: item.title, value: priorityLabel(item.priority) })),
+        subtitle: unread.length ? `${unread.length} sin leer` : "Estas al dia",
+        items: unread.slice(0, 3).map((item) => ({ label: item.title, value: badge({ text: recommendationLabels.priority(item.priority), tone: PRIORITY_TONES[item.priority] }) })),
         route: ROUTES.CLIENT_RECOMENDACIONES,
-      },
-      {
+      })}
+      ${summary({
         title: "Ultimos Gastos",
-        subtitle: "Movimientos recientes",
         icon: "fa-clock-rotate-left",
+        subtitle: "Movimientos recientes",
         items: recentExpenses.map((item) => ({ label: item.merchant, value: formatCurrency(item.amount) })),
         route: ROUTES.CLIENT_HISTORIAL,
-      },
-    ];
-
-    container.innerHTML = html`${cards.map(
-      (card) => html`
-        <article class="summary-card">
-          <h3 class="summary-card__title">
-            <i class="fa-solid ${card.icon} accent"></i>
-            ${card.title}
-          </h3>
-          <p class="text-muted mb-2">${card.subtitle}</p>
-          <div class="summary-card__list">
-            ${card.items.length
-              ? card.items.map((item) => html`<div class="summary-card__row"><span>${item.label}</span><strong>${item.value}</strong></div>`)
-              : html`<p class="text-muted">Sin datos todavia.</p>`}
-          </div>
-          <a class="action-btn action-btn--ghost mt-2" href="${buildHash(card.route)}" target="_blank">Ver detalle</a>
-        </article>
-      `
-    )}`;
+      })}
+    `;
   }
 
   _renderMerchants(ranking) {
-    const container = this.element.querySelector("#userMerchantsList");
-    if (!container) {
-      return;
-    }
-
-    container.innerHTML = ranking.length
-      ? html`${ranking.map(
-          (merchant, index) => html`
-            <div class="merchant-item">
-              <div class="merchant-item__left">
-                <span>${index + 1}.</span>
-                <div>
-                  <p>${merchant.merchant}</p>
-                  <p class="text-muted">${merchant.count} compras</p>
-                </div>
-              </div>
-              <strong>${formatCurrency(merchant.amount)}</strong>
-            </div>
-          `
+    this.element.querySelector("#dashboardMerchants").innerHTML = ranking.length
+      ? html`${ranking.map((merchant, index) =>
+          mediaItem({
+            variant: "accent",
+            leading: html`${index + 1}.`,
+            title: merchant.merchant,
+            subtitle: `${merchant.count} compras`,
+            trailing: formatCurrency(merchant.amount),
+          })
         )}`
-      : html`<p class="text-muted">Cuando registres gastos vas a ver aca tus comercios mas frecuentes.</p>`;
+      : emptyState({ icon: "fa-store", title: "Sin comercios todavia", message: "Cuando registres gastos vas a ver aca tus comercios mas frecuentes." });
   }
 
-  _initCharts(analysis) {
-    if (!window.Chart) {
-      return;
-    }
+  _renderCharts(analysis) {
+    const average = analysis.byMonth.length
+      ? analysis.byMonth.reduce((sum, item) => sum + item.amount, 0) / analysis.byMonth.length
+      : 0;
 
-    this._destroyCharts();
-    const colors = getChartThemeColors();
-    const palette = getChartPalette();
-    const axis = { ticks: { color: colors.label }, grid: { color: colors.grid } };
-    const legend = { labels: { color: colors.label } };
+    const charts = {
+      daily: {
+        title: "Gastos por dia (ultimas 2 semanas)",
+        icon: "fa-chart-line",
+        type: "line",
+        valueFormat: "currency",
+        labels: analysis.byDay.map((item) => formatShortDate(item.date)),
+        datasets: [{ label: "Gasto diario", data: analysis.byDay.map((item) => item.amount) }],
+      },
+      category: {
+        title: "Gastos por categoria",
+        icon: "fa-chart-pie",
+        type: "doughnut",
+        valueFormat: "currency",
+        labels: analysis.byCategory.map((item) => item.category),
+        datasets: [{ label: "Gasto", data: analysis.byCategory.map((item) => item.amount) }],
+        link: { href: buildHash(ROUTES.CLIENT_PATRONES), label: "Ver mas detalles en Patrones de Consumo", newTab: true },
+      },
+      monthly: {
+        title: "Gasto mensual",
+        icon: "fa-chart-column",
+        type: "bar",
+        valueFormat: "currency",
+        caption: "Ultimos 7 meses. La linea punteada es el promedio.",
+        labels: analysis.byMonth.map((item) => formatMonth(item.month)),
+        datasets: [
+          { label: "Gasto mensual", data: analysis.byMonth.map((item) => item.amount) },
+          { label: "Promedio", kind: "line", dashed: true, data: analysis.byMonth.map(() => Math.round(average)) },
+        ],
+      },
+    };
 
-    const categoryCanvas = this.element.querySelector("#userCategoryChart");
-    if (categoryCanvas) {
-      this.charts.push(
-        new window.Chart(categoryCanvas, {
-          type: "doughnut",
-          data: {
-            labels: analysis.byCategory.map((item) => item.category),
-            datasets: [
-              {
-                data: analysis.byCategory.map((item) => item.amount),
-                backgroundColor: analysis.byCategory.map((_, index) => palette[index % palette.length]),
-                borderColor: colors.border,
-                borderWidth: 2,
-              },
-            ],
-          },
-          options: { plugins: { legend } },
-        })
-      );
-    }
-
-    const monthlyCanvas = this.element.querySelector("#userMonthlyChart");
-    if (monthlyCanvas) {
-      this.charts.push(
-        new window.Chart(monthlyCanvas, {
-          type: "bar",
-          data: {
-            labels: analysis.byMonth.map((item) => formatMonth(item.month)),
-            datasets: [
-              {
-                label: "Gasto Mensual",
-                data: analysis.byMonth.map((item) => item.amount),
-                backgroundColor: palette[0],
-                borderColor: palette[0],
-                borderWidth: 1,
-              },
-            ],
-          },
-          options: { scales: { x: axis, y: axis }, plugins: { legend } },
-        })
-      );
-    }
-  }
-
-  _destroyCharts() {
-    this.charts.forEach((chart) => chart.destroy());
-    this.charts = [];
-  }
-
-  destroy() {
-    this._destroyCharts();
-    super.destroy();
+    this.charts = this.charts || {};
+    [
+      ["daily", "#dashboardDailyChart"],
+      ["category", "#dashboardCategoryChart"],
+      ["monthly", "#dashboardMonthlyChart"],
+    ].forEach(([key, selector]) => {
+      if (this.charts[key]) {
+        this.charts[key].update(charts[key]);
+      } else {
+        this.charts[key] = this.mountChild(ChartCard, selector, charts[key]);
+      }
+    });
   }
 }

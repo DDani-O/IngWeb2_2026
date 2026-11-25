@@ -1,0 +1,29 @@
+/*
+ * Estilos de la biblioteca de componentes (Fase 3 del refactor).
+ * Cada componente tiene su CSS al lado de su JS; este archivo solo los importa.
+ * Reglas: mobile-first (media queries min-width), tokens de global.css, BEM simple.
+ */
+@import url("./atoms/avatar.css");
+@import url("./atoms/badge.css");
+@import url("./atoms/button.css");
+@import url("./atoms/trend.css");
+@import url("./molecules/alertItem.css");
+@import url("./molecules/clientCard.css");
+@import url("./molecules/dateCard.css");
+@import url("./molecules/formField.css");
+@import url("./molecules/infoCard.css");
+@import url("./molecules/keyValueList.css");
+@import url("./molecules/mediaItem.css");
+@import url("./molecules/profileSummary.css");
+@import url("./molecules/recommendationCard.css");
+@import url("./molecules/statCard.css");
+@import url("./molecules/stateBlock.css");
+@import url("./organisms/ChartCard.css");
+@import url("./organisms/DataTable.css");
+@import url("./organisms/FilterBar.css");
+@import url("./organisms/Modal.css");
+@import url("./organisms/ProfileForm.css");
+@import url("./organisms/RecommendationForm.css");
+@import url("./organisms/TicketUploader.css");
+@import url("./organisms/ViewToggle.css");
+@import url("./feedback/toast.css");

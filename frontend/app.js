@@ -6,10 +6,11 @@ import { tabRegistry } from "./core/TabRegistry.js";
 import { themeManager } from "./core/ThemeManager.js";
 import { ADVISOR_LAYOUT, AppLayout, CLIENT_LAYOUT } from "./components/layout/AppLayout.js";
 import { PublicLayout } from "./components/layout/PublicLayout.js";
+import { createToaster } from "./components/feedback/toast.js";
 import { notFoundRoute, routes } from "./routes.js";
-import { EVENTS, ROUTES, UI_TIMING } from "./utils/constants.js";
+import { EVENTS, ROUTES } from "./utils/constants.js";
 
-const toastContainer = document.querySelector("#globalToastContainer");
+const showToast = createToaster(document.querySelector("#globalToastContainer"));
 
 const router = new Router({
   routes,
@@ -86,25 +87,4 @@ function createAppLayout(config) {
     },
     onReturnHome: (path) => tabRegistry.returnTo(path, (target) => router.navigate(target)),
   });
-}
-
-/**
- * Muestra un aviso breve en el contenedor global de toasts.
- * @param {string} message
- * @param {"success"|"warning"|"danger"} variant
- */
-function showToast(message, variant = "success") {
-  if (!toastContainer) {
-    return;
-  }
-
-  const toast = document.createElement("article");
-  toast.className = `app-toast app-toast--${variant}`;
-  toast.textContent = message;
-
-  toastContainer.appendChild(toast);
-
-  window.setTimeout(() => {
-    toast.remove();
-  }, UI_TIMING.TOAST_DISMISS_MS);
 }

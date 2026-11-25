@@ -1,17 +1,24 @@
 import { PageController } from "../../core/PageController.js";
-import {
-  fillRecommendationClients,
-  mountAdvisorRecommendationModal,
-  readRecommendationForm,
-} from "../../components/modals/AdvisorRecommendationModal.js";
+import { badge } from "../../components/atoms/badge.js";
+import { trend } from "../../components/atoms/trend.js";
+import { CLIENT_TABLE_COLUMNS, CLIENT_VIEW_MODES, clientCard } from "../../components/molecules/clientCard.js";
+import { keyValueList } from "../../components/molecules/keyValueList.js";
+import { emptyState } from "../../components/molecules/stateBlock.js";
+import { DataTable } from "../../components/organisms/DataTable.js";
+import { FilterBar } from "../../components/organisms/FilterBar.js";
+import { Modal } from "../../components/organisms/Modal.js";
+import { RecommendationDialog } from "../../components/organisms/RecommendationDialog.js";
+import { ViewToggle } from "../../components/organisms/ViewToggle.js";
 import { clientsService } from "../../services/clients.service.js";
 import { recommendationsService } from "../../services/recommendations.service.js";
-import { RISK_LEVELS, ROUTES, UI_TIMING } from "../../utils/constants.js";
-import { formatCurrency, formatDate, formatDaysAgo } from "../../utils/formatters.js";
-import { debounce, getInitials } from "../../utils/helpers.js";
+import { RISK_LEVELS } from "../../utils/constants.js";
+import { formatCurrency, formatDate } from "../../utils/formatters.js";
 import { html } from "../../utils/html.js";
 
-const MODAL_PREFIX = "advisorClientRecommendation";
+const CLIENT_ACTIONS = [
+  { action: "detail", label: "Ver detalle" },
+  { action: "recommend", label: "Enviar recomendacion", variant: "primary" },
+];
 
 /**
  * Clientes asignados al asesor (consigna §3: visualizar usuarios y generar recomendaciones).
@@ -22,240 +29,121 @@ export class AsesorClientesPage extends PageController {
   constructor(element, options = {}) {
     super(element, options);
     this.clients = [];
-    this.filteredClients = [];
-    this.viewMode = "cards";
-    this._debouncedFilter = debounce(() => this._applyFilters(), UI_TIMING.SEARCH_DEBOUNCE_MS);
   }
 
   render() {
-    this._syncView();
-    const modalReady = this._mountRecommendationModal();
+    this.filters = this.mountChild(FilterBar, "#clientsFilters", {
+      idPrefix: "clients",
+      ariaLabel: "Filtrar clientes",
+      fields: [
+        { type: "search", name: "search", label: "Buscar cliente", placeholder: "Nombre o perfil" },
+        { type: "select", name: "risk", label: "Riesgo", options: [{ value: "", label: "Todos" }, ...Object.entries(RISK_LEVELS).map(([value, risk]) => ({ value, label: risk.label }))] },
+        { type: "select", name: "status", label: "Estado", options: [{ value: "", label: "Todos" }, { value: "activo", label: "Activo" }, { value: "inactivo", label: "Inactivo" }] },
+      ],
+    });
+    this.mountChild(ViewToggle, "#clientsView", { label: "Vista de clientes", value: "cards", modes: CLIENT_VIEW_MODES });
+    this.table = this.mountChild(DataTable, "#clientsTable", {
+      columns: CLIENT_TABLE_COLUMNS,
+      caption: "Clientes asignados",
+      actions: CLIENT_ACTIONS,
+      empty: { icon: "fa-users", title: "No hay clientes para estos filtros" },
+    });
+    this.detailModal = this.mountChild(Modal, "#clientDetailModal", { title: "Detalle de cliente" });
+    this.dialog = this.mountChild(RecommendationDialog, "#clientRecommendationDialog", { idPrefix: "clientsRec" });
 
     this._loadData(async () => {
-      const [clients] = await Promise.all([clientsService.list(), modalReady]);
+      const clients = await clientsService.list();
       if (!this._isAlive()) {
         return;
       }
 
       this.clients = clients;
-      fillRecommendationClients(this.element, MODAL_PREFIX, clients);
+      this.dialog.setRecipients(clients);
       this._applyFilters();
     });
   }
 
   attachEvents() {
-    this.listen(this.element.querySelector("#clientsSearchInput"), "input", () => this._debouncedFilter());
-    this.listen(this.element.querySelector("#clientsRiskFilter"), "change", () => this._applyFilters());
-    this.listen(this.element.querySelector("#clientsStatusFilter"), "change", () => this._applyFilters());
-
-    this.listen(this.element.querySelector("#clientsViewToggle"), "click", () => {
-      this.viewMode = this.viewMode === "cards" ? "table" : "cards";
-      this._syncView();
+    this.listen(this.element, "filters-change", () => this._applyFilters());
+    this.listen(this.element, "view-change", (event) => this._showView(event.detail.value));
+    this.listen(this.element, "row-action", (event) => this._handleAction(event.detail.action, event.detail.id));
+    this.listen(this.element.querySelector("#clientsCards"), "click", (event) => {
+      const trigger = event.target.closest("[data-action]");
+      if (trigger) {
+        this._handleAction(trigger.dataset.action, trigger.dataset.id);
+      }
     });
-
-    this.listen(this.element.querySelector("#clientsCards"), "click", (event) => this._handleAction(event));
-    this.listen(this.element.querySelector("#clientsTableBody"), "click", (event) => this._handleAction(event));
-
-    this.listen(this.element.querySelector("#openClientRecommendationButton"), "click", () => this._openRecommendationModal());
-
-    this.listen(this.element.querySelector("#backToAdvisorDashboardButton"), "click", () => {
-      this.options.router?.navigate(ROUTES.ADVISOR_DASHBOARD);
-    });
-  }
-
-  /**
-   * Inserta el modal de nueva recomendación en su slot y engancha el envío del formulario.
-   */
-  async _mountRecommendationModal() {
-    await mountAdvisorRecommendationModal(this.element, {
-      slotSelector: "#advisorClientRecommendationModalSlot",
-      idPrefix: MODAL_PREFIX,
-    });
-
-    this.listen(this.element.querySelector(`#${MODAL_PREFIX}Form`), "submit", (event) => {
-      event.preventDefault();
-      this._handleCreateRecommendation(event.target);
-    });
+    this.listen(this.element.querySelector('[data-action="new-recommendation"]'), "click", () => this.dialog.open());
+    this.listen(this.element, "recommendation-submit", (event) => this._createRecommendation(event.detail.recommendation));
   }
 
   _applyFilters() {
-    const search = this._getValue("#clientsSearchInput").toLowerCase();
-    const risk = this._getValue("#clientsRiskFilter");
-    const status = this._getValue("#clientsStatusFilter");
+    const { search = "", risk = "", status = "" } = this.filters.getValues();
+    const term = search.trim().toLowerCase();
 
-    this.filteredClients = this.clients.filter((client) => {
-      const profileName = client.spendingProfile?.name || "";
+    const visible = this.clients.filter((client) => {
       const matchesSearch =
-        !search || client.fullName.toLowerCase().includes(search) || profileName.toLowerCase().includes(search);
+        !term || client.fullName.toLowerCase().includes(term) || (client.spendingProfile?.name || "").toLowerCase().includes(term);
       return matchesSearch && (!risk || client.riskLevel === risk) && (!status || client.status === status);
     });
 
-    this._renderClients();
+    this._setText("#clientsCount", `${visible.length} clientes visibles`);
+    this.element.querySelector("#clientsCards").innerHTML = visible.length
+      ? html`${visible.map((client) => clientCard({ client, actions: CLIENT_ACTIONS }))}`
+      : emptyState({ icon: "fa-users", title: "No hay clientes para estos filtros" });
+    this.table.update({ rows: visible });
   }
 
-  _renderClients() {
-    const cards = this.element.querySelector("#clientsCards");
-    const tableBody = this.element.querySelector("#clientsTableBody");
-
-    if (!cards || !tableBody) {
-      return;
-    }
-
-    this._setText("#clientsCountLabel", `${this.filteredClients.length} clientes visibles`);
-
-    cards.innerHTML = this.filteredClients.length
-      ? html`${this.filteredClients.map((client) => {
-          const risk = RISK_LEVELS[client.riskLevel] || RISK_LEVELS.bajo;
-          return html`
-            <article class="advisor-client-card">
-              <div class="advisor-client-head">
-                <div class="d-flex gap-2 align-items-start">
-                  <span class="avatar-badge">${getInitials(client.fullName)}</span>
-                  <div>
-                    <p class="advisor-client-name">${client.fullName}</p>
-                    <p class="advisor-client-mail">${client.spendingProfile?.name || "Sin perfil"}</p>
-                  </div>
-                </div>
-                <span class="risk-pill risk-pill--${risk.cssModifier}">${risk.label}</span>
-              </div>
-              <div class="advisor-client-metrics">
-                <div>
-                  <p>Ultimo gasto</p>
-                  <strong>${formatDaysAgo(client.lastExpenseDate)}</strong>
-                </div>
-                <div>
-                  <p>Promedio</p>
-                  <strong>${formatCurrency(client.monthlyAverage)}</strong>
-                </div>
-              </div>
-              ${this._changeLabel(client)}
-              <div class="d-flex flex-wrap gap-2 mt-2">
-                <button class="action-btn action-btn--ghost" data-action="detail" data-id="${client.id}" type="button">Ver detalle</button>
-                <button class="action-btn action-btn--primary" data-action="recommend" data-id="${client.id}" type="button">Enviar recomendacion</button>
-              </div>
-            </article>
-          `;
-        })}`
-      : html`<p class="text-muted">No hay clientes para estos filtros.</p>`;
-
-    tableBody.innerHTML = html`${this.filteredClients.map((client) => {
-      const risk = RISK_LEVELS[client.riskLevel] || RISK_LEVELS.bajo;
-      return html`
-        <tr>
-          <td>
-            <div class="advisor-table-client">
-              <span class="avatar-badge">${getInitials(client.fullName)}</span>
-              <strong>${client.fullName}</strong>
-            </div>
-          </td>
-          <td>${client.spendingProfile?.name || "Sin perfil"}</td>
-          <td>${formatDaysAgo(client.lastExpenseDate)}</td>
-          <td>${formatCurrency(client.monthlyAverage)}</td>
-          <td>${this._changeLabel(client)}</td>
-          <td><span class="risk-pill risk-pill--${risk.cssModifier}">${risk.label}</span></td>
-          <td>
-            <div class="d-flex flex-wrap gap-2">
-              <button class="action-btn action-btn--ghost" data-action="detail" data-id="${client.id}" type="button">Detalle</button>
-              <button class="action-btn action-btn--primary" data-action="recommend" data-id="${client.id}" type="button">Recomendar</button>
-            </div>
-          </td>
-        </tr>
-      `;
-    })}`;
+  _showView(view) {
+    this.element.querySelector("#clientsCards").classList.toggle("app-hidden", view === "table");
+    this.element.querySelector("#clientsTable").classList.toggle("app-hidden", view !== "table");
   }
 
-  /** Variación del gasto vs. el mes anterior: subir es negativo (rojo). */
-  _changeLabel(client) {
-    if (client.changePercent === null || client.changePercent === undefined) {
-      return html`<p class="advisor-client-change">--</p>`;
-    }
-
-    const direction = client.changePercent >= 0 ? "up" : "down";
-    return html`<p class="advisor-client-change advisor-client-change--${direction}">${client.changePercent >= 0 ? "+" : ""}${client.changePercent}%</p>`;
-  }
-
-  _syncView() {
-    const cards = this.element.querySelector("#clientsCards");
-    const tableWrap = this.element.querySelector("#clientsTableWrap");
-    const toggle = this.element.querySelector("#clientsViewToggle");
-
-    if (!cards || !tableWrap || !toggle) {
-      return;
-    }
-
-    const showTable = this.viewMode === "table";
-    cards.classList.toggle("app-hidden", showTable);
-    tableWrap.classList.toggle("app-hidden", !showTable);
-
-    toggle.innerHTML = showTable
-      ? html`<i class="fa-solid fa-border-all"></i> Ver como cards`
-      : html`<i class="fa-solid fa-table"></i> Ver como tabla`;
-  }
-
-  _handleAction(event) {
-    const button = event.target.closest("[data-action]");
-    if (!button) {
-      return;
-    }
-
-    const client = this.clients.find((item) => item.id === button.dataset.id);
+  _handleAction(action, clientId) {
+    const client = this.clients.find((item) => item.id === clientId);
     if (!client) {
       return;
     }
 
-    if (button.dataset.action === "recommend") {
-      this._openRecommendationModal(client.id);
+    if (action === "recommend") {
+      this.dialog.open(client.id);
       return;
     }
 
-    this._openClientModal(client);
+    if (action === "detail") {
+      this._openDetail(client);
+    }
   }
 
-  _openClientModal(client) {
-    const content = this.element.querySelector("#advisorClientDetailContent");
-    if (!content) {
-      return;
-    }
-
+  _openDetail(client) {
     const risk = RISK_LEVELS[client.riskLevel] || RISK_LEVELS.bajo;
-    const change = client.changePercent === null ? "--" : `${client.changePercent >= 0 ? "+" : ""}${client.changePercent}%`;
-
-    content.innerHTML = html`
-      <article class="history-detail-card">
-        <p><strong>Cliente:</strong> ${client.fullName}</p>
-        <p><strong>Email:</strong> ${client.email}</p>
-        <p><strong>Perfil de gasto:</strong> ${client.spendingProfile?.name || "Sin perfil"}</p>
-        <p><strong>Gasto promedio mensual:</strong> ${formatCurrency(client.monthlyAverage)}</p>
-        <p><strong>Gasto del mes:</strong> ${formatCurrency(client.totalThisMonth)}</p>
-        <p><strong>Cambio vs. mes anterior:</strong> ${change}</p>
-        <p><strong>Gastos inusuales:</strong> ${client.unusualCount}</p>
-        <p><strong>Ultimo gasto:</strong> ${client.lastExpenseDate ? formatDate(client.lastExpenseDate) : "Sin gastos"}</p>
-        <p><strong>Riesgo:</strong> ${risk.label}</p>
-      </article>
-    `;
-
-    this._showModal("#advisorClientDetailModal");
+    this.detailModal.setTitle(client.fullName);
+    this.detailModal.setContent(
+      keyValueList({
+        items: [
+          { label: "Email", value: client.email },
+          { label: "Perfil de gasto", value: client.spendingProfile?.name || "Sin perfil" },
+          { label: "Gasto promedio mensual", value: formatCurrency(client.monthlyAverage) },
+          { label: "Gasto del mes", value: formatCurrency(client.totalThisMonth) },
+          { label: "Vs. mes anterior", value: trend({ value: client.changePercent }) },
+          { label: "Gastos inusuales", value: String(client.unusualCount) },
+          { label: "Ultimo gasto", value: client.lastExpenseDate ? formatDate(client.lastExpenseDate) : "Sin gastos" },
+          { label: "Riesgo", value: badge({ text: risk.label, tone: risk.tone }) },
+        ],
+      })
+    );
+    this.detailModal.open();
   }
 
-  _openRecommendationModal(clientId = "") {
-    fillRecommendationClients(this.element, MODAL_PREFIX, this.clients, clientId);
-    this._showModal(`#${MODAL_PREFIX}Modal`);
-  }
-
-  async _handleCreateRecommendation(form) {
-    if (!form.checkValidity()) {
-      form.reportValidity();
-      return;
-    }
-
-    const created = await this._runAction(() => recommendationsService.create(readRecommendationForm(this.element, MODAL_PREFIX)), {
-      button: form.querySelector('[type="submit"]'),
+  async _createRecommendation(recommendation) {
+    this.dialog.setBusy(true);
+    const created = await this._runAction(() => recommendationsService.create(recommendation), {
       successMessage: "Recomendacion creada y enviada al cliente.",
     });
+    this.dialog.setBusy(false);
 
     if (created && this._isAlive()) {
-      this._getModalInstance(`#${MODAL_PREFIX}Modal`)?.hide();
-      form.reset();
+      this.dialog.close();
     }
   }
 }

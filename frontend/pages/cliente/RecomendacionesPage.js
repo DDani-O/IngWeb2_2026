@@ -1,11 +1,17 @@
 import { PageController } from "../../core/PageController.js";
+import { badge } from "../../components/atoms/badge.js";
+import { keyValueList } from "../../components/molecules/keyValueList.js";
+import { recommendationCard, recommendationLabels } from "../../components/molecules/recommendationCard.js";
+import { emptyState } from "../../components/molecules/stateBlock.js";
+import { FilterBar } from "../../components/organisms/FilterBar.js";
+import { Modal } from "../../components/organisms/Modal.js";
 import { recommendationsService } from "../../services/recommendations.service.js";
-import { RECOMMENDATION_PRIORITIES, RECOMMENDATION_TYPES } from "../../utils/constants.js";
+import { PRIORITY_TONES, RECOMMENDATION_PRIORITIES, RECOMMENDATION_TYPES } from "../../utils/constants.js";
 import { formatDate } from "../../utils/formatters.js";
 import { html } from "../../utils/html.js";
 
 const PRIORITY_WEIGHT = { alta: 3, media: 2, baja: 1 };
-const PRIORITY_TONE = { alta: "danger", media: "warning", baja: "success" };
+const ALL = [{ value: "", label: "Todas" }];
 
 /**
  * Recomendaciones recibidas por el cliente (del sistema o de su asesor).
@@ -17,10 +23,21 @@ export class RecomendacionesPage extends PageController {
   constructor(element, options = {}) {
     super(element, options);
     this.recommendations = [];
-    this.filteredRecommendations = [];
   }
 
   render() {
+    this.filters = this.mountChild(FilterBar, "#recommendationFilters", {
+      idPrefix: "recommendations",
+      ariaLabel: "Filtrar recomendaciones",
+      fields: [
+        { type: "select", name: "priority", label: "Prioridad", options: [...ALL, ...RECOMMENDATION_PRIORITIES] },
+        { type: "select", name: "type", label: "Tipo", options: [{ value: "", label: "Todos" }, ...RECOMMENDATION_TYPES] },
+        { type: "select", name: "read", label: "Estado", options: [...ALL, { value: "no", label: "Sin leer" }, { value: "si", label: "Leidas" }] },
+        { type: "select", name: "sort", label: "Ordenar", options: [{ value: "fecha", label: "Mas reciente" }, { value: "prioridad", label: "Por prioridad" }] },
+      ],
+    });
+    this.detailModal = this.mountChild(Modal, "#recommendationDetailModal", { title: "Detalle de la recomendacion", size: "lg" });
+
     this._loadData(async () => {
       const recommendations = await recommendationsService.listMine();
       if (!this._isAlive()) {
@@ -28,172 +45,87 @@ export class RecomendacionesPage extends PageController {
       }
 
       this.recommendations = recommendations;
-      this._applyFilters();
+      this._renderGroups();
     });
   }
 
   attachEvents() {
-    [
-      "#recommendationPriorityFilter",
-      "#recommendationTypeFilter",
-      "#recommendationReadFilter",
-      "#recommendationSortFilter",
-    ].forEach((selector) => {
-      const select = this.element.querySelector(selector);
-      this.listen(select, "change", () => this._applyFilters());
-    });
-
-    const groups = this.element.querySelector("#recommendationGroups");
-    this.listen(groups, "click", (event) => this._handleCardAction(event));
-
+    this.listen(this.element, "filters-change", () => this._renderGroups());
+    this.listen(this.element.querySelector("#recommendationGroups"), "click", (event) => this._handleAction(event));
     this._bindDashboardBackButtons();
   }
 
-  _applyFilters() {
-    const priority = this._getValue("#recommendationPriorityFilter") || "todas";
-    const type = this._getValue("#recommendationTypeFilter") || "todos";
-    const readState = this._getValue("#recommendationReadFilter") || "todas";
-    const sort = this._getValue("#recommendationSortFilter") || "reciente";
+  _filtered() {
+    const { priority = "", type = "", read = "", sort = "fecha" } = this.filters.getValues();
 
-    let result = [...this.recommendations];
+    const result = this.recommendations.filter(
+      (item) => (!priority || item.priority === priority) && (!type || item.type === type) && (!read || item.read === (read === "si"))
+    );
 
-    if (priority !== "todas") {
-      result = result.filter((item) => item.priority === priority);
-    }
-
-    if (type !== "todos") {
-      result = result.filter((item) => item.type === type);
-    }
-
-    if (readState !== "todas") {
-      const wantRead = readState === "leidas";
-      result = result.filter((item) => item.read === wantRead);
-    }
-
-    if (sort === "prioridad") {
-      result.sort((a, b) => PRIORITY_WEIGHT[b.priority] - PRIORITY_WEIGHT[a.priority]);
-    } else {
-      result.sort((a, b) => String(b.date).localeCompare(String(a.date)));
-    }
-
-    this.filteredRecommendations = result;
-
-    const unreadCount = this.recommendations.filter((item) => !item.read).length;
-    this._setText("#recommendationCount", `${result.length} recomendaciones · ${unreadCount} sin leer`);
-    this._renderGroups();
+    return sort === "prioridad"
+      ? result.sort((a, b) => PRIORITY_WEIGHT[b.priority] - PRIORITY_WEIGHT[a.priority])
+      : result.sort((a, b) => String(b.date).localeCompare(String(a.date)));
   }
 
   _renderGroups() {
-    const highContainer = this.element.querySelector("#recommendationsHighPriority");
-    const otherContainer = this.element.querySelector("#recommendationsOtherPriority");
-    const readContainer = this.element.querySelector("#recommendationsRead");
+    const visible = this._filtered();
+    const unread = visible.filter((item) => !item.read);
+    const unreadTotal = this.recommendations.filter((item) => !item.read).length;
+    this._setText("#recommendationCount", `${visible.length} recomendaciones · ${unreadTotal} sin leer`);
 
-    if (!highContainer || !otherContainer || !readContainer) {
-      return;
-    }
+    const renderGroup = (selector, items, emptyTitle) => {
+      this.element.querySelector(selector).innerHTML = items.length
+        ? html`${items.map((item) =>
+            recommendationCard({
+              recommendation: item,
+              actions: [
+                ...(item.read ? [] : [{ action: "read", label: "Marcar como leida", variant: "primary" }]),
+                { action: "detail", label: "Ver detalle" },
+              ],
+            })
+          )}`
+        : emptyState({ icon: "fa-lightbulb", title: emptyTitle });
+    };
 
-    const unread = this.filteredRecommendations.filter((item) => !item.read);
-    const groups = [
-      {
-        container: highContainer,
-        items: unread.filter((item) => item.priority === "alta"),
-        emptyText: "No hay recomendaciones de prioridad alta sin leer para este filtro.",
-      },
-      {
-        container: otherContainer,
-        items: unread.filter((item) => item.priority !== "alta"),
-        emptyText: "No hay otras recomendaciones sin leer para este filtro.",
-      },
-      {
-        container: readContainer,
-        items: this.filteredRecommendations.filter((item) => item.read),
-        emptyText: "Todavia no leiste recomendaciones de este filtro.",
-      },
-    ];
-
-    groups.forEach(({ container, items, emptyText }) => {
-      container.innerHTML = items.length
-        ? html`${items.map((item) => this._buildRecommendationCard(item))}`
-        : html`<p class="text-muted">${emptyText}</p>`;
-    });
+    renderGroup("#recommendationsHigh", unread.filter((item) => item.priority === "alta"), "No hay recomendaciones de prioridad alta sin leer.");
+    renderGroup("#recommendationsOther", unread.filter((item) => item.priority !== "alta"), "No hay otras recomendaciones sin leer.");
+    renderGroup("#recommendationsRead", visible.filter((item) => item.read), "Todavia no leiste recomendaciones de este filtro.");
   }
 
-  _buildRecommendationCard(item) {
-    return html`
-      <article class="recommendation-card recommendation-card--${item.priority} ${item.read ? "recommendation-card--leida" : ""}">
-        <div class="recommendation-card__head">
-          <div>
-            <span class="badge-soft badge-soft--${PRIORITY_TONE[item.priority] || "warning"}">Prioridad ${this._label(RECOMMENDATION_PRIORITIES, item.priority)}</span>
-            <span class="badge-soft badge-soft--warning">${this._label(RECOMMENDATION_TYPES, item.type)}</span>
-            <h3 class="recommendation-card__title">${item.title}</h3>
-          </div>
-          <span class="badge-soft badge-soft--${item.read ? "success" : "danger"}">${item.read ? "Leida" : "Sin leer"}</span>
-        </div>
-
-        <p class="recommendation-card__text">${item.message}</p>
-
-        <p class="text-muted">${this._originLabel(item)} · ${formatDate(item.date)}</p>
-
-        <div class="recommendation-actions">
-          ${item.read
-            ? ""
-            : html`<button class="action-btn action-btn--primary" data-action="read" data-id="${item.id}" type="button">Marcar como leida</button>`}
-          <button class="action-btn action-btn--ghost" data-action="detail" data-id="${item.id}" type="button">Ver detalle</button>
-        </div>
-      </article>
-    `;
-  }
-
-  async _handleCardAction(event) {
-    const actionTarget = event.target.closest("[data-action]");
-    if (!actionTarget) {
-      return;
-    }
-
-    const recommendation = this.recommendations.find((item) => item.id === actionTarget.dataset.id);
+  async _handleAction(event) {
+    const trigger = event.target.closest("[data-action]");
+    const recommendation = trigger && this.recommendations.find((item) => item.id === trigger.dataset.id);
     if (!recommendation) {
       return;
     }
 
-    if (actionTarget.dataset.action === "read") {
+    if (trigger.dataset.action === "detail") {
+      this.detailModal.setTitle(recommendation.title);
+      this.detailModal.setContent(html`
+        <p class="mb-3">${recommendation.message}</p>
+        ${keyValueList({
+          items: [
+            { label: "Tipo", value: recommendationLabels.type(recommendation.type) },
+            { label: "Prioridad", value: badge({ text: recommendationLabels.priority(recommendation.priority), tone: PRIORITY_TONES[recommendation.priority] }) },
+            { label: "Origen", value: recommendationLabels.origin(recommendation) },
+            { label: "Fecha", value: formatDate(recommendation.date) },
+          ],
+        })}
+      `);
+      this.detailModal.open();
+      return;
+    }
+
+    if (trigger.dataset.action === "read") {
       const updated = await this._runAction(() => recommendationsService.markAsRead(recommendation.id), {
-        button: actionTarget,
+        button: trigger,
         successMessage: "Recomendacion marcada como leida.",
       });
 
       if (updated && this._isAlive()) {
         this.recommendations = this.recommendations.map((item) => (item.id === updated.id ? updated : item));
-        this._applyFilters();
+        this._renderGroups();
       }
-      return;
     }
-
-    if (actionTarget.dataset.action === "detail") {
-      this._openDetailModal(recommendation);
-    }
-  }
-
-  _openDetailModal(recommendation) {
-    const content = this.element.querySelector("#recommendationDetailContent");
-    if (content) {
-      content.innerHTML = html`
-        <h6 class="mb-2">${recommendation.title}</h6>
-        <p class="text-muted mb-2">${recommendation.message}</p>
-        <p class="text-muted mb-2"><strong>Tipo:</strong> ${this._label(RECOMMENDATION_TYPES, recommendation.type)}</p>
-        <p class="text-muted mb-2"><strong>Prioridad:</strong> ${this._label(RECOMMENDATION_PRIORITIES, recommendation.priority)}</p>
-        <p class="text-muted mb-2"><strong>Origen:</strong> ${this._originLabel(recommendation)}</p>
-        <p class="text-muted mb-0"><strong>Fecha:</strong> ${formatDate(recommendation.date)}</p>
-      `;
-    }
-
-    this._showModal("#recommendationDetailModal");
-  }
-
-  _originLabel(item) {
-    return item.origin === "asesor" ? `Enviada por ${item.advisorName || "tu asesor"}` : "Generada por el sistema";
-  }
-
-  _label(options, value) {
-    return options.find((option) => option.value === value)?.label || value;
   }
 }

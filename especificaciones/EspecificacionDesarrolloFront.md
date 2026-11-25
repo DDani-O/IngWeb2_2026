@@ -157,16 +157,20 @@ frontend/
 ├── mocks/                    # Backend simulado con el contrato de la §10
 ├── content/                  # Contenido estático (perfiles de gasto)
 │
-├── components/
+├── components/               # Biblioteca de componentes (catálogo en la §7); JS + CSS de cada uno
+│   ├── atoms/                # button, badge, avatar, trend, icon
+│   ├── molecules/            # statCard, alertItem, keyValueList, mediaItem, formField, infoCard, …
+│   ├── organisms/            # DataTable, FilterBar, ChartCard, Modal, ViewToggle, formularios, TicketUploader
 │   ├── layout/               # AppLayout (topbar + sidebar + footer, por rol) y PublicLayout
-│   └── modals/               # Modal de nueva recomendación del asesor
+│   ├── feedback/             # Toast
+│   └── components.css        # Importa las hojas de todos los componentes
 │
 ├── pages/                    # Cada página = NombrePage.js (con `static template`) + nombre.html
 │   ├── public/               # landing, placeholder / ruta no encontrada
 │   ├── cliente/              # dashboard, cargar-gasto, historial, patrones, recomendaciones, perfil, perfiles
 │   └── asesor/               # dashboard, clientes, perfil
 │
-├── assets/css/               # global.css (tokens), layouts.css, themes/, components/<pagina>.css
+├── assets/css/               # global.css (tokens), layouts.css (patrones de página), themes/, components/ (landing, placeholder, patrones, perfiles)
 └── utils/                    # constants, formatters, helpers, validators, html (escapado)
 ```
 
@@ -373,111 +377,52 @@ El `Router` **no** es singleton: se crea una vez en `app.js` con su configuraci�
 
 ## 7. SISTEMA DE COMPONENTES
 
-### Concepto General
+> Vigente desde la Fase 3 del refactor (`DiagnosticoRefactor.md` §7). Base teórica: `referencias/TeoriaComponentes.md`.
 
-Un **componente** es una unidad reutilizable de UI que encapsula estructura (HTML), estilos (CSS) e interactividad (JS).
+### Convenciones
 
-### Características Base
+- **Ubicación:** `frontend/components/{atoms,molecules,organisms,layout,feedback}/`. Cada componente tiene su JS y su CSS al lado (`badge.js` + `badge.css`); `components/components.css` importa todas las hojas.
+- **Átomos y moléculas sin estado → funciones puras** que reciben props y devuelven HTML escapado (`SafeHtml` de `utils/html.js`). Ejemplo: `badge({ text: "Alta", tone: "danger" })`.
+- **Organismos con comportamiento → clases `Component`.** Se montan con `this.mountChild(Clase, puntoDeMontaje, props)` (se destruyen con la página) y se actualizan con `componente.update(props)`.
+- **Props hacia abajo, eventos hacia arriba:** un organismo nunca modifica datos del padre; avisa con `this.dispatch("nombre-evento", detalle)` (`CustomEvent` que burbujea) y el padre escucha con `this.listen(this.element, "nombre-evento", ...)`. El `EventBus` queda para hechos de aplicación (sesión, gasto creado, perfil actualizado, tema).
+- **Slots:** contenido inyectable por props `SafeHtml` (`body`, `footer`, `trailing`…) o montando un componente dentro de otro (`Modal.bodyElement`).
+- **Acciones en listas:** los botones llevan `data-action` y `data-id`; el contenedor atiende por delegación (DataTable lo traduce a `row-action`).
+- **CSS mobile-first** (`min-width`), con tokens de `global.css`. Nombres que no chocan con Bootstrap (`status-badge`, `stat-card`, `data-table`, `alert-item`…).
+- **Páginas:** solo componen y orquestan (piden datos a los servicios, pasan props, reaccionan a eventos). Sus templates tienen la estructura estática (`section-block`, `section-title`) y puntos de montaje con `id`.
 
-Todos los componentes heredan de la clase `Component` que proporciona:
+### Catálogo
 
-- **Ciclo de vida**: `constructor()` → `render()` → `attachEvents()` → `destroy()`
-- **Validación de opciones**: Verificar que recibe parámetros correctos
-- **Logging interno**: Debug habilitado/deshabilitado
-- **Sistema de eventos**: Emitir eventos propios
-- **Manejo de memoria**: Limpiar recursos al destruir
+| Nivel | Componente | API (props → eventos) | Usado en |
+|---|---|---|---|
+| Átomo | `button` | `label, variant (primary·ghost·danger), size (sm·md), icon, type, href, newTab, action, id, block, disabled` | todas |
+| Átomo | `badge` | `text, tone (neutral·success·warning·danger·info), icon` | historial, recomendaciones, clientes, dashboard |
+| Átomo | `avatar` | `name, size (sm·md·lg)` | clientes, perfiles de cuenta |
+| Átomo | `trend` | `value (%), label, goodWhen (down)` | KPIs, clientes |
+| Átomo | `icon` | `name, label` (con label es accesible; sin label, decorativo) | todos |
+| Molécula | `statCard` | `label, value, format (currency·number·percent·text), emoji, subtitle, trend` | dashboards, patrones |
+| Molécula | `alertItem` | `title, description, tone, emoji` | dashboards, patrones |
+| Molécula | `keyValueList` | `items [{label, value}], variant (rows·boxed)` | resúmenes, detalles, OCR |
+| Molécula | `mediaItem` | `title, subtitle, leading, trailing, variant` | comercios, gastos recientes, categorías |
+| Molécula | `formField` / `formGrid` | `id, name, label, type, value, options, required, readonly, hint, width (full·half·third), inputAttrs` | formularios |
+| Molécula | `infoCard` | `title, icon, subtitle, body (slot), footer (slot), highlight` | dashboards, OCR |
+| Molécula | `dateCard` | `date` | dashboards |
+| Molécula | `clientCard` (+ `CLIENT_TABLE_COLUMNS`) | `client, actions` | dashboard y clientes del asesor |
+| Molécula | `recommendationCard` | `recommendation, actions` | recomendaciones |
+| Molécula | `profileSummary` | `fullName, email, items, footer` | perfiles de cuenta |
+| Molécula | `emptyState` · `loadingState` · `errorState` | `icon, title, message, action` · `message` · `message, retryLabel` (botón `data-action="retry"`) | todas (PageController) |
+| Organismo | `DataTable` | `columns [{key, label, render, align}], rows, rowKey, actions, empty, caption` → `row-action {action, id, row}`. Tarjetas en mobile, tabla desde 768px | historial, clientes, perfiles |
+| Organismo | `FilterBar` | `fields [{type: search·select, name, label, options}], values, idPrefix` → `filters-change {values}`; `getValues()`, `setOptions()` | historial, clientes, recomendaciones |
+| Organismo | `ChartCard` | `title, icon, type (bar·line·doughnut·pie), labels, datasets [{label, data, kind, dashed}], valueFormat, height (sm·md·lg), caption, link` | dashboards, patrones |
+| Organismo | `Modal` + `confirmDialog()` | `title, size, body, footer` → `modal-close`; `open()`, `close()`, `setContent()`, `bodyElement`. `confirmDialog({...})` devuelve `Promise<boolean>` | historial, clientes, recomendaciones |
+| Organismo | `ViewToggle` | `modes [{value, label, icon}], value, label` → `view-change {value}` | dashboard y clientes del asesor |
+| Organismo | `RecommendationForm` | `recipients, selectedId, idPrefix` → `recommendation-submit {recommendation}` | dentro de RecommendationDialog |
+| Organismo | `RecommendationDialog` | Modal + RecommendationForm; `open(clientId)`, `setRecipients()`, `setBusy()` | dashboard y clientes del asesor |
+| Organismo | `ProfileForm` | `fields (esquema de formField), values, idPrefix, extraActions` → `profile-submit {values}`, `profile-reset` | perfil del cliente y del asesor |
+| Organismo | `TicketUploader` | `accept, maxSizeMb, inputId` → `ticket-analyze {file}`; click, teclado y arrastrar/soltar con validación | cargar gasto |
+| Template | `AppLayout` · `PublicLayout` | `config` por rol, `user`, `onLogout`, `onReturnHome` | router |
+| Servicio | `createToaster(container)` | `showToast(message, tone)` | app.js |
 
-### Estructura de un Componente
-
-**Archivo JS:** `components/NombreComponente/NombreComponente.js`
-
-```javascript
-class NombreComponente extends Component {
-  // Opciones por defecto
-  static DEFAULTS = {
-    text: '',
-    type: 'primary'
-  };
-
-  // Validar opciones recibidas
-  _validateOptions(options) {
-    if (options.type && !['primary', 'secondary'].includes(options.type)) {
-      throw new Error('Tipo inválido');
-    }
-  }
-
-  // Generar HTML
-  render() {
-    this.elemento.innerHTML = `
-      <button class="btn btn-${this.options.type}">
-        ${this.options.text}
-      </button>
-    `;
-  }
-
-  // Adjuntar event listeners
-  attachEvents() {
-    this.elemento.querySelector('button').addEventListener('click', (e) => {
-      this.emit('clicked', { target: e.target });
-    });
-  }
-
-  // Limpiar recursos
-  destroy() {
-    // Quitar event listeners, limpiar referencias
-    super.destroy();
-  }
-}
-```
-
-**Archivo CSS:** `components/NombreComponente/NombreComponente.css`
-
-```css
-/* Componente principal */
-.component-nombre {
-  /* estilos base */
-}
-
-/* Variantes */
-.component-nombre--primary {
-  /* estilos para variante primary */
-}
-
-.component-nombre--secondary {
-  /* estilos para variante secondary */
-}
-```
-
-### Ciclo de Vida Completo
-
-```
-1. new NombreComponente(selector, options)
-   ↓
-2. Constructor valida opciones
-   ↓
-3. render() genera HTML en el selector
-   ↓
-4. attachEvents() adjunta event listeners
-   ↓
-5. Componente activo y funcional
-   ↓
-6. destroy() limpia y quita listeners
-```
-
-### Reutilización mediante Herencia
-
-```
-Component (base universal)
-  ↓
-CardComponent (base para tarjetas)
-  ├── FeatureCard (tarjeta de feature)
-  ├── StatsCard (tarjeta de estadísticas)
-  └── ProfileCard (tarjeta de perfil)
-```
-
-### Nota sobre Lista de Componentes
-
-La lista específica de componentes necesarios (Button, FormInput, Card, Modal, etc.) se detallará en la **siguiente etapa del proyecto**. En esta fase, definimos la arquitectura y estructura base.
+La landing y el placeholder conservan su marcado propio (no forman parte de la Fase 3); sus estilos se ordenan en la Fase 4.
 
 ---
 

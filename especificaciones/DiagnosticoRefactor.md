@@ -515,13 +515,14 @@ Cada fase termina con el front funcionando (checklist manual del README + recorr
 - `core/TabRegistry.js` (decisión 3); se eliminan los globales `window.fintrack*`.
 - Spec §4 y §11.5 actualizadas (la tabla de rutas pasa a ser `routes.js`).
 
-### Fase 3 — Componentes genéricos (mobile-first) y gráficos
+### Fase 3 — Componentes genéricos (mobile-first) y gráficos · ✅ completada (25/11/2026)
 - Átomos: `button`, `badge`, `avatar`, `trend`, `icon`.
 - Moléculas: `statCard`, `alertItem`, `keyValueList`, `sectionHeader`, `mediaItem`, `formField`, `emptyState`/`loadingState`/`errorState`.
 - Organismos: `DataTable`, `FilterBar`, `ChartCard`, `Modal`, `ConfirmDialog`, `ViewToggle`, `RecommendationForm`, `ClientCard`, `RecommendationCard`, `ProfileForm`, `TicketUploader`, servicio `Toast`.
 - Migración página por página (dashboard del cliente + patrones → dashboard del asesor + clientes → historial → cargar gasto → recomendaciones → perfiles → perfiles de cuenta), **eliminando** el marcado, el JS y el CSS viejos de cada una (decisión 5).
 - Gráficos nuevos de las specs (decisión 9).
 - Accesibilidad incorporada en cada componente (O-19).
+- Como quedó implementado: 5 átomos, 11 moléculas y 9 organismos (catálogo en la spec §7). Cambios respecto del catálogo previsto: no se creó `sectionHeader` (los títulos de sección son HTML estático de los templates), se sumaron `dateCard`, `profileSummary` y `RecommendationDialog` (Modal + RecommendationForm), y `ClientCard` y `RecommendationCard` quedaron como moléculas (render puro con acciones por delegación). La landing y el placeholder conservan su marcado (quedan para la Fase 4 de CSS).
 
 ### Fase 4 — CSS
 - Escalas de espaciado y tipografía, temas sin duplicación, tokens sin uso fuera, colores de la landing tokenizados (R4).

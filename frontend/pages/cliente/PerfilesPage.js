@@ -1,4 +1,6 @@
 import { PageController } from "../../core/PageController.js";
+import { badge } from "../../components/atoms/badge.js";
+import { DataTable } from "../../components/organisms/DataTable.js";
 import { findSpendingProfileContent } from "../../content/spendingProfiles.js";
 import { profileService } from "../../services/profile.service.js";
 import { html } from "../../utils/html.js";
@@ -19,6 +21,8 @@ export class PerfilesPage extends PageController {
   static template = "./pages/cliente/perfiles.html";
 
   render() {
+    this.comparison = this.mountChild(DataTable, "#profilesComparison", { caption: "Comparativa de perfiles de gasto", rowKey: "key" });
+
     this._loadData(async () => {
       const [catalog, user] = await Promise.all([profileService.listSpendingProfiles(), profileService.getMine()]);
       if (!this._isAlive()) {
@@ -28,9 +32,8 @@ export class PerfilesPage extends PageController {
       const profiles = catalog
         .map((profile) => ({ ...profile, content: findSpendingProfileContent(profile.name) }))
         .filter((profile) => profile.content);
-      const assignedId = user.client?.spendingProfile?.id || null;
 
-      this._renderProfiles(profiles, assignedId);
+      this._renderProfiles(profiles, user.client?.spendingProfile?.id || null);
       this._renderComparison(profiles);
     });
   }
@@ -40,56 +43,35 @@ export class PerfilesPage extends PageController {
   }
 
   _renderProfiles(profiles, assignedId) {
-    const container = this.element.querySelector("#profilesGrid");
-    if (!container) {
-      return;
-    }
-
-    container.innerHTML = html`${profiles.map(({ id, content }) => {
-      const isAssigned = id === assignedId;
-
-      return html`
-        <article class="profile-showcase profile-card ${content.colorClass} ${isAssigned ? "profile-card--active" : ""}">
-          <div class="profile-card__emoji">${content.emoji}</div>
-          <h3 class="profile-card__name">${content.name}</h3>
-          <p class="profile-card__tagline">${content.tagline}</p>
-          <p class="profile-card__description">${content.description}</p>
-
-          <h4 class="profile-card__section-title">Caracteristicas:</h4>
-          <ul class="profile-card__list">
-            ${content.characteristics.map((item) => html`<li>${item}</li>`)}
-          </ul>
-
-          ${isAssigned
-            ? html`<span class="profile-active-badge"><i class="fa-solid fa-circle-check"></i>Tu perfil actual, asignado automaticamente</span>`
-            : ""}
-        </article>
-      `;
-    })}`;
-
-    if (!assignedId) {
-      container.insertAdjacentHTML(
-        "afterbegin",
-        String(html`<p class="text-muted">Todavia no tenes un perfil asignado: el sistema lo calcula cuando registras tus primeros gastos.</p>`)
-      );
-    }
+    this.element.querySelector("#profilesGrid").innerHTML = html`
+      ${assignedId ? "" : html`<p class="text-muted">Todavia no tenes un perfil asignado: el sistema lo calcula cuando registras tus primeros gastos.</p>`}
+      ${profiles.map(({ id, content }) => {
+        const isAssigned = id === assignedId;
+        return html`
+          <article class="profile-showcase profile-card ${content.colorClass} ${isAssigned ? "profile-card--active" : ""}" ${isAssigned ? html`aria-current="true"` : ""}>
+            <div class="profile-card__emoji" aria-hidden="true">${content.emoji}</div>
+            <h3 class="profile-card__name">${content.name}</h3>
+            <p class="profile-card__tagline">${content.tagline}</p>
+            <p class="profile-card__description">${content.description}</p>
+            <h4 class="profile-card__section-title">Caracteristicas:</h4>
+            <ul class="profile-card__list">
+              ${content.characteristics.map((item) => html`<li>${item}</li>`)}
+            </ul>
+            ${isAssigned ? badge({ text: "Tu perfil actual, asignado automaticamente", tone: "success", icon: "fa-circle-check" }) : ""}
+          </article>
+        `;
+      })}
+    `;
   }
 
   _renderComparison(profiles) {
-    const head = this.element.querySelector("#profilesComparisonHead");
-    const body = this.element.querySelector("#profilesComparisonBody");
-    if (!head || !body) {
-      return;
-    }
-
-    head.innerHTML = html`<tr><th>Metrica</th>${profiles.map(({ content }) => html`<th>${content.name}</th>`)}</tr>`;
-    body.innerHTML = html`${COMPARISON_ROWS.map(
-      ([label, key]) => html`
-        <tr>
-          <td>${label}</td>
-          ${profiles.map(({ content }) => html`<td>${content.comparison[key]}</td>`)}
-        </tr>
-      `
-    )}`;
+    this.comparison.update({
+      columns: [{ key: "label", label: "Metrica" }, ...profiles.map(({ content }) => ({ key: content.id, label: content.name }))],
+      rows: COMPARISON_ROWS.map(([label, key]) => ({
+        key,
+        label,
+        ...Object.fromEntries(profiles.map(({ content }) => [content.id, content.comparison[key]])),
+      })),
+    });
   }
 }

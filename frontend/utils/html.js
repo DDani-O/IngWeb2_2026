@@ -73,10 +73,24 @@ export function html(strings, ...values) {
 }
 
 /**
- * Marca como seguro un HTML de confianza (solo para marcado fijo del propio código).
- * @param {string} trustedMarkup
+ * Arma atributos HTML seguros a partir de un objeto. Omite valores false/null/undefined;
+ * `true` genera un atributo booleano. Los nombres se validan y los valores se escapan.
+ * Ejemplo: html`<button ${attrs({ "data-id": id, disabled: busy })}>`.
+ * @param {Object<string, *>} attributes
  * @returns {SafeHtml}
  */
-export function unsafeRaw(trustedMarkup) {
-  return new SafeHtml(trustedMarkup);
+export function attrs(attributes = {}) {
+  const parts = Object.entries(attributes)
+    .filter(([name, value]) => /^[a-zA-Z][\w:-]*$/.test(name) && value !== false && value !== null && value !== undefined)
+    .map(([name, value]) => (value === true ? name : `${name}="${escapeHtml(value)}"`));
+
+  return new SafeHtml(parts.join(" "));
+}
+
+/**
+ * Une clases CSS ignorando valores vacíos.
+ * @param {...(string|false|null|undefined)} classNames
+ */
+export function cx(...classNames) {
+  return classNames.filter(Boolean).join(" ");
 }

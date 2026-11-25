@@ -1,0 +1,20 @@
+/* Átomo Badge (mobile-first). Ver badge.js */
+.status-badge {
+  --badge-color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--badge-color) 35%, transparent);
+  background: color-mix(in srgb, var(--badge-color) 18%, transparent);
+  color: color-mix(in srgb, var(--badge-color) 75%, var(--text-primary) 25%);
+  font-size: 0.74rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.status-badge--success { --badge-color: var(--color-success); }
+.status-badge--warning { --badge-color: var(--color-warning); }
+.status-badge--danger { --badge-color: var(--color-danger); }
+.status-badge--info { --badge-color: var(--color-info); }

@@ -1,0 +1,35 @@
+/* Servicio Toast (mobile-first). Ver toast.js */
+.global-toast-container {
+  position: fixed;
+  right: var(--floating-edge-gap);
+  bottom: var(--floating-bottom-gap); /* incluye env(safe-area-inset-bottom) */
+  left: var(--floating-edge-gap);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.625rem;
+  z-index: 2100;
+  pointer-events: none;
+}
+
+.app-toast {
+  pointer-events: auto;
+  background: var(--surface-2);
+  border: 1px solid var(--border-soft);
+  border-left: 4px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  padding: 0.7rem 0.75rem;
+  box-shadow: var(--shadow-soft);
+  color: var(--text-primary);
+}
+
+.app-toast--success { border-left-color: var(--color-success); }
+.app-toast--warning { border-left-color: var(--color-warning); }
+.app-toast--danger { border-left-color: var(--color-danger); }
+
+@media (min-width: 576px) {
+  .global-toast-container {
+    left: auto;
+    width: min(23rem, calc(100vw - 2 * var(--floating-edge-gap)));
+  }
+}

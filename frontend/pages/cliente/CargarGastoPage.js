@@ -1,4 +1,11 @@
 import { PageController } from "../../core/PageController.js";
+import { badge } from "../../components/atoms/badge.js";
+import { formField, formGrid } from "../../components/molecules/formField.js";
+import { infoCard } from "../../components/molecules/infoCard.js";
+import { keyValueList } from "../../components/molecules/keyValueList.js";
+import { mediaItem } from "../../components/molecules/mediaItem.js";
+import { emptyState } from "../../components/molecules/stateBlock.js";
+import { TicketUploader } from "../../components/organisms/TicketUploader.js";
 import { categoriesService } from "../../services/categories.service.js";
 import { expensesService } from "../../services/expenses.service.js";
 import { ticketsService } from "../../services/tickets.service.js";
@@ -7,11 +14,11 @@ import { formatCurrency, formatDate, todayIsoDate } from "../../utils/formatters
 import { html } from "../../utils/html.js";
 
 const RECENT_LIMIT = 6;
-const EMPTY_FILE_TEXT = "Selecciona una imagen del ticket";
+const DRAFT_FIELDS = ["merchant", "amount", "categoryId", "date", "description"];
 
 /**
- * Carga de gastos (consigna §4.2): formulario manual y carga por imagen de ticket con OCR/IA,
- * que precompleta el formulario para que el cliente lo revise antes de guardar.
+ * Carga de gastos (consigna §4.2): formulario manual con los campos de la consigna y carga por
+ * imagen de ticket con OCR/IA, que precompleta el formulario para que el cliente lo revise.
  */
 export class CargarGastoPage extends PageController {
   static template = "./pages/cliente/cargar-gasto.html";
@@ -20,109 +27,81 @@ export class CargarGastoPage extends PageController {
     super(element, options);
     // Resultado del OCR: si existe al guardar, el gasto queda con origen "ticket".
     this.ticketAnalysis = null;
+    this.categories = [];
     const userId = this.options.authManager?.getCurrentUser()?.id || "anonimo";
     this.draftStorageKey = `${STORAGE_KEYS.EXPENSE_DRAFT}.${userId}`;
   }
 
   render() {
+    this._renderFields();
+    this.uploader = this.mountChild(TicketUploader, "#ticketUploader", { inputId: "expenseTicketFile" });
+
     this._loadData(async () => {
-      const [categories, recent] = await Promise.all([
-        categoriesService.list(),
-        expensesService.list({ limit: RECENT_LIMIT }),
-      ]);
+      const [categories, recent] = await Promise.all([categoriesService.list(), expensesService.list({ limit: RECENT_LIMIT })]);
       if (!this._isAlive()) {
         return;
       }
 
-      this._renderCategoryOptions(categories);
-      this._renderMerchantSuggestions(recent.items);
-      this._renderRecentExpenses(recent.items);
-      this._restoreDraft();
-      this._setDateIfEmpty();
+      this.categories = categories;
+      this._renderFields(this._readDraft());
+      this._renderRecent(recent.items);
     });
   }
 
   attachEvents() {
-    const form = this.element.querySelector("#userExpenseForm");
-    const clearButton = this.element.querySelector("#clearExpenseFormButton");
-    const analyzeButton = this.element.querySelector("#analyzeTicketButton");
-    const fileInput = this.element.querySelector("#expenseTicketFile");
-
-    this.listen(form, "submit", (event) => this._handleFormSubmit(event));
+    const form = this.element.querySelector("#expenseForm");
+    this.listen(form, "submit", (event) => this._handleSubmit(event));
     this.listen(form, "input", () => this._persistDraft());
     this.listen(form, "change", () => this._persistDraft());
-
-    this.listen(clearButton, "click", () => this._clearForm());
-    this.listen(analyzeButton, "click", () => this._analyzeTicket(analyzeButton));
-
-    this.listen(fileInput, "change", () => {
-      const selectedFile = fileInput?.files?.[0];
-      this._setText("#ticketFileName", selectedFile ? `Archivo seleccionado: ${selectedFile.name}` : EMPTY_FILE_TEXT);
-    });
-
+    this.listen(this.element.querySelector('[data-action="clear"]'), "click", () => this._clearForm());
+    this.listen(this.element, "ticket-analyze", (event) => this._analyzeTicket(event.detail.file));
     this._bindDashboardBackButtons();
   }
 
-  _renderCategoryOptions(categories) {
-    const select = this.element.querySelector("#expenseCategory");
-    if (!select) {
-      return;
-    }
-
-    select.innerHTML = html`
-      <option value="">Seleccionar categoria</option>
-      ${categories.map((category) => html`<option value="${category.id}">${category.icon} ${category.name}</option>`)}
-    `;
+  /**
+   * Dibuja los campos del formulario con los valores indicados.
+   * @param {{merchant?, amount?, categoryId?, date?, description?}} values
+   */
+  _renderFields(values = {}) {
+    const container = this.element.querySelector("#expenseFields");
+    container.innerHTML = formGrid(html`
+      ${formField({ id: "expenseMerchant", name: "merchant", label: "Comercio", required: true, width: "half", value: values.merchant, inputAttrs: { list: "merchantSuggestions", autocomplete: "off", maxlength: 120 } })}
+      ${formField({ id: "expenseAmount", name: "amount", label: "Monto", type: "number", required: true, width: "half", value: values.amount, inputAttrs: { min: "0.01", step: "0.01", inputmode: "decimal" } })}
+      ${formField({ id: "expenseCategory", name: "categoryId", label: "Categoria", type: "select", required: true, width: "half", value: values.categoryId, placeholderOption: "Seleccionar categoria", options: this.categories.map((category) => ({ value: category.id, label: `${category.icon} ${category.name}` })) })}
+      ${formField({ id: "expenseDate", name: "date", label: "Fecha", type: "date", required: true, width: "half", value: values.date || todayIsoDate(), inputAttrs: { max: todayIsoDate() } })}
+      ${formField({ id: "expenseDescription", name: "description", label: "Descripcion", type: "textarea", value: values.description, inputAttrs: { placeholder: "Ej: compra semanal, combustible, etc.", maxlength: 300 } })}
+    `);
   }
 
-  _renderMerchantSuggestions(expenses) {
-    const datalist = this.element.querySelector("#merchantSuggestions");
-    if (!datalist) {
-      return;
-    }
-
+  _renderRecent(expenses) {
     const merchants = [...new Set(expenses.map((expense) => expense.merchant))];
-    datalist.innerHTML = html`${merchants.map((merchant) => html`<option value="${merchant}"></option>`)}`;
-  }
+    this.element.querySelector("#merchantSuggestions").innerHTML = html`${merchants.map((merchant) => html`<option value="${merchant}"></option>`)}`;
 
-  _renderRecentExpenses(expenses) {
-    const container = this.element.querySelector("#recentExpenseList");
-    if (!container) {
-      return;
-    }
-
-    container.innerHTML = expenses.length
-      ? html`${expenses.map(
-          (expense) => html`
-            <article class="recent-expense-item">
-              <div>
-                <p class="recent-expense-item__title">${expense.merchant}</p>
-                <p class="recent-expense-item__meta">${formatDate(expense.date)} · ${expense.category}</p>
-              </div>
-              <div class="text-end">
-                <p class="recent-expense-item__amount">${formatCurrency(expense.amount)}</p>
-                <span class="badge-soft ${expense.origin === "ticket" ? "badge-soft--success" : "badge-soft--warning"}">${EXPENSE_ORIGINS[expense.origin] || expense.origin}</span>
-              </div>
-            </article>
-          `
+    this.element.querySelector("#recentExpenses").innerHTML = expenses.length
+      ? html`${expenses.map((expense) =>
+          mediaItem({
+            title: expense.merchant,
+            subtitle: `${formatDate(expense.date)} · ${expense.category}`,
+            trailing: html`${formatCurrency(expense.amount)}${badge({ text: EXPENSE_ORIGINS[expense.origin] || expense.origin, tone: expense.origin === "ticket" ? "success" : "neutral" })}`,
+          })
         )}`
-      : html`<p class="text-muted">Todavia no cargaste gastos.</p>`;
+      : emptyState({ icon: "fa-receipt", title: "Todavia no cargaste gastos" });
   }
 
-  async _handleFormSubmit(event) {
+  async _handleSubmit(event) {
     event.preventDefault();
-
-    const form = this.element.querySelector("#userExpenseForm");
-    if (!form || !form.checkValidity()) {
-      form?.reportValidity();
+    const form = event.target;
+    if (!form.checkValidity()) {
+      form.reportValidity();
       return;
     }
 
-    const values = this._readFormValues();
+    const values = this._readValues();
     const created = await this._runAction(
       () =>
         expensesService.create({
           ...values,
+          amount: Number(values.amount),
           origin: this.ticketAnalysis ? "ticket" : "manual",
           ticketId: this.ticketAnalysis?.ticketId || null,
         }),
@@ -136,113 +115,88 @@ export class CargarGastoPage extends PageController {
     this._clearForm();
     const recent = await this._runAction(() => expensesService.list({ limit: RECENT_LIMIT }));
     if (recent && this._isAlive()) {
-      this._renderRecentExpenses(recent.items);
-      this._renderMerchantSuggestions(recent.items);
+      this._renderRecent(recent.items);
     }
   }
 
-  async _analyzeTicket(button) {
-    const selectedFile = this.element.querySelector("#expenseTicketFile")?.files?.[0];
-
-    if (!selectedFile) {
-      this.options.showToast?.("Selecciona una imagen de ticket para analizar.", "warning");
-      return;
-    }
-
-    this._setText("#ticketFileName", `Analizando ${selectedFile.name}...`);
-    const analysis = await this._runAction(() => ticketsService.upload(selectedFile), {
-      button,
-      successMessage: "Ticket analizado. Verifica los datos antes de guardar.",
+  async _analyzeTicket(file) {
+    this.uploader.setBusy(true);
+    const analysis = await this._runAction(() => ticketsService.upload(file), {
+      successMessage: "Ticket analizado. Revisa los datos antes de guardar.",
     });
-    this._setText("#ticketFileName", `Archivo seleccionado: ${selectedFile.name}`);
+    this.uploader.setBusy(false);
 
     if (!analysis || !this._isAlive()) {
       return;
     }
 
     this.ticketAnalysis = analysis;
-    this._setInputValue("#expenseMerchant", analysis.merchant);
-    this._setInputValue("#expenseAmount", analysis.amount === null ? "" : String(analysis.amount));
-    this._setInputValue("#expenseCategory", analysis.categoryId);
-    this._setInputValue("#expenseDate", analysis.date);
-    this._setInputValue("#expenseDescription", `Ticket: ${analysis.fileName}`);
-
+    this._renderFields({
+      merchant: analysis.merchant,
+      amount: analysis.amount ?? "",
+      categoryId: analysis.categoryId,
+      date: analysis.date,
+      description: `Ticket: ${analysis.fileName}`,
+    });
     this._showOcrResult(analysis);
     this._persistDraft();
   }
 
   _showOcrResult(analysis) {
-    const card = this.element.querySelector("#ocrResultCard");
-    const rows = this.element.querySelector("#ocrResultRows");
-
-    if (!card || !rows) {
-      return;
-    }
-
+    const container = this.element.querySelector("#ocrResult");
     if (!analysis) {
-      card.classList.add("app-hidden");
-      rows.replaceChildren();
+      container.replaceChildren();
       return;
     }
 
-    const items = [
-      ["Archivo", analysis.fileName],
-      ["Comercio", analysis.merchant || "-"],
-      ["Monto", analysis.amount === null ? "-" : formatCurrency(analysis.amount)],
-      ["Categoria sugerida", analysis.categoryName || "-"],
-      ["Fecha", analysis.date ? formatDate(analysis.date) : "-"],
-      ["Confianza", analysis.confidence === null ? "-" : `${analysis.confidence}%`],
-    ];
+    container.innerHTML = infoCard({
+      title: "Datos detectados",
+      icon: "fa-circle-check",
+      subtitle: "Ya los cargamos en el formulario: revisalos y corregi lo que haga falta.",
+      body: keyValueList({
+        items: [
+          { label: "Archivo", value: analysis.fileName },
+          { label: "Comercio", value: analysis.merchant },
+          { label: "Monto", value: analysis.amount === null ? "-" : formatCurrency(analysis.amount) },
+          { label: "Categoria sugerida", value: analysis.categoryName },
+          { label: "Fecha", value: analysis.date ? formatDate(analysis.date) : "-" },
+          { label: "Confianza", value: analysis.confidence === null ? "-" : `${analysis.confidence}%` },
+        ],
+      }),
+    });
+  }
 
-    rows.innerHTML = html`${items.map(([label, value]) => html`<div class="ocr-result__row"><span>${label}</span><strong>${value}</strong></div>`)}`;
-    card.classList.remove("app-hidden");
+  _readValues() {
+    const form = this.element.querySelector("#expenseForm");
+    const values = Object.fromEntries(new FormData(form).entries());
+    return {
+      merchant: (values.merchant || "").trim(),
+      amount: values.amount || "",
+      categoryId: values.categoryId || "",
+      date: values.date || "",
+      description: (values.description || "").trim(),
+    };
   }
 
   _persistDraft() {
-    localStorage.setItem(this.draftStorageKey, JSON.stringify(this._readFormValues()));
+    localStorage.setItem(this.draftStorageKey, JSON.stringify(this._readValues()));
   }
 
-  _restoreDraft() {
-    const rawDraft = localStorage.getItem(this.draftStorageKey);
-    if (!rawDraft) {
-      return;
-    }
-
+  _readDraft() {
     try {
-      const draft = JSON.parse(rawDraft);
-      this._setInputValue("#expenseMerchant", draft.merchant || "");
-      this._setInputValue("#expenseAmount", draft.amount ? String(draft.amount) : "");
-      this._setInputValue("#expenseCategory", draft.categoryId || "");
-      this._setInputValue("#expenseDate", draft.date || "");
-      this._setInputValue("#expenseDescription", draft.description || "");
+      const draft = JSON.parse(localStorage.getItem(this.draftStorageKey) || "{}");
+      return Object.fromEntries(DRAFT_FIELDS.map((field) => [field, draft[field] || ""]));
     } catch {
       localStorage.removeItem(this.draftStorageKey);
+      return {};
     }
   }
 
   _clearForm() {
-    this.element.querySelector("#userExpenseForm")?.reset();
     localStorage.removeItem(this.draftStorageKey);
     this.ticketAnalysis = null;
-    this._setText("#ticketFileName", EMPTY_FILE_TEXT);
+    this._renderFields();
     this._showOcrResult(null);
-    this._setDateIfEmpty();
-  }
-
-  _setDateIfEmpty() {
-    const input = this.element.querySelector("#expenseDate");
-    if (input && !input.value) {
-      input.value = todayIsoDate();
-    }
-  }
-
-  _readFormValues() {
-    return {
-      merchant: this._getValue("#expenseMerchant"),
-      amount: Number(this._getValue("#expenseAmount") || 0),
-      categoryId: this._getValue("#expenseCategory"),
-      date: this._getValue("#expenseDate"),
-      description: this._getValue("#expenseDescription"),
-    };
+    this.uploader.reset();
   }
 }

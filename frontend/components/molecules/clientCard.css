@@ -1,0 +1,59 @@
+/* Molécula ClientCard (mobile-first). Ver clientCard.js */
+.client-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .client-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (min-width: 1200px) {
+  .client-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+.client-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  padding: 0.875rem;
+  transition: 180ms ease;
+}
+
+.client-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-accent);
+}
+
+.client-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.client-card__identity {
+  flex: 1;
+  min-width: 8rem;
+}
+
+.client-card__name {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.client-card__profile {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+
+.client-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: auto;
+}

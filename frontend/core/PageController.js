@@ -1,4 +1,5 @@
 import { ROUTES } from "../utils/constants.js";
+import { errorState, loadingState } from "../components/molecules/stateBlock.js";
 import { Component } from "./Component.js";
 
 export class PageController extends Component {
@@ -61,32 +62,18 @@ export class PageController extends Component {
   }
 
   _showStatus(kind, message, onRetry = null) {
-    // Se ubica después del primer bloque de la página (el encabezado).
-    const anchor = this.element.querySelector(".app-page-content") || this.element;
-
     if (!this._statusElement) {
       this._statusElement = document.createElement("div");
+      this._statusElement.className = "app-status";
     }
 
     const status = this._statusElement;
-    status.className = `app-status app-status--${kind}`;
-    status.setAttribute("role", kind === "error" ? "alert" : "status");
-    status.replaceChildren();
-
-    const text = document.createElement("span");
-    text.textContent = message;
-    status.append(text);
-
-    if (onRetry) {
-      const retry = document.createElement("button");
-      retry.type = "button";
-      retry.className = "action-btn action-btn--ghost";
-      retry.textContent = "Reintentar";
-      retry.addEventListener("click", onRetry, { once: true });
-      status.append(retry);
-    }
+    status.innerHTML = kind === "error" ? errorState({ message, retryLabel: onRetry ? "Reintentar" : null }) : loadingState({ message });
+    status.querySelector('[data-action="retry"]')?.addEventListener("click", onRetry, { once: true });
 
     if (!status.isConnected) {
+      // Se ubica después del primer bloque de la página (el encabezado).
+      const anchor = this.element.querySelector(".app-page-content") || this.element;
       anchor.insertBefore(status, anchor.children[1] || null);
     }
   }
@@ -112,23 +99,6 @@ export class PageController extends Component {
   }
 
   /**
-   * Lee el valor de un input/select del componente.
-   */
-  _getValue(selector) {
-    return this.element.querySelector(selector)?.value?.trim() || "";
-  }
-
-  /**
-   * Escribe el valor de un input/select si existe.
-   */
-  _setInputValue(selector, value) {
-    const input = this.element.querySelector(selector);
-    if (input) {
-      input.value = value;
-    }
-  }
-
-  /**
    * Vincula los botones .js-dashboard-back: vuelven al dashboard y, si ya está abierto
    * en otra pestaña, cierran esta (ver core/TabRegistry.js).
    */
@@ -144,30 +114,5 @@ export class PageController extends Component {
         }
       });
     });
-  }
-
-  /**
-   * Retorna (o crea) una instancia Bootstrap Modal para el selector indicado.
-   */
-  _getModalInstance(selector) {
-    if (!window.bootstrap) {
-      return null;
-    }
-
-    const modalElement = this.element.querySelector(selector);
-    if (!modalElement) {
-      return null;
-    }
-
-    return window.bootstrap.Modal.getOrCreateInstance(modalElement);
-  }
-
-  /**
-   * Abre un modal Bootstrap si existe.
-   */
-  _showModal(selector) {
-    const modal = this._getModalInstance(selector);
-    modal?.show();
-    return modal;
   }
 }

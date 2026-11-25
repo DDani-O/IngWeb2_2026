@@ -117,11 +117,15 @@ export const RECOMMENDATION_PRIORITIES = [
  */
 export const CHART_PALETTE_SIZE = 8;
 
+/** Nivel de riesgo calculado por el backend y su tono visual (átomo badge). */
 export const RISK_LEVELS = {
-  bajo: { label: "Bajo", cssModifier: "low" },
-  medio: { label: "Medio", cssModifier: "medium" },
-  alto: { label: "Alto", cssModifier: "high" },
+  bajo: { label: "Bajo", tone: "success" },
+  medio: { label: "Medio", tone: "warning" },
+  alto: { label: "Alto", tone: "danger" },
 };
+
+/** Tono visual de cada prioridad de recomendación. */
+export const PRIORITY_TONES = { alta: "danger", media: "warning", baja: "info" };
 
 export const EXPENSE_ORIGINS = {
   manual: "Manual",

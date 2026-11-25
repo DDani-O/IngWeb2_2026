@@ -1,6 +1,6 @@
 # Especificación: Dashboard de Asesor
 
-> Fase 0 del refactor (`../DiagnosticoRefactor.md` §6): se eliminaron la bandeja de entrada (inbox), los mensajes sin leer y la página de Reportes (comisiones, tareas, descargas) porque no forman parte de la consigna ni tienen respaldo en la BD. Las recomendaciones usan el modelo de `recomendaciones_financieras` (título, mensaje, tipo, prioridad; sin ahorro estimado). Los gráficos de la sección 8 se implementan en la Fase 3 y el análisis por cliente (`#/asesor/clientes/:id`), en la Fase 5.
+> Fase 0 del refactor (`../DiagnosticoRefactor.md` §6): se eliminaron la bandeja de entrada (inbox), los mensajes sin leer y la página de Reportes (comisiones, tareas, descargas) porque no forman parte de la consigna ni tienen respaldo en la BD. Las recomendaciones usan el modelo de `recomendaciones_financieras` (título, mensaje, tipo, prioridad; sin ahorro estimado). Los gráficos de la sección 8 están implementados con `ChartCard` (Fase 3); el análisis por cliente (`#/asesor/clientes/:id`), en la Fase 5.
 
 ## DESCRIPCIÓN GENERAL
 

@@ -1,0 +1,113 @@
+/* Organismo DataTable (mobile-first: tarjetas → tabla desde 768px). Ver DataTable.js */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table thead {
+  display: none;
+}
+
+.data-table tbody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.data-table tr {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  background: var(--table-row-bg);
+  padding: 0.75rem;
+}
+
+.data-table td {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.data-table td::before {
+  content: attr(data-label);
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.data-table__actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding-top: 0.35rem;
+}
+
+.data-table__actions::before {
+  content: none;
+}
+
+@media (min-width: 768px) {
+  .data-table-wrap {
+    overflow-x: auto;
+    border-radius: var(--radius-md);
+  }
+
+  .data-table thead {
+    display: table-header-group;
+  }
+
+  .data-table tbody {
+    display: table-row-group;
+  }
+
+  .data-table tr {
+    display: table-row;
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+  }
+
+  .data-table th {
+    text-align: left;
+    font-size: 0.76rem;
+    color: var(--color-primary);
+    border-bottom: 1px solid var(--border-strong);
+    padding: 0.7rem 0.625rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    background: var(--table-head-bg);
+    white-space: nowrap;
+  }
+
+  .data-table td {
+    display: table-cell;
+    padding: 0.7rem 0.625rem;
+    border-bottom: 1px solid var(--border-soft);
+    background: var(--table-row-bg);
+    vertical-align: middle;
+  }
+
+  .data-table td::before {
+    content: none;
+  }
+
+  .data-table tbody tr:hover td {
+    background: var(--table-row-hover);
+  }
+
+  .data-table__cell--end {
+    text-align: right;
+  }
+
+  .data-table__actions {
+    white-space: nowrap;
+  }
+
+  .data-table__actions .action-btn + .action-btn {
+    margin-left: 0.5rem;
+  }
+}

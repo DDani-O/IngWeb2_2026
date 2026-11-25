@@ -1,6 +1,6 @@
 # Especificación: Dashboard del Cliente
 
-> Fase 0 del refactor (`../DiagnosticoRefactor.md` §6): se eliminó la sección de conexión con el asesor (teaser, botón flotante y modal de chat) porque no forma parte de la consigna ni tiene respaldo en la BD. El rol se llama `cliente` y la ruta es `#/cliente/dashboard`. Los 3 gráficos de la sección 7 se implementan en la Fase 3 con el componente `ChartCard`.
+> Fase 0 del refactor (`../DiagnosticoRefactor.md` §6): se eliminó la sección de conexión con el asesor (teaser, botón flotante y modal de chat) porque no forma parte de la consigna ni tiene respaldo en la BD. El rol se llama `cliente` y la ruta es `#/cliente/dashboard`. Los 3 gráficos de la sección 7 están implementados con el componente `ChartCard` (Fase 3); el mensual incluye la línea de promedio.
 
 ## DESCRIPCIÓN GENERAL
 

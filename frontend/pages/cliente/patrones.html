@@ -1,70 +1,45 @@
-<div class="app-page-content page-user-patterns">
-  <section class="section-block patterns-hero">
+<div class="app-page-content page-cliente-patrones">
+  <section class="hero-panel">
     <h1 class="text-gradient">Patrones de Consumo</h1>
-    <p class="text-muted">
+    <p class="text-muted mt-2">
       Analisis detallado de tus gastos y habitos de consumo. Comprende donde va tu dinero.
     </p>
-    <p class="text-muted mt-2">Cliente: <strong id="patternsUserName"></strong></p>
   </section>
 
   <section class="section-block">
-    <h2 class="section-title">
-      <i class="fa-solid fa-lightbulb accent"></i>
-      Informacion Clave
-    </h2>
-    <div class="patterns-key-grid" id="patternsKeyInsights"></div>
+    <h2 class="section-title"><i class="fa-solid fa-lightbulb accent" aria-hidden="true"></i>Informacion Clave</h2>
+    <div class="card-grid" id="patternsInsights"></div>
   </section>
 
-  <section class="patterns-stats-grid" id="patternsStatsGrid"></section>
+  <section class="stat-grid" id="patternsStats" aria-label="Indicadores"></section>
 
-  <section class="section-block patterns-categories">
-    <h2 class="section-title">
-      <i class="fa-solid fa-layer-group accent"></i>
-      Categorias donde mas dinero se gasta
-    </h2>
-    <div class="patterns-categories-grid">
-      <article class="chart-card">
-        <canvas id="patternsCategoryChart" aria-label="Gastos por categoria"></canvas>
-      </article>
-      <div class="patterns-category-list" id="patternsCategoryList"></div>
+  <section class="section-block">
+    <h2 class="section-title"><i class="fa-solid fa-layer-group accent" aria-hidden="true"></i>Categorias donde mas dinero se gasta</h2>
+    <div class="chart-grid">
+      <div id="patternsCategoryChart"></div>
+      <div class="media-list" id="patternsCategoryList"></div>
     </div>
   </section>
 
-  <section class="section-block patterns-evolution">
-    <h2 class="section-title">
-      <i class="fa-solid fa-chart-line accent"></i>
-      Evolucion de Gastos en el Tiempo
-    </h2>
-    <div class="patterns-evolution-grid">
-      <article class="chart-card">
-        <h3 class="info-card__title">Gasto total mensual</h3>
-        <canvas id="patternsEvolutionChart" aria-label="Evolucion mensual"></canvas>
-      </article>
-      <article class="chart-card">
-        <h3 class="info-card__title">Evolucion por categoria</h3>
-        <canvas id="patternsByCategoryChart" aria-label="Evolucion por categoria"></canvas>
-      </article>
+  <section class="section-block">
+    <h2 class="section-title"><i class="fa-solid fa-chart-line accent" aria-hidden="true"></i>Evolucion de Gastos en el Tiempo</h2>
+    <div class="chart-grid">
+      <div id="patternsMonthlyChart"></div>
+      <div id="patternsByCategoryChart"></div>
     </div>
   </section>
 
-  <section class="section-block patterns-unusual">
-    <h2 class="section-title">
-      <i class="fa-solid fa-triangle-exclamation accent"></i>
-      Gastos Inusuales
-    </h2>
-    <p class="text-muted mb-3">
-      Movimientos que superan mas de un 35% tu promedio historico en cada categoria.
-    </p>
-    <div class="patterns-unusual-grid">
-      <article class="chart-card">
-        <canvas id="patternsUnusualChart" aria-label="Comparativa de gastos inusuales"></canvas>
-      </article>
-      <div class="patterns-unusual-list" id="patternsUnusualList"></div>
+  <section class="section-block">
+    <h2 class="section-title"><i class="fa-solid fa-triangle-exclamation accent" aria-hidden="true"></i>Gastos Inusuales</h2>
+    <p class="text-muted mb-3">Gastos de los ultimos 30 dias que superan en mas de un 35% tu promedio en su categoria.</p>
+    <div class="chart-grid">
+      <div id="patternsUnusualChart"></div>
+      <div class="alert-list" id="patternsUnusualList"></div>
     </div>
-    <button class="action-btn action-btn--primary mt-3 js-dashboard-back" type="button">
-      <i class="fa-solid fa-arrow-left"></i>
-      Volver al Dashboard
-    </button>
+    <div class="section-actions">
+      <button class="action-btn action-btn--primary js-dashboard-back" type="button">
+        <i class="fa-solid fa-arrow-left" aria-hidden="true"></i><span>Volver al Dashboard</span>
+      </button>
+    </div>
   </section>
-
 </div>

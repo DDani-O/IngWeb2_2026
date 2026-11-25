@@ -110,6 +110,13 @@ Cambios:
 - Se eliminaron `asesor-inbox.css`, `asesor-reportes.css` y `asesor-perfil.css` (vacío), y las reglas de inbox, mensajes sin leer, ahorro potencial, pasos de implementación y guías de perfil.
 - La reformulación de estas reglas (escalas de espaciado y tipografía, breakpoints únicos) está planificada para la Fase 4 (`especificaciones/DiagnosticoRefactor.md` §7).
 
+## Cambios de la Fase 3 del refactor (25/11/2026)
+- Los estilos de cada componente viven junto a su JS en `frontend/components/**` y se cargan desde `components/components.css`. Son **mobile-first** (`min-width`).
+- Se eliminaron las hojas por página que quedaron sin uso (`page-shell`, `dashboard-usuario`, `dashboard-asesor`, `historial`, `cargar-gasto`, `perfil-usuario`, `asesor-clientes`, `recomendaciones`). `patrones.css` y `perfiles.css` conservan solo lo propio de esas páginas; los patrones de página compartidos (hero de dashboard, dos columnas, acciones de sección) están en `layouts.css`.
+- Los gráficos toman el alto de `.chart-card__canvas--sm/md/lg` (Chart.js con `maintainAspectRatio: false`); se resolvió el defecto R3 del diagnóstico.
+- Los puntos de montaje que son ítems de grilla usan `min-width: 0` (`minmax(0, 1fr)`) para que el contenido no desborde en 320–360px.
+- El toast usa los tokens de flotantes con `env(safe-area-inset-bottom)`.
+
 ## Reglas para cambios futuros
 1. Si un valor de layout se repite 2 o mas veces, debe convertirse en token global.
 2. Evitar crear nuevos `padding-top` de compensacion manual por pagina.
