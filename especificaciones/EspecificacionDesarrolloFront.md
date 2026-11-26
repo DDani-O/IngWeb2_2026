@@ -601,12 +601,14 @@ DashboardPage {
 
 ## 10. ENDPOINTS DEL BACKEND
 
-> Contrato vigente desde la Fase 1 del refactor (`DiagnosticoRefactor.md` §6, decisión 6). El backend NestJS lo implementa tal cual; el front lo consume desde `frontend/services/*.service.js` y lo traduce al modelo de la UI en `frontend/services/adapters.js`. El backend simulado `frontend/mocks/mockServer.js` implementa exactamente este contrato.
+> Contrato definitivo, fijado en la fase I1 de `PlanIntegracionBackend.md` (confirma la decisión 6 de `DiagnosticoRefactor.md` §6). Es la fuente de verdad para los tres lados: el backend NestJS (`backend/src/modules/`) lo implementa, el front lo consume desde `frontend/services/*.service.js` y lo traduce al modelo de la UI en `frontend/services/adapters.js`, y el backend simulado `frontend/mocks/mockServer.js` lo replica para trabajar sin conexión. Hasta terminar la fase I4 el backend todavía expone otro contrato: §10.8 detalla qué cambia en cada endpoint.
 
 ### Convenciones
 
-- **Rutas en inglés** (las fija la consigna: `/auth/login`, `/expenses`, `/tickets/upload`); **cuerpos en español**, con los mismos nombres de columna que la BD.
-- Base URL: `API_CONFIG.BASE_URLS` en `frontend/utils/constants.js` (`local` = `http://localhost:3000`; `production` se completa al hacer el deploy).
+- **Rutas en inglés** (las fija la consigna: `/auth/login`, `/expenses`, `/tickets/upload`) y orientadas a recursos, sin prefijo por rol: el rol del token decide qué ve cada uno.
+- **Todo lo demás en español snake_case, con los mismos nombres de columna que la BD**: campos de entrada y salida, query params, códigos de error y campos de formularios multipart. Los campos calculados siguen la misma regla (`categoria_nombre`, `promedio_categoria`). **No se mezclan idiomas** en una misma respuesta.
+- Base URL: `API_CONFIG.BASE_URLS` en `frontend/utils/constants.js` (`local` = `http://localhost:3000/api/v1`; `production` se completa al hacer el deploy). El backend publica todo bajo el prefijo global `/api/v1`.
+- Campos que no están en el contrato se rechazan con 422 (el `ValidationPipe` usa `whitelist` + `forbidNonWhitelisted`).
 - Autenticación: header `Authorization: Bearer <token>` (JWT). Todas las rutas requieren token salvo login y registro.
 - Roles: `cliente` y `asesor`. Una ruta de otro rol responde **403**.
 - Fechas de gasto: `AAAA-MM-DD`. Timestamps: ISO 8601. Montos: número (ARS).
@@ -704,9 +706,9 @@ Validaciones: `monto > 0`, `fecha_gasto` con formato `AAAA-MM-DD`, `categoria_id
 
 | Método | Ruta | Cuerpo | Respuesta |
 |---|---|---|---|
-| POST | `/tickets/upload` | `multipart/form-data` con el campo `archivo` (imagen) | **201** `{ ticket: { id, nombre_archivo, estado_procesamiento }, analisis: { comercio_detectado, fecha_detectada, monto_detectado, categoria_sugerida: { id, nombre } \| null, confianza_general } }` |
+| POST | `/tickets/upload` | `multipart/form-data` con el campo `archivo` (imagen JPEG, PNG o WebP de hasta 5 MB; si no, 422) | **201** `{ ticket: { id, nombre_archivo, estado_procesamiento }, analisis: { comercio_detectado, fecha_detectada, monto_detectado, categoria_sugerida: { id, nombre } \| null, confianza_general } }` |
 
-El backend guarda la imagen (`tickets`), la envía al servicio de OCR/IA, persiste el resultado (`analisis_ocr`) y lo devuelve en la misma respuesta. El front precompleta el formulario y, al guardar, manda `POST /expenses` con `origen: "ticket"` y `ticket_id`.
+Flujo **en un solo paso** (decisión de la fase I1): el backend sube la imagen a Supabase Storage (`tickets`), la envía al modelo de IA con visión, persiste el resultado (`analisis_ocr`) y lo devuelve en la misma respuesta. El cliente revisa y corrige el formulario precompletado y, al guardar, el front manda `POST /expenses` con `origen: "ticket"` y `ticket_id`. Con un `ticket_id`, `POST /expenses` valida que el ticket sea del cliente, guarda `ticket_principal_id`, `ocr_estado = procesado` y `ocr_confianza`, y vincula el `analisis_ocr` con el gasto creado (`gasto_id`). Si la IA no responde, el upload contesta igual con `analisis` en `null` y `estado_procesamiento = error`, y el cliente completa el formulario a mano. No hay endpoint de confirmación aparte.
 
 ### 10.5 Recomendaciones
 
@@ -749,14 +751,14 @@ El backend guarda la imagen (`tickets`), la envía al servicio de OCR/IA, persis
 }
 ```
 
-Reglas de cálculo (las implementa hoy el mock en `frontend/mocks/analytics.js` y el backend debe reproducirlas):
+Reglas de cálculo (las implementa hoy el mock en `frontend/mocks/analytics.js`; el backend las reproduce exactamente, confirmado en la fase I1):
 - `gastos_por_mes`: últimos 7 meses incluido el actual. `gastos_por_dia`: últimos 14 días. `ranking_comercios`: top 5 por monto.
 - `variacion_mes_anterior`: mes en curso contra el mes anterior **hasta el mismo día** (porcentaje; `null` si no hay datos).
 - `gasto_promedio_mensual`: promedio de los meses completos anteriores con gastos.
 - `dia_mayor_gasto`: 0 = domingo … 6 = sábado.
 - **Gasto inusual**: gasto de los últimos 30 días que supera en más de 35% el promedio de su categoría (con al menos 3 gastos previos en esa categoría).
 - `alertas.nivel`: `danger` · `warning` · `success` · `info`.
-- **Perfil de gasto** (asignado automáticamente, sin intervención del cliente): participación de las categorías discrecionales (Entretenimiento, Suscripciones, Otros) en los últimos 3 meses, comparada con `perfiles_de_gasto.criterio_regla.discrecional_max` (Drácula Nocturno < 10%, Equilibrista Cósmico < 30%, Espíritu Libre el resto). El resultado se guarda en `clasificacion_de_perfil`.
+- **Perfil de gasto** (asignado automáticamente por el sistema; ni el cliente ni el asesor lo eligen): participación de las categorías discrecionales (Entretenimiento, Suscripciones, Otros) en los últimos 3 meses (el mes en curso y los dos anteriores, desde el día 1), comparada con `perfiles_de_gasto.criterio_regla.discrecional_max` (Drácula Nocturno < 10%, Equilibrista Cósmico < 30%, Espíritu Libre el resto). El catálogo tiene **exactamente esos 3 perfiles** y `criterio_regla` solo guarda la regla (`{ "discrecional_max": 0.1 }`); los textos, emojis y la comparativa viven en el front (`frontend/content/spendingProfiles.js`) y se vinculan por nombre. El resultado se guarda en `clasificacion_de_perfil` (`asesor_id = null`, `motivo` con el porcentaje calculado, cierra la vigencia del anterior con `vigente_hasta`). Se calcula al armar el análisis o el resumen de un cliente (la ventana de 3 meses avanza con el tiempo aunque no haya gastos nuevos) y solo se escribe una clasificación nueva si el perfil cambió respecto del vigente. Sin gastos en la ventana, el perfil queda `null`.
 - `nivel_riesgo`: `alto` si hay 2 o más gastos inusuales o la variación supera 25%; `medio` si hay 1 o la variación supera 10%; `bajo` en otro caso.
 
 **`resumen_asesor`**:
@@ -781,6 +783,56 @@ Reglas de cálculo (las implementa hoy el mock en `frontend/mocks/analytics.js` 
 | GET | `/clients/:id/expenses` | **200** `{ datos: [gasto], total }` con los mismos filtros que `GET /expenses` (403 si no está asignado) |
 
 **`resumen_cliente`**: `{ id, nombre_completo, email, estado, perfil_de_gasto, gasto_promedio_mensual, gasto_mes_actual, variacion_mes_anterior, ultimo_gasto_fecha, gastos_inusuales (cantidad), nivel_riesgo }`.
+
+### 10.8 Correspondencia con el backend actual (inventario de la fase I1)
+
+Estado del backend heredado de `dev` contra este contrato. Columna **Fase**: dónde se resuelve según `PlanIntegracionBackend.md` (I2 = nombres en español y forma de las respuestas; I3 = lógica que falta o se reescribe).
+
+**Endpoints del contrato**
+
+| Contrato | Backend actual | Qué cambia | Fase |
+|---|---|---|---|
+| `POST /auth/register` | `POST /auth/register` | Cuerpo en español (`nombre_completo`, `rol`, `matricula`, `especialidad`); se sacan los extras del cliente (`occupation`, `estimatedIncome`, `financialGoal`, `preferredCurrency`). Respuesta `{ token, usuario }` en vez de `{ access_token, user }`. 409 `EMAIL_DUPLICADO`. Se mantiene la asignación automática a un asesor (`obtener_asesor_disponible()`). | I2 |
+| `POST /auth/login` | `POST /auth/login` | Respuesta `{ token, usuario }`; 401 `CREDENCIALES_INVALIDAS`. | I2 |
+| `GET /auth/me` | `GET /users/me` (cliente y asesor) | Nueva ruta; objeto `usuario` de este contrato. | I2 |
+| `PUT /auth/profile` | `PATCH /users/me` y `PATCH /advisor/profile` | Una sola ruta para los dos roles, con los campos de §10.1. | I2 |
+| `GET /categories` | `GET /categories` (público) | Pasa a requerir token, como el resto. Respuesta `[{ id, nombre, icono }]`. | I2 |
+| `GET /spending-profiles` | `GET /users/spending-profiles` | Nueva ruta; `[{ id, nombre, descripcion }]`. | I2 |
+| `GET /expenses` | `GET /expenses` (`page`, `limit`, `categoryId`, `from`, `to`, `search`, `orderBy`, `order`) | Query de §10.3 (`busqueda`, `categoria_id`, `origen`, `desde`, `hasta`, `orden`, `limite`); respuesta `{ datos, total }` en vez de `{ data, pagination }`. | I2 |
+| `GET /expenses/:id` | `GET /expenses/:id` | Objeto `gasto` de este contrato (hoy `amount`, `merchant`, `ocrEstado`…). | I2 |
+| `POST /expenses` | `POST /expenses` | Cuerpo en español; acepta `origen` y `ticket_id` y vincula el ticket (§10.4). | I2 |
+| `PUT /expenses/:id` | solo `PATCH /expenses/:id` | Se agrega `PUT` (mínimo de la consigna) y se quita `PATCH`. | I2 |
+| `DELETE /expenses/:id` | `DELETE /expenses/:id` (204) | Sin cambios de forma; errores en el formato del contrato. | I2 |
+| `POST /tickets/upload` | `POST /tickets/upload` (campo `file`, 8 MB, admite PDF y HEIC) | Campo `archivo`, 5 MB, JPEG/PNG/WebP; respuesta `{ ticket, analisis }`. | I2 |
+| `GET /recommendations` | `GET /users/me/recommendations` (`{ stats, recommendations }`) | Nueva ruta; lista plana de `recomendacion`. | I2 |
+| `PUT /recommendations/:id/read` | `PATCH /users/me/recommendations/:id` (`status`, `isRead`) | Nueva ruta; marca `leida` y `leida_en`. | I2 |
+| `GET /recommendations/sent` | `GET /advisor/recommendations` (`clientId`, `status`, `type`) | Nueva ruta; query `limite`, `cliente_id`. | I2 |
+| `POST /recommendations` | `POST /advisor/recommendations` (`clientId`, `content`, `problem`, `implementationSteps`…) | Nueva ruta; cuerpo `{ cliente_id, titulo, mensaje, tipo, prioridad }`. | I2 |
+| `GET /analysis/me` | `GET /users/me/consumption-analysis` y `GET /analytics/consumption` (duplicados) | Se reescribe el cálculo con las reglas de §10.6 (hoy faltan variación, gasto por día, alertas, perfil y riesgo; los inusuales usan z-score y el ranking cuenta compras en vez de sumar montos). | I3 |
+| `GET /analysis/clients/:id` | `GET /advisor/clients/:clientId/consumption-analysis` | Nueva ruta; mismo `analisis` que `/analysis/me`, con control de asignación (403). | I3 |
+| `GET /analysis/advisor/summary` | `GET /advisor/dashboard` (`calendar`, `inbox`, `charts`… armados para la UI vieja) | Se reescribe como `resumen_asesor`. | I3 |
+| `GET /clients` | `GET /advisor/clients` (paginado; `search`, `status`, `risk`, `profile`, `sortBy` en el servidor) | Nueva ruta; lista completa de `resumen_cliente` (el front filtra). | I3 |
+| `GET /clients/:id` | `GET /advisor/clients/:clientId` | Nueva ruta; `resumen_cliente` + `usuario`. | I3 |
+| `GET /clients/:id/expenses` | `GET /advisor/clients/:clientId/expenses` | Nueva ruta; mismos filtros y forma que `GET /expenses`. | I2 |
+
+**Endpoints del backend que se eliminan** (no los usa el front y no suman a la consigna; `DiagnosticoRefactor.md` §6, decisiones 1 y 2):
+
+| Endpoint | Motivo |
+|---|---|
+| `GET /expenses/summary` | Lo cubre `GET /analysis/me`. |
+| `GET /users/me/dashboard` | Lo cubren `/auth/me` y `/analysis/me`. |
+| `GET /analytics/consumption` | Duplicado de `/users/me/consumption-analysis`. |
+| `GET /advisor/profile` | Lo cubre `/auth/me`. |
+| `PATCH /advisor/recommendations/:id` · `DELETE /advisor/recommendations/:id` | La consigna pide generar recomendaciones, no editarlas ni borrarlas. |
+| `GET /advisor/reports` | La página de reportes se eliminó en la Fase 0. |
+| `GET /advisor/risk-assessment` | El riesgo viene en `resumen_cliente.nivel_riesgo`. |
+| `PATCH /advisor/clients/:clientId/profile` | El perfil lo asigna el sistema (decisión 2). |
+| `POST /tickets/:id/confirm` | El flujo de tickets es en un paso (§10.4). |
+
+**Cambios de base de datos** (migración nueva, fase I3):
+- Reemplazar el catálogo de `perfiles_de_gasto` cargado por `seeds/seed_perfiles_de_gasto.sql` (7 perfiles con `criterio_regla` en inglés: `thresholds`, `savingsRatio`…) por los 3 perfiles de §10.6 con `criterio_regla = { discrecional_max }`, migrando o cerrando las clasificaciones que apunten a perfiles eliminados.
+- Las vistas de la migración `0008` (`advisor_dashboard_view`, `client_anomaly_view`, etc.) no las usa ningún servicio del backend; se evalúa eliminarlas junto con la regla de z-score.
+- Columnas que existen y quedan fuera del contrato (no se exponen, conservan sus valores por defecto): `perfiles_usuarios.pais/telefono/moneda_preferida/tema/umbral_alerta/ahorro_objetivo/notificar_*`, `perfiles_asesores.capacidad_maxima/telefono/pais/notificar_*` (`capacidad_maxima` sí la usa la asignación automática), `recomendaciones_financieras.estado/icono/problema/solucion/pasos_implementacion/ahorro_potencial`.
 
 ---
 
