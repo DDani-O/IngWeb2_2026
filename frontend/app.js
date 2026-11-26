@@ -1,3 +1,4 @@
+import { apiClient } from "./core/APIClient.js";
 import { authManager } from "./core/AuthManager.js";
 import { eventBus } from "./core/EventBus.js";
 import { Router } from "./core/Router.js";
@@ -53,7 +54,28 @@ function initializeApplication() {
     authManager.updateCurrentUser(user);
   });
 
+  watchServerWakeUp();
+
   router.start();
+}
+
+/**
+ * Con el driver http, despierta el backend apenas abre la app (mientras se completa el login)
+ * y avisa si tarda: el plan gratuito de Render duerme el servidor tras 15 minutos sin uso.
+ */
+function watchServerWakeUp() {
+  let closeNotice = null;
+  eventBus.on(EVENTS.API.WAKING, () => {
+    closeNotice = showToast("Despertando el servidor... La primera carga puede tardar hasta un minuto.", "warning", { persistent: true });
+  });
+  eventBus.on(EVENTS.API.AWAKE, ({ noticed }) => {
+    closeNotice?.();
+    closeNotice = null;
+    if (noticed) {
+      showToast("Servidor listo.", "success");
+    }
+  });
+  apiClient.wakeUp();
 }
 
 /**

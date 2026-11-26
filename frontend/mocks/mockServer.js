@@ -336,6 +336,10 @@ function listExpenses(clientId, query) {
 
 const routes = [
   {
+    method: "GET", path: "/health", auth: false,
+    handler: () => ({ status: 200, body: { estado: "ok" } }),
+  },
+  {
     method: "POST", path: "/auth/login", auth: false,
     handler: ({ body }) => {
       allowOnly(body, ["email", "password"]);

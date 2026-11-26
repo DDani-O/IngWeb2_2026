@@ -609,7 +609,8 @@ DashboardPage {
 - **Todo lo demás en español snake_case, con los mismos nombres de columna que la BD**: campos de entrada y salida, query params, códigos de error y campos de formularios multipart. Los campos calculados siguen la misma regla (`categoria_nombre`, `promedio_categoria`). **No se mezclan idiomas** en una misma respuesta.
 - Base URL: `API_CONFIG.BASE_URLS` en `frontend/utils/constants.js` (`local` = `http://localhost:3000/api/v1`; `production` se completa al hacer el deploy). El backend publica todo bajo el prefijo global `/api/v1`.
 - Campos que no están en el contrato se rechazan con 422 (el `ValidationPipe` usa `whitelist` + `forbidNonWhitelisted`).
-- Autenticación: header `Authorization: Bearer <token>` (JWT). Todas las rutas requieren token salvo login y registro.
+- Autenticación: header `Authorization: Bearer <token>` (JWT). Todas las rutas requieren token salvo login, registro y `GET /health`.
+- `GET /health` (público, no toca la BD) → **200** `{ "estado": "ok" }`. Lo usan el health check del hosting y el front, que lo llama al abrir la app para despertar el servidor del plan gratuito (con el driver `http`, los demás pedidos esperan a esa respuesta; ver `APIClient.wakeUp()`).
 - Roles: `cliente` y `asesor`. Una ruta de otro rol responde **403**.
 - Fechas de gasto: `AAAA-MM-DD`. Timestamps: ISO 8601. Montos: número (ARS).
 - **Errores** (4xx/5xx), siempre con este cuerpo:

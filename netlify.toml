@@ -1,0 +1,16 @@
+# Front estático en Netlify (fase I6 de especificaciones/PlanIntegracionBackend.md).
+# Sin build: se publica la carpeta frontend/ tal cual (ES modules nativos, ruteo por hash, así
+# que no hacen falta redirects). En producción el front usa siempre el driver "http" contra
+# API_CONFIG.BASE_URLS.production (frontend/utils/constants.js).
+[build]
+  publish = "frontend"
+  command = ""
+
+# Los HTML y los módulos JS se revalidan en cada carga: sin bundler no hay hashes en los
+# nombres, y así un deploy nuevo se ve sin que haya que limpiar la caché del navegador.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"

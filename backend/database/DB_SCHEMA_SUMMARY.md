@@ -1,7 +1,7 @@
 # Resumen de estructura BD — FinTrack 2026
 
 Fuente de verdad: `database.types.ts` generado con `npx supabase gen types typescript`.
-Ultima actualizacion: mayo 2026.
+Ultima actualizacion: 26/11/2026 (base al dia con la migracion `0017`).
 
 ---
 
@@ -18,7 +18,6 @@ Ultima actualizacion: mayo 2026.
 | `tipo_recomendacion` | `sugerencia` \| `alerta` \| `observacion` |
 | `prioridad_recomendacion` | `baja` \| `media` \| `alta` |
 | `estado_recomendacion` | `pendiente` \| `completada` \| `descartada` |
-| `tipo_mensaje_asesor` | `mensaje` \| `ticket` |
 
 ---
 
@@ -221,25 +220,25 @@ Catalogo de perfiles financieros. Administrado por asesores/sistema.
 | `id` | uuid PK | |
 | `nombre` | text UNIQUE NOT NULL | |
 | `descripcion` | text | |
-| `criterio_regla` | jsonb | Metadata: emoji, tagline, caracteristicas, tips, umbrales |
+| `criterio_regla` | jsonb | Solo la regla de asignacion: `{ "discrecional_max": 0.1 }` (los textos viven en el front) |
 | `activo` | boolean | default true |
 | `creado_en` | timestamptz | |
 
 **RLS:** Lectura por cualquier usuario autenticado. Insert/Update restringido.
-**Regla de negocio:** El cliente NO puede asignarse un perfil. Solo el asesor puede hacerlo via `clasificacion_de_perfil`.
-**Seed:** `database/seeds/seed_perfiles_de_gasto.sql` (7 perfiles predefinidos).
+**Regla de negocio:** el perfil lo asigna el sistema automaticamente segun el gasto discrecional (spec §10.6); ni el cliente ni el asesor lo eligen.
+**Catalogo:** exactamente 3 perfiles (Drácula Nocturno, Equilibrista Cósmico, Espíritu Libre), cargados por la migracion `0016` (y `seeds/seed_perfiles_de_gasto.sql`).
 
 ---
 
 ### `clasificacion_de_perfil`
-Asignacion de un perfil de gasto a un cliente por parte del asesor.
+Perfil de gasto asignado a cada cliente. Lo escribe el backend (`analysis.service.ts`) solo cuando el perfil calculado cambia.
 
 | Campo | Tipo | Notas |
 |-------|------|-------|
 | `id` | uuid PK | |
 | `cliente_id` | uuid FK→usuarios | |
 | `perfil_id` | uuid FK→perfiles_de_gasto | |
-| `asesor_id` | uuid FK→usuarios | Nullable si es asignacion automatica |
+| `asesor_id` | uuid FK→usuarios | `null`: la asignacion es automatica |
 | `puntaje` | numeric(5,2) | 0-100, confianza de la clasificacion |
 | `motivo` | text | |
 | `vigente_desde` | timestamptz | |
@@ -251,74 +250,18 @@ Asignacion de un perfil de gasto a un cliente por parte del asesor.
 
 ---
 
-### `analisis_de_consumo`
-Snapshot historico de analytics por periodo. **Actualmente no utilizado activamente.**
+### Objetos eliminados
 
-| Campo | Tipo |
-|-------|------|
-| `id` | uuid PK |
-| `cliente_id` | uuid FK→usuarios |
-| `periodo_inicio` | date |
-| `periodo_fin` | date |
-| `gasto_total` | numeric |
-| `gasto_promedio` | numeric |
-| `cantidad_gastos` | int |
-| `gastos_inusuales_detectados` | int |
-| `dia_mayor_gasto` | int (1-7) |
-| `comercio_mas_frecuente` | text |
-| `categoria_dominante_id` | uuid FK→categorias_de_gasto |
-| `creado_en` | timestamptz |
-
-**Nota arquitectonica:** El servicio `ConsumptionAnalyticsService` calcula todo dinamicamente desde `gastos`. Esta tabla existe como tabla de snapshot para cache historico opcional pero no se escribe desde la API actual. No se recomienda eliminar aun (FK references, RLS activas), pero tampoco hay logica que la llene. Candidata a deprecar en una version futura si se implementa un job de agregacion.
-
----
-
-### `mensajes_asesor`
-Mensajeria entre asesor y cliente.
-
-| Campo | Tipo | Notas |
-|-------|------|-------|
-| `id` | uuid PK | |
-| `asesor_id` | uuid FK→usuarios | |
-| `cliente_id` | uuid FK→usuarios | |
-| `remitente_id` | uuid FK→usuarios | |
-| `destinatario_id` | uuid FK→usuarios | |
-| `contenido` | text NOT NULL | |
-| `asunto` | text | |
-| `tipo` | `tipo_mensaje_asesor` | `mensaje` o `ticket` |
-| `leido` | boolean | |
-| `leido_en` | timestamptz | |
-| `creado_en` | timestamptz | |
-
-**RLS:** Lectura por participantes. Insert por participantes con asignacion activa.
-**Estado:** El backend del asesor puede enviar mensajes. El endpoint del cliente para leer/enviar esta pendiente.
-
----
-
-## Views SQL
-
-### `advisor_dashboard_view`
-Estadisticas del asesor: clientes activos, gasto promedio, transacciones recientes, recomendaciones pendientes.
-Agrupada por `asesor_id`.
-
-### `category_distribution_view`
-Distribucion de gastos por categoria por cliente: total, cantidad, porcentaje, promedio, ranking.
-No tiene filtro de fecha — acumulado historico completo.
-
-### `client_anomaly_view`
-Gastos del cliente enriquecidos con estadisticas de su categoria (avg 90 dias, stddev 90 dias, percentil 95).
-Usada como base para deteccion de anomalias en SQL (funcion `obtener_gastos_inusuales`).
-**Nota:** El backend actual usa su propio algoritmo en TypeScript (`AnomalyDetectionService`), no consulta esta view directamente.
-
-### `consumption_stats_view`
-Estadisticas generales del cliente: gasto total, promedio, maximo, minimo, desvio estandar, cantidad de gastos, comercios unicos, categorias unicas, periodo.
-
-### `monthly_evolution_view`
-Evolucion mensual: gasto del mes, mes anterior, variacion porcentual, cantidad de transacciones, promedio por transaccion.
+- `analisis_de_consumo`: eliminada en la `0014` (el analisis se calcula en cada pedido a partir de `gastos`).
+- `mensajes_asesor` y su ENUM: eliminados en la `0013` (se quito la mensajeria asesor-cliente).
+- Vistas `advisor_dashboard_view`, `category_distribution_view`, `client_anomaly_view`, `consumption_stats_view` y `monthly_evolution_view`: eliminadas en la `0016` (no las usaba nadie y exponian datos sin login).
+- Funciones `obtener_gastos_inusuales` y `calcular_zscore`: eliminadas en la `0017` (el z-score se descarto en la fase I1; los gastos inusuales los calcula el backend con la regla del 35 %).
 
 ---
 
 ## Funciones SQL
+
+Todas tienen `search_path = public` (`0017`). Ninguna `SECURITY DEFINER` es ejecutable por `anon`; `es_asesor_asignado_a_cliente` y `analisis_ocr_cliente_referencia` conservan `authenticated` porque las usan las politicas RLS.
 
 | Funcion | Descripcion |
 |---------|-------------|
@@ -326,10 +269,9 @@ Evolucion mensual: gasto del mes, mes anterior, variacion porcentual, cantidad d
 | `set_actualizado_en()` | Trigger: actualiza `actualizado_en` automaticamente |
 | `es_asesor_asignado_a_cliente(p_cliente_id)` | Verifica si auth.uid() tiene asignacion activa sobre el cliente |
 | `analisis_ocr_cliente_referencia(p_gasto_id, p_ticket_id)` | Resuelve cliente_id desde gasto o ticket |
-| `calcular_zscore(p_mean, p_stddev, p_value)` | Calcula Z-score estandarizado |
 | `contar_clientes_activos(p_asesor_id)` | Cuenta asignaciones activas de un asesor |
-| `obtener_asesor_disponible()` | Retorna id del asesor con menor carga |
-| `obtener_gastos_inusuales(p_cliente_id, p_dias)` | Gastos anomalos via SQL (Z-score + percentil) |
+| `obtener_asesor_disponible()` | Retorna el id del asesor **activo** con menos clientes y con capacidad libre (lo usa el registro) |
+| `sync_user_email()` · `handle_auth_user_email_change()` | Sin uso: no estan conectadas a ningun trigger; solo las puede ejecutar `service_role` |
 
 ---
 
@@ -341,17 +283,26 @@ Validadores de integridad:
 - `trg_validar_perfiles_usuarios`: solo clientes pueden tener perfil_usuario.
 - `trg_validar_perfiles_asesores`: solo asesores pueden tener perfil_asesor.
 - `trg_validar_clasificacion_de_perfil`: valida roles y asignaciones antes de clasificar.
-- `trg_validar_analisis_de_consumo`: valida que cliente_id sea un cliente.
 - `trg_validar_analisis_ocr`: valida integridad de referencias.
 
 ---
 
 ## Migraciones aplicadas
 
+Se ejecutan en orden en el SQL Editor de Supabase (ver `README.md` de esta carpeta). La base de produccion esta al dia con la `0017`.
+
 | Archivo | Descripcion |
 |---------|-------------|
 | `0001_init_schema.sql` | Schema completo inicial |
-| `0002` – `0009` | Parches: vistas, funciones, ajustes de RLS, filtros de fecha |
+| `0002` – `0009` | Parches: categorias globales, perfiles, mensajeria, asignaciones, vistas, filtros de fecha |
 | `0010_ciudad_to_pais.sql` | Renombrar `ciudad` → `pais` en `perfiles_usuarios` |
+| `0011` – `0012` | Indices de recomendaciones y correccion de `es_service_role` |
+| `0013_remove_messaging.sql` | Elimina la mensajeria asesor-cliente |
+| `0014_remove_consumption_analysis_table.sql` | Elimina `analisis_de_consumo` |
+| `0015_add_notifications_to_advisors.sql` | Preferencias de notificacion del asesor |
+| `0016_spending_profiles_v2.sql` | Catalogo de 3 perfiles con regla en `criterio_regla`; elimina las vistas sin uso |
+| `0017_security_functions.sql` | Funciones sin acceso anonimo, `search_path` fijo, elimina el z-score SQL |
 
-**Seed disponible:** `seeds/seed_perfiles_de_gasto.sql` — 7 perfiles financieros con metadata completa.
+**Seeds:** `seeds/seed_perfiles_de_gasto.sql` (catalogo de perfiles) y `seeds/seed_demo_jun_nov_2026.sql` (datos de la demo, idempotente).
+
+**Diferencia conocida con la base de produccion:** la categoria `Ropa` existe en Supabase pero no la crea ninguna migracion (se agrego a mano).

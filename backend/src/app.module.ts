@@ -8,8 +8,10 @@ import { TicketsModule } from "./modules/tickets/tickets.module";
 import { ClientsModule } from "./modules/clients/clients.module";
 import { RecommendationsModule } from "./modules/recommendations/recommendations.module";
 import { AnalysisModule } from "./modules/analysis/analysis.module";
+import { HealthController } from "./health.controller";
 
 @Module({
+  controllers: [HealthController],
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     AuthModule,

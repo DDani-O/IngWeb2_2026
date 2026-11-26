@@ -26,6 +26,11 @@ export const API_CONFIG = {
   TIMEOUT_MS: 8000,
   /** La carga de tickets espera al modelo de IA: más margen que el resto de los pedidos. */
   UPLOAD_TIMEOUT_MS: 30000,
+  /**
+   * Primer pedido a /health con el driver http: el plan gratuito de Render duerme el backend
+   * tras 15 minutos sin uso y tarda cerca de un minuto en despertar.
+   */
+  COLD_START_TIMEOUT_MS: 90000,
 };
 
 export const STORAGE_KEYS = {
@@ -93,6 +98,12 @@ export const EVENTS = {
   PROFILE: {
     UPDATED: "profile:updated",
   },
+  API: {
+    /** El servidor tarda en responder el primer pedido (está despertando). */
+    WAKING: "api:waking",
+    /** Terminó el primer pedido a /health (respondió o falló). */
+    AWAKE: "api:awake",
+  },
 };
 
 export const UI_LAYOUT = {
@@ -105,6 +116,8 @@ export const UI_TIMING = {
   TAB_CLOSE_FALLBACK_MS: 120,
   MOCK_LATENCY_MS: 220,
   SEARCH_DEBOUNCE_MS: 300,
+  /** Si /health no respondió en este tiempo, se avisa que el servidor está despertando. */
+  COLD_START_NOTICE_MS: 2500,
 };
 
 /**

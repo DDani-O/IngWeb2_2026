@@ -100,10 +100,38 @@ Una fase por commit; los integrantes commitean a mano.
 - **Recorrido con `http`:** registro y login reales, todas las pantallas de los dos roles, alta/edición/borrado de gasto, tickets, filtros, detalle de recomendaciones y análisis por cliente del asesor, sin errores de consola ni respuestas 4xx/5xx inesperadas; los números de dashboard, patrones y cartera coinciden con la base. El modo `mock` sigue andando.
 - **Pendiente detectado (no bloquea):** la UI muestra los montos sin centavos ($ 48.351 por 48.350,90); la categoría `Ropa` existe en Supabase pero no en las migraciones ni en las categorías que sugiere el OCR; falta agregar `GROQ_MODEL` a `backend/.env.example` (bloqueado por permisos en esta sesión).
 
-### I6 — Deploy y documentación
+### I6 — Deploy y documentación · en curso
 - Deploy de front y back; URLs en el README.
 - Completar las secciones *(pendiente)* del README.
 - Actualizar o retirar la documentación heredada de `dev` que quedó desactualizada (ver §5).
+
+**Hecho hasta ahora (26/11):**
+- Configuración versionada: `render.yaml` (API en Render, plan free, región Virginia junto a Supabase `us-east-1`, rama `main`, health check `/api/v1/health`) y `netlify.toml` (publica `frontend/` sin build). Build probado desde una copia limpia con los mismos comandos de Render (`npm ci && npm run build`, `npm run start`): arranca, `/health` responde y el CORS acepta solo `FRONTEND_URL`.
+- `GET /health` público (`src/health.controller.ts`, spec §10, mock y e2e).
+- Arranque en frío del plan gratuito: con el driver `http`, `APIClient.wakeUp()` llama a `/health` al abrir la app (hasta 90 s), los demás pedidos lo esperan y, si tarda más de 2,5 s, se muestra "Despertando el servidor…" hasta que responde. Probado demorando `/health` 8 s: el login enviado mientras tanto espera y entra sin errores.
+- README: estado, modelo de datos (`0017`, seed de demo), endpoints (`/health`), uso de la IA (modelo configurable, `parseMonto`), tecnologías y guía de deploy. Las URLs se completan después del deploy.
+- Documentación heredada: `backend/database/README.md` reescrito; `DB_SCHEMA_SUMMARY.md` actualizado (objetos eliminados por la `0013`, `0014`, `0016` y `0017`, migraciones hasta la `0017`); se retiraron `backend/database/INDEX.md`, `backend/FINTRACK_BACKEND_CONTEXT.md` y `PENDIENTES_GENERALES.md`, cuyo contenido vigente ya está en los `CLAUDE.md`, la spec y este plan.
+
+**Pasos del equipo para el deploy:**
+1. Commitear I6 en `dev` y llevar `main` a `dev` (ver abajo); push de las dos ramas.
+2. Render → New → **Blueprint** → este repo. Cargar `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_KEY`, `JWT_SECRET`, `GROQ_API_KEY` (los mismos valores del `backend/.env`) y, por ahora, `FRONTEND_URL` vacío.
+3. Netlify → Add new site → Import from Git → este repo, rama `main` (toma `netlify.toml`).
+4. Pasar las dos URLs: se completan `API_CONFIG.BASE_URLS.production` y `FRONTEND_URL` en Render, y se verifica online el recorrido de la demo.
+
+**Para llevar `main` a `dev`** (`main` es ancestro de `dev`, así que no hay merge commit):
+```bash
+git fetch origin
+git switch main
+git merge --ff-only origin/dev   # si falla, main tiene commits que dev no tiene: avisar antes de forzar nada
+git push origin main
+git switch dev
+```
+
+**Notas para el equipo (antes de la entrega):**
+- Activar en Supabase **Authentication → Policies → Leaked password protection** (aviso del revisor de seguridad; es un switch del panel, no SQL).
+- **Cambiar las claves de las cuentas reales de la demo** (`bj@`, `bi@`, `cn@`, `mj@` y `asesorprueba@`): usan `Fintrack2026*`, la misma clave que el README publica para el mock, y los emails aparecen en el seed. Con el sistema online, cualquiera que lea el repo podría entrar. Las nuevas se pasan a los docentes por privado (el README ya dice que se entregan por separado).
+- El día de la demo (1/12) "Gasto del mes" arranca en $0: volver a correr `seed_demo_jun_nov_2026.sql` esa mañana (es idempotente) o cargar un ticket durante la demo. Abrir la app un par de minutos antes para que Render despierte.
+- `backend/.env.example`: falta agregar `GROQ_MODEL=qwen/qwen3.8-27b` (no se pudo editar desde Claude Code por la regla de permisos sobre `.env*`).
 
 ## 4. Decisiones
 

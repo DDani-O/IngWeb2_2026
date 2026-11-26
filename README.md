@@ -2,7 +2,7 @@
 
 Plataforma web de gestión de gastos personales con carga de tickets por OCR/IA, para la materia **Ingeniería Web II (2026)**. Grupo: Daniel Olguín y Celeste Núñez.
 
-> **Estado:** el **frontend está completo** y funciona contra un **backend simulado** (`frontend/mocks/`). La **API NestJS** implementa el contrato completo (auth, perfil, gastos, tickets con OCR/IA, recomendaciones, análisis de consumo y cartera del asesor) sobre **Supabase**. Falta conectar el frontend a la API real, probarlo contra Supabase y el **deploy**, según `especificaciones/PlanIntegracionBackend.md`. Las secciones marcadas con *(pendiente)* se completan cuando eso esté listo.
+> **Estado:** sistema completo. El **frontend** (SPA vanilla) consume la **API NestJS**, que implementa el contrato completo (auth, perfil, gastos, tickets con OCR/IA, recomendaciones, análisis de consumo y cartera del asesor) sobre **Supabase**, probado de punta a punta contra la base real (`especificaciones/PlanIntegracionBackend.md`, fases I0–I6). Online: ver [URLs públicas](#urls-públicas). En `localhost` el front también puede usar un **backend simulado** (`frontend/mocks/`) para demos sin conexión.
 
 ---
 
@@ -67,7 +67,7 @@ NestJS con un módulo por dominio en `src/modules/` (`auth`, `users`, `categorie
 
 ## 3. Modelo de datos
 
-Base PostgreSQL en Supabase, definida por las migraciones `backend/database/migrations/0001` a `0016` (tablas, ENUMs, funciones validadoras, triggers, políticas RLS e índices; la `0016` deja el catálogo de 3 perfiles de gasto). Resumen del esquema: `backend/database/DB_SCHEMA_SUMMARY.md`.
+Base PostgreSQL en Supabase, definida por las migraciones `backend/database/migrations/0001` a `0017` (tablas, ENUMs, funciones validadoras, triggers, políticas RLS e índices; la `0016` deja el catálogo de 3 perfiles de gasto y la `0017` cierra el acceso anónimo a las funciones y fija su `search_path`). Cómo cargarla: `backend/database/README.md`.
 
 | Tabla | Contenido |
 |---|---|
@@ -83,16 +83,17 @@ Base PostgreSQL en Supabase, definida por las migraciones `backend/database/migr
 | `perfiles_de_gasto` | Catálogo de perfiles con su regla de asignación (`criterio_regla`). |
 | `clasificacion_de_perfil` | Perfil asignado a cada cliente y su vigencia. |
 
-El análisis de consumo se calcula en el momento a partir de `gastos` (la tabla `analisis_de_consumo` se eliminó en la migración 0014; la mensajería asesor-cliente, en la 0013). Seeds de prueba en `backend/database/seeds/`.
+El análisis de consumo se calcula en el momento a partir de `gastos` (la tabla `analisis_de_consumo` se eliminó en la migración 0014; la mensajería asesor-cliente, en la 0013). Datos de la demo: `backend/database/seeds/seed_demo_jun_nov_2026.sql` (idempotente; gastos de junio a hoy para dos clientes, con gastos inusuales).
 
 ---
 
 ## 4. Endpoints del backend
 
-Contrato completo (cuerpos, errores y reglas de cálculo) en la [spec §10](especificaciones/EspecificacionDesarrolloFront.md). Rutas en inglés, cuerpos en español. La API NestJS y el backend simulado implementan este mismo contrato. *(pendiente)* Falta pasar el frontend al driver `http` (fase I4 del plan de integración). Todas requieren `Authorization: Bearer <token>` salvo login y registro.
+Contrato completo (cuerpos, errores y reglas de cálculo) en la [spec §10](especificaciones/EspecificacionDesarrolloFront.md). Rutas en inglés, cuerpos en español, todas bajo el prefijo `/api/v1`. La API NestJS y el backend simulado implementan este mismo contrato. Todas requieren `Authorization: Bearer <token>` salvo login, registro y `/health`.
 
 | Método | Ruta | Rol | Descripción |
 |---|---|---|---|
+| GET | `/health` | público | `{ estado: "ok" }`: health check del hosting y "despertar" del servidor. |
 | POST | `/auth/register` | público | Registro (cliente o asesor); devuelve `{ token, usuario }`. |
 | POST | `/auth/login` | público | Inicio de sesión; devuelve `{ token, usuario }`. |
 | GET · PUT | `/auth/me` · `/auth/profile` | ambos | Usuario autenticado · edición del perfil. |
@@ -121,7 +122,7 @@ La IA reduce la carga manual al interpretar la foto de un ticket (consigna §4.3
 
 Además, el sistema calcula de forma automática el análisis de consumo: gastos inusuales (más de 35% sobre el promedio de su categoría), nivel de riesgo y asignación del perfil de gasto según la participación del gasto discrecional (reglas en la spec §10.6).
 
-El backend NestJS sube la imagen a Supabase Storage y se la pasa a un modelo de IA con visión en **Groq** (`meta-llama/llama-4-scout-17b-16e-instruct`, vía la API compatible con OpenAI), que devuelve en JSON el comercio, la fecha, el monto y la categoría sugerida (`backend/src/modules/tickets/ocr.service.ts`). Con el driver mock, el paso 3 lo simula `frontend/mocks/mockServer.js` a partir del nombre del archivo.
+El backend NestJS sube la imagen a Supabase Storage y se la pasa a un modelo de IA con visión en **Groq** (por defecto `qwen/qwen3.8-27b`, configurable con `GROQ_MODEL`; vía la API compatible con OpenAI), con un prompt que pide el JSON del ticket argentino: comercio, fecha, **total final** (no el subtotal) y categoría sugerida (`backend/src/modules/tickets/ocr.service.ts`). La respuesta se normaliza antes de guardarla: el monto acepta formatos `1.500,50` y `1,500.50` (`parseMonto`, con tests). Si la IA no puede leer el ticket, la API responde `analisis: null` y el front deja el formulario para completar a mano. Con el driver mock, el paso 3 lo simula `frontend/mocks/mockServer.js` a partir del nombre del archivo.
 
 ---
 
@@ -131,9 +132,9 @@ El backend NestJS sube la imagen a Supabase Storage y se la pasa a un modelo de 
 |---|---|
 | Frontend | HTML5, CSS3 (custom properties, grid, `clamp`, `color-mix`), JavaScript ES2022 con ES modules nativos, Fetch API, Bootstrap 5.3 (CDN), Chart.js 4 (CDN), Font Awesome 6. |
 | Backend | Node.js, NestJS 11, TypeScript, `class-validator`, Passport + JWT, `@nestjs/config`, `@supabase/supabase-js`, Jest (unitarios) + Supertest (e2e). |
-| Base de datos | Supabase (PostgreSQL, Auth, Storage, Row Level Security, funciones, triggers y vistas). |
-| OCR/IA | Groq, modelo con visión Llama 4 Scout (SDK `openai`). |
-| Deploy *(pendiente)* | Front: Netlify/Vercel/GitHub Pages · Back: Render/Railway/Fly.io · BD: Supabase. |
+| Base de datos | Supabase (PostgreSQL, Auth, Storage, Row Level Security, funciones y triggers). |
+| OCR/IA | Groq, modelo con visión Qwen 3.8 27B (configurable con `GROQ_MODEL`; SDK `openai`). |
+| Deploy | Front: **Netlify** (`netlify.toml`) · Back: **Render** (`render.yaml`, plan gratuito) · BD: **Supabase**. |
 
 ---
 
@@ -183,16 +184,28 @@ npm run test:e2e          # requiere un proyecto de Supabase de prueba en el .en
 
 La base se crea ejecutando en orden las migraciones de `backend/database/migrations/` en el SQL Editor de Supabase. Variables de entorno: ver `backend/.env.example`.
 
-### URLs públicas *(pendiente)*
+### Deploy
 
-- Frontend: —
-- Backend: —
+La configuración está versionada; el deploy sale de la rama `main`.
+
+1. **Backend en Render:** New → **Blueprint** → elegir este repo (lee `render.yaml`: servicio web Node, `rootDir: backend`, build `npm ci && npm run build`, start `npm run start`, health check `/api/v1/health`, región Virginia, cerca de Supabase `us-east-1`). Cargar las variables marcadas como secretas: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_KEY`, `JWT_SECRET`, `GROQ_API_KEY` y `FRONTEND_URL` (la URL de Netlify, sin barra final). `PORT` lo pone Render.
+2. **Frontend en Netlify:** Add new site → Import from Git → este repo (lee `netlify.toml`: publica `frontend/` sin build).
+3. Completar `API_CONFIG.BASE_URLS.production` en `frontend/utils/constants.js` con `https://<servicio>.onrender.com/api/v1`, y `FRONTEND_URL` en Render con la URL de Netlify. Commit y push: los dos se redeployan solos.
+
+**Plan gratuito de Render:** el backend se duerme tras 15 minutos sin pedidos y tarda cerca de un minuto en despertar. El front lo despierta apenas se abre la app (`GET /health`), hace esperar a los demás pedidos y muestra "Despertando el servidor…" mientras tanto. Para una demo, abrir la app un par de minutos antes.
+
+### URLs públicas
+
+- Frontend: *(se completa al hacer el deploy)*
+- Backend: *(se completa al hacer el deploy)*
+
+Las cuentas de demostración de la versión online se entregan por separado (no se publican en el repo).
 
 ---
 
 ## 8. Prueba manual
 
-No hay tests automatizados. Con el servidor levantado, recorrer:
+El backend tiene tests automáticos (`npm test` y `npm run test:e2e`); el front se prueba a mano. Con el front servido (y, para el driver `http`, el backend levantado o la versión online), recorrer:
 
 1. La landing carga; el login y el registro abren y cierran sin errores en consola.
 2. Login de cliente → `#/cliente/dashboard`; login de asesor → `#/asesor/dashboard`.
@@ -217,4 +230,5 @@ No hay tests automatizados. Con el servidor levantado, recorrer:
 | `especificaciones/DiagnosticoRefactor.md` | Diagnóstico del frontend, decisiones del equipo y plan de refactor ejecutado (fases 0 a 5). |
 | `frontend/PrincipiosDesarrollo.md` · `frontend/ReglasCSS.md` | Principios de desarrollo y reglas de CSS. |
 | `especificaciones/PlanIntegracionBackend.md` | Plan de integración del backend con el frontend (fases I0 a I6). |
-| `backend/database/DB_SCHEMA_SUMMARY.md` · `backend/database/README.md` | Esquema de la base de datos y cómo cargarla. |
+| `backend/database/README.md` | Cómo cargar la base (migraciones en orden y seed de la demo). |
+| `backend/CLAUDE.md` · `frontend/CLAUDE.md` | Estructura, convenciones y comandos de cada parte. |

@@ -44,6 +44,43 @@ export class APIClient {
     this.timeoutMs = API_CONFIG.TIMEOUT_MS;
     this._tokenProvider = () => null;
     this._mockHandler = null;
+    this._wakePromise = null;
+  }
+
+  /**
+   * Despierta el backend (driver http): un único GET /health con margen largo
+   * (API_CONFIG.COLD_START_TIMEOUT_MS), compartido por todos los pedidos que lleguen mientras
+   * tanto. Si tarda más de UI_TIMING.COLD_START_NOTICE_MS emite EVENTS.API.WAKING; al terminar,
+   * EVENTS.API.AWAKE. Si falla, se reintenta en el próximo pedido (que informa su propio error).
+   * Con el driver mock no hace nada.
+   * @returns {Promise<void>}
+   */
+  wakeUp() {
+    if (this.driver !== "http") {
+      return Promise.resolve();
+    }
+    if (!this._wakePromise) {
+      let noticed = false;
+      const noticeId = window.setTimeout(() => {
+        noticed = true;
+        eventBus.emit(EVENTS.API.WAKING);
+      }, UI_TIMING.COLD_START_NOTICE_MS);
+
+      this._wakePromise = this._fetch("GET", "/health", {}, null, null, API_CONFIG.COLD_START_TIMEOUT_MS)
+        .then(({ status }) => {
+          if (status !== 200) {
+            this._wakePromise = null;
+          }
+        })
+        .catch(() => {
+          this._wakePromise = null;
+        })
+        .finally(() => {
+          window.clearTimeout(noticeId);
+          eventBus.emit(EVENTS.API.AWAKE, { noticed });
+        });
+    }
+    return this._wakePromise;
   }
 
   /**
@@ -118,6 +155,12 @@ export class APIClient {
   }
 
   async _httpRequest(method, path, query, data, token, timeoutMs = this.timeoutMs) {
+    // El primer pedido espera a que el servidor despierte (plan gratuito de Render).
+    await this.wakeUp();
+    return this._fetch(method, path, query, data, token, timeoutMs);
+  }
+
+  async _fetch(method, path, query, data, token, timeoutMs = this.timeoutMs) {
     if (!this.baseUrl) {
       throw new ApiError({ code: "SIN_CONFIGURAR", message: "Falta configurar la URL del backend (API_CONFIG.BASE_URLS)." });
     }

@@ -1,0 +1,41 @@
+# Blueprint de Render para la API NestJS (fase I6 de especificaciones/PlanIntegracionBackend.md).
+# Render → New → Blueprint → elegir este repo. Los valores con `sync: false` se cargan a mano
+# en el panel la primera vez (son secretos o dependen del deploy del front); nunca van al repo.
+services:
+  - type: web
+    name: fintrack-api
+    runtime: node
+    plan: free
+    # Supabase está en us-east-1: Virginia es la región de Render más cercana.
+    region: virginia
+    branch: main
+    rootDir: backend
+    # npm ci respeta el package-lock; instala las devDependencies que necesita `nest build`.
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
+    # Ruta pública que no toca la BD (src/health.controller.ts).
+    healthCheckPath: /api/v1/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRATION
+        value: 7d
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GROQ_MODEL
+        value: qwen/qwen3.8-27b
+      - key: APP_TIMEZONE
+        value: America/Argentina/Buenos_Aires
+      # URL pública del front en Netlify (https://<sitio>.netlify.app, sin barra final): CORS.
+      - key: FRONTEND_URL
+        sync: false
+      # PORT lo define Render; main.ts ya lo lee.
