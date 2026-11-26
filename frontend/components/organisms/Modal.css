@@ -1,6 +1,6 @@
 /* Organismo Modal (mobile-first). Ver Modal.js */
 .app-modal .modal-title {
-  font-size: 1.15rem;
+  font-size: var(--font-size-md);
 }
 
 .app-modal-surface {

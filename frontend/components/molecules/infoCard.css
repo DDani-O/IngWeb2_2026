@@ -2,7 +2,7 @@
 .card-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 0.875rem;
+  gap: var(--space-3);
 }
 
 @media (min-width: 768px) {
@@ -16,11 +16,11 @@
 .info-card {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: var(--space-3);
   border: 1px solid var(--border-soft);
   border-radius: var(--radius-md);
   background: var(--surface-card);
-  padding: 1rem;
+  padding: var(--space-4);
   min-width: 0;
 }
 
@@ -32,14 +32,14 @@
 .info-card__title {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 1.05rem;
+  gap: var(--space-2);
+  font-size: var(--font-size-base);
 }
 
 .info-card__subtitle {
   color: var(--text-muted);
-  font-size: 0.88rem;
-  margin-top: 0.25rem;
+  font-size: var(--font-size-sm);
+  margin-top: var(--space-1);
 }
 
 .info-card__body {
@@ -49,5 +49,5 @@
 .info-card__footer {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }

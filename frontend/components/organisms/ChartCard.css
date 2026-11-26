@@ -2,7 +2,7 @@
 .chart-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 0.875rem;
+  gap: var(--space-3);
 }
 
 /* El punto de montaje es el ítem de la grilla: sin min-width 0, el canvas lo estira. */
@@ -24,11 +24,11 @@
 .chart-card {
   display: flex;
   flex-direction: column;
-  gap: 0.625rem;
+  gap: var(--space-2);
   height: 100%;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-soft);
-  padding: 0.875rem;
+  padding: var(--space-3);
   background: var(--surface-card);
   min-width: 0;
 }
@@ -36,8 +36,8 @@
 .chart-card__title {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.98rem;
+  gap: var(--space-2);
+  font-size: var(--font-size-base);
 }
 
 /* El alto lo define el contenedor (Chart.js usa maintainAspectRatio: false). */
@@ -52,11 +52,11 @@
 
 .chart-card__caption {
   color: var(--text-muted);
-  font-size: 0.85rem;
+  font-size: var(--font-size-sm);
 }
 
 .chart-card__link {
   color: var(--color-primary);
-  font-size: 0.92rem;
+  font-size: var(--font-size-sm);
   font-weight: 600;
 }

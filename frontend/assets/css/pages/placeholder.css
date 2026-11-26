@@ -12,7 +12,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: var(--space-5);
 }
 
 .placeholder-card {
@@ -20,32 +20,32 @@
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-xl);
   background: linear-gradient(150deg, color-mix(in srgb, var(--color-primary) 14%, transparent), var(--surface-card));
-  padding: 26px;
+  padding: var(--space-6);
   text-align: center;
 }
 
 .placeholder-icon {
-  font-size: clamp(2.3rem, 5vw, 4rem);
-  margin-bottom: 10px;
+  font-size: var(--font-size-display);
+  margin-bottom: var(--space-2);
   color: var(--color-primary);
 }
 
 .placeholder-title {
-  font-size: clamp(1.4rem, 3.3vw, 2.2rem);
-  margin-bottom: 8px;
+  font-size: var(--font-size-2xl);
+  margin-bottom: var(--space-2);
 }
 
 .placeholder-description {
   max-width: 620px;
   margin: 0 auto;
   color: var(--text-muted);
-  font-size: 0.94rem;
+  font-size: var(--font-size-base);
 }
 
 .placeholder-actions {
-  margin-top: 18px;
+  margin-top: var(--space-4);
   display: flex;
   justify-content: center;
-  gap: 10px;
+  gap: var(--space-2);
   flex-wrap: wrap;
 }

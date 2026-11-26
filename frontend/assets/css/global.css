@@ -9,10 +9,6 @@
 
   --bg-950: #021312;
   --bg-900: #031a1b;
-  --bg-850: #072324;
-  --bg-800: #0a2d2f;
-  --bg-750: #124141;
-  --bg-overlay: rgba(3, 26, 27, 0.88);
 
   --text-100: #f2fffc;
   --text-200: #d3ebe6;
@@ -34,7 +30,6 @@
 
   --surface-1: rgba(7, 40, 42, 0.46);
   --surface-2: rgba(7, 47, 49, 0.62);
-  --surface-3: rgba(8, 57, 60, 0.76);
   --surface-card: linear-gradient(145deg, rgba(8, 48, 55, 0.66), rgba(5, 27, 35, 0.58));
   --surface-panel: linear-gradient(145deg, rgba(8, 46, 49, 0.88), rgba(6, 29, 32, 0.72));
   --surface-hero: linear-gradient(
@@ -43,11 +38,12 @@
     rgba(8, 49, 52, 0.74) 45%,
     rgba(7, 40, 44, 0.62)
   );
-  --surface-overlay: rgba(8, 37, 43, 0.74);
 
   --field-bg: rgba(255, 255, 255, 0.03);
   --field-border: rgba(124, 214, 192, 0.32);
   --field-focus: rgba(57, 223, 191, 0.24);
+  /* Texto de las opciones de <select>: el desplegable nativo es claro en ambos temas. */
+  --native-option-text: #102224;
   --modal-surface: linear-gradient(145deg, rgba(6, 33, 40, 0.98), rgba(4, 23, 29, 0.95));
 
   --navbar-bg: rgba(2, 22, 26, 0.84);
@@ -66,27 +62,54 @@
   --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.32);
   --shadow-accent: 0 18px 36px rgba(29, 189, 160, 0.2);
 
+  /* Radios */
   --radius-sm: 10px;
   --radius-md: 14px;
   --radius-lg: 20px;
   --radius-xl: 28px;
+  --radius-pill: 999px;
+  --radius-round: 50%;
+
+  /*
+   * Escala de espaciado (gap, padding, margin). Todo espaciado sale de acá;
+   * un valor fuera de la escala tiene que justificarse con un comentario.
+   */
+  --space-1: 0.25rem; /* 4px */
+  --space-2: 0.5rem; /* 8px */
+  --space-3: 0.75rem; /* 12px */
+  --space-4: 1rem; /* 16px */
+  --space-5: 1.25rem; /* 20px */
+  --space-6: 1.5rem; /* 24px */
+  --space-7: 2rem; /* 32px */
+  --space-8: 3rem; /* 48px */
+
+  /*
+   * Escala tipográfica. Los pasos grandes son fluidos (clamp) para no romper en mobile.
+   */
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-md: 1.125rem;
+  --font-size-lg: 1.25rem;
+  --font-size-xl: clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem);
+  --font-size-2xl: clamp(1.5rem, 1.2rem + 1.2vw, 2rem);
+  --font-size-3xl: clamp(1.8rem, 1.3rem + 2vw, 3rem);
+  --font-size-display: clamp(2.5rem, 1.6rem + 3.5vw, 4.5rem);
 
   --font-display: "Outfit", "Segoe UI", sans-serif;
   --font-body: "Nunito Sans", "Segoe UI", sans-serif;
 
   --container-max: 1280px;
+  /* Alto de las barras de navegación (app y landing); los offsets del contenido dependen de este valor. */
   --nav-height: 74px;
 
   --app-shell-top-offset: calc(var(--nav-height) + clamp(0.75rem, 1.8vw, 1.5rem));
   --page-inline-padding: clamp(0.875rem, 2vw, 1.125rem);
   --page-block-end: clamp(1.75rem, 2.7vw, 2.125rem);
-  --anchor-extra-offset: clamp(0.5rem, 1.2vw, 0.75rem);
 
   --floating-edge-gap: clamp(0.75rem, 1.8vw, 1.5rem);
   --floating-bottom-gap: calc(clamp(0.75rem, 2.8vh, 1.5rem) + env(safe-area-inset-bottom, 0px));
 
-  --chart-canvas-min-height: clamp(14rem, 31vh, 16.75rem);
-  --chart-canvas-min-height-compact: clamp(13.5rem, 30vh, 16.25rem);
   /* Paleta categórica de gráficos (la lee getChartPalette en utils/helpers.js). */
   --chart-1: #39dfbf;
   --chart-2: #31a8d4;
@@ -97,7 +120,6 @@
   --chart-7: #f08bd0;
   --chart-8: #94a3b8;
 
-  --kpi-card-min-height: clamp(11.5rem, 27vh, 13.125rem);
 }
 
 * {
@@ -161,7 +183,7 @@ textarea {
   background: var(--field-bg);
   border: 1px solid var(--field-border);
   border-radius: var(--radius-sm);
-  padding: 10px 12px;
+  padding: var(--space-2) var(--space-3);
 }
 
 input:focus,
@@ -174,9 +196,9 @@ textarea:focus {
 .section-title {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 16px;
-  font-size: clamp(1.06rem, 2.1vw, 1.34rem);
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  font-size: var(--font-size-lg);
   font-weight: 700;
 }
 
@@ -189,11 +211,6 @@ textarea:focus {
 
 .text-muted {
   color: var(--text-muted) !important;
-}
-
-.text-secondary,
-.text-body-secondary {
-  color: var(--text-secondary) !important;
 }
 
 .accent {

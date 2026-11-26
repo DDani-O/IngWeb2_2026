@@ -2,13 +2,13 @@
 .form-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1rem;
+  gap: var(--space-4);
 }
 
 .form-field {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: var(--space-1);
   min-width: 0;
 }
 
@@ -20,7 +20,7 @@
 
 .form-field__hint {
   color: var(--text-muted);
-  font-size: 0.8rem;
+  font-size: var(--font-size-xs);
 }
 
 @media (min-width: 768px) {

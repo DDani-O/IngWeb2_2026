@@ -170,7 +170,7 @@ frontend/
 │   ├── cliente/              # dashboard, cargar-gasto, historial, patrones, recomendaciones, perfil, perfiles
 │   └── asesor/               # dashboard, clientes, perfil
 │
-├── assets/css/               # global.css (tokens), layouts.css (patrones de página), themes/, components/ (landing, placeholder, patrones, perfiles)
+├── assets/css/               # global.css (tokens), layouts.css, themes/light.css, pages/ (landing, placeholder, patrones, perfiles)
 └── utils/                    # constants, formatters, helpers, validators, html (escapado)
 ```
 
@@ -428,139 +428,59 @@ La landing y el placeholder conservan su marcado propio (no forman parte de la F
 
 ## 8. GESTIÓN DE ESTILOS
 
-### Variables CSS (Tema Global)
+> Vigente desde la Fase 4 del refactor. Las reglas obligatorias y la tabla de breakpoints están en `frontend/ReglasCSS.md`; acá se resume el sistema.
 
-Archivo: `assets/css/global.css`
+### Archivos
+
+1. `assets/css/global.css` — tokens en `:root` (tema oscuro por defecto), reset y utilidades.
+2. `assets/css/themes/light.css` — redefine los tokens de color para `[data-theme="light"]`. El tema lo aplica `ThemeManager` en `<html data-theme>`.
+3. `assets/css/layouts.css` — layout de la app y patrones de página compartidos.
+4. `components/**/<componente>.css` — un archivo por componente (ver §7), importados por `components/components.css`.
+5. `assets/css/pages/<pagina>.css` — solo lo propio de cada página.
+
+### Tokens (extracto de `global.css`)
 
 ```css
 :root {
-  /* Colores Principales */
-  --primary-color: #06D6A0;        /* Turquesa/Cyan */
-  --secondary-color: #118AB2;      /* Azul */
-  --danger-color: #EF476F;         /* Rojo */
-  --warning-color: #FFD166;        /* Amarillo */
-  --success-color: #06D6A0;        /* Verde */
-  
-  /* Colores Neutros */
-  --bg-dark: #0a0e27;              /* Fondo oscuro */
-  --bg-light: #f5f7fa;             /* Fondo claro */
-  --text-dark: #1a202c;            /* Texto oscuro */
-  --text-light: #e2e8f0;           /* Texto claro */
-  --border-color: #e2e8f0;         /* Bordes */
-  
-  /* Tamaños de Fuente */
-  --font-size-xs: 0.75rem;
-  --font-size-sm: 0.875rem;
-  --font-size-base: 1rem;
-  --font-size-lg: 1.125rem;
-  --font-size-xl: 1.25rem;
-  --font-size-2xl: 1.5rem;
-  
-  /* Espaciado */
-  --spacing-xs: 0.25rem;
-  --spacing-sm: 0.5rem;
-  --spacing-md: 1rem;
-  --spacing-lg: 1.5rem;
-  --spacing-xl: 2rem;
-  --spacing-2xl: 3rem;
-  
-  /* Bordes y Sombras */
-  --border-radius: 0.5rem;
-  --border-radius-lg: 1rem;
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.1);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.2);
+  /* Color: marca y estados */
+  --color-primary: #39dfbf;  --color-success: #31d17d;  --color-warning: #f6b437;
+  --color-danger: #ff5d66;   --color-info: #31d4c7;
+  /* Color: texto, superficies, bordes (los redefine light.css) */
+  --text-primary · --text-secondary · --text-muted · --text-faint
+  --surface-1 · --surface-2 · --surface-card · --surface-panel · --surface-hero · --modal-surface
+  --border-soft · --border-strong · --field-bg · --field-border · --navbar-bg
+  --action-primary-bg · --action-primary-text · --action-ghost-*
+  /* Gráficos: paleta categórica (la lee getChartPalette) */
+  --chart-1 … --chart-8
+  /* Espaciado: 4 · 8 · 12 · 16 · 20 · 24 · 32 · 48 px */
+  --space-1 … --space-8
+  /* Tipografía */
+  --font-size-xs · sm · base · md · lg (fijos) · xl · 2xl · 3xl · display (fluidos con clamp)
+  /* Radios */
+  --radius-sm · md · lg · xl · pill · round
+  /* Layout */
+  --nav-height · --container-max · --app-shell-top-offset · --page-inline-padding
+  --floating-edge-gap · --floating-bottom-gap (incluye safe-area)
 }
 ```
 
-### Temas (Light/Dark)
-
-Archivo: `assets/css/themes/light.css`
-```css
-[data-theme="light"] {
-  --bg-primary: #ffffff;
-  --bg-secondary: #f5f7fa;
-  --text-primary: #1a202c;
-  --text-secondary: #4a5568;
-}
-```
-
-Archivo: `assets/css/themes/dark.css`
-```css
-[data-theme="dark"] {
-  --bg-primary: #1a202c;
-  --bg-secondary: #0a0e27;
-  --text-primary: #e2e8f0;
-  --text-secondary: #cbd5e0;
-}
-```
-
-### Estructura de CSS
-
-1. **global.css** - Variables, resets, utilidades
-2. **layouts.css** - Grillas, containers, espacios
-3. **themes/** - Variaciones de tema
-4. **components/** - Estilos específicos de cada componente (1 archivo por componente)
-
-### Naming: BEM Simplificado
+### Naming: BEM simple
 
 ```css
-/* Block - componente principal */
-.component-button { }
-
-/* Element - subelemento */
-.component-button__icon { }
-.component-button__text { }
-
-/* Modifier - variante */
-.component-button--primary { }
-.component-button--small { }
-.component-button--disabled { }
-
-/* Combinaciones */
-.component-button--primary:hover { }
-.component-button--primary .component-button__icon { }
+.stat-card { }            /* bloque */
+.stat-card__value { }     /* elemento */
+.status-badge--danger { } /* modificador */
 ```
 
-### Reglas Generales
+Las clases propias no reutilizan nombres de Bootstrap. Bootstrap se usa para grid utilitario, offcanvas, modales y controles de formulario (`form-control`, `form-select`).
 
-✅ **Usar Bootstrap primero** - `.btn`, `.card`, `.container` de Bootstrap antes de crear custom  
-✅ **CSS Variables** - Referenciar `var(--primary-color)` en lugar de hardcodear colores  
-✅ **Flexbox y Grid** - Para layouts, no floats  
-✅ **Mobile First** - Media queries `@media (min-width: ...)` ascendente  
-✅ **Desacoplado** - Estilos nunca inline, siempre en archivos CSS separados  
+### Reglas generales
 
-### Reglas Operativas Responsive (alineadas con ReglasCSS)
-
-Estas reglas son de cumplimiento obligatorio y complementan la estrategia general de estilos.
-
-1. **Tokenización obligatoria de layout**
-  - Cualquier valor repetido en offsets, spacing o alturas debe vivir en variables globales.
-  - En la implementación actual, los tokens base viven en `assets/css/global.css`.
-
-2. **Prohibido compensar navbar con valores fijos por página**
-  - No usar `padding-top` hardcodeado por vista como estrategia principal.
-  - Usar un offset compartido de shell (`--app-shell-top-offset`) y derivados.
-
-3. **Elementos flotantes con safe-area**
-  - CTA flotantes, FABs, teasers y paneles deben usar tokens + `env(safe-area-inset-bottom)`.
-  - Evitar valores absolutos fijos de `right/bottom/width/height` para overlays críticos.
-
-4. **Alturas fluidas para paneles y gráficos**
-  - Preferir `clamp(...)` para `min-height` y `max-height` en cards, charts y chats.
-  - Evitar alturas rígidas que generen clipping en pantallas bajas o zoom alto.
-
-5. **Viewport moderno con fallback**
-  - Para contenedores dependientes del alto de pantalla, usar `vh` + `dvh`.
-  - Objetivo: reducir saltos visuales por barras dinámicas en mobile.
-
-6. **Navegación por anchors sin números mágicos locales**
-  - `scroll-margin-top` y offsets de scroll deben depender de tokens compartidos,
-    no de números hardcodeados aislados.
-
-7. **Sincronización CSS/JS para UX timing y offsets**
-  - Cualquier timeout UI o offset de interacción debe centralizarse en constantes
-    (`utils/constants.js`) y no quedar inline en módulos.
+- Todo espaciado, tamaño de fuente, radio y color sale de los tokens (detalle y excepciones en `ReglasCSS.md` §2).
+- **Mobile-first** (`min-width`) en componentes y patrones nuevos; la landing conserva `max-width`.
+- Breakpoints únicos: 576 · 768 · 992 · 1200 px.
+- Alturas de viewport con el par `vh` + `dvh`; gráficos con alto por contenedor; flotantes con safe-area.
+- Sin estilos inline. Verificación: 320–1440 px sin scroll horizontal y contraste AA en ambos temas.
 
 ---
 

@@ -524,11 +524,12 @@ Cada fase termina con el front funcionando (checklist manual del README + recorr
 - Accesibilidad incorporada en cada componente (O-19).
 - Como quedó implementado: 5 átomos, 11 moléculas y 9 organismos (catálogo en la spec §7). Cambios respecto del catálogo previsto: no se creó `sectionHeader` (los títulos de sección son HTML estático de los templates), se sumaron `dateCard`, `profileSummary` y `RecommendationDialog` (Modal + RecommendationForm), y `ClientCard` y `RecommendationCard` quedaron como moléculas (render puro con acciones por delegación). La landing y el placeholder conservan su marcado (quedan para la Fase 4 de CSS).
 
-### Fase 4 — CSS
+### Fase 4 — CSS · ✅ completada (25/11/2026)
 - Escalas de espaciado y tipografía, temas sin duplicación, tokens sin uso fuera, colores de la landing tokenizados (R4).
 - Arreglos R1 (navbar de la landing), R3 si quedó algo fuera de `ChartCard`, safe-area del toast, vh/dvh en los overrides.
 - Borrado de las hojas por página que hayan quedado vacías y renombre de las clases `user-*` que sobrevivan.
 - `ReglasCSS.md` reformulado (D-14) con la tabla única de breakpoints.
+- Resultado medido: de 49 a 9 tamaños de fuente (todos tokens), 0 espaciados y 0 colores literales fuera de los tokens, breakpoints solo 576/768/992/1200, contraste AA (≥ 4.7:1) en los textos medidos de landing y dashboard en ambos temas, navbar de la landing con alto fijo a 320–1440 px y 60/60 mediciones (12 rutas × 5 anchos) sin desborde. Se eliminaron `themes/dark.css` y 14 tokens sin uso; `assets/css/components/` pasó a `assets/css/pages/`. No quedan clases `user-*` del rol cliente (las que quedan, como `sidebar-user-card`, nombran la cuenta en general).
 
 ### Fase 5 — Funcionalidad que exige la consigna
 - Edición y recategorización de gasto (`/cliente/gastos/:id`, `PUT /expenses/:id`).
