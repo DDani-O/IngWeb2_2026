@@ -1,22 +1,18 @@
 import { PageController } from "../../core/PageController.js";
-import { badge } from "../../components/atoms/badge.js";
-import { trend } from "../../components/atoms/trend.js";
 import { CLIENT_TABLE_COLUMNS, CLIENT_VIEW_MODES, clientCard } from "../../components/molecules/clientCard.js";
-import { keyValueList } from "../../components/molecules/keyValueList.js";
 import { emptyState } from "../../components/molecules/stateBlock.js";
 import { DataTable } from "../../components/organisms/DataTable.js";
 import { FilterBar } from "../../components/organisms/FilterBar.js";
-import { Modal } from "../../components/organisms/Modal.js";
 import { RecommendationDialog } from "../../components/organisms/RecommendationDialog.js";
 import { ViewToggle } from "../../components/organisms/ViewToggle.js";
 import { clientsService } from "../../services/clients.service.js";
 import { recommendationsService } from "../../services/recommendations.service.js";
-import { RISK_LEVELS } from "../../utils/constants.js";
-import { formatCurrency, formatDate } from "../../utils/formatters.js";
+import { RISK_LEVELS, ROUTES } from "../../utils/constants.js";
+import { fillRoute } from "../../utils/helpers.js";
 import { html } from "../../utils/html.js";
 
 const CLIENT_ACTIONS = [
-  { action: "detail", label: "Ver detalle" },
+  { action: "detail", label: "Ver analisis" },
   { action: "recommend", label: "Enviar recomendacion", variant: "primary" },
 ];
 
@@ -48,7 +44,6 @@ export class AsesorClientesPage extends PageController {
       actions: CLIENT_ACTIONS,
       empty: { icon: "fa-users", title: "No hay clientes para estos filtros" },
     });
-    this.detailModal = this.mountChild(Modal, "#clientDetailModal", { title: "Detalle de cliente" });
     this.dialog = this.mountChild(RecommendationDialog, "#clientRecommendationDialog", { idPrefix: "clientsRec" });
 
     this._loadData(async () => {
@@ -111,28 +106,8 @@ export class AsesorClientesPage extends PageController {
     }
 
     if (action === "detail") {
-      this._openDetail(client);
+      this.options.router?.navigate(fillRoute(ROUTES.ADVISOR_CLIENTE_DETALLE, { id: client.id }));
     }
-  }
-
-  _openDetail(client) {
-    const risk = RISK_LEVELS[client.riskLevel] || RISK_LEVELS.bajo;
-    this.detailModal.setTitle(client.fullName);
-    this.detailModal.setContent(
-      keyValueList({
-        items: [
-          { label: "Email", value: client.email },
-          { label: "Perfil de gasto", value: client.spendingProfile?.name || "Sin perfil" },
-          { label: "Gasto promedio mensual", value: formatCurrency(client.monthlyAverage) },
-          { label: "Gasto del mes", value: formatCurrency(client.totalThisMonth) },
-          { label: "Vs. mes anterior", value: trend({ value: client.changePercent }) },
-          { label: "Gastos inusuales", value: String(client.unusualCount) },
-          { label: "Ultimo gasto", value: client.lastExpenseDate ? formatDate(client.lastExpenseDate) : "Sin gastos" },
-          { label: "Riesgo", value: badge({ text: risk.label, tone: risk.tone }) },
-        ],
-      })
-    );
-    this.detailModal.open();
   }
 
   async _createRecommendation(recommendation) {

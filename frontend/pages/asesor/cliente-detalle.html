@@ -1,0 +1,58 @@
+<div class="app-page-content page-asesor-cliente-detalle">
+  <section class="hero-panel">
+    <div class="dashboard-hero">
+      <div>
+        <p class="text-muted"><a href="#/asesor/clientes">Mis clientes</a> / Analisis</p>
+        <h1 class="text-gradient" id="clientName">Cliente</h1>
+        <p class="text-muted mt-2" id="clientEmail"></p>
+        <div class="tag-list mt-2" id="clientTags"></div>
+        <div class="dashboard-hero__actions">
+          <button class="action-btn action-btn--primary" data-action="new-recommendation" type="button">
+            <i class="fa-solid fa-pen" aria-hidden="true"></i><span>Enviar recomendacion</span>
+          </button>
+          <a class="action-btn action-btn--ghost" href="#/asesor/clientes">
+            <i class="fa-solid fa-arrow-left" aria-hidden="true"></i><span>Volver a clientes</span>
+          </a>
+        </div>
+      </div>
+      <div class="alert-list" id="clientAlerts" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <section class="section-block">
+    <h2 class="section-title"><i class="fa-solid fa-chart-column accent" aria-hidden="true"></i>Indicadores</h2>
+    <div class="stat-grid" id="clientStats"></div>
+  </section>
+
+  <section class="section-block">
+    <h2 class="section-title"><i class="fa-solid fa-chart-line accent" aria-hidden="true"></i>Patrones de consumo</h2>
+    <div class="chart-grid chart-grid--3">
+      <div class="chart-grid__wide" id="clientDailyChart"></div>
+      <div id="clientCategoryChart"></div>
+      <div id="clientMonthlyChart"></div>
+    </div>
+  </section>
+
+  <div class="two-column">
+    <section class="section-block">
+      <h2 class="section-title"><i class="fa-solid fa-triangle-exclamation accent" aria-hidden="true"></i>Gastos inusuales</h2>
+      <div class="alert-list" id="clientUnusual"></div>
+    </section>
+    <section class="section-block">
+      <h2 class="section-title"><i class="fa-solid fa-store accent" aria-hidden="true"></i>Comercios mas frecuentes</h2>
+      <div class="media-list" id="clientMerchants"></div>
+    </section>
+  </div>
+
+  <section class="section-block">
+    <h2 class="section-title"><i class="fa-solid fa-receipt accent" aria-hidden="true"></i>Ultimos gastos</h2>
+    <div id="clientExpenses"></div>
+  </section>
+
+  <section class="section-block">
+    <h2 class="section-title"><i class="fa-solid fa-lightbulb accent" aria-hidden="true"></i>Recomendaciones enviadas</h2>
+    <div class="recommendation-list" id="clientRecommendations"></div>
+  </section>
+
+  <div id="clientRecommendationDialog"></div>
+</div>

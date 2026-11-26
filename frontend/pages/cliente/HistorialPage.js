@@ -6,7 +6,8 @@ import { FilterBar } from "../../components/organisms/FilterBar.js";
 import { Modal, confirmDialog } from "../../components/organisms/Modal.js";
 import { categoriesService } from "../../services/categories.service.js";
 import { expensesService } from "../../services/expenses.service.js";
-import { EXPENSE_ORIGINS } from "../../utils/constants.js";
+import { EXPENSE_ORIGINS, ROUTES } from "../../utils/constants.js";
+import { fillRoute } from "../../utils/helpers.js";
 import { formatCurrency, formatDate } from "../../utils/formatters.js";
 
 const originBadge = (expense) => badge({ text: EXPENSE_ORIGINS[expense.origin] || expense.origin, tone: expense.origin === "ticket" ? "success" : "neutral" });
@@ -18,7 +19,7 @@ const SORT_OPTIONS = [
 ];
 
 /**
- * Historial de gastos (consigna §4.4): listado con búsqueda, filtros, orden, detalle y borrado.
+ * Historial de gastos (consigna §4.4): listado con búsqueda, filtros, orden, detalle, edición y borrado.
  * El filtrado lo resuelve la API (GET /expenses con query).
  */
 export class HistorialPage extends PageController {
@@ -46,6 +47,7 @@ export class HistorialPage extends PageController {
       ],
       actions: [
         { action: "detail", label: "Detalle" },
+        { action: "edit", label: "Editar" },
         { action: "delete", label: "Eliminar", variant: "danger" },
       ],
       empty: { icon: "fa-magnifying-glass", title: "No encontramos gastos para esos filtros", message: "Proba con otra categoria o borra la busqueda." },
@@ -98,6 +100,11 @@ export class HistorialPage extends PageController {
         })
       );
       this.detailModal.open();
+      return;
+    }
+
+    if (action === "edit") {
+      this.options.router?.navigate(fillRoute(ROUTES.CLIENT_EDITAR_GASTO, { id: expense.id }));
       return;
     }
 

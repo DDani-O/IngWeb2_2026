@@ -22,7 +22,9 @@ export class PageController extends Component {
         return;
       }
 
-      this._showStatus("error", error?.message || "No pudimos cargar los datos.", () => this._loadData(task));
+      // Reintentar solo tiene sentido en errores transitorios (sin conexión, tiempo agotado, 5xx).
+      const transient = !error?.status || error.status >= 500;
+      this._showStatus("error", error?.message || "No pudimos cargar los datos.", transient ? () => this._loadData(task) : null);
     }
   }
 

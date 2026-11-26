@@ -714,7 +714,7 @@ El backend guarda la imagen (`tickets`), la envía al servicio de OCR/IA, persis
 |---|---|---|---|---|
 | GET | `/recommendations` | cliente | — | **200** `[recomendacion]` (propias, más recientes primero) |
 | PUT | `/recommendations/:id/read` | cliente | — | **200** `recomendacion` (`leida = true`, `leida_en`) |
-| GET | `/recommendations/sent` | asesor | query `limite` | **200** `[recomendacion]` enviadas por el asesor |
+| GET | `/recommendations/sent` | asesor | query `limite`, `cliente_id` (opcional: solo las de ese cliente) | **200** `[recomendacion]` enviadas por el asesor |
 | POST | `/recommendations` | asesor | `{ cliente_id, titulo, mensaje, tipo, prioridad }` | **201** `recomendacion` (`origen = asesor`); 403 si el cliente no está asignado |
 
 ### 10.6 Análisis de consumo
@@ -778,6 +778,7 @@ Reglas de cálculo (las implementa hoy el mock en `frontend/mocks/analytics.js` 
 |---|---|---|
 | GET | `/clients` | **200** `[resumen_cliente]` de los clientes asignados (`asignaciones_de_clientes` activas) |
 | GET | `/clients/:id` | **200** `resumen_cliente` + `usuario` (403 si no está asignado) |
+| GET | `/clients/:id/expenses` | **200** `{ datos: [gasto], total }` con los mismos filtros que `GET /expenses` (403 si no está asignado) |
 
 **`resumen_cliente`**: `{ id, nombre_completo, email, estado, perfil_de_gasto, gasto_promedio_mensual, gasto_mes_actual, variacion_mes_anterior, ultimo_gasto_fecha, gastos_inusuales (cantidad), nivel_riesgo }`.
 
@@ -1074,6 +1075,17 @@ DASHBOARD    DASHBOARD
 
 ---
 
+#### 11.3.8 Editar Gasto Page
+
+**Archivo:** `pages/cliente/editar-gasto.html` + `pages/cliente/EditarGastoPage.js` · Ruta `#/cliente/gastos/:id` (desde el historial, acción "Editar").
+
+- Formulario `ExpenseForm` (el mismo de la carga) con los datos del gasto: permite corregir comercio, monto, fecha y descripción y **cambiar la categoría** (consigna: "categorizar gastos").
+- Muestra el origen (manual o ticket) y permite eliminar el gasto con confirmación.
+
+**Datos:** GET `/expenses/:id`, GET `/categories`, PUT `/expenses/:id`, DELETE `/expenses/:id`.
+
+---
+
 ### 11.4 Páginas del Asesor Financiero
 
 #### 11.4.1 Dashboard Asesor
@@ -1110,7 +1122,21 @@ Spec detallada: `paginasFront/03-AsesorDashboard.md`.
 **Archivo:** `pages/asesor/clientes.html` + `pages/asesor/AsesorClientesPage.js`
 
 - Búsqueda y filtros por riesgo y estado, vista en tarjetas o tabla, detalle del cliente y envío de recomendaciones.
-- El análisis completo por cliente (`#/asesor/clientes/:id`) se agrega en la Fase 5 del refactor.
+- "Ver análisis" abre el análisis completo del cliente (§11.4.4).
+
+#### 11.4.4 Análisis del Cliente
+
+**Archivo:** `pages/asesor/cliente-detalle.html` + `pages/asesor/AsesorClienteDetallePage.js` · Ruta `#/asesor/clientes/:id` (desde Mis Clientes o el dashboard, acción "Ver análisis").
+
+Cubre la consigna §3 y §4.5 para el asesor: analizar los gastos de cada cliente, identificar patrones y gastos problemáticos y generar recomendaciones.
+
+- Encabezado: nombre, email, **perfil de gasto asignado por el sistema**, nivel de riesgo y estado.
+- Alertas e indicadores (gasto del mes, promedio mensual, categoría principal, gastos inusuales).
+- Gráficos: gasto por día, por categoría y por mes con promedio.
+- Gastos inusuales, ranking de comercios y últimos gastos (`DataTable`).
+- Recomendaciones enviadas a ese cliente y botón para enviar una nueva (`RecommendationDialog` con el cliente preseleccionado).
+
+**Datos:** GET `/clients/:id`, GET `/analysis/clients/:id`, GET `/clients/:id/expenses`, GET `/recommendations/sent?cliente_id=…`, POST `/recommendations`.
 
 #### 11.4.3 Perfil del Asesor
 
@@ -1135,8 +1161,10 @@ Spec detallada: `paginasFront/03-AsesorDashboard.md`.
 | Recomendaciones | `#/cliente/recomendaciones` | client | cliente |
 | Perfil de cuenta | `#/cliente/perfil` | client | cliente |
 | Perfiles de gasto | `#/cliente/perfiles` | client | cliente |
+| Editar gasto | `#/cliente/gastos/:id` | client | cliente |
 | Dashboard Asesor | `#/asesor/dashboard` | advisor | asesor |
 | Mis Clientes | `#/asesor/clientes` | advisor | asesor |
+| Análisis del cliente | `#/asesor/clientes/:id` | advisor | asesor |
 | Perfil del Asesor | `#/asesor/perfil` | advisor | asesor |
 | Ruta inexistente | cualquier otra: "Ruta no encontrada" en la misma URL | public | público |
 

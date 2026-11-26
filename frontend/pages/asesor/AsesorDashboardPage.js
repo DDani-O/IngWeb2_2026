@@ -15,7 +15,7 @@ import { clientsService } from "../../services/clients.service.js";
 import { recommendationsService } from "../../services/recommendations.service.js";
 import { ROUTES } from "../../utils/constants.js";
 import { formatMonth } from "../../utils/formatters.js";
-import { buildHash } from "../../utils/helpers.js";
+import { buildHash, fillRoute } from "../../utils/helpers.js";
 import { html } from "../../utils/html.js";
 
 const BOARD_ITEMS_PER_COLUMN = 3;
@@ -42,7 +42,7 @@ export class AsesorDashboardPage extends PageController {
     this.clientsTable = this.mountChild(DataTable, "#advisorClientsTable", {
       columns: CLIENT_TABLE_COLUMNS,
       caption: "Clientes asignados",
-      actions: [{ action: "manage", label: "Gestionar" }],
+      actions: [{ action: "analysis", label: "Ver analisis" }],
       empty: { icon: "fa-users", title: "Todavia no tenes clientes asignados" },
     });
     this.dialog = this.mountChild(RecommendationDialog, "#advisorRecommendationDialog", { idPrefix: "advisorDashboardRec" });
@@ -69,7 +69,9 @@ export class AsesorDashboardPage extends PageController {
 
   attachEvents() {
     this.listen(this.element, "view-change", (event) => this._showView(event.detail.value));
-    this.listen(this.element, "row-action", () => this.options.router?.navigate(ROUTES.ADVISOR_CLIENTES));
+    this.listen(this.element, "row-action", (event) =>
+      this.options.router?.navigate(fillRoute(ROUTES.ADVISOR_CLIENTE_DETALLE, { id: event.detail.id }))
+    );
     this.listen(this.element, "recommendation-submit", (event) => this._createRecommendation(event.detail.recommendation));
     this.listen(this.element.querySelector('[data-action="new-recommendation"]'), "click", () => this.dialog.open());
   }
@@ -89,10 +91,10 @@ export class AsesorDashboardPage extends PageController {
 
   _renderClients() {
     this._setText("#advisorClientsCount", String(this.clients.length));
-    const manage = [{ action: "manage", label: "Gestionar cliente", href: buildHash(ROUTES.ADVISOR_CLIENTES) }];
+    const analysisLink = (client) => [{ action: "analysis", label: "Ver analisis", href: buildHash(fillRoute(ROUTES.ADVISOR_CLIENTE_DETALLE, { id: client.id })) }];
 
     this.element.querySelector("#advisorClientsCards").innerHTML = this.clients.length
-      ? html`${this.clients.map((client) => clientCard({ client, actions: manage }))}`
+      ? html`${this.clients.map((client) => clientCard({ client, actions: analysisLink(client) }))}`
       : emptyState({ icon: "fa-users", title: "Todavia no tenes clientes asignados" });
     this.clientsTable.update({ rows: this.clients });
   }

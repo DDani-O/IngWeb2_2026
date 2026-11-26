@@ -3,10 +3,11 @@ import { alertItem } from "../../components/molecules/alertItem.js";
 import { emptyState } from "../../components/molecules/stateBlock.js";
 import { mediaItem } from "../../components/molecules/mediaItem.js";
 import { statCard } from "../../components/molecules/statCard.js";
+import { unusualExpenseList } from "../../components/molecules/spendingAnalysis.js";
 import { ChartCard } from "../../components/organisms/ChartCard.js";
 import { analysisService } from "../../services/analysis.service.js";
 import { CHART_PALETTE_SIZE } from "../../utils/constants.js";
-import { formatCurrency, formatDate, formatMonth, formatWeekday } from "../../utils/formatters.js";
+import { formatCurrency, formatMonth, formatWeekday } from "../../utils/formatters.js";
 import { html } from "../../utils/html.js";
 
 /** Cantidad de categorías que se muestran en el gráfico de evolución por categoría. */
@@ -101,15 +102,7 @@ export class PatronesPage extends PageController {
   }
 
   _renderUnusualList(unusualExpenses) {
-    this.element.querySelector("#patternsUnusualList").innerHTML = unusualExpenses.length
-      ? html`${unusualExpenses.map((item) =>
-          alertItem({
-            tone: item.deviationPercent >= 100 ? "danger" : "warning",
-            title: `${item.merchant} · ${item.category}`,
-            description: `${formatDate(item.date)}: ${formatCurrency(item.amount)} contra un promedio de ${formatCurrency(item.categoryAverage)} (+${item.deviationPercent}%).`,
-          })
-        )}`
-      : emptyState({ icon: "fa-circle-check", title: "Sin gastos inusuales", message: "No detectamos gastos fuera de tu patron en los ultimos 30 dias." });
+    this.element.querySelector("#patternsUnusualList").innerHTML = unusualExpenseList(unusualExpenses);
   }
 
   _renderCharts(analysis) {

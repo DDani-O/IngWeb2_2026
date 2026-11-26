@@ -19,8 +19,11 @@ export const recommendationsService = {
     return recommendation;
   },
 
-  async listSent({ limit } = {}) {
-    return (await apiClient.get("/recommendations/sent", { query: { limite: limit } })).map(toRecommendation);
+  /**
+   * @param {{limit?: number, clientId?: string}} options `clientId` filtra las enviadas a ese cliente
+   */
+  async listSent({ limit, clientId } = {}) {
+    return (await apiClient.get("/recommendations/sent", { query: { limite: limit, cliente_id: clientId } })).map(toRecommendation);
   },
 
   /**

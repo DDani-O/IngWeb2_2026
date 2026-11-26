@@ -3,19 +3,17 @@ import { badge } from "../../components/atoms/badge.js";
 import { button } from "../../components/atoms/button.js";
 import { alertItem } from "../../components/molecules/alertItem.js";
 import { dateCard } from "../../components/molecules/dateCard.js";
-import { emptyState } from "../../components/molecules/stateBlock.js";
 import { infoCard } from "../../components/molecules/infoCard.js";
 import { keyValueList } from "../../components/molecules/keyValueList.js";
-import { mediaItem } from "../../components/molecules/mediaItem.js";
+import { analysisCharts, analysisStats, merchantRanking } from "../../components/molecules/spendingAnalysis.js";
 import { recommendationLabels } from "../../components/molecules/recommendationCard.js";
-import { statCard } from "../../components/molecules/statCard.js";
 import { ChartCard } from "../../components/organisms/ChartCard.js";
 import { findSpendingProfileContent } from "../../content/spendingProfiles.js";
 import { analysisService } from "../../services/analysis.service.js";
 import { expensesService } from "../../services/expenses.service.js";
 import { recommendationsService } from "../../services/recommendations.service.js";
 import { PRIORITY_TONES, ROUTES } from "../../utils/constants.js";
-import { formatCurrency, formatMonth, formatShortDate } from "../../utils/formatters.js";
+import { formatCurrency } from "../../utils/formatters.js";
 import { buildHash } from "../../utils/helpers.js";
 import { html } from "../../utils/html.js";
 
@@ -56,12 +54,7 @@ export class DashboardPage extends PageController {
   }
 
   _renderStats(analysis) {
-    this.element.querySelector("#dashboardStats").innerHTML = html`
-      ${statCard({ label: "Gasto del mes", emoji: "💸", value: analysis.totalThisMonth, format: "currency", subtitle: "Mes en curso", trend: { value: analysis.changeVsPreviousMonth, label: "vs. mismo periodo del mes anterior" } })}
-      ${statCard({ label: "Promedio mensual", emoji: "📊", value: analysis.monthlyAverage, format: "currency", subtitle: "Ultimos 6 meses" })}
-      ${statCard({ label: "Categoria principal", emoji: "🏷️", value: analysis.dominantCategory?.name || "--", format: "text", subtitle: analysis.dominantCategory ? `${analysis.dominantCategory.percentage}% de tus gastos` : "Sin gastos registrados" })}
-      ${statCard({ label: "Gastos inusuales", emoji: "🔎", value: analysis.unusualExpenses.length, subtitle: "Ultimos 30 dias" })}
-    `;
+    this.element.querySelector("#dashboardStats").innerHTML = analysisStats(analysis);
   }
 
   _renderProfile(analysis) {
@@ -116,55 +109,13 @@ export class DashboardPage extends PageController {
   }
 
   _renderMerchants(ranking) {
-    this.element.querySelector("#dashboardMerchants").innerHTML = ranking.length
-      ? html`${ranking.map((merchant, index) =>
-          mediaItem({
-            variant: "accent",
-            leading: html`${index + 1}.`,
-            title: merchant.merchant,
-            subtitle: `${merchant.count} compras`,
-            trailing: formatCurrency(merchant.amount),
-          })
-        )}`
-      : emptyState({ icon: "fa-store", title: "Sin comercios todavia", message: "Cuando registres gastos vas a ver aca tus comercios mas frecuentes." });
+    this.element.querySelector("#dashboardMerchants").innerHTML = merchantRanking(ranking);
   }
 
   _renderCharts(analysis) {
-    const average = analysis.byMonth.length
-      ? analysis.byMonth.reduce((sum, item) => sum + item.amount, 0) / analysis.byMonth.length
-      : 0;
-
-    const charts = {
-      daily: {
-        title: "Gastos por dia (ultimas 2 semanas)",
-        icon: "fa-chart-line",
-        type: "line",
-        valueFormat: "currency",
-        labels: analysis.byDay.map((item) => formatShortDate(item.date)),
-        datasets: [{ label: "Gasto diario", data: analysis.byDay.map((item) => item.amount) }],
-      },
-      category: {
-        title: "Gastos por categoria",
-        icon: "fa-chart-pie",
-        type: "doughnut",
-        valueFormat: "currency",
-        labels: analysis.byCategory.map((item) => item.category),
-        datasets: [{ label: "Gasto", data: analysis.byCategory.map((item) => item.amount) }],
-        link: { href: buildHash(ROUTES.CLIENT_PATRONES), label: "Ver mas detalles en Patrones de Consumo", newTab: true },
-      },
-      monthly: {
-        title: "Gasto mensual",
-        icon: "fa-chart-column",
-        type: "bar",
-        valueFormat: "currency",
-        caption: "Ultimos 7 meses. La linea punteada es el promedio.",
-        labels: analysis.byMonth.map((item) => formatMonth(item.month)),
-        datasets: [
-          { label: "Gasto mensual", data: analysis.byMonth.map((item) => item.amount) },
-          { label: "Promedio", kind: "line", dashed: true, data: analysis.byMonth.map(() => Math.round(average)) },
-        ],
-      },
-    };
+    const charts = analysisCharts(analysis, {
+      categoryLink: { href: buildHash(ROUTES.CLIENT_PATRONES), label: "Ver mas detalles en Patrones de Consumo", newTab: true },
+    });
 
     this.charts = this.charts || {};
     [
@@ -172,11 +123,7 @@ export class DashboardPage extends PageController {
       ["category", "#dashboardCategoryChart"],
       ["monthly", "#dashboardMonthlyChart"],
     ].forEach(([key, selector]) => {
-      if (this.charts[key]) {
-        this.charts[key].update(charts[key]);
-      } else {
-        this.charts[key] = this.mountChild(ChartCard, selector, charts[key]);
-      }
+      this.charts[key] = this.charts[key] ? this.charts[key].update(charts[key]) : this.mountChild(ChartCard, selector, charts[key]);
     });
   }
 }

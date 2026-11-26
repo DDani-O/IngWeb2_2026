@@ -7,6 +7,7 @@
  * - `meta.role` para el guard global (app.js), heredado por las hijas,
  * - `title` (título del documento y footer del layout),
  * - `page`: import diferido que devuelve la clase de la página; la página declara su template,
+ * - `activeNav` (opcional): link del menú que se marca activo (para rutas de detalle),
  * - `props` opcionales que se pasan a la página, y `reuseOnQueryChange` si la página
  *   sabe actualizarse con `onRouteUpdate(to)` cuando solo cambia la query.
  */
@@ -36,6 +37,7 @@ export const routes = [
       { path: "dashboard", title: "Dashboard del cliente", page: lazy(() => import("./pages/cliente/DashboardPage.js"), "DashboardPage") },
       { path: "cargar-gasto", title: "Carga de gastos", page: lazy(() => import("./pages/cliente/CargarGastoPage.js"), "CargarGastoPage") },
       { path: "historial", title: "Historial de gastos", page: lazy(() => import("./pages/cliente/HistorialPage.js"), "HistorialPage") },
+      { path: "gastos/:id", title: "Editar gasto", activeNav: ROUTES.CLIENT_HISTORIAL, page: lazy(() => import("./pages/cliente/EditarGastoPage.js"), "EditarGastoPage") },
       { path: "patrones", title: "Patrones de consumo", page: lazy(() => import("./pages/cliente/PatronesPage.js"), "PatronesPage") },
       { path: "recomendaciones", title: "Recomendaciones financieras", page: lazy(() => import("./pages/cliente/RecomendacionesPage.js"), "RecomendacionesPage") },
       { path: "perfil", title: "Perfil del cliente", page: lazy(() => import("./pages/cliente/PerfilPage.js"), "PerfilPage") },
@@ -49,6 +51,7 @@ export const routes = [
     children: [
       { path: "dashboard", title: "Panel asesor", page: lazy(() => import("./pages/asesor/AsesorDashboardPage.js"), "AsesorDashboardPage") },
       { path: "clientes", title: "Gestion de clientes", page: lazy(() => import("./pages/asesor/AsesorClientesPage.js"), "AsesorClientesPage") },
+      { path: "clientes/:id", title: "Analisis del cliente", activeNav: ROUTES.ADVISOR_CLIENTES, page: lazy(() => import("./pages/asesor/AsesorClienteDetallePage.js"), "AsesorClienteDetallePage") },
       { path: "perfil", title: "Perfil del asesor", page: lazy(() => import("./pages/asesor/AsesorPerfilPage.js"), "AsesorPerfilPage") },
     ],
   },

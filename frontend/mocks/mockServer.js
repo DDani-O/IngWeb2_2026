@@ -211,6 +211,31 @@ function simulateOcr(fileName) {
   };
 }
 
+/** GET /expenses (cliente) y GET /clients/:id/expenses (asesor): mismo filtrado y orden. */
+function listExpenses(clientId, query) {
+  let items = db.gastos.filter((item) => item.cliente_id === clientId);
+  const search = String(query.busqueda || "").toLowerCase();
+
+  if (search) {
+    items = items.filter((item) => item.comercio.toLowerCase().includes(search) || (item.descripcion || "").toLowerCase().includes(search));
+  }
+  if (query.categoria_id) items = items.filter((item) => item.categoria_id === query.categoria_id);
+  if (query.origen) items = items.filter((item) => item.origen === query.origen);
+  if (query.desde) items = items.filter((item) => item.fecha_gasto >= query.desde);
+  if (query.hasta) items = items.filter((item) => item.fecha_gasto <= query.hasta);
+
+  const sorters = {
+    monto_desc: (a, b) => b.monto - a.monto,
+    monto_asc: (a, b) => a.monto - b.monto,
+    fecha: (a, b) => b.fecha_gasto.localeCompare(a.fecha_gasto) || b.creado_en.localeCompare(a.creado_en),
+  };
+  items = [...items].sort(sorters[query.orden] || sorters.fecha);
+
+  const total = items.length;
+  const limit = Number(query.limite) || total;
+  return { status: 200, body: { datos: items.slice(0, limit).map(serializeExpense), total } };
+}
+
 // ---------- Rutas ----------
 
 const routes = [
@@ -303,28 +328,13 @@ const routes = [
   },
   {
     method: "GET", path: "/expenses", role: "cliente",
-    handler: ({ user, query }) => {
-      let items = db.gastos.filter((item) => item.cliente_id === user.id);
-      const search = String(query.busqueda || "").toLowerCase();
-
-      if (search) {
-        items = items.filter((item) => item.comercio.toLowerCase().includes(search) || (item.descripcion || "").toLowerCase().includes(search));
-      }
-      if (query.categoria_id) items = items.filter((item) => item.categoria_id === query.categoria_id);
-      if (query.origen) items = items.filter((item) => item.origen === query.origen);
-      if (query.desde) items = items.filter((item) => item.fecha_gasto >= query.desde);
-      if (query.hasta) items = items.filter((item) => item.fecha_gasto <= query.hasta);
-
-      const sorters = {
-        monto_desc: (a, b) => b.monto - a.monto,
-        monto_asc: (a, b) => a.monto - b.monto,
-        fecha: (a, b) => b.fecha_gasto.localeCompare(a.fecha_gasto) || b.creado_en.localeCompare(a.creado_en),
-      };
-      items = [...items].sort(sorters[query.orden] || sorters.fecha);
-
-      const total = items.length;
-      const limit = Number(query.limite) || total;
-      return { status: 200, body: { datos: items.slice(0, limit).map(serializeExpense), total } };
+    handler: ({ user, query }) => listExpenses(user.id, query),
+  },
+  {
+    method: "GET", path: "/clients/:id/expenses", role: "asesor",
+    handler: ({ user, params, query }) => {
+      assertAssignedClient(user, params.id);
+      return listExpenses(params.id, query);
     },
   },
   { method: "GET", path: "/expenses/:id", role: "cliente", handler: ({ user, params }) => ({ status: 200, body: serializeExpense(findOwnExpense(user, params.id)) }) },
@@ -435,7 +445,7 @@ const routes = [
     method: "GET", path: "/recommendations/sent", role: "asesor",
     handler: ({ user, query }) => {
       const items = db.recomendaciones_financieras
-        .filter((item) => item.asesor_id === user.id)
+        .filter((item) => item.asesor_id === user.id && (!query.cliente_id || item.cliente_id === query.cliente_id))
         .sort((a, b) => b.creado_en.localeCompare(a.creado_en));
       const limit = Number(query.limite) || items.length;
       return { status: 200, body: items.slice(0, limit).map(serializeRecommendation) };

@@ -49,8 +49,10 @@ export const ROUTES = {
   CLIENT_PATRONES: "/cliente/patrones",
   CLIENT_PERFILES: "/cliente/perfiles",
   CLIENT_RECOMENDACIONES: "/cliente/recomendaciones",
+  CLIENT_EDITAR_GASTO: "/cliente/gastos/:id",
   ADVISOR_DASHBOARD: "/asesor/dashboard",
   ADVISOR_CLIENTES: "/asesor/clientes",
+  ADVISOR_CLIENTE_DETALLE: "/asesor/clientes/:id",
   ADVISOR_PERFIL: "/asesor/perfil",
   PLACEHOLDER: "/utils/placeholder",
 };

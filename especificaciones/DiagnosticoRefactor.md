@@ -531,11 +531,13 @@ Cada fase termina con el front funcionando (checklist manual del README + recorr
 - `ReglasCSS.md` reformulado (D-14) con la tabla única de breakpoints.
 - Resultado medido: de 49 a 9 tamaños de fuente (todos tokens), 0 espaciados y 0 colores literales fuera de los tokens, breakpoints solo 576/768/992/1200, contraste AA (≥ 4.7:1) en los textos medidos de landing y dashboard en ambos temas, navbar de la landing con alto fijo a 320–1440 px y 60/60 mediciones (12 rutas × 5 anchos) sin desborde. Se eliminaron `themes/dark.css` y 14 tokens sin uso; `assets/css/components/` pasó a `assets/css/pages/`. No quedan clases `user-*` del rol cliente (las que quedan, como `sidebar-user-card`, nombran la cuenta en general).
 
-### Fase 5 — Funcionalidad que exige la consigna
+### Fase 5 — Funcionalidad que exige la consigna · ✅ completada en el frontend (25/11/2026)
 - Edición y recategorización de gasto (`/cliente/gastos/:id`, `PUT /expenses/:id`).
 - Análisis por cliente para el asesor (`/asesor/clientes/:id`): gastos, patrones, gastos inusuales y perfil asignado por el sistema.
 - Carga de ticket contra `POST /tickets/upload` a través del servicio (OCR real cuando esté el backend).
 - README y documentación de entrega (D-15).
+- Como quedó implementado: `ExpenseForm` (organismo compartido por carga y edición), página de edición `#/cliente/gastos/:id`, página de análisis `#/asesor/clientes/:id` con los bloques de `spendingAnalysis.js` (compartidos con el dashboard y patrones), endpoint nuevo `GET /clients/:id/expenses` y filtro `cliente_id` en `/recommendations/sent` (contrato §10 actualizado), y README de entrega con sistema, arquitectura, modelo de datos, endpoints, tecnologías y uso de la IA.
+- **Pendiente fuera del frontend:** implementar la API NestJS siguiendo la §10 (el mock es la referencia ejecutable), elegir e integrar el servicio real de OCR/IA, hacer el deploy y completar en el README las secciones marcadas como pendientes (URLs, servicio de OCR).
 
 ---
 

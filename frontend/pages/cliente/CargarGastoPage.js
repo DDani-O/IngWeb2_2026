@@ -1,24 +1,24 @@
 import { PageController } from "../../core/PageController.js";
 import { badge } from "../../components/atoms/badge.js";
-import { formField, formGrid } from "../../components/molecules/formField.js";
 import { infoCard } from "../../components/molecules/infoCard.js";
 import { keyValueList } from "../../components/molecules/keyValueList.js";
 import { mediaItem } from "../../components/molecules/mediaItem.js";
 import { emptyState } from "../../components/molecules/stateBlock.js";
+import { ExpenseForm } from "../../components/organisms/ExpenseForm.js";
 import { TicketUploader } from "../../components/organisms/TicketUploader.js";
 import { categoriesService } from "../../services/categories.service.js";
 import { expensesService } from "../../services/expenses.service.js";
 import { ticketsService } from "../../services/tickets.service.js";
 import { EXPENSE_ORIGINS, STORAGE_KEYS } from "../../utils/constants.js";
-import { formatCurrency, formatDate, todayIsoDate } from "../../utils/formatters.js";
+import { formatCurrency, formatDate } from "../../utils/formatters.js";
 import { html } from "../../utils/html.js";
 
 const RECENT_LIMIT = 6;
 const DRAFT_FIELDS = ["merchant", "amount", "categoryId", "date", "description"];
 
 /**
- * Carga de gastos (consigna §4.2): formulario manual con los campos de la consigna y carga por
- * imagen de ticket con OCR/IA, que precompleta el formulario para que el cliente lo revise.
+ * Carga de gastos (consigna §4.2): formulario manual y carga por imagen de ticket con OCR/IA
+ * (POST /tickets/upload), que precompleta el formulario para que el cliente lo revise antes de guardar.
  */
 export class CargarGastoPage extends PageController {
   static template = "./pages/cliente/cargar-gasto.html";
@@ -27,13 +27,15 @@ export class CargarGastoPage extends PageController {
     super(element, options);
     // Resultado del OCR: si existe al guardar, el gasto queda con origen "ticket".
     this.ticketAnalysis = null;
-    this.categories = [];
     const userId = this.options.authManager?.getCurrentUser()?.id || "anonimo";
     this.draftStorageKey = `${STORAGE_KEYS.EXPENSE_DRAFT}.${userId}`;
   }
 
   render() {
-    this._renderFields();
+    this.form = this.mountChild(ExpenseForm, "#expenseForm", {
+      idPrefix: "newExpense",
+      secondaryAction: { label: "Limpiar formulario", icon: "fa-eraser" },
+    });
     this.uploader = this.mountChild(TicketUploader, "#ticketUploader", { inputId: "expenseTicketFile" });
 
     this._loadData(async () => {
@@ -42,40 +44,21 @@ export class CargarGastoPage extends PageController {
         return;
       }
 
-      this.categories = categories;
-      this._renderFields(this._readDraft());
+      this.form.update({ categories, values: this._readDraft() });
       this._renderRecent(recent.items);
     });
   }
 
   attachEvents() {
-    const form = this.element.querySelector("#expenseForm");
-    this.listen(form, "submit", (event) => this._handleSubmit(event));
-    this.listen(form, "input", () => this._persistDraft());
-    this.listen(form, "change", () => this._persistDraft());
-    this.listen(this.element.querySelector('[data-action="clear"]'), "click", () => this._clearForm());
+    this.listen(this.element, "expense-submit", (event) => this._create(event.detail.values));
+    this.listen(this.element, "expense-change", (event) => this._persistDraft(event.detail.values));
+    this.listen(this.element, "expense-secondary", () => this._clearForm());
     this.listen(this.element, "ticket-analyze", (event) => this._analyzeTicket(event.detail.file));
     this._bindDashboardBackButtons();
   }
 
-  /**
-   * Dibuja los campos del formulario con los valores indicados.
-   * @param {{merchant?, amount?, categoryId?, date?, description?}} values
-   */
-  _renderFields(values = {}) {
-    const container = this.element.querySelector("#expenseFields");
-    container.innerHTML = formGrid(html`
-      ${formField({ id: "expenseMerchant", name: "merchant", label: "Comercio", required: true, width: "half", value: values.merchant, inputAttrs: { list: "merchantSuggestions", autocomplete: "off", maxlength: 120 } })}
-      ${formField({ id: "expenseAmount", name: "amount", label: "Monto", type: "number", required: true, width: "half", value: values.amount, inputAttrs: { min: "0.01", step: "0.01", inputmode: "decimal" } })}
-      ${formField({ id: "expenseCategory", name: "categoryId", label: "Categoria", type: "select", required: true, width: "half", value: values.categoryId, placeholderOption: "Seleccionar categoria", options: this.categories.map((category) => ({ value: category.id, label: `${category.icon} ${category.name}` })) })}
-      ${formField({ id: "expenseDate", name: "date", label: "Fecha", type: "date", required: true, width: "half", value: values.date || todayIsoDate(), inputAttrs: { max: todayIsoDate() } })}
-      ${formField({ id: "expenseDescription", name: "description", label: "Descripcion", type: "textarea", value: values.description, inputAttrs: { placeholder: "Ej: compra semanal, combustible, etc.", maxlength: 300 } })}
-    `);
-  }
-
   _renderRecent(expenses) {
-    const merchants = [...new Set(expenses.map((expense) => expense.merchant))];
-    this.element.querySelector("#merchantSuggestions").innerHTML = html`${merchants.map((merchant) => html`<option value="${merchant}"></option>`)}`;
+    this.form.update({ suggestions: [...new Set(expenses.map((expense) => expense.merchant))], values: this.form.getValues() });
 
     this.element.querySelector("#recentExpenses").innerHTML = expenses.length
       ? html`${expenses.map((expense) =>
@@ -88,25 +71,18 @@ export class CargarGastoPage extends PageController {
       : emptyState({ icon: "fa-receipt", title: "Todavia no cargaste gastos" });
   }
 
-  async _handleSubmit(event) {
-    event.preventDefault();
-    const form = event.target;
-    if (!form.checkValidity()) {
-      form.reportValidity();
-      return;
-    }
-
-    const values = this._readValues();
+  async _create(values) {
+    this.form.setBusy(true);
     const created = await this._runAction(
       () =>
         expensesService.create({
           ...values,
-          amount: Number(values.amount),
           origin: this.ticketAnalysis ? "ticket" : "manual",
           ticketId: this.ticketAnalysis?.ticketId || null,
         }),
-      { button: form.querySelector('[type="submit"]'), successMessage: "Gasto registrado correctamente." }
+      { successMessage: "Gasto registrado correctamente." }
     );
+    this.form.setBusy(false);
 
     if (!created || !this._isAlive()) {
       return;
@@ -131,15 +107,17 @@ export class CargarGastoPage extends PageController {
     }
 
     this.ticketAnalysis = analysis;
-    this._renderFields({
-      merchant: analysis.merchant,
-      amount: analysis.amount ?? "",
-      categoryId: analysis.categoryId,
-      date: analysis.date,
-      description: `Ticket: ${analysis.fileName}`,
+    this.form.update({
+      values: {
+        merchant: analysis.merchant,
+        amount: analysis.amount ?? "",
+        categoryId: analysis.categoryId,
+        date: analysis.date,
+        description: `Ticket: ${analysis.fileName}`,
+      },
     });
     this._showOcrResult(analysis);
-    this._persistDraft();
+    this._persistDraft(this.form.getValues());
   }
 
   _showOcrResult(analysis) {
@@ -166,26 +144,14 @@ export class CargarGastoPage extends PageController {
     });
   }
 
-  _readValues() {
-    const form = this.element.querySelector("#expenseForm");
-    const values = Object.fromEntries(new FormData(form).entries());
-    return {
-      merchant: (values.merchant || "").trim(),
-      amount: values.amount || "",
-      categoryId: values.categoryId || "",
-      date: values.date || "",
-      description: (values.description || "").trim(),
-    };
-  }
-
-  _persistDraft() {
-    localStorage.setItem(this.draftStorageKey, JSON.stringify(this._readValues()));
+  _persistDraft(values) {
+    localStorage.setItem(this.draftStorageKey, JSON.stringify(values));
   }
 
   _readDraft() {
     try {
       const draft = JSON.parse(localStorage.getItem(this.draftStorageKey) || "{}");
-      return Object.fromEntries(DRAFT_FIELDS.map((field) => [field, draft[field] || ""]));
+      return Object.fromEntries(DRAFT_FIELDS.map((field) => [field, draft[field] ?? ""]));
     } catch {
       localStorage.removeItem(this.draftStorageKey);
       return {};
@@ -195,7 +161,7 @@ export class CargarGastoPage extends PageController {
   _clearForm() {
     localStorage.removeItem(this.draftStorageKey);
     this.ticketAnalysis = null;
-    this._renderFields();
+    this.form.update({ values: {} });
     this._showOcrResult(null);
     this.uploader.reset();
   }

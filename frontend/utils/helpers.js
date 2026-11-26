@@ -37,6 +37,15 @@ export function stringifyQuery(params = {}) {
 }
 
 /**
+ * Completa los parámetros de una ruta con `:param` (ej. "/cliente/gastos/:id" → "/cliente/gastos/gas-1").
+ * @param {string} pattern
+ * @param {Object<string, string>} params
+ */
+export function fillRoute(pattern, params = {}) {
+  return pattern.replace(/:(\w+)/g, (_match, key) => encodeURIComponent(params[key] ?? ""));
+}
+
+/**
  * Construye un hash route consistente a partir de path y query.
  */
 export function buildHash(path, query = {}) {

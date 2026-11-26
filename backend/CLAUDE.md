@@ -14,6 +14,7 @@ Estado: **sin inicializar**. `package.json` y `tsconfig.json` están vacíos; la
 - Validación de entrada con DTOs + `class-validator` y `ValidationPipe` global.
 - Auth con JWT; roles `usuario`/`asesor` con guard + decorador `@Roles()`.
 - Respetar el contrato de endpoints de `../especificaciones/EspecificacionDesarrolloFront.md` (sección 10) y los mínimos de la consigna. Si se cambia un endpoint, actualizar esa sección.
+- Referencia ejecutable del contrato: el backend simulado del front (`../frontend/mocks/mockServer.js`) implementa todas las rutas, validaciones, códigos de error y permisos, y `../frontend/mocks/analytics.js` implementa las reglas de análisis (gastos inusuales, nivel de riesgo, asignación automática del perfil de gasto). Las respuestas tienen que tener exactamente esa forma (en español, como la BD).
 - Configuración por variables de entorno (`@nestjs/config`): URL/keys de Supabase, secreto JWT, API key del servicio OCR/IA. Mantener un `.env.example` versionado; el `.env` real nunca se commitea.
 - CORS habilitado para el origen del frontend (local `http://localhost:5500` y el dominio del deploy).
 

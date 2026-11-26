@@ -145,8 +145,9 @@ export class AppLayout extends Component {
    * @param {{path: string, title: string}} to
    */
   setActive(to) {
+    const activePath = to.route?.activeNav || to.path;
     this.element.querySelectorAll("[data-route]").forEach((link) => {
-      const isActive = link.dataset.route === to.path;
+      const isActive = link.dataset.route === activePath;
       link.classList.toggle("active", isActive);
       if (isActive) {
         link.setAttribute("aria-current", "page");
