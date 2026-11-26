@@ -1,118 +1,127 @@
-import { API_CONFIG, STORAGE_KEYS } from "../utils/constants.js";
-import { parseQueryString } from "../utils/helpers.js";
+import { API_CONFIG, EVENTS, STORAGE_KEYS, UI_TIMING } from "../utils/constants.js";
+import { sleep } from "../utils/helpers.js";
+import { eventBus } from "./EventBus.js";
+
+/**
+ * Error normalizado de la API. El backend responde { error, mensaje, codigo, detalles }.
+ */
+export class ApiError extends Error {
+  constructor({ status = 0, code = "ERROR", message = "Error de comunicacion con el servidor.", details = null } = {}) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.code = code;
+    this.details = details;
+  }
+}
+
+/**
+ * Resuelve el driver activo: override en localStorage (para pruebas) o API_CONFIG.DRIVER.
+ */
+function resolveDriver() {
+  const override = localStorage.getItem(STORAGE_KEYS.API_DRIVER);
+  return override === "http" || override === "mock" ? override : API_CONFIG.DRIVER;
+}
+
+function resolveBaseUrl() {
+  const isLocal = ["localhost", "127.0.0.1"].includes(window.location.hostname);
+  return isLocal ? API_CONFIG.BASE_URLS.local : API_CONFIG.BASE_URLS.production;
+}
 
 export class APIClient {
   /**
-   * Inicializa cliente HTTP con URL base y timeout global.
-   * Puede reutilizarse para apuntar a distintos entornos (dev/prod/mock).
+   * Cliente HTTP único de la app. Con driver "mock" atiende los pedidos con el backend
+   * simulado (mocks/mockServer.js) usando el mismo contrato que la API real.
    */
-  constructor(baseUrl = API_CONFIG.BASE_URL) {
-    this.baseUrl = baseUrl;
+  constructor() {
+    this.driver = resolveDriver();
+    this.baseUrl = resolveBaseUrl();
     this.timeoutMs = API_CONFIG.TIMEOUT_MS;
+    this._tokenProvider = () => null;
+    this._mockHandler = null;
   }
 
   /**
-   * Realiza solicitudes GET.
+   * Define de dónde se lee el token (lo inyecta AuthManager para evitar dependencias circulares).
+   * @param {() => string|null} provider
    */
-  async get(endpoint, options = {}) {
-    return this._request("GET", endpoint, options);
+  setTokenProvider(provider) {
+    this._tokenProvider = provider;
+  }
+
+  async get(endpoint, { query } = {}) {
+    return this._request("GET", endpoint, { query });
+  }
+
+  async post(endpoint, data = {}) {
+    return this._request("POST", endpoint, { data });
+  }
+
+  async put(endpoint, data = {}) {
+    return this._request("PUT", endpoint, { data });
+  }
+
+  async delete(endpoint) {
+    return this._request("DELETE", endpoint, {});
   }
 
   /**
-   * Realiza solicitudes POST enviando payload JSON.
+   * Punto único de red: arma el pedido, aplica el driver y normaliza respuestas y errores.
    */
-  async post(endpoint, data = {}, options = {}) {
-    return this._request("POST", endpoint, { ...options, data });
+  async _request(method, endpoint, { query = {}, data = null } = {}) {
+    const path = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+    const cleanQuery = Object.fromEntries(
+      Object.entries(query || {}).filter(([, value]) => value !== undefined && value !== null && value !== "")
+    );
+    const token = this._tokenProvider();
+
+    const { status, body } =
+      this.driver === "mock"
+        ? await this._mockRequest(method, path, cleanQuery, data, token)
+        : await this._httpRequest(method, path, cleanQuery, data, token);
+
+    if (status >= 200 && status < 300) {
+      return body;
+    }
+
+    const error = new ApiError({
+      status,
+      code: body?.codigo || `HTTP_${status}`,
+      message: body?.mensaje || "Error de comunicacion con el servidor.",
+      details: body?.detalles || null,
+    });
+
+    // Solo es "sesión expirada" si se mandó un token; un 401 en el login es credencial inválida.
+    if (status === 401 && token) {
+      eventBus.emit(EVENTS.AUTH.SESSION_EXPIRED, { message: error.message });
+    }
+
+    throw error;
   }
 
-  /**
-   * Realiza solicitudes PUT para actualizar recursos.
-   */
-  async put(endpoint, data = {}, options = {}) {
-    return this._request("PUT", endpoint, { ...options, data });
+  async _mockRequest(method, path, query, data, token) {
+    if (!this._mockHandler) {
+      const module = await import("../mocks/mockServer.js");
+      this._mockHandler = module.handleMockRequest;
+    }
+
+    await sleep(UI_TIMING.MOCK_LATENCY_MS);
+    return this._mockHandler({ method, path, query, body: data, token });
   }
 
-  /**
-   * Realiza solicitudes PATCH para actualizaciones parciales.
-   */
-  async patch(endpoint, data = {}, options = {}) {
-    return this._request("PATCH", endpoint, { ...options, data });
-  }
+  async _httpRequest(method, path, query, data, token) {
+    if (!this.baseUrl) {
+      throw new ApiError({ code: "SIN_CONFIGURAR", message: "Falta configurar la URL del backend (API_CONFIG.BASE_URLS)." });
+    }
 
-  /**
-   * Realiza solicitudes DELETE.
-   */
-  async delete(endpoint, options = {}) {
-    return this._request("DELETE", endpoint, options);
-  }
-
-  /**
-   * Envia un FormData (multipart/form-data) al servidor.
-   * No setea Content-Type para que el browser incluya el boundary correcto.
-   */
-  async postFile(endpoint, formData) {
-    const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
-    const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
-    const url = `${this.baseUrl}${cleanEndpoint}`;
-
+    const queryString = new URLSearchParams(query).toString();
+    const url = `${this.baseUrl}${path}${queryString ? `?${queryString}` : ""}`;
+    const isFormData = data instanceof FormData;
     const headers = {};
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
+
+    if (!isFormData && data !== null && method !== "GET" && method !== "DELETE") {
+      headers["Content-Type"] = "application/json";
     }
-
-    const controller = new AbortController();
-    const timeoutId = window.setTimeout(() => controller.abort(), this.timeoutMs);
-
-    try {
-      const response = await fetch(url, {
-        method: "POST",
-        headers,
-        body: formData,
-        signal: controller.signal,
-      });
-
-      const text = await response.text();
-      let payload = {};
-      if (text) {
-        try {
-          payload = JSON.parse(text);
-        } catch {
-          payload = { message: text };
-        }
-      }
-
-      if (!response.ok) {
-        const message = Array.isArray(payload?.message)
-          ? payload.message[0]
-          : payload?.message;
-        throw new Error(message || "Error de comunicacion con el backend.");
-      }
-
-      return payload;
-    } finally {
-      window.clearTimeout(timeoutId);
-    }
-  }
-
-  /**
-   * Metodo central de red: arma URL, headers, timeout y manejo de errores.
-   * Tambien puede servir como punto unico para agregar retries o telemetry.
-   */
-  async _request(method, endpoint, options = {}) {
-    const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
-    const queryParams = options.query || {};
-
-    const queryString = new URLSearchParams(queryParams).toString();
-    const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
-    const url = `${this.baseUrl}${cleanEndpoint}${
-      queryString ? `?${queryString}` : ""
-    }`;
-
-    const headers = {
-      "Content-Type": "application/json",
-      ...(options.headers || {}),
-    };
-
     if (token) {
       headers.Authorization = `Bearer ${token}`;
     }
@@ -124,43 +133,29 @@ export class APIClient {
       const response = await fetch(url, {
         method,
         headers,
-        body:
-          method === "GET" || method === "DELETE"
-            ? null
-            : JSON.stringify(options.data || {}),
+        body: method === "GET" || method === "DELETE" || data === null ? null : isFormData ? data : JSON.stringify(data),
         signal: controller.signal,
       });
 
       const text = await response.text();
-      let payload = {};
-
+      let body = null;
       if (text) {
         try {
-          payload = JSON.parse(text);
+          body = JSON.parse(text);
         } catch {
-          payload = { message: text };
+          body = { mensaje: "Respuesta invalida del servidor.", codigo: "RESPUESTA_INVALIDA" };
         }
       }
 
-      if (!response.ok) {
-        const message = Array.isArray(payload?.message)
-          ? payload.message[0]
-          : payload?.message;
-        throw new Error(message || "Error de comunicacion con el backend.");
+      return { status: response.status, body };
+    } catch (error) {
+      if (error.name === "AbortError") {
+        throw new ApiError({ code: "TIEMPO_AGOTADO", message: "El servidor tardo demasiado en responder." });
       }
-
-      return payload;
+      throw new ApiError({ code: "SIN_CONEXION", message: "No se pudo conectar con el servidor." });
     } finally {
       window.clearTimeout(timeoutId);
     }
-  }
-
-  /**
-   * Extrae parametros query desde un hash para reutilizarlos en rutas.
-   */
-  static parseHashQuery(hash) {
-    const [, query = ""] = String(hash).split("?");
-    return parseQueryString(query);
   }
 }
 

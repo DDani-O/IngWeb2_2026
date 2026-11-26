@@ -1,0 +1,9 @@
+/* Átomo Trend (mobile-first). Ver trend.js */
+.trend {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.trend--good { color: var(--color-success); }
+.trend--bad { color: var(--color-danger); }

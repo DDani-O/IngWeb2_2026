@@ -1,0 +1,14 @@
+/* Organismo ProfileForm (mobile-first). Ver ProfileForm.js */
+.profile-form__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+@media (min-width: 576px) {
+  .profile-form__actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}

@@ -1,0 +1,45 @@
+<div class="app-page-content page-cliente-patrones">
+  <section class="hero-panel">
+    <h1 class="text-gradient">Patrones de Consumo</h1>
+    <p class="text-muted mt-2">
+      Analisis detallado de tus gastos y habitos de consumo. Comprende donde va tu dinero.
+    </p>
+  </section>
+
+  <section class="section-block">
+    <h2 class="section-title"><i class="fa-solid fa-lightbulb accent" aria-hidden="true"></i>Informacion Clave</h2>
+    <div class="card-grid" id="patternsInsights"></div>
+  </section>
+
+  <section class="stat-grid" id="patternsStats" aria-label="Indicadores"></section>
+
+  <section class="section-block">
+    <h2 class="section-title"><i class="fa-solid fa-layer-group accent" aria-hidden="true"></i>Categorias donde mas dinero se gasta</h2>
+    <div class="chart-grid">
+      <div id="patternsCategoryChart"></div>
+      <div class="media-list" id="patternsCategoryList"></div>
+    </div>
+  </section>
+
+  <section class="section-block">
+    <h2 class="section-title"><i class="fa-solid fa-chart-line accent" aria-hidden="true"></i>Evolucion de Gastos en el Tiempo</h2>
+    <div class="chart-grid">
+      <div id="patternsMonthlyChart"></div>
+      <div id="patternsByCategoryChart"></div>
+    </div>
+  </section>
+
+  <section class="section-block">
+    <h2 class="section-title"><i class="fa-solid fa-triangle-exclamation accent" aria-hidden="true"></i>Gastos Inusuales</h2>
+    <p class="text-muted mb-3">Gastos de los ultimos 30 dias que superan en mas de un 35% tu promedio en su categoria.</p>
+    <div class="chart-grid">
+      <div id="patternsUnusualChart"></div>
+      <div class="alert-list" id="patternsUnusualList"></div>
+    </div>
+    <div class="section-actions">
+      <button class="action-btn action-btn--primary js-dashboard-back" type="button">
+        <i class="fa-solid fa-arrow-left" aria-hidden="true"></i><span>Volver al Dashboard</span>
+      </button>
+    </div>
+  </section>
+</div>

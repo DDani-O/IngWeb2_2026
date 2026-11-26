@@ -1,0 +1,48 @@
+<div class="app-page-content page-cliente-dashboard">
+  <section class="hero-panel">
+    <div class="dashboard-hero">
+      <div>
+        <h1 class="text-gradient" id="dashboardWelcome">Hola!</h1>
+        <p class="text-muted mt-2">
+          Tu resumen financiero esta listo. Explora tus patrones de gasto y descubre como mejorar tu economia personal.
+        </p>
+        <div class="dashboard-hero__actions">
+          <a class="action-btn action-btn--primary" href="#/cliente/cargar-gasto">
+            <i class="fa-solid fa-receipt" aria-hidden="true"></i><span>Cargar Gasto</span>
+          </a>
+          <a class="action-btn action-btn--ghost" href="#/cliente/historial">
+            <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i><span>Ver Historial</span>
+          </a>
+        </div>
+      </div>
+      <div id="dashboardDate"></div>
+      <div class="alert-list" id="dashboardAlerts" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <section class="section-block">
+    <h2 class="section-title"><i class="fa-solid fa-chart-column accent" aria-hidden="true"></i>Tus Estadisticas de Consumo</h2>
+    <div class="stat-grid" id="dashboardStats"></div>
+  </section>
+
+  <section id="dashboardProfile"></section>
+
+  <section class="section-block">
+    <h2 class="section-title"><i class="fa-solid fa-eye accent" aria-hidden="true"></i>Resumenes Rapidos</h2>
+    <div class="card-grid card-grid--3" id="dashboardSummaries"></div>
+  </section>
+
+  <section class="section-block">
+    <h2 class="section-title"><i class="fa-solid fa-chart-line accent" aria-hidden="true"></i>Visualizaciones</h2>
+    <div class="chart-grid chart-grid--3">
+      <div class="chart-grid__wide" id="dashboardDailyChart"></div>
+      <div id="dashboardCategoryChart"></div>
+      <div id="dashboardMonthlyChart"></div>
+    </div>
+  </section>
+
+  <section class="section-block">
+    <h2 class="section-title"><i class="fa-solid fa-store accent" aria-hidden="true"></i>Comercios Mas Frecuentes</h2>
+    <div class="media-list" id="dashboardMerchants"></div>
+  </section>
+</div>

@@ -1,0 +1,62 @@
+/* Moléculas EmptyState / LoadingState / ErrorState (mobile-first). Ver stateBlock.js */
+.state-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  border: 1px dashed var(--border-soft);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+  padding: var(--space-5) var(--space-4);
+  text-align: center;
+}
+
+.state-block__icon {
+  color: var(--color-primary);
+  font-size: var(--font-size-lg);
+}
+
+.state-block__title {
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.state-block__message {
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.state-block--error {
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--color-danger) 45%, transparent);
+  background: color-mix(in srgb, var(--color-danger) 10%, var(--surface-1));
+}
+
+.state-block--error .state-block__icon {
+  color: var(--color-danger);
+}
+
+.state-block__spinner {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: var(--radius-round);
+  border: 3px solid var(--border-soft);
+  border-top-color: var(--color-primary);
+  animation: state-block-spin 0.8s linear infinite;
+}
+
+@keyframes state-block-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (min-width: 768px) {
+  .state-block--loading,
+  .state-block--error {
+    flex-direction: row;
+    justify-content: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .state-block__spinner { animation: none; }
+}

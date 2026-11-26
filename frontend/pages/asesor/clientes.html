@@ -1,129 +1,28 @@
-<div class="app-page page-asesor-clientes">
-  <div id="advisorTopbarSlot"></div>
-
-  <main class="app-main app-main--wide advisor-clientes-main">
-    <section class="hero-panel advisor-clientes-hero">
-      <h1 class="text-gradient">Gestion de Clientes</h1>
-      <p class="text-muted mt-2">
-        Administra tu cartera, revisa riesgo por cliente y abre el detalle para tomar acciones.
-      </p>
-      <div class="d-flex flex-wrap gap-2 mt-3">
-        <a class="action-btn action-btn--ghost" href="#/asesor/inbox">
-          <i class="fa-solid fa-inbox"></i>
-          Ir a inbox
-        </a>
-        <button class="action-btn action-btn--primary" id="openClientRecommendationButton" type="button">
-          <i class="fa-solid fa-pen"></i>
-          Enviar recomendacion
-        </button>
-        <button class="action-btn action-btn--ghost" id="backToAdvisorDashboardButton" type="button">
-          <i class="fa-solid fa-arrow-left"></i>
-          Volver al panel
-        </button>
-      </div>
-    </section>
-
-    <section class="section-block">
-      <div class="advisor-clients-toolbar">
-        <div class="advisor-clients-toolbar__search">
-          <label class="form-label" for="clientsSearchInput">Buscar cliente</label>
-          <input id="clientsSearchInput" class="form-control" placeholder="Nombre o perfil" />
-        </div>
-
-        <div>
-          <label class="form-label" for="clientsRiskFilter">Riesgo</label>
-          <select id="clientsRiskFilter" class="form-select">
-            <option value="Todos">Todos</option>
-            <option value="low">Bajo</option>
-            <option value="medium">Medio</option>
-            <option value="high">Alto</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="form-label" for="clientsStatusFilter">Estado</label>
-          <select id="clientsStatusFilter" class="form-select">
-            <option value="Todos">Todos</option>
-            <option value="activo">Activo</option>
-          </select>
-        </div>
-
-        <div class="d-flex align-items-end">
-          <button class="action-btn action-btn--ghost" id="clientsViewToggle" type="button">
-            <i class="fa-solid fa-table"></i>
-            Ver como tabla
-          </button>
-        </div>
-      </div>
-
-      <p class="text-muted mt-3" id="clientsCountLabel">0 clientes</p>
-
-      <div id="clientsCards" class="advisor-client-grid"></div>
-
-      <div id="clientsTableWrap" class="table-responsive app-hidden mt-2">
-        <table class="table-shell advisor-client-table">
-          <thead>
-            <tr>
-              <th>Cliente</th>
-              <th>Perfil</th>
-              <th>Ultimo gasto</th>
-              <th>Promedio</th>
-              <th>Cambio</th>
-              <th>Riesgo</th>
-              <th>Accion</th>
-            </tr>
-          </thead>
-          <tbody id="clientsTableBody"></tbody>
-        </table>
-      </div>
-    </section>
-
-    <div id="appFooterSlot"></div>
-  </main>
-
-  <div id="advisorSidebarSlot"></div>
-
-  <div class="modal fade" id="advisorClientDetailModal" tabindex="-1" aria-labelledby="advisorClientDetailModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content app-modal-surface">
-        <div class="modal-header">
-          <h5 class="modal-title" id="advisorClientDetailModalLabel">Detalle de cliente</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-        </div>
-        <div class="modal-body" id="advisorClientDetailContent"></div>
-      </div>
+<div class="app-page-content page-asesor-clientes">
+  <section class="hero-panel">
+    <h1 class="text-gradient">Gestion de Clientes</h1>
+    <p class="text-muted mt-2">
+      Administra tu cartera, revisa el riesgo de cada cliente y envia recomendaciones.
+    </p>
+    <div class="dashboard-hero__actions">
+      <button class="action-btn action-btn--primary" data-action="new-recommendation" type="button">
+        <i class="fa-solid fa-pen" aria-hidden="true"></i><span>Enviar recomendacion</span>
+      </button>
+      <a class="action-btn action-btn--ghost" href="#/asesor/dashboard">
+        <i class="fa-solid fa-arrow-left" aria-hidden="true"></i><span>Volver al panel</span>
+      </a>
     </div>
-  </div>
+  </section>
 
-  <div class="modal fade" id="advisorClientProfileModal" tabindex="-1" aria-labelledby="advisorClientProfileModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content app-modal-surface">
-        <div class="modal-header">
-          <h5 class="modal-title" id="advisorClientProfileModalLabel">Asignar perfil financiero</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-        </div>
-        <form id="advisorClientProfileForm" class="modal-body" novalidate>
-          <input type="hidden" id="advisorClientProfileClientId" />
-          <div class="mb-3">
-            <label class="form-label" for="advisorClientProfileSelect">Perfil a asignar</label>
-            <select id="advisorClientProfileSelect" class="form-select" required></select>
-          </div>
-          <div class="mb-3">
-            <label class="form-label" for="advisorClientProfileReason">Motivo (opcional)</label>
-            <textarea id="advisorClientProfileReason" class="form-control" rows="3" maxlength="200" placeholder="Ej: Ajuste por cambio de habitos"></textarea>
-          </div>
-          <div class="d-flex flex-wrap gap-2">
-            <button class="action-btn action-btn--primary" type="submit">
-              <i class="fa-solid fa-check"></i>
-              Asignar perfil
-            </button>
-            <button class="action-btn action-btn--ghost" type="button" data-bs-dismiss="modal">
-              Cancelar
-            </button>
-          </div>
-        </form>
-      </div>
+  <section class="section-block">
+    <div id="clientsFilters"></div>
+    <div class="section-header mt-3">
+      <p class="text-muted" id="clientsCount" aria-live="polite">0 clientes</p>
+      <div id="clientsView"></div>
     </div>
-  </div>
+    <div class="client-grid" id="clientsCards"></div>
+    <div class="app-hidden" id="clientsTable"></div>
+  </section>
 
-  <div id="advisorClientRecommendationModalSlot"></div>
+  <div id="clientRecommendationDialog"></div>
+</div>

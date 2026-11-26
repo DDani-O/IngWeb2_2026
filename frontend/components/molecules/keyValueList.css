@@ -1,0 +1,40 @@
+/* Molécula KeyValueList (mobile-first). Ver keyValueList.js */
+.kv-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.kv-list__item {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-3);
+  font-size: var(--font-size-sm);
+}
+
+.kv-list dt {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.kv-list dd {
+  margin: 0;
+  color: var(--text-primary);
+  font-weight: 700;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.kv-list--rows .kv-list__item {
+  border-bottom: 1px solid var(--border-soft);
+  padding-bottom: var(--space-2);
+}
+
+.kv-list--boxed .kv-list__item {
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+  padding: var(--space-2);
+}

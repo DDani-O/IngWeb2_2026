@@ -1,0 +1,62 @@
+/* Organismo ChartCard (mobile-first). Ver ChartCard.js */
+.chart-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+}
+
+/* El punto de montaje es el ítem de la grilla: sin min-width 0, el canvas lo estira. */
+.chart-grid > * {
+  min-width: 0;
+}
+
+@media (min-width: 992px) {
+  .chart-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .chart-grid--3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .chart-grid__wide { grid-column: 1 / -1; }
+}
+
+@media (min-width: 1200px) {
+  .chart-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .chart-grid--3 .chart-grid__wide { grid-column: auto; }
+}
+
+.chart-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  height: 100%;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-soft);
+  padding: var(--space-3);
+  background: var(--surface-card);
+  min-width: 0;
+}
+
+.chart-card__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-base);
+}
+
+/* El alto lo define el contenedor (Chart.js usa maintainAspectRatio: false). */
+.chart-card__canvas {
+  position: relative;
+  width: 100%;
+}
+
+.chart-card__canvas--sm { height: clamp(12rem, 30vh, 14rem); }
+.chart-card__canvas--md { height: clamp(14rem, 36vh, 17rem); }
+.chart-card__canvas--lg { height: clamp(16rem, 42vh, 21rem); }
+
+.chart-card__caption {
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.chart-card__link {
+  color: var(--color-primary);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}

@@ -48,13 +48,6 @@ export class ThemeManager {
   }
 
   /**
-   * Alterna entre tema oscuro y claro.
-   */
-  toggleTheme() {
-    this.setTheme(this.theme === "dark" ? "light" : "dark");
-  }
-
-  /**
    * Devuelve la instancia unica global del ThemeManager.
    */
   static getInstance() {

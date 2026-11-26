@@ -1,0 +1,67 @@
+/* Átomo Button (mobile-first). Ver button.js */
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 2.75rem; /* objetivo táctil */
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  font-size: var(--font-size-base);
+  line-height: 1.2;
+  text-align: center;
+  cursor: pointer;
+  transition: 180ms ease;
+}
+
+.action-btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.action-btn--sm {
+  min-height: 2.25rem;
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--font-size-sm);
+}
+
+.action-btn--block {
+  width: 100%;
+}
+
+.action-btn--primary {
+  background: var(--action-primary-bg);
+  color: var(--action-primary-text);
+}
+
+.action-btn--primary:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-accent);
+}
+
+.action-btn--ghost {
+  border-color: var(--action-ghost-border);
+  color: var(--action-ghost-text);
+  background: var(--action-ghost-bg);
+}
+
+.action-btn--ghost:not(:disabled):hover {
+  background: color-mix(in srgb, var(--action-ghost-bg) 60%, var(--color-primary) 22%);
+}
+
+.action-btn--danger {
+  border-color: color-mix(in srgb, var(--color-danger) 45%, transparent);
+  color: color-mix(in srgb, var(--color-danger) 75%, var(--text-primary) 25%);
+  background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+}
+
+.action-btn--danger:not(:disabled):hover {
+  background: color-mix(in srgb, var(--color-danger) 22%, transparent);
+}

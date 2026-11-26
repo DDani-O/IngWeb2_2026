@@ -1,314 +1,212 @@
 # FinTrack 2026
 
-Plataforma web de educacion y acompanamiento financiero personal. Conecta clientes con asesores financieros, centraliza el registro de gastos, analiza patrones de consumo con IA y genera recomendaciones personalizadas.
+Plataforma web de gestión de gastos personales con carga de tickets por OCR/IA, para la materia **Ingeniería Web II (2026)**. Grupo: Daniel Olguín y Celeste Núñez.
 
-**Estado actual:** sistema full-stack funcional con backend NestJS + Supabase y frontend SPA vanilla JS. Autenticacion real con JWT. Analytics dinamico. OCR de tickets via Gemini AI.
-
----
-
-## Arquitectura general
-
-```
-frontend/          SPA vanilla JS — puerto 5500
-backend/           NestJS + TypeScript — puerto 3000
-Supabase           PostgreSQL + Auth + Storage (cloud)
-Gemini AI          OCR e interpretacion de tickets de gasto
-```
-
-El frontend se comunica con el backend via REST API (`/api/v1`). El backend usa el service role de Supabase para acceder a la BD con privilegios completos, verificando identidad y permisos en la capa de aplicacion.
-
-### Roles del sistema
-
-- **cliente**: registra gastos, sube tickets, ve analytics, recibe recomendaciones.
-- **asesor**: gestiona cartera de clientes, asigna perfiles de gasto, envia recomendaciones, ve dashboard consolidado.
+> **Estado:** el **frontend está completo** y funciona contra un **backend simulado** (`frontend/mocks/`). La **API NestJS** está implementada (auth, gastos, categorías, tickets con OCR/IA, análisis, asesor) sobre **Supabase**, pero su contrato todavía no coincide con el del frontend: la alineación (API en español, igual que la BD) y el **deploy** están en curso según `especificaciones/PlanIntegracionBackend.md`. Las secciones marcadas con *(pendiente)* se completan cuando eso esté listo.
 
 ---
 
-## Frontend
+## 1. Descripción del sistema
 
-SPA (Single Page Application) con JavaScript ES modules nativo, enrutamiento por hash (`#/ruta`), sin frameworks.
+FinTrack permite a una persona registrar sus gastos, a mano o subiendo la foto de un ticket que una IA interpreta, y entender en qué gasta. Un asesor financiero analiza los patrones de consumo de sus clientes y les envía recomendaciones.
 
-### Tecnologias
+### Roles y funcionalidades
 
-- JavaScript ES Modules (sin bundler)
-- Bootstrap 5 (grid/utilidades)
-- Chart.js (graficos: doughnut, line, bar apilado)
-- Font Awesome 6 (iconos)
-- CSS custom properties con sistema de temas claro/oscuro
+**Cliente**
+- Registro e inicio de sesión; edición del perfil de cuenta (ocupación, ingreso estimado, objetivo financiero, tema claro/oscuro).
+- **Carga de gastos**: formulario manual (comercio, fecha, monto, categoría, descripción) o **imagen del ticket**, que se analiza con OCR/IA y precompleta el formulario para revisarlo antes de guardar.
+- **Historial**: búsqueda, filtros por categoría y origen, orden, detalle, **edición y recategorización** y borrado.
+- **Dashboard**: gasto del mes con variación, promedio mensual, categoría principal, gastos inusuales, alertas, gráficos (por día, **torta por categoría**, **barras por mes** con promedio) y **ranking de comercios**.
+- **Patrones de consumo**: promedio mensual, categorías con más gasto, evolución en el tiempo (total y por categoría), día de mayor gasto y **gastos inusuales**.
+- **Perfil de gasto**: el sistema lo **asigna automáticamente** según los hábitos (Drácula Nocturno, Equilibrista Cósmico, Espíritu Libre); el cliente lo ve, no lo elige.
+- **Recomendaciones** del sistema o del asesor (sugerencias, alertas y observaciones con prioridad): filtros y "marcar como leída".
 
-### Estructura
+**Asesor**
+- Dashboard de la cartera: clientes activos, clientes con gastos inusuales, recomendaciones leídas, alertas y gráficos (clientes por perfil, gasto por perfil, actividad mensual).
+- **Mis clientes**: búsqueda y filtros por riesgo y estado, vista en tarjetas o tabla.
+- **Análisis por cliente**: perfil asignado, nivel de riesgo, indicadores, gráficos, gastos inusuales, ranking de comercios, últimos gastos y recomendaciones enviadas.
+- **Generar recomendaciones** (título, tipo, prioridad y mensaje) para un cliente.
+- Perfil profesional (especialidad, matrícula, descripción).
+
+**Extras opcionales de la consigna cubiertos:** categoría sugerida por la IA al leer el ticket (1), dashboard financiero con varios gráficos (2), alertas de gasto inusual y de aumento mensual (3, sin límites de presupuesto), comparación con el mes anterior (6), análisis de patrones (7), ranking de comercios (8), búsqueda y filtros de gastos (9, sin rango de fechas ni montos en la UI), modo oscuro (11), edición de los datos detectados en el ticket (13) y perfil financiero del usuario (16).
+
+---
+
+## 2. Arquitectura
+
+Arquitectura cliente-servidor por HTTP/REST:
 
 ```
-frontend/
-├── index.html                  Entrada, landing publica, modales auth
-├── core/
-│   ├── Router.js               Enrutamiento por hash con guards de rol
-│   ├── PageController.js       Clase base de todas las paginas
-│   ├── APIClient.js            Cliente HTTP centralizado (JWT en header)
-│   └── AppShell.js             Bootstrap de la app, inyeccion de shells
-├── pages/
-│   ├── usuario/
-│   │   ├── dashboard.html / DashboardPage.js
-│   │   ├── cargar-gasto.html / CargarGastoPage.js   (manual + OCR)
-│   │   ├── historial.html / HistorialPage.js
-│   │   ├── patrones.html / PatronesPage.js           (analytics)
-│   │   ├── perfil.html / PerfilPage.js               (cuenta cliente)
-│   │   ├── perfiles.html / PerfilesPage.js           (informativo, solo lectura)
-│   │   └── recomendaciones.html / RecomendacionesPage.js
-│   └── asesor/
-│       ├── dashboard.html / AsesorDashboardPage.js
-│       ├── clientes.html / AsesorClientesPage.js
-│       ├── inbox.html / AsesorInboxPage.js
-│       ├── perfil.html / AsesorPerfilPage.js
-│       └── reportes.html / AsesorReportesPage.js
-├── components/
-│   ├── user/UserShell/         Sidebar + topbar del cliente
-│   └── advisor/AdvisorShell/   Sidebar + topbar del asesor
-└── assets/css/                 Estilos por componente + temas
+Frontend (HTML + CSS + JS vanilla, SPA)
+   páginas → servicios → APIClient ──HTTP/REST (JSON, JWT)──▶ Backend NestJS ──▶ Supabase (PostgreSQL + RLS)
+                             │                                      │
+                             └─ driver "mock": mocks/mockServer.js  └─ OCR/IA: Groq (modelo con visión)
 ```
 
-### Paginas del cliente
+### Frontend (`frontend/`)
 
-| Ruta | Descripcion |
-|------|-------------|
-| `/usuario/dashboard` | KPIs del mes, ultimos gastos, perfil activo, recomendaciones pendientes |
-| `/usuario/cargar-gasto` | Carga manual de gasto o upload de ticket con OCR (Gemini) |
-| `/usuario/historial` | Listado paginado de gastos con filtros |
-| `/usuario/patrones` | Analytics completo: distribucion por categoria, evolucion mensual, evolucion categoria x mes (stacked bar), gastos inusuales |
-| `/usuario/perfil` | Cuenta: datos personales, preferencias, configuracion (pais, ocupacion, ingresos, tema) |
-| `/usuario/perfiles` | Explorador informativo de perfiles de gasto — SOLO lectura, sin seleccion |
-| `/usuario/recomendaciones` | Listado de recomendaciones con acciones (marcar completada/descartar) |
+SPA con ES modules nativos, sin bundler ni frameworks de componentes. Bootstrap 5 y Chart.js por CDN.
 
-### Paginas del asesor
+| Capa | Ubicación | Responsabilidad |
+|---|---|---|
+| Arranque y rutas | `app.js`, `routes.js` | Tabla de rutas declarativa por rol, guard global, layouts, manejo de sesión expirada. |
+| Núcleo | `core/` | `Router` (hash, `:params`, layouts persistentes, 404), `Component` (ciclo de vida, props, eventos, composición), `PageController`, `AuthManager`, `APIClient`, `EventBus`, `ThemeManager`, `TabRegistry`. |
+| Componentes | `components/` | Biblioteca con Atomic Design: átomos y moléculas (funciones que devuelven HTML escapado) y organismos (`DataTable`, `FilterBar`, `ChartCard`, `Modal`, `ExpenseForm`, `TicketUploader`…). Catálogo y API: [spec §7](especificaciones/EspecificacionDesarrolloFront.md). |
+| Páginas | `pages/{public,cliente,asesor}/` | Componen componentes y piden datos a los servicios. |
+| Servicios | `services/` | Un servicio por dominio y `adapters.js`, la única capa que traduce el contrato en español de la API al modelo de la UI. |
+| Backend simulado | `mocks/` | Implementa el contrato completo (tokens, roles, validaciones, errores) y calcula el análisis de consumo. Persiste en `localStorage`. |
+| Estilos | `assets/css/`, `components/**/*.css` | Tokens (escalas de espaciado y tipografía, colores por tema), componentes mobile-first. Reglas: [ReglasCSS.md](frontend/ReglasCSS.md). |
 
-| Ruta | Descripcion |
-|------|-------------|
-| `/asesor/dashboard` | Estadisticas agregadas de cartera, alertas, calendario, graficos |
-| `/asesor/clientes` | Gestion de clientes asignados: ver perfil, historial de gastos, recomendaciones |
-| `/asesor/inbox` | Mensajes recibidos de clientes |
-| `/asesor/perfil` | Perfil del asesor: matricula, especialidad, capacidad, pais |
-| `/asesor/reportes` | Reportes y estadisticas de la cartera |
+Decisiones clave: todo el texto que viene de la API se escapa por defecto (`utils/html.js`); el guard de rutas es de experiencia de usuario y la seguridad la impone el backend con el token; pasar del mock a la API real es cambiar `API_CONFIG.DRIVER` sin tocar páginas ni servicios.
 
-### Levantar el frontend
+### Backend (`backend/`)
+
+NestJS con un módulo por dominio en `src/modules/` (`auth`, `users`, `expenses`, `categories`, `tickets`, `analytics`, `advisor`), DTOs con `class-validator` (`ValidationPipe` global con `whitelist`), prefijo global `/api/v1`, JWT propio con `JwtAuthGuard` + `RolesGuard` (`@Roles('cliente' | 'asesor')`), filtro global de errores y configuración por variables de entorno. Habla con Supabase por `@supabase/supabase-js` (sin ORM): Supabase Auth para las cuentas, PostgREST para los datos y Storage para las imágenes de los tickets. Tests e2e en `backend/test/e2e/`. Ver `backend/CLAUDE.md`.
+
+---
+
+## 3. Modelo de datos
+
+Base PostgreSQL en Supabase, definida por las migraciones `backend/database/migrations/0001` a `0015` (tablas, ENUMs, funciones validadoras, triggers, políticas RLS, vistas de análisis e índices). Resumen del esquema: `backend/database/DB_SCHEMA_SUMMARY.md`.
+
+| Tabla | Contenido |
+|---|---|
+| `usuarios` | Cuenta (rol `cliente` o `asesor`, nombre completo, estado). Referencia a `auth.users` de Supabase. |
+| `perfiles_usuarios` | Datos del cliente: ocupación, ingreso estimado, objetivo financiero. |
+| `perfiles_asesores` | Datos del asesor: matrícula, especialidad, descripción. |
+| `asignaciones_de_clientes` | Qué asesor atiende a qué cliente. |
+| `categorias_de_gasto` | Catálogo de categorías. |
+| `gastos` | Comercio, fecha, monto, categoría, descripción, origen (`manual` · `ticket`), ticket asociado y estado del OCR. |
+| `tickets` | Imagen subida (URL, tipo, tamaño, estado de procesamiento). |
+| `analisis_ocr` | Resultado del OCR/IA por ticket: texto, comercio, fecha y monto detectados, categoría sugerida, confianza. |
+| `recomendaciones_financieras` | Título, mensaje, tipo, prioridad, origen (`sistema` · `asesor`), leída. |
+| `perfiles_de_gasto` | Catálogo de perfiles con su regla de asignación (`criterio_regla`). |
+| `clasificacion_de_perfil` | Perfil asignado a cada cliente y su vigencia. |
+
+El análisis de consumo se calcula en el momento a partir de `gastos` (la tabla `analisis_de_consumo` se eliminó en la migración 0014; la mensajería asesor-cliente, en la 0013). Seeds de prueba en `backend/database/seeds/`.
+
+---
+
+## 4. Endpoints del backend
+
+Contrato completo (cuerpos, errores y reglas de cálculo) en la [spec §10](especificaciones/EspecificacionDesarrolloFront.md). Rutas en inglés, cuerpos en español. *(pendiente)* Esta tabla es el contrato que implementa el backend simulado; la API NestJS todavía expone otras rutas y nombres de campo y se alinea en las fases I1–I4 del plan de integración. Todas requieren `Authorization: Bearer <token>` salvo login y registro.
+
+| Método | Ruta | Rol | Descripción |
+|---|---|---|---|
+| POST | `/auth/register` | público | Registro (cliente o asesor); devuelve `{ token, usuario }`. |
+| POST | `/auth/login` | público | Inicio de sesión; devuelve `{ token, usuario }`. |
+| GET · PUT | `/auth/me` · `/auth/profile` | ambos | Usuario autenticado · edición del perfil. |
+| GET | `/categories` · `/spending-profiles` | ambos | Catálogos. |
+| GET · POST | `/expenses` | cliente | Listar (filtros y orden) · crear gasto. |
+| GET · PUT · DELETE | `/expenses/:id` | cliente | Ver · editar/recategorizar · borrar. |
+| POST | `/tickets/upload` | cliente | Sube la imagen (multipart `archivo`) y devuelve los datos detectados por OCR/IA. |
+| GET · PUT | `/recommendations` · `/recommendations/:id/read` | cliente | Recomendaciones recibidas · marcar leída. |
+| GET · POST | `/recommendations/sent` · `/recommendations` | asesor | Enviadas (filtro por cliente) · crear. |
+| GET | `/analysis/me` | cliente | Análisis de consumo propio. |
+| GET | `/analysis/clients/:id` · `/analysis/advisor/summary` | asesor | Análisis de un cliente · resumen de la cartera. |
+| GET | `/clients` · `/clients/:id` · `/clients/:id/expenses` | asesor | Clientes asignados · detalle · gastos del cliente. |
+
+Errores: `{ error, mensaje, codigo, detalles }` con 401, 403, 404, 409, 422 o 500.
+
+---
+
+## 5. Uso de la inteligencia artificial
+
+La IA reduce la carga manual al interpretar la foto de un ticket (consigna §4.3):
+
+1. El cliente elige o arrastra la imagen en **Cargar gasto** (`TicketUploader`: valida que sea una imagen de hasta 5 MB).
+2. El front la envía a `POST /tickets/upload` (multipart).
+3. El backend guarda la imagen (`tickets`), la manda al **servicio de OCR/IA** y persiste el resultado (`analisis_ocr`): comercio, fecha, monto, **categoría sugerida** y confianza.
+4. El front precompleta el formulario y muestra los datos detectados; el cliente los revisa y corrige antes de guardar (el gasto queda con origen `ticket`).
+
+Además, el sistema calcula de forma automática el análisis de consumo: gastos inusuales (más de 35% sobre el promedio de su categoría), nivel de riesgo y asignación del perfil de gasto según la participación del gasto discrecional (reglas en la spec §10.6).
+
+El backend NestJS sube la imagen a Supabase Storage y se la pasa a un modelo de IA con visión en **Groq** (`meta-llama/llama-4-scout-17b-16e-instruct`, vía la API compatible con OpenAI), que devuelve en JSON el comercio, la fecha, el monto y la categoría sugerida (`backend/src/modules/tickets/ocr.service.ts`). Con el driver mock, el paso 3 lo simula `frontend/mocks/mockServer.js` a partir del nombre del archivo.
+
+---
+
+## 6. Tecnologías
+
+| Parte | Tecnologías |
+|---|---|
+| Frontend | HTML5, CSS3 (custom properties, grid, `clamp`, `color-mix`), JavaScript ES2022 con ES modules nativos, Fetch API, Bootstrap 5.3 (CDN), Chart.js 4 (CDN), Font Awesome 6. |
+| Backend | Node.js, NestJS 11, TypeScript, `class-validator`, Passport + JWT, `@nestjs/config`, `@supabase/supabase-js`, Jest + Supertest (e2e). |
+| Base de datos | Supabase (PostgreSQL, Auth, Storage, Row Level Security, funciones, triggers y vistas). |
+| OCR/IA | Groq, modelo con visión Llama 4 Scout (SDK `openai`). |
+| Deploy *(pendiente)* | Front: Netlify/Vercel/GitHub Pages · Back: Render/Railway/Fly.io · BD: Supabase. |
+
+---
+
+## 7. Cómo levantar el proyecto
+
+### Frontend
+
+No se puede abrir `index.html` con `file://`: hay que servirlo por HTTP.
 
 ```bash
 cd frontend
-python3 -m http.server 5500
-# o
-npx serve -l 5500 .
+python3 -m http.server 5500      # o: npx serve -l 5500 .
 ```
 
-Abrir: `http://localhost:5500`
+Abrir http://localhost:5500.
 
-> No abrir con `file://` — los modulos ES requieren servidor HTTP.
+**Credenciales de prueba** (backend simulado), clave `Fintrack2026*` para todas:
 
----
+| Rol | Email |
+|---|---|
+| Cliente | `cliente@fintrack.local` |
+| Asesor | `asesor@fintrack.local` |
 
-## Backend
+También se puede registrar una cuenta nueva desde la landing (los clientes nuevos quedan asignados al asesor de prueba).
 
-NestJS + TypeScript. Arquitectura modular por dominio. Cada modulo: `*.module.ts` → `*.controller.ts` → `*.service.ts` → `dto/*.dto.ts`.
+**Backend simulado.** Mientras la API no esté lista, `APIClient` usa `frontend/mocks/mockServer.js`. Los datos (8 clientes con 7 meses de gastos generados a partir de la fecha actual, recomendaciones, asignaciones) se guardan en `localStorage` con la clave `fintrack.mockDb`; para volver a los datos iniciales, borrar esa clave desde las herramientas del navegador.
 
-### Tecnologias
+**Conectar la API real.** En `frontend/utils/constants.js`: `API_CONFIG.DRIVER = "http"` y completar `API_CONFIG.BASE_URLS` (`local` para `localhost`, `production` para el dominio del deploy). Para probar sin tocar código: en la consola, `localStorage.setItem("fintrack.apiDriver", "http")` y recargar.
 
-- NestJS + TypeScript
-- Supabase (PostgreSQL + Auth + Storage)
-- Passport + JWT (`@nestjs/jwt`, `passport-jwt`)
-- class-validator + class-transformer (validacion de DTOs)
-- Google Gemini AI (OCR de tickets)
-
-### Modulos
-
-| Modulo | Descripcion |
-|--------|-------------|
-| `auth` | Registro y login. Crea usuario en `auth.users` y en `usuarios`. |
-| `users` | Perfil de cuenta, recomendaciones, dashboard cliente, perfiles de gasto. |
-| `expenses` | CRUD de gastos. Filtros por fecha, categoria, comercio. |
-| `categories` | Listado de categorias (publico). |
-| `tickets` | Upload de tickets al storage, OCR via Gemini, creacion de gasto desde ticket. |
-| `analytics` | Consumption analytics dinamico: highlights, distribucion categorias, evolucion mensual, evolucion categoria x mes, gastos inusuales (Z-score + percentil). |
-| `advisor` | Dashboard del asesor, gestion de clientes, asignacion de perfiles, recomendaciones, mensajeria, reportes. |
-
-### Levantar el backend
+### Backend
 
 ```bash
 cd backend
-cp .env.example .env   # completar variables
+cp .env.example .env      # completar con las claves de Supabase y Groq
 npm install
-npm run start:dev      # puerto 3000
+npm run start:dev         # http://localhost:3000/api/v1
+npm run test:e2e          # requiere un proyecto de Supabase de prueba en el .env
 ```
 
-### Variables de entorno
+La base se crea ejecutando en orden las migraciones de `backend/database/migrations/` en el SQL Editor de Supabase. Variables de entorno: ver `backend/.env.example`.
 
-```
-SUPABASE_URL=https://<proyecto>.supabase.co
-SUPABASE_ANON_KEY=<anon_key>
-SUPABASE_SERVICE_KEY=<service_role_key>
-JWT_SECRET=<secreto>
-GEMINI_API_KEY=<api_key_google>
-PORT=3000
-CORS_ORIGIN=http://localhost:5500
-```
+### URLs públicas *(pendiente)*
 
-### Endpoints principales
-
-**Auth (publico)**
-```
-POST /auth/register
-POST /auth/login
-```
-
-**Users (JWT)**
-```
-GET  /users/me
-PATCH /users/me
-GET  /users/me/recommendations
-GET  /users/me/dashboard
-GET  /users/me/consumption-analysis?monthsBack=12
-GET  /users/spending-profiles
-```
-
-**Expenses (JWT, rol cliente)**
-```
-GET    /expenses
-POST   /expenses
-GET    /expenses/:id
-PATCH  /expenses/:id
-DELETE /expenses/:id
-GET    /expenses/summary
-```
-
-**Tickets (JWT, rol cliente)**
-```
-POST /tickets/upload     multipart/form-data, procesa OCR Gemini
-GET  /tickets
-GET  /tickets/:id/status
-```
-
-**Categories (publico)**
-```
-GET /categories
-```
-
-**Advisor (JWT, rol asesor)**
-```
-GET  /advisor/dashboard
-GET  /advisor/clients
-GET  /advisor/clients/:id
-GET  /advisor/clients/:id/expenses
-GET  /advisor/clients/:id/recommendations
-POST /advisor/clients/:id/recommendations
-GET  /advisor/clients/:id/spending-profile
-POST /advisor/clients/:id/spending-profile     asigna perfil al cliente
-GET  /advisor/messages
-POST /advisor/messages
-GET  /advisor/profile
-PATCH /advisor/profile
-GET  /advisor/reports
-```
+- Frontend: —
+- Backend: —
 
 ---
 
-## Base de datos
+## 8. Prueba manual
 
-Supabase / PostgreSQL. Ver detalle completo en `backend/database/DB_SCHEMA_SUMMARY.md`.
+No hay tests automatizados. Con el servidor levantado, recorrer:
 
-### Tablas
-
-| Tabla | Descripcion |
-|-------|-------------|
-| `usuarios` | Usuarios del sistema (clientes y asesores) |
-| `perfiles_usuarios` | Preferencias del cliente (pais, ingresos, tema, etc.) |
-| `perfiles_asesores` | Datos profesionales del asesor |
-| `asignaciones_de_clientes` | Relacion asesor ↔ cliente |
-| `gastos` | Registro de gastos del cliente |
-| `categorias_de_gasto` | Catalogo global de categorias |
-| `tickets` | Imagenes de tickets subidas al storage |
-| `analisis_ocr` | Resultado del procesamiento OCR por ticket |
-| `recomendaciones_financieras` | Recomendaciones enviadas por asesores o sistema |
-| `mensajes_asesor` | Mensajeria asesor ↔ cliente |
-| `perfiles_de_gasto` | Catalogo de perfiles financieros (ahorrador, equilibrista, etc.) |
-| `clasificacion_de_perfil` | Perfil asignado a un cliente por un asesor |
-| `analisis_de_consumo` | Snapshot historico de analytics (opcional, datos calculados dinamicamente) |
-
-### Views SQL
-
-| View | Descripcion |
-|------|-------------|
-| `advisor_dashboard_view` | Estadisticas agregadas por asesor |
-| `category_distribution_view` | Distribucion de gastos por categoria por cliente |
-| `client_anomaly_view` | Gastos con Z-score y percentil para deteccion de anomalias |
-| `consumption_stats_view` | Estadisticas generales de consumo por cliente |
-| `monthly_evolution_view` | Evolucion mensual de gastos con variacion porcentual |
-
-### Migraciones
-
-```
-backend/database/migrations/
-├── 0001_init_schema.sql       Schema completo inicial
-├── 0002_*.sql                 ...parches incrementales...
-├── 0010_ciudad_to_pais.sql    Renombrar ciudad → pais en perfiles_usuarios
-```
-
-Ejecutar en orden en el editor SQL de Supabase.
+1. La landing carga; el login y el registro abren y cierran sin errores en consola.
+2. Login de cliente → `#/cliente/dashboard`; login de asesor → `#/asesor/dashboard`.
+3. Sin sesión, `#/cliente/patrones` lleva al login y, al entrar, vuelve a patrones.
+4. **Cargar gasto**: manual y con una imagen (analizar, revisar, guardar); aparece en el historial y en el dashboard.
+5. **Historial**: filtrar, ver detalle, **editar** (cambiar categoría) y eliminar con confirmación.
+6. **Recomendaciones**: filtrar y marcar como leída (persiste al recargar).
+7. **Perfil de cuenta**: editar datos y tema; el nombre se actualiza en la barra superior.
+8. **Asesor**: filtrar clientes, abrir **Ver análisis**, enviar una recomendación y comprobar que el cliente la recibe.
+9. Una ruta inexistente (`#/no-existe`) muestra "Ruta no encontrada" y "Volver" regresa.
+10. Probar en 360 px de ancho y en tema claro: sin scroll horizontal y con texto legible.
 
 ---
 
-## Analytics — Deteccion de gastos inusuales
+## 9. Documentación del proyecto
 
-El modulo `analytics` calcula todo dinamicamente desde la tabla `gastos`. No escribe en `analisis_de_consumo`.
-
-Algoritmo (Z-score + percentil):
-1. Agrupar gastos por categoria.
-2. Calcular media y desvio estandar por categoria.
-3. Calcular Z-score de cada gasto: `(monto - media) / stdev`.
-4. Calcular percentil del gasto dentro de su categoria.
-5. Gasto anomalo si `|zScore| > 1.5` O `percentil > 95`.
-6. `anomalyScore = (zsContribution + percentileContribution) / 2` (0-1).
-7. Retornar top anomalias ordenadas por score desc.
-
----
-
-## Perfiles de gasto
-
-Los perfiles financieros (Ahorrador Disciplinado, Equilibrista Financiero, etc.) son un catalogo persistido en `perfiles_de_gasto`. El campo `criterio_regla` (JSONB) almacena metadata de display: emoji, tagline, caracteristicas, consejos, umbrales de clasificacion.
-
-**Regla de negocio:** el cliente NUNCA puede asignarse un perfil. Solo el asesor puede asignar un perfil via `clasificacion_de_perfil`. La pantalla `/usuario/perfiles` es puramente informativa.
-
----
-
-## OCR de tickets
-
-Flujo:
-1. Cliente sube imagen/PDF en `/usuario/cargar-gasto`.
-2. `POST /tickets/upload` sube el archivo a Supabase Storage.
-3. El backend llama a Gemini AI con el texto extraido del ticket.
-4. Gemini retorna: comercio, monto, fecha, categoria sugerida.
-5. Se crea un registro en `analisis_ocr` y se pre-rellena el formulario de gasto.
-6. El cliente confirma y guarda el gasto (con `origen: "ticket"`).
-
----
-
-## Estado del proyecto
-
-### Implementado y funcional
-- Autenticacion JWT real (registro, login, guards, roles)
-- Dashboard cliente con datos reales de BD
-- Dashboard asesor con estadisticas reales
-- CRUD de gastos con filtros
-- Upload y OCR de tickets (Gemini)
-- Analytics de consumo completo (distribucion, evolucion, anomalias)
-- Asignacion asesor ↔ cliente (automatica al registrarse)
-- Perfiles de gasto (catalogo + asignacion por asesor)
-- Recomendaciones financieras (lectura + cambio de estado por cliente)
-- Mensajeria asesor → cliente (inbox)
-- Historial de gastos
-- Cuenta cliente (datos personales, preferencias, tema)
-
-### Pendiente — ver `PENDIENTES_GENERALES.md`
-- Envio de recomendaciones desde el panel del asesor (frontend)
-- Mensajeria bidireccional cliente ↔ asesor (frontend + endpoint cliente)
-- Revision completa del dashboard asesor (metricas, UX)
-- Validacion de calculos del dashboard cliente
-- Boton logout del dashboard cliente (comportamiento incorrecto)
-
-
+| Documento | Contenido |
+|---|---|
+| `Consigna_Plataforma Gestion de Gastos Personales.pdf` | Consigna oficial. |
+| `especificaciones/EspecificacionDesarrolloFront.md` | Especificación del frontend: arquitectura, componentes (§7), estilos (§8), **contrato de la API (§10)** y páginas (§11). |
+| `especificaciones/paginasFront/` | Specs por página y capturas de referencia. |
+| `especificaciones/DiagnosticoRefactor.md` | Diagnóstico del frontend, decisiones del equipo y plan de refactor ejecutado (fases 0 a 5). |
+| `frontend/PrincipiosDesarrollo.md` · `frontend/ReglasCSS.md` | Principios de desarrollo y reglas de CSS. |
+| `especificaciones/PlanIntegracionBackend.md` | Plan de integración del backend con el frontend (fases I0 a I6). |
+| `backend/database/DB_SCHEMA_SUMMARY.md` · `backend/database/README.md` | Esquema de la base de datos y cómo cargarla. |

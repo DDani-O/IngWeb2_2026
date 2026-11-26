@@ -1,0 +1,51 @@
+.placeholder-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding-top: var(--app-shell-top-offset);
+}
+
+.placeholder-main {
+  max-width: 840px;
+  margin: 0 auto;
+  min-height: calc(100vh - var(--app-shell-top-offset));
+  min-height: calc(100dvh - var(--app-shell-top-offset));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-5);
+}
+
+.placeholder-card {
+  width: 100%;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-xl);
+  background: linear-gradient(150deg, color-mix(in srgb, var(--color-primary) 14%, transparent), var(--surface-card));
+  padding: var(--space-6);
+  text-align: center;
+}
+
+.placeholder-icon {
+  font-size: var(--font-size-display);
+  margin-bottom: var(--space-2);
+  color: var(--color-primary);
+}
+
+.placeholder-title {
+  font-size: var(--font-size-2xl);
+  margin-bottom: var(--space-2);
+}
+
+.placeholder-description {
+  max-width: 620px;
+  margin: 0 auto;
+  color: var(--text-muted);
+  font-size: var(--font-size-base);
+}
+
+.placeholder-actions {
+  margin-top: var(--space-4);
+  display: flex;
+  justify-content: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}

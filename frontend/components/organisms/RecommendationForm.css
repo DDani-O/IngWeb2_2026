@@ -1,0 +1,6 @@
+/* Organismo RecommendationForm (mobile-first). Ver RecommendationForm.js */
+.recommendation-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--space-4);
+}

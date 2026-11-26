@@ -1,18 +1,94 @@
 import { ROUTES } from "../utils/constants.js";
+import { errorState, loadingState } from "../components/molecules/stateBlock.js";
 import { Component } from "./Component.js";
 
 export class PageController extends Component {
   /**
-   * Restaura la posicion de scroll global y del contenedor principal de rutas.
+   * Ejecuta una carga de datos mostrando "Cargando…" y, si falla, un aviso con "Reintentar".
+   * Si la página se destruyó mientras esperaba, no toca el DOM.
+   * @param {() => Promise<void>} task
    */
-  _resetViewPosition() {
-    window.scrollTo(0, 0);
+  async _loadData(task) {
+    this._showStatus("loading", "Cargando datos...");
 
-    const routeContainer = document.querySelector("#appRouteContainer");
-    if (routeContainer) {
-      routeContainer.scrollTop = 0;
+    try {
+      await task();
+      if (this._isAlive()) {
+        this._clearStatus();
+      }
+    } catch (error) {
+      if (!this._isAlive() || error?.status === 401) {
+        // 401: la app ya redirige al login (auth:sessionExpired).
+        return;
+      }
+
+      // Reintentar solo tiene sentido en errores transitorios (sin conexión, tiempo agotado, 5xx).
+      const transient = !error?.status || error.status >= 500;
+      this._showStatus("error", error?.message || "No pudimos cargar los datos.", transient ? () => this._loadData(task) : null);
     }
   }
+
+  /**
+   * Ejecuta una acción del usuario (guardar, borrar…) con manejo de errores uniforme.
+   * Mientras corre, deshabilita el botón indicado para evitar doble envío.
+   * @returns {Promise<*>} resultado de la tarea o null si falló
+   */
+  async _runAction(task, { button = null, successMessage = "", errorMessage = "No pudimos completar la accion." } = {}) {
+    if (button) {
+      button.disabled = true;
+    }
+
+    try {
+      const result = await task();
+      if (successMessage) {
+        this.options.showToast?.(successMessage, "success");
+      }
+      return result;
+    } catch (error) {
+      if (error?.status !== 401) {
+        this.options.showToast?.(error?.message || errorMessage, "danger");
+      }
+      return null;
+    } finally {
+      if (button) {
+        button.disabled = false;
+      }
+    }
+  }
+
+  /**
+   * Indica si la página sigue montada (no se navegó a otra mientras se esperaba la API).
+   */
+  _isAlive() {
+    return Boolean(this.element?.isConnected) && !this._destroyed;
+  }
+
+  _showStatus(kind, message, onRetry = null) {
+    if (!this._statusElement) {
+      this._statusElement = document.createElement("div");
+      this._statusElement.className = "app-status";
+    }
+
+    const status = this._statusElement;
+    status.innerHTML = kind === "error" ? errorState({ message, retryLabel: onRetry ? "Reintentar" : null }) : loadingState({ message });
+    status.querySelector('[data-action="retry"]')?.addEventListener("click", onRetry, { once: true });
+
+    if (!status.isConnected) {
+      // Se ubica después del primer bloque de la página (el encabezado).
+      const anchor = this.element.querySelector(".app-page-content") || this.element;
+      anchor.insertBefore(status, anchor.children[1] || null);
+    }
+  }
+
+  _clearStatus() {
+    this._statusElement?.remove();
+  }
+
+  destroy() {
+    this._destroyed = true;
+    super.destroy();
+  }
+
 
   /**
    * Actualiza texto de un nodo si existe en el arbol del componente.
@@ -25,118 +101,20 @@ export class PageController extends Component {
   }
 
   /**
-   * Lee el valor de un input/select del componente.
+   * Vincula los botones .js-dashboard-back: vuelven al dashboard y, si ya está abierto
+   * en otra pestaña, cierran esta (ver core/TabRegistry.js).
    */
-  _getValue(selector) {
-    return this.element.querySelector(selector)?.value?.trim() || "";
-  }
-
-  /**
-   * Escribe el valor de un input/select si existe.
-   */
-  _setInputValue(selector, value) {
-    const input = this.element.querySelector(selector);
-    if (input) {
-      input.value = value;
-    }
-  }
-
-  /**
-   * Vincula listeners para los botones comunes de cierre de sesion por rol.
-   * Se usa delegacion en document porque los botones pueden vivir fuera de
-   * la zona del componente actual (topbar/sidebar montados en shell).
-   */
-  _bindLogoutButtons({ role = "cliente", toastMessage } = {}) {
-    const selectors =
-      role === "asesor"
-        ? ["#advisorLogoutButton", "#advisorLogoutButtonMobile"]
-        : ["#userLogoutButton", "#userLogoutButtonMobile"];
-
-    const listener = (event) => {
-      const target = event.target.closest(selectors.join(", "));
-      if (!target) {
-        return;
-      }
-
-      event.preventDefault();
-      this._handleLogout({ toastMessage });
-    };
-
-    this.listen(document, "click", listener);
-  }
-
-  /**
-   * Cierra sesion y redirige al home con modal login.
-   */
-  _handleLogout({ toastMessage = "Sesion finalizada correctamente." } = {}) {
-    this.options.authManager?.logout();
-    this.options.showToast?.(toastMessage, "success");
-    this.options.router?.navigate(ROUTES.HOME, { modal: "login" });
-  }
-
-  /**
-   * Vincula botones comunes de retorno al dashboard del usuario.
-   */
-  _bindDashboardBackButtons(route = ROUTES.USER_DASHBOARD) {
+  _bindDashboardBackButtons(route = ROUTES.CLIENT_DASHBOARD) {
     this.element.querySelectorAll(".js-dashboard-back").forEach((button) => {
-      this.listen(button, "click", (event) => this._handleBackToRoute(event, route));
-    });
-  }
-
-  /**
-   * Mantiene el flujo existente: cerrar pestana secundaria o navegar en la actual.
-   */
-  _handleBackToRoute(event, route) {
-    event.preventDefault();
-
-    const isRouteOpenInAnotherTab =
-      this.options.hasRouteOpenInOtherTab?.(route) ||
-      (window.opener && !window.opener.closed);
-
-    if (isRouteOpenInAnotherTab) {
-      window.close();
-
-      window.setTimeout(() => {
-        if (!window.closed) {
-          this.options.router?.navigate(route);
+      this.listen(button, "click", (event) => {
+        event.preventDefault();
+        const navigate = (target) => this.options.router?.navigate(target);
+        if (this.options.tabRegistry) {
+          this.options.tabRegistry.returnTo(route, navigate);
+        } else {
+          navigate(route);
         }
-      }, 120);
-
-      return;
-    }
-
-    this.options.router?.navigate(route);
-  }
-
-  /**
-   * Mantiene compatibilidad con controladores existentes.
-   */
-  _handleBackToDashboard(event) {
-    this._handleBackToRoute(event, ROUTES.USER_DASHBOARD);
-  }
-
-  /**
-   * Retorna (o crea) una instancia Bootstrap Modal para el selector indicado.
-   */
-  _getModalInstance(selector) {
-    if (!window.bootstrap) {
-      return null;
-    }
-
-    const modalElement = this.element.querySelector(selector);
-    if (!modalElement) {
-      return null;
-    }
-
-    return window.bootstrap.Modal.getOrCreateInstance(modalElement);
-  }
-
-  /**
-   * Abre un modal Bootstrap si existe.
-   */
-  _showModal(selector) {
-    const modal = this._getModalInstance(selector);
-    modal?.show();
-    return modal;
+      });
+    });
   }
 }

@@ -1,0 +1,52 @@
+/* Molécula RecommendationCard (mobile-first). Ver recommendationCard.js */
+.recommendation-card {
+  --priority-color: var(--color-warning);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  border: 1px solid color-mix(in srgb, var(--priority-color) 35%, transparent);
+  border-left: 3px solid var(--priority-color);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  padding: var(--space-4);
+}
+
+.recommendation-card--alta { --priority-color: var(--color-danger); }
+.recommendation-card--baja { --priority-color: var(--color-info); }
+
+.recommendation-card--read {
+  --priority-color: var(--border-strong);
+  opacity: 0.9;
+}
+
+.recommendation-card__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-bottom: var(--space-2);
+}
+
+.recommendation-card__title {
+  font-size: var(--font-size-xl);
+}
+
+.recommendation-card__text {
+  color: var(--text-secondary);
+}
+
+.recommendation-card__meta {
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.recommendation-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.recommendation-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}

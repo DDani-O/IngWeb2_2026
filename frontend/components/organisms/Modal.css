@@ -1,0 +1,35 @@
+/* Organismo Modal (mobile-first). Ver Modal.js */
+.app-modal .modal-title {
+  font-size: var(--font-size-md);
+}
+
+.app-modal-surface {
+  background: var(--modal-surface);
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-soft);
+}
+
+.app-modal-surface .modal-header,
+.app-modal-surface .modal-footer {
+  border-color: var(--border-soft);
+}
+
+.app-modal-surface .form-control,
+.app-modal-surface .form-select {
+  background: var(--field-bg);
+  border-color: var(--field-border);
+  color: var(--text-primary);
+}
+
+.app-modal-surface .form-control::placeholder {
+  color: var(--text-faint);
+}
+
+.app-modal-surface .btn-close {
+  filter: invert(1) sepia(1) saturate(0) hue-rotate(180deg) brightness(1.08);
+}
+
+[data-theme="light"] .app-modal-surface .btn-close {
+  filter: none;
+}

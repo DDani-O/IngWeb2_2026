@@ -1,9 +1,5 @@
+/* Tema claro: redefine los tokens de color de :root (global.css), que es el tema oscuro por defecto. */
 [data-theme="light"] {
-  --theme-bg-main: #f5f7fb;
-  --theme-bg-surface: #ffffff;
-  --theme-text-main: #0f172a;
-  --theme-text-secondary: #475569;
-
   --app-bg-start: #f5fbfa;
   --app-bg-end: #edf6f4;
   --bg-bloom-1: rgba(98, 215, 191, 0.22);
@@ -20,7 +16,6 @@
 
   --surface-1: rgba(255, 255, 255, 0.86);
   --surface-2: rgba(248, 254, 252, 0.94);
-  --surface-3: rgba(236, 248, 245, 0.92);
   --surface-card: linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(242, 252, 249, 0.9));
   --surface-panel: linear-gradient(145deg, rgba(253, 255, 255, 0.95), rgba(239, 249, 246, 0.92));
   --surface-hero: linear-gradient(
@@ -29,7 +24,6 @@
     rgba(228, 248, 244, 0.93) 45%,
     rgba(221, 245, 241, 0.9)
   );
-  --surface-overlay: rgba(244, 252, 250, 0.95);
 
   --border-soft: rgba(43, 139, 127, 0.2);
   --border-strong: rgba(43, 139, 127, 0.36);
@@ -44,7 +38,7 @@
 
   --table-head-bg: rgba(220, 242, 237, 0.9);
   --table-row-bg: rgba(248, 254, 252, 0.92);
-  --table-row-hover: rgba(45, 212, 191, 0.14);
+  --table-row-hover: rgba(57, 223, 191, 0.14);
 
   --action-ghost-bg: rgba(31, 142, 127, 0.08);
   --action-ghost-border: rgba(31, 142, 127, 0.32);

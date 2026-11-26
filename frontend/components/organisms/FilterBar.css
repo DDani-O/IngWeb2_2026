@@ -1,0 +1,26 @@
+/* Organismo FilterBar (mobile-first). Ver FilterBar.js */
+.filter-bar {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+}
+
+@media (min-width: 576px) {
+  .filter-bar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .filter-bar > .form-field:first-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 992px) {
+  .filter-bar {
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  }
+
+  .filter-bar > .form-field:first-child {
+    grid-column: span 2;
+  }
+}

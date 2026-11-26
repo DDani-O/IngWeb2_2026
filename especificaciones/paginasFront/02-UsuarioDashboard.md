@@ -1,4 +1,6 @@
-# Especificación: Dashboard de Usuario
+# Especificación: Dashboard del Cliente
+
+> Fase 0 del refactor (`../DiagnosticoRefactor.md` §6): se eliminó la sección de conexión con el asesor (teaser, botón flotante y modal de chat) porque no forma parte de la consigna ni tiene respaldo en la BD. El rol se llama `cliente` y la ruta es `#/cliente/dashboard`. Los 3 gráficos de la sección 7 están implementados con el componente `ChartCard` (Fase 3); el mensual incluye la línea de promedio.
 
 ## DESCRIPCIÓN GENERAL
 
@@ -73,7 +75,7 @@ El Dashboard de Usuario es la página principal después del login para usuarios
   - Nombre del perfil activo (ej: "Drácula", "Equilibrista", "Espíritu Libre")
   - Descripción breve del perfil
   - Categorías incluidas en el perfil
-  - Botón: "Cambiar perfil" (enlaza a /usuario/perfiles)
+  - Botón: "Ver perfiles de gasto" (enlaza a `#/cliente/perfiles` en pestaña nueva). El perfil lo asigna el sistema; el cliente no lo cambia.
 - **Tema:** Card prominente, color del perfil como acento
 
 ### 6. Sección de Tarjetas Resumen (Summary Cards)
@@ -119,16 +121,6 @@ El Dashboard de Usuario es la página principal después del login para usuarios
 - **Responsividad:** En móvil, los gráficos se apilan verticalmente
 - **Tema:** Fondo del canvas consistente, ejes visibles pero sutiles
 
-### 8. Sección de Conexión con Asesor
-- **Toast/Card destacada en esquina o sección fija:**
-  - Icono de asesor
-  - Mensaje: "¿Preguntas sobre tus gastos?" o similar
-  - Nombre del asesor asignado (si aplica)
-  - Botón: "Contactar Asesor"
-  - Botón: "Ver perfil del asesor"
-- **Comportamiento:** Clickear botón abre modal de chat/contacto
-- **Tema:** Fondo color principal con baja opacidad, texto claro
-
 ### 9. Footer
 - **Mínimo:** Copyright, enlace a soporte, enlace a términos
 - **Opcional:** Enlaces útiles adicionales
@@ -154,14 +146,6 @@ El Dashboard de Usuario es la página principal después del login para usuarios
 - **Legendas clickeables:** Mostrar/ocultar datos del gráfico
 - **Responsivo:** En móvil, se pueden desplazar horizontalmente
 - **Reload datos:** Botón para actualizar gráficos (si datos vienen del backend)
-
-### Modal de Chat/Contacto Asesor
-- **Estructura:**
-  - Foto/perfil del asesor
-  - Campo de texto para mensaje
-  - Botón "Enviar"
-  - Botón "Cerrar"
-- **Funcionalidad:** Envío de mensaje inicia conversación o abre chat persistente
 
 ### Notificaciones
 - **Badge en navbar:** Muestra número de notificaciones no leídas
@@ -199,11 +183,6 @@ El Dashboard de Usuario es la página principal después del login para usuarios
 - Distribución por categoría (este mes)
 - Gastos mensuales (últimos 6 meses)
 
-### Datos de Asesor (del Backend)
-- Nombre del asesor asignado
-- Foto de perfil del asesor
-- Estado de conexión/disponibilidad
-
 ### Datos de Alertas (del Backend)
 - Lista de alertas activas
 - Tipo de alerta (warning, info, success)
@@ -217,7 +196,7 @@ El Dashboard de Usuario es la página principal después del login para usuarios
     "name": "Juan",
     "email": "juan@mail.com",
     "activeProfile": "Drácula",
-    "role": "usuario"
+    "role": "cliente"
   },
   "stats": {
     "totalSpentThisMonth": 2450.50,
@@ -232,7 +211,6 @@ El Dashboard de Usuario es la página principal después del login para usuarios
     "categoryDistribution": [ { category: "Alimentación", amount: 500 }, ... ],
     "monthlyExpenses": [ { month: "Febrero", amount: 2200 }, ... ]
   },
-  "advisor": { name, photo, available },
   "alerts": [ { type, message, action } ]
 }
 ```
@@ -308,8 +286,6 @@ El Dashboard de Usuario es la página principal después del login para usuarios
 ### Componentes de Base
 - **Button:** Botones de acción (primaria, secundaria)
 - **Card:** Contenedores para stats, resúmenes, alertas
-- **Modal:** Para chat/contacto con asesor
-- **FormInput:** Campos en modal de mensajes
 - **Navbar:** Barra superior con notificaciones y perfil
 
 ### Componentes Específicos
@@ -351,14 +327,6 @@ El Dashboard de Usuario es la página principal después del login para usuarios
 4. Puede buscar, filtrar, descargar
 5. Retorna a dashboard vía back button
 
-### Flujo 4: Contactar Asesor
-1. Usuario ve notificación de asesor disponible
-2. Clickea "Contactar Asesor" en toast/card
-3. Modal se abre con chat
-4. Usuario escribe mensaje
-5. Envía y modal se actualiza
-6. Puede cerrar modal y continuar en dashboard
-
 ### Flujo 5: Navegar Perfil de Consumo
 1. Usuario ve "Perfil de Consumo" en sección
 2. Lee información del perfil activo
@@ -380,15 +348,13 @@ El Dashboard de Usuario es la página principal después del login para usuarios
 ### Consideraciones de Arquitectura
 - **Reutilización:** StatsCard, SummaryCard, Modal, Button usados múltiples veces
 - **Estado local:** Usuario autenticado, datos del dashboard en memoria
-- **Composición:** Dashboard = Navbar + Sidebar + Hero + Stats + Profile + SummaryCards + Charts + Toast
+- **Composición:** Dashboard = Navbar + Sidebar + Hero + Stats + Profile + SummaryCards + Charts
 - **Ciclo de vida:** Fetch datos al montar, actualizar en intervalos (opcional)
 
 ### Interacción con Backend
-- **GET /usuario/dashboard:** Obtiene todos los datos (user, stats, charts, alerts, advisor)
+- **GET /usuario/dashboard:** Obtiene todos los datos (user, stats, charts, alerts)
 - **POST /gastos:** Cargar nuevo gasto (desde página separada)
 - **GET /notificaciones:** Obtener notificaciones
-- **POST /mensajes:** Enviar mensaje a asesor
-- **GET /asesor/perfil:** Datos del asesor asignado
 
 ### Performance
 - Lazy load de gráficos (Chart.js se inicializa solo cuando visible)
@@ -430,10 +396,10 @@ El Dashboard de Usuario es la página principal después del login para usuarios
 
 ## METADATA
 
-- **Route:** `/usuario/dashboard`
-- **HTTP Methods:** GET (fetch datos), POST (enviar mensajes)
-- **Autenticación:** Requerida (rol: usuario)
-- **Roles permitidos:** Usuario regular (no asesor)
+- **Route:** `#/cliente/dashboard`
+- **HTTP Methods:** GET (fetch datos)
+- **Autenticación:** Requerida (rol: `cliente`)
+- **Roles permitidos:** Cliente (no asesor)
 - **Tema:** Dark mode obligatorio
 - **Responsivo:** Sí (mobile-first)
 

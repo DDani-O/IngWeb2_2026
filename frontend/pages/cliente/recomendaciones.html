@@ -1,0 +1,36 @@
+<div class="app-page-content page-cliente-recomendaciones">
+  <section class="hero-panel">
+    <h1 class="text-gradient">Recomendaciones Financieras</h1>
+    <p class="text-muted mt-2">
+      Sugerencias, alertas y observaciones generadas por el sistema o por tu asesor a partir de tus gastos.
+    </p>
+  </section>
+
+  <section class="section-block">
+    <div id="recommendationFilters"></div>
+    <p class="text-muted mt-3" id="recommendationCount" aria-live="polite">0 recomendaciones</p>
+  </section>
+
+  <div id="recommendationGroups" class="d-flex flex-column gap-3">
+    <section class="section-block">
+      <h2 class="section-title"><i class="fa-solid fa-circle-exclamation accent" aria-hidden="true"></i>Prioridad Alta</h2>
+      <div class="recommendation-list" id="recommendationsHigh"></div>
+    </section>
+    <section class="section-block">
+      <h2 class="section-title"><i class="fa-solid fa-circle-info accent" aria-hidden="true"></i>Prioridad Media y Baja</h2>
+      <div class="recommendation-list" id="recommendationsOther"></div>
+    </section>
+    <section class="section-block">
+      <h2 class="section-title"><i class="fa-solid fa-circle-check accent" aria-hidden="true"></i>Leidas</h2>
+      <div class="recommendation-list" id="recommendationsRead"></div>
+    </section>
+  </div>
+
+  <div class="section-actions">
+    <button class="action-btn action-btn--primary js-dashboard-back" type="button">
+      <i class="fa-solid fa-arrow-left" aria-hidden="true"></i><span>Volver al Dashboard</span>
+    </button>
+  </div>
+
+  <div id="recommendationDetailModal"></div>
+</div>

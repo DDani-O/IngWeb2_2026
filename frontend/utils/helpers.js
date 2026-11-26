@@ -1,5 +1,4 @@
-import { ROUTES } from "./constants.js";
-import { TEXTS } from "./i18n.js";
+import { html } from "./html.js";
 
 /**
  * Convierte una query string en objeto para simplificar lectura de parametros.
@@ -38,6 +37,15 @@ export function stringifyQuery(params = {}) {
 }
 
 /**
+ * Completa los parámetros de una ruta con `:param` (ej. "/cliente/gastos/:id" → "/cliente/gastos/gas-1").
+ * @param {string} pattern
+ * @param {Object<string, string>} params
+ */
+export function fillRoute(pattern, params = {}) {
+  return pattern.replace(/:(\w+)/g, (_match, key) => encodeURIComponent(params[key] ?? ""));
+}
+
+/**
  * Construye un hash route consistente a partir de path y query.
  */
 export function buildHash(path, query = {}) {
@@ -49,18 +57,6 @@ export function buildHash(path, query = {}) {
   }
 
   return `#${normalizedPath}?${queryString}`;
-}
-
-/**
- * Escapa caracteres HTML para prevenir inyecciones al renderizar texto dinamico.
- */
-export function sanitizeText(value = "") {
-  return String(value)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/\"/g, "&quot;")
-    .replace(/'/g, "&#039;");
 }
 
 /**
@@ -93,16 +89,6 @@ export function sleep(ms = 200) {
 }
 
 /**
- * Crea un nodo DOM desde un string HTML.
- * Puede aprovecharse para plantillas pequenas o componentes dinamicos.
- */
-export function createElementFromHTML(htmlString) {
-  const template = document.createElement("template");
-  template.innerHTML = htmlString.trim();
-  return template.content.firstElementChild;
-}
-
-/**
  * Valida que una URL sea relativa y segura para navegacion interna.
  */
 export function isSafeRelativeUrl(url = "") {
@@ -122,68 +108,11 @@ export function isSafeRelativeUrl(url = "") {
 }
 
 /**
- * Obtiene un preset de placeholder por nombre desde i18n.
- * Sirve para centralizar textos/iconos de paginas no implementadas.
- * Los textos se cargan desde TEXTS.placeholders en utils/i18n.js
- *
- * @param {string} presetName - Nombre del preset (ej: 'cargarGasto', 'historial')
- * @returns {object|null} Objeto con title, description, icon, ctaText
- */
-export function getPlaceholderPreset(presetName = "") {
-  const preset = TEXTS.placeholders ? TEXTS.placeholders[presetName] : null;
-  return preset || null;
-}
-
-/**
- * Construye el hash de placeholder usando preset y overrides opcionales.
- * Si no existe preset, aplica una configuracion por defecto desde i18n.
- * Asegura que ciertos parámetros técnicos (como ctaUrl) estén presentes.
- */
-export function buildPlaceholderHashFromPreset(presetName, override = {}) {
-  const preset = getPlaceholderPreset(presetName);
-
-  // Determina la ruta de destino del CTA según el preset
-  const defaultCtaUrl = (() => {
-    switch (presetName) {
-      case "cargarGasto":
-      case "historial":
-      case "patrones":
-      case "perfil":
-        return ROUTES.USER_DASHBOARD;
-      case "advisorClientes":
-      case "advisorInbox":
-      case "advisorReportes":
-        return ROUTES.ADVISOR_DASHBOARD;
-      default:
-        return ROUTES.HOME;
-    }
-  })();
-
-  if (!preset) {
-    return buildHash(ROUTES.PLACEHOLDER, {
-      title: "Pagina en Construccion",
-      description: "Estamos trabajando en esta seccion. Vuelve pronto.",
-      icon: "fa-hammer",
-      ctaText: "Volver al Inicio",
-      ctaUrl: ROUTES.HOME,
-    });
-  }
-
-  return buildHash(ROUTES.PLACEHOLDER, {
-    ...preset,
-    ctaUrl: defaultCtaUrl,
-    ...override,
-  });
-}
-
-/**
  * Renderiza estrellas HTML segun rating limitado entre 1 y 5.
  */
 export function renderStars(rating = 5) {
   const stars = clamp(rating, 1, 5);
-  return Array.from({ length: stars })
-    .map(() => '<i class="fa-solid fa-star"></i>')
-    .join("");
+  return html`${Array.from({ length: stars }).map(() => html`<i class="fa-solid fa-star"></i>`)}`;
 }
 
 /**
@@ -208,6 +137,15 @@ export function getCssVar(name, fallback = "") {
     .trim();
 
   return value || fallback;
+}
+
+/**
+ * Paleta categórica de gráficos tomada de los tokens --chart-1 … --chart-N (global.css).
+ * @param {number} size
+ */
+export function getChartPalette(size = 8) {
+  const fallback = ["#39dfbf", "#31a8d4", "#f6b437", "#a78bfa", "#ff5d66", "#7dd87a", "#f08bd0", "#94a3b8"];
+  return Array.from({ length: size }, (_, index) => getCssVar(`--chart-${index + 1}`, fallback[index % fallback.length]));
 }
 
 /**

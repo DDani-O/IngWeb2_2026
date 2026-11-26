@@ -72,7 +72,7 @@ Documento complementario obligatorio para estilos y responsive: **`ReglasCSS`**
 ### Resumen Ejecutivo de Principios
 
 1. **Desacoplamiento Total** - Cada archivo JS, CSS e HTML independiente
-2. **Herencia antes que Composición** - Para reutilización en componentes
+2. **Composición antes que Herencia** - Las pantallas se arman componiendo componentes chicos con props y eventos; la herencia se reserva para la base de ciclo de vida (`Component`)
 3. **Patrón Single Responsibility** - Una clase = una responsabilidad
 4. **Eventos Desacoplados** - EventBus para comunicación entre módulos
 5. **Configuración Centralizada** - Constantes en `utils/constants.js`
@@ -133,136 +133,48 @@ Documento complementario obligatorio para estilos y responsive: **`ReglasCSS`**
 
 ### Estructura Completa
 
-```
-frontend/
-│
-├── PrincipiosDesarrollo.md          # Guía de principios (LEER PRIMERO)
-├── ReglasCSS (en raíz del repo)     # Reglas operativas CSS/responsive vigentes
-├── index.html                       # HTML principal - entry point
-├── app.js                           # JavaScript entry point - inicialización
-│
-├── assets/                          # Recursos estáticos (desacoplados)
-│   │
-│   ├── css/
-│   │   ├── global.css              # Variables CSS, resets, utilidades
-│   │   ├── layouts.css             # Grillas, containers, espacios
-│   │   └── themes/
-│   │       ├── light.css           # Variables tema claro
-│   │       └── dark.css            # Variables tema oscuro
-│   │
-│   └── img/
-│       ├── logos/                  # Logos de la app
-│       ├── icons/                  # Iconos custom
-│       └── backgrounds/            # Imágenes de fondo
-│
-├── core/                            # ARQUITECTURA BASE DEL SISTEMA
-│   │
-│   ├── Component.js                # 🔷 Clase base universal para todos
-│   │                               #    - Ciclo de vida (render, attachEvents, destroy)
-│   │                               #    - Manejo de opciones y validación
-│   │                               #    - Sistema de logging interno
-│   │
-│   ├── EventBus.js                 # 🔶 Sistema de eventos global (Singleton)
-│   │                               #    - on(event, callback)
-│   │                               #    - emit(event, data)
-│   │                               #    - off(event, callback)
-│   │
-│   ├── Router.js                   # 🔶 Enrutador SPA (Singleton)
-│   │                               #    - navigate(page, params)
-│   │                               #    - Historial de navegación
-│   │                               #    - Hash-based routing
-│   │
-│   ├── APIClient.js                # 🔶 Cliente HTTP (Singleton)
-│   │                               #    - GET, POST, PUT, DELETE
-│   │                               #    - Manejo de headers y autenticación
-│   │                               #    - Control de errores
-│   │
-│   ├── StateManager.js             # 🔶 Gestor de estado global (Singleton)
-│   │                               #    - Estado compartido de la app
-│   │                               #    - Getters y setters
-│   │                               #    - Emite eventos al cambiar
-│   │
-│   ├── AuthManager.js              # 🔶 Gestión de autenticación (Singleton)
-│   │                               #    - Login, logout, registro
-│   │                               #    - Manejo de tokens JWT
-│   │                               #    - Verificación de sesión
-│   │
-│   └── ThemeManager.js             # 🔶 Gestión de temas (Singleton)
-│                                   #    - Cambiar tema light/dark
-│                                   #    - Persistencia en localStorage
-│
-├── components/                      # COMPONENTES REUTILIZABLES
-│   │                               # Estructura a definir en siguiente fase
-│   └── [Componentes personalizados van aquí]
-│
-├── utils/                           # UTILIDADES Y HELPERS
-│   │
-│   ├── helpers.js                  # Funciones utilitarias generales
-│   │                               # - DOM manipulation
-│   │                               # - Array/Object utilities
-│   │                               # - Timing utilities
-│   │
-│   ├── validators.js               # Validaciones de datos
-│   │                               # - isValidEmail()
-│   │                               # - isValidPassword()
-│   │                               # - isValidAmount()
-│   │                               # - etc.
-│   │
-│   ├── formatters.js               # Formatos de presentación
-│   │                               # - formatCurrency(amount)
-│   │                               # - formatDate(date)
-│   │                               # - formatTime(time)
-│   │
-│   └── constants.js                # Constantes y enums globales
-│                                   # - API URLs
-│                                   # - Event names
-│                                   # - Error messages
-│                                   # - Colores, tamaños, etc.
-│
-└── pages/                           # PÁGINAS/VISTAS DE LA APLICACIÓN
-    │                               # Cada página = 1 archivo HTML + 1 archivo JS
-    │
-    ├── auth/                        # 🔓 FLUJO DE AUTENTICACIÓN
-    │   ├── login.html              # Formulario de login
-    │   ├── LoginPage.js            # Controlador de login
-    │   │
-    │   ├── registro-usuario.html   # Formulario de registro (usuario regular)
-    │   ├── RegistroUsuarioPage.js  # Controlador de registro usuario
-    │   │
-    │   ├── elegir-perfil.html      # Selección de rol (usuario vs asesor)
-    │   └── ElegirPerfilPage.js     # Controlador de elección de perfil
-    │
-    ├── usuario/                     # 👤 PÁGINAS DEL USUARIO REGULAR
-    │   ├── dashboard.html          # Panel principal del usuario
-    │   ├── DashboardPage.js        # Controlador dashboard usuario
-    │   │
-    │   ├── cargar-gasto.html       # Formulario de carga de gasto
-    │   ├── CargarGastoPage.js      # Controlador de carga
-    │   │
-    │   ├── historial.html          # Listado histórico de gastos
-    │   ├── HistorialPage.js        # Controlador de historial
-    │   │
-    │   ├── patrones.html           # Análisis de patrones de consumo
-    │   ├── PatronesPage.js         # Controlador de patrones
-    │   │
-    │   ├── perfil.html             # Perfil del usuario
-    │   ├── PerfilPage.js           # Controlador de perfil
-    │   │
-    │   ├── perfiles.html           # Perfiles de gasto (clasificaciones)
-    │   ├── PerfilesPage.js         # Controlador de perfiles
-    │   │
-    │   ├── recomendaciones.html    # Recomendaciones financieras
-    │   └── RecomendacionesPage.js  # Controlador de recomendaciones
-    │
-    ├── asesor/                      # 💼 PÁGINAS DEL ASESOR FINANCIERO
-    │   ├── dashboard.html          # Panel de asesor (clientes y análisis)
-    │   └── AsesorDashboardPage.js  # Controlador dashboard asesor
-    │
-    └── public/                      # 🌐 PÁGINAS PÚBLICAS
-        ├── landing.html            # Página de bienvenida/marketing
-        └── LandingPage.js          # Controlador de landing
+Estructura vigente (actualizada en la Fase 2 del refactor; ver `DiagnosticoRefactor.md` §7).
 
 ```
+frontend/
+├── index.html                # Entry point: CSS, Bootstrap y Chart.js por CDN, contenedor #route-view
+├── app.js                    # Arranque: tema, sesión, router (layouts + guard global), eventos de sesión
+├── routes.js                 # Tabla de rutas declarativa (fuente de verdad de la navegación)
+├── PrincipiosDesarrollo.md   # Guía de principios
+├── ReglasCSS.md              # Reglas operativas CSS/responsive vigentes
+│
+├── core/                     # Infraestructura
+│   ├── Router.js             # Router por hash: rutas anidadas, :params, beforeEach, layouts persistentes, 404
+│   ├── TabRegistry.js        # Pestañas abiertas ("volver al dashboard" cierra la pestaña secundaria)
+│   ├── templateLoader.js     # Carga y caché de templates HTML + renderTemplate con escapado
+│   ├── Component.js          # Base de ciclo de vida (render, attachEvents, listen, destroy)
+│   ├── PageController.js     # Base de páginas: _loadData, _runAction, helpers de DOM y modales
+│   ├── APIClient.js          # Único punto de red (driver mock/http)
+│   ├── AuthManager.js        # Sesión (delega en services/auth.service.js)
+│   ├── EventBus.js · StateManager.js · ThemeManager.js
+│
+├── services/                 # Un servicio por dominio + adapters.js (API en español ↔ UI)
+├── mocks/                    # Backend simulado con el contrato de la §10
+├── content/                  # Contenido estático (perfiles de gasto)
+│
+├── components/               # Biblioteca de componentes (catálogo en la §7); JS + CSS de cada uno
+│   ├── atoms/                # button, badge, avatar, trend, icon
+│   ├── molecules/            # statCard, alertItem, keyValueList, mediaItem, formField, infoCard, …
+│   ├── organisms/            # DataTable, FilterBar, ChartCard, Modal, ViewToggle, formularios, TicketUploader
+│   ├── layout/               # AppLayout (topbar + sidebar + footer, por rol) y PublicLayout
+│   ├── feedback/             # Toast
+│   └── components.css        # Importa las hojas de todos los componentes
+│
+├── pages/                    # Cada página = NombrePage.js (con `static template`) + nombre.html
+│   ├── public/               # landing, placeholder / ruta no encontrada
+│   ├── cliente/              # dashboard, cargar-gasto, historial, patrones, recomendaciones, perfil, perfiles
+│   └── asesor/               # dashboard, clientes, perfil
+│
+├── assets/css/               # global.css (tokens), layouts.css, themes/light.css, pages/ (landing, placeholder, patrones, perfiles)
+└── utils/                    # constants, formatters, helpers, validators, html (escapado)
+```
+
+Los templates de las páginas internas **no** incluyen topbar, sidebar ni footer: los pone el layout. Su raíz es `<div class="app-page-content page-…">` (con `display: contents`).
 
 ### Convenciones de Nombres
 
@@ -452,9 +364,12 @@ SpecificComponent (componentes finales)
 - `StateManager` - Un único estado global
 - `AuthManager` - Una única sesión de usuario
 - `ThemeManager` - Una única configuración de tema
-- `APIClient` - Un único cliente HTTP
+- `APIClient` - Un único cliente HTTP (se exporta la instancia `apiClient`)
+- `TabRegistry` - Un único registro de pestañas (instancia `tabRegistry`)
 
-**Implementación:** Constructor privado con método `getInstance()`
+El `Router` **no** es singleton: se crea una vez en `app.js` con su configuración y se inyecta a las páginas.
+
+**Implementación:** se exporta una instancia única del módulo (`export const eventBus = …`); algunas clases además tienen `getInstance()`.
 
 **Beneficio:** Acceso centralizado, consistencia global
 
@@ -462,249 +377,110 @@ SpecificComponent (componentes finales)
 
 ## 7. SISTEMA DE COMPONENTES
 
-### Concepto General
+> Vigente desde la Fase 3 del refactor (`DiagnosticoRefactor.md` §7). Base teórica: `referencias/TeoriaComponentes.md`.
 
-Un **componente** es una unidad reutilizable de UI que encapsula estructura (HTML), estilos (CSS) e interactividad (JS).
+### Convenciones
 
-### Características Base
+- **Ubicación:** `frontend/components/{atoms,molecules,organisms,layout,feedback}/`. Cada componente tiene su JS y su CSS al lado (`badge.js` + `badge.css`); `components/components.css` importa todas las hojas.
+- **Átomos y moléculas sin estado → funciones puras** que reciben props y devuelven HTML escapado (`SafeHtml` de `utils/html.js`). Ejemplo: `badge({ text: "Alta", tone: "danger" })`.
+- **Organismos con comportamiento → clases `Component`.** Se montan con `this.mountChild(Clase, puntoDeMontaje, props)` (se destruyen con la página) y se actualizan con `componente.update(props)`.
+- **Props hacia abajo, eventos hacia arriba:** un organismo nunca modifica datos del padre; avisa con `this.dispatch("nombre-evento", detalle)` (`CustomEvent` que burbujea) y el padre escucha con `this.listen(this.element, "nombre-evento", ...)`. El `EventBus` queda para hechos de aplicación (sesión, gasto creado, perfil actualizado, tema).
+- **Slots:** contenido inyectable por props `SafeHtml` (`body`, `footer`, `trailing`…) o montando un componente dentro de otro (`Modal.bodyElement`).
+- **Acciones en listas:** los botones llevan `data-action` y `data-id`; el contenedor atiende por delegación (DataTable lo traduce a `row-action`).
+- **CSS mobile-first** (`min-width`), con tokens de `global.css`. Nombres que no chocan con Bootstrap (`status-badge`, `stat-card`, `data-table`, `alert-item`…).
+- **Páginas:** solo componen y orquestan (piden datos a los servicios, pasan props, reaccionan a eventos). Sus templates tienen la estructura estática (`section-block`, `section-title`) y puntos de montaje con `id`.
 
-Todos los componentes heredan de la clase `Component` que proporciona:
+### Catálogo
 
-- **Ciclo de vida**: `constructor()` → `render()` → `attachEvents()` → `destroy()`
-- **Validación de opciones**: Verificar que recibe parámetros correctos
-- **Logging interno**: Debug habilitado/deshabilitado
-- **Sistema de eventos**: Emitir eventos propios
-- **Manejo de memoria**: Limpiar recursos al destruir
+| Nivel | Componente | API (props → eventos) | Usado en |
+|---|---|---|---|
+| Átomo | `button` | `label, variant (primary·ghost·danger), size (sm·md), icon, type, href, newTab, action, id, block, disabled` | todas |
+| Átomo | `badge` | `text, tone (neutral·success·warning·danger·info), icon` | historial, recomendaciones, clientes, dashboard |
+| Átomo | `avatar` | `name, size (sm·md·lg)` | clientes, perfiles de cuenta |
+| Átomo | `trend` | `value (%), label, goodWhen (down)` | KPIs, clientes |
+| Átomo | `icon` | `name, label` (con label es accesible; sin label, decorativo) | todos |
+| Molécula | `statCard` | `label, value, format (currency·number·percent·text), emoji, subtitle, trend` | dashboards, patrones |
+| Molécula | `alertItem` | `title, description, tone, emoji` | dashboards, patrones |
+| Molécula | `keyValueList` | `items [{label, value}], variant (rows·boxed)` | resúmenes, detalles, OCR |
+| Molécula | `mediaItem` | `title, subtitle, leading, trailing, variant` | comercios, gastos recientes, categorías |
+| Molécula | `formField` / `formGrid` | `id, name, label, type, value, options, required, readonly, hint, width (full·half·third), inputAttrs` | formularios |
+| Molécula | `infoCard` | `title, icon, subtitle, body (slot), footer (slot), highlight` | dashboards, OCR |
+| Molécula | `dateCard` | `date` | dashboards |
+| Molécula | `clientCard` (+ `CLIENT_TABLE_COLUMNS`) | `client, actions` | dashboard y clientes del asesor |
+| Molécula | `recommendationCard` | `recommendation, actions` | recomendaciones |
+| Molécula | `profileSummary` | `fullName, email, items, footer` | perfiles de cuenta |
+| Molécula | `emptyState` · `loadingState` · `errorState` | `icon, title, message, action` · `message` · `message, retryLabel` (botón `data-action="retry"`) | todas (PageController) |
+| Organismo | `DataTable` | `columns [{key, label, render, align}], rows, rowKey, actions, empty, caption` → `row-action {action, id, row}`. Tarjetas en mobile, tabla desde 768px | historial, clientes, perfiles |
+| Organismo | `FilterBar` | `fields [{type: search·select, name, label, options}], values, idPrefix` → `filters-change {values}`; `getValues()`, `setOptions()` | historial, clientes, recomendaciones |
+| Organismo | `ChartCard` | `title, icon, type (bar·line·doughnut·pie), labels, datasets [{label, data, kind, dashed}], valueFormat, height (sm·md·lg), caption, link` | dashboards, patrones |
+| Organismo | `Modal` + `confirmDialog()` | `title, size, body, footer` → `modal-close`; `open()`, `close()`, `setContent()`, `bodyElement`. `confirmDialog({...})` devuelve `Promise<boolean>` | historial, clientes, recomendaciones |
+| Organismo | `ViewToggle` | `modes [{value, label, icon}], value, label` → `view-change {value}` | dashboard y clientes del asesor |
+| Organismo | `RecommendationForm` | `recipients, selectedId, idPrefix` → `recommendation-submit {recommendation}` | dentro de RecommendationDialog |
+| Organismo | `RecommendationDialog` | Modal + RecommendationForm; `open(clientId)`, `setRecipients()`, `setBusy()` | dashboard y clientes del asesor |
+| Organismo | `ProfileForm` | `fields (esquema de formField), values, idPrefix, extraActions` → `profile-submit {values}`, `profile-reset` | perfil del cliente y del asesor |
+| Organismo | `TicketUploader` | `accept, maxSizeMb, inputId` → `ticket-analyze {file}`; click, teclado y arrastrar/soltar con validación | cargar gasto |
+| Template | `AppLayout` · `PublicLayout` | `config` por rol, `user`, `onLogout`, `onReturnHome` | router |
+| Servicio | `createToaster(container)` | `showToast(message, tone)` | app.js |
 
-### Estructura de un Componente
-
-**Archivo JS:** `components/NombreComponente/NombreComponente.js`
-
-```javascript
-class NombreComponente extends Component {
-  // Opciones por defecto
-  static DEFAULTS = {
-    text: '',
-    type: 'primary'
-  };
-
-  // Validar opciones recibidas
-  _validateOptions(options) {
-    if (options.type && !['primary', 'secondary'].includes(options.type)) {
-      throw new Error('Tipo inválido');
-    }
-  }
-
-  // Generar HTML
-  render() {
-    this.elemento.innerHTML = `
-      <button class="btn btn-${this.options.type}">
-        ${this.options.text}
-      </button>
-    `;
-  }
-
-  // Adjuntar event listeners
-  attachEvents() {
-    this.elemento.querySelector('button').addEventListener('click', (e) => {
-      this.emit('clicked', { target: e.target });
-    });
-  }
-
-  // Limpiar recursos
-  destroy() {
-    // Quitar event listeners, limpiar referencias
-    super.destroy();
-  }
-}
-```
-
-**Archivo CSS:** `components/NombreComponente/NombreComponente.css`
-
-```css
-/* Componente principal */
-.component-nombre {
-  /* estilos base */
-}
-
-/* Variantes */
-.component-nombre--primary {
-  /* estilos para variante primary */
-}
-
-.component-nombre--secondary {
-  /* estilos para variante secondary */
-}
-```
-
-### Ciclo de Vida Completo
-
-```
-1. new NombreComponente(selector, options)
-   ↓
-2. Constructor valida opciones
-   ↓
-3. render() genera HTML en el selector
-   ↓
-4. attachEvents() adjunta event listeners
-   ↓
-5. Componente activo y funcional
-   ↓
-6. destroy() limpia y quita listeners
-```
-
-### Reutilización mediante Herencia
-
-```
-Component (base universal)
-  ↓
-CardComponent (base para tarjetas)
-  ├── FeatureCard (tarjeta de feature)
-  ├── StatsCard (tarjeta de estadísticas)
-  └── ProfileCard (tarjeta de perfil)
-```
-
-### Nota sobre Lista de Componentes
-
-La lista específica de componentes necesarios (Button, FormInput, Card, Modal, etc.) se detallará en la **siguiente etapa del proyecto**. En esta fase, definimos la arquitectura y estructura base.
+La landing y el placeholder conservan su marcado propio (no forman parte de la Fase 3); sus estilos se ordenan en la Fase 4.
 
 ---
 
 ## 8. GESTIÓN DE ESTILOS
 
-### Variables CSS (Tema Global)
+> Vigente desde la Fase 4 del refactor. Las reglas obligatorias y la tabla de breakpoints están en `frontend/ReglasCSS.md`; acá se resume el sistema.
 
-Archivo: `assets/css/global.css`
+### Archivos
+
+1. `assets/css/global.css` — tokens en `:root` (tema oscuro por defecto), reset y utilidades.
+2. `assets/css/themes/light.css` — redefine los tokens de color para `[data-theme="light"]`. El tema lo aplica `ThemeManager` en `<html data-theme>`.
+3. `assets/css/layouts.css` — layout de la app y patrones de página compartidos.
+4. `components/**/<componente>.css` — un archivo por componente (ver §7), importados por `components/components.css`.
+5. `assets/css/pages/<pagina>.css` — solo lo propio de cada página.
+
+### Tokens (extracto de `global.css`)
 
 ```css
 :root {
-  /* Colores Principales */
-  --primary-color: #06D6A0;        /* Turquesa/Cyan */
-  --secondary-color: #118AB2;      /* Azul */
-  --danger-color: #EF476F;         /* Rojo */
-  --warning-color: #FFD166;        /* Amarillo */
-  --success-color: #06D6A0;        /* Verde */
-  
-  /* Colores Neutros */
-  --bg-dark: #0a0e27;              /* Fondo oscuro */
-  --bg-light: #f5f7fa;             /* Fondo claro */
-  --text-dark: #1a202c;            /* Texto oscuro */
-  --text-light: #e2e8f0;           /* Texto claro */
-  --border-color: #e2e8f0;         /* Bordes */
-  
-  /* Tamaños de Fuente */
-  --font-size-xs: 0.75rem;
-  --font-size-sm: 0.875rem;
-  --font-size-base: 1rem;
-  --font-size-lg: 1.125rem;
-  --font-size-xl: 1.25rem;
-  --font-size-2xl: 1.5rem;
-  
-  /* Espaciado */
-  --spacing-xs: 0.25rem;
-  --spacing-sm: 0.5rem;
-  --spacing-md: 1rem;
-  --spacing-lg: 1.5rem;
-  --spacing-xl: 2rem;
-  --spacing-2xl: 3rem;
-  
-  /* Bordes y Sombras */
-  --border-radius: 0.5rem;
-  --border-radius-lg: 1rem;
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.1);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.2);
+  /* Color: marca y estados */
+  --color-primary: #39dfbf;  --color-success: #31d17d;  --color-warning: #f6b437;
+  --color-danger: #ff5d66;   --color-info: #31d4c7;
+  /* Color: texto, superficies, bordes (los redefine light.css) */
+  --text-primary · --text-secondary · --text-muted · --text-faint
+  --surface-1 · --surface-2 · --surface-card · --surface-panel · --surface-hero · --modal-surface
+  --border-soft · --border-strong · --field-bg · --field-border · --navbar-bg
+  --action-primary-bg · --action-primary-text · --action-ghost-*
+  /* Gráficos: paleta categórica (la lee getChartPalette) */
+  --chart-1 … --chart-8
+  /* Espaciado: 4 · 8 · 12 · 16 · 20 · 24 · 32 · 48 px */
+  --space-1 … --space-8
+  /* Tipografía */
+  --font-size-xs · sm · base · md · lg (fijos) · xl · 2xl · 3xl · display (fluidos con clamp)
+  /* Radios */
+  --radius-sm · md · lg · xl · pill · round
+  /* Layout */
+  --nav-height · --container-max · --app-shell-top-offset · --page-inline-padding
+  --floating-edge-gap · --floating-bottom-gap (incluye safe-area)
 }
 ```
 
-### Temas (Light/Dark)
-
-Archivo: `assets/css/themes/light.css`
-```css
-[data-theme="light"] {
-  --bg-primary: #ffffff;
-  --bg-secondary: #f5f7fa;
-  --text-primary: #1a202c;
-  --text-secondary: #4a5568;
-}
-```
-
-Archivo: `assets/css/themes/dark.css`
-```css
-[data-theme="dark"] {
-  --bg-primary: #1a202c;
-  --bg-secondary: #0a0e27;
-  --text-primary: #e2e8f0;
-  --text-secondary: #cbd5e0;
-}
-```
-
-### Estructura de CSS
-
-1. **global.css** - Variables, resets, utilidades
-2. **layouts.css** - Grillas, containers, espacios
-3. **themes/** - Variaciones de tema
-4. **components/** - Estilos específicos de cada componente (1 archivo por componente)
-
-### Naming: BEM Simplificado
+### Naming: BEM simple
 
 ```css
-/* Block - componente principal */
-.component-button { }
-
-/* Element - subelemento */
-.component-button__icon { }
-.component-button__text { }
-
-/* Modifier - variante */
-.component-button--primary { }
-.component-button--small { }
-.component-button--disabled { }
-
-/* Combinaciones */
-.component-button--primary:hover { }
-.component-button--primary .component-button__icon { }
+.stat-card { }            /* bloque */
+.stat-card__value { }     /* elemento */
+.status-badge--danger { } /* modificador */
 ```
 
-### Reglas Generales
+Las clases propias no reutilizan nombres de Bootstrap. Bootstrap se usa para grid utilitario, offcanvas, modales y controles de formulario (`form-control`, `form-select`).
 
-✅ **Usar Bootstrap primero** - `.btn`, `.card`, `.container` de Bootstrap antes de crear custom  
-✅ **CSS Variables** - Referenciar `var(--primary-color)` en lugar de hardcodear colores  
-✅ **Flexbox y Grid** - Para layouts, no floats  
-✅ **Mobile First** - Media queries `@media (min-width: ...)` ascendente  
-✅ **Desacoplado** - Estilos nunca inline, siempre en archivos CSS separados  
+### Reglas generales
 
-### Reglas Operativas Responsive (alineadas con ReglasCSS)
-
-Estas reglas son de cumplimiento obligatorio y complementan la estrategia general de estilos.
-
-1. **Tokenización obligatoria de layout**
-  - Cualquier valor repetido en offsets, spacing o alturas debe vivir en variables globales.
-  - En la implementación actual, los tokens base viven en `assets/css/global.css`.
-
-2. **Prohibido compensar navbar con valores fijos por página**
-  - No usar `padding-top` hardcodeado por vista como estrategia principal.
-  - Usar un offset compartido de shell (`--app-shell-top-offset`) y derivados.
-
-3. **Elementos flotantes con safe-area**
-  - CTA flotantes, FABs, teasers y paneles deben usar tokens + `env(safe-area-inset-bottom)`.
-  - Evitar valores absolutos fijos de `right/bottom/width/height` para overlays críticos.
-
-4. **Alturas fluidas para paneles y gráficos**
-  - Preferir `clamp(...)` para `min-height` y `max-height` en cards, charts y chats.
-  - Evitar alturas rígidas que generen clipping en pantallas bajas o zoom alto.
-
-5. **Viewport moderno con fallback**
-  - Para contenedores dependientes del alto de pantalla, usar `vh` + `dvh`.
-  - Objetivo: reducir saltos visuales por barras dinámicas en mobile.
-
-6. **Navegación por anchors sin números mágicos locales**
-  - `scroll-margin-top` y offsets de scroll deben depender de tokens compartidos,
-    no de números hardcodeados aislados.
-
-7. **Sincronización CSS/JS para UX timing y offsets**
-  - Cualquier timeout UI o offset de interacción debe centralizarse en constantes
-    (`utils/constants.js`) y no quedar inline en módulos.
+- Todo espaciado, tamaño de fuente, radio y color sale de los tokens (detalle y excepciones en `ReglasCSS.md` §2).
+- **Mobile-first** (`min-width`) en componentes y patrones nuevos; la landing conserva `max-width`.
+- Breakpoints únicos: 576 · 768 · 992 · 1200 px.
+- Alturas de viewport con el par `vh` + `dvh`; gráficos con alto por contenedor; flotantes con safe-area.
+- Sin estilos inline. Verificación: 320–1440 px sin scroll horizontal y contraste AA en ambos temas.
 
 ---
 
@@ -825,297 +601,186 @@ DashboardPage {
 
 ## 10. ENDPOINTS DEL BACKEND
 
-### Base URL
+> Contrato vigente desde la Fase 1 del refactor (`DiagnosticoRefactor.md` §6, decisión 6). El backend NestJS lo implementa tal cual; el front lo consume desde `frontend/services/*.service.js` y lo traduce al modelo de la UI en `frontend/services/adapters.js`. El backend simulado `frontend/mocks/mockServer.js` implementa exactamente este contrato.
 
-```
-http://api.fintrack.local/v1
-```
+### Convenciones
 
-### 10.1 Autenticación
+- **Rutas en inglés** (las fija la consigna: `/auth/login`, `/expenses`, `/tickets/upload`); **cuerpos en español**, con los mismos nombres de columna que la BD.
+- Base URL: `API_CONFIG.BASE_URLS` en `frontend/utils/constants.js` (`local` = `http://localhost:3000`; `production` se completa al hacer el deploy).
+- Autenticación: header `Authorization: Bearer <token>` (JWT). Todas las rutas requieren token salvo login y registro.
+- Roles: `cliente` y `asesor`. Una ruta de otro rol responde **403**.
+- Fechas de gasto: `AAAA-MM-DD`. Timestamps: ISO 8601. Montos: número (ARS).
+- **Errores** (4xx/5xx), siempre con este cuerpo:
 
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| **POST** | `/auth/register` | Registrar nuevo usuario |
-| **POST** | `/auth/login` | Login (retorna JWT token) |
-| **POST** | `/auth/logout` | Logout |
-| **GET** | `/auth/me` | Obtener usuario autenticado |
-| **PUT** | `/auth/profile` | Actualizar perfil de usuario |
-
-#### POST `/auth/register`
-```javascript
-Request:
-{
-  email: "usuario@example.com",
-  password: "SecurePass123",
-  nombre: "Juan",
-  apellido: "Pérez",
-  perfil: "usuario" // o "asesor"
-}
-
-Response (201):
-{
-  id: 1,
-  email: "usuario@example.com",
-  nombre: "Juan",
-  perfil: "usuario",
-  token: "eyJhbGc..."
-}
+```json
+{ "error": true, "mensaje": "Descripcion legible", "codigo": "VALIDACION", "detalles": { "campos": ["monto"] } }
 ```
 
-#### POST `/auth/login`
-```javascript
-Request:
-{
-  email: "usuario@example.com",
-  password: "SecurePass123"
-}
+| Estado | `codigo` | Cuándo |
+|---|---|---|
+| 401 | `CREDENCIALES_INVALIDAS` | Login con email o contraseña incorrectos |
+| 401 | `NO_AUTENTICADO` | Token ausente, inválido o vencido (el front cierra la sesión) |
+| 403 | `PROHIBIDO` | Rol incorrecto o cliente no asignado al asesor |
+| 404 | `NO_ENCONTRADO` | Recurso inexistente o ajeno |
+| 409 | `EMAIL_DUPLICADO` | Registro con un email existente |
+| 422 | `VALIDACION` | Datos inválidos (`detalles.campos` lista los campos) |
+| 500 | `ERROR_INTERNO` | Error no controlado |
 
-Response (200):
+### Objetos comunes
+
+**Usuario** (`usuarios` + `perfiles_usuarios` o `perfiles_asesores`):
+
+```json
 {
-  token: "eyJhbGc...",
-  user: {
-    id: 1,
-    email: "usuario@example.com",
-    nombre: "Juan",
-    perfil: "usuario"
+  "id": "uuid", "email": "cliente@fintrack.local", "rol": "cliente",
+  "nombre_completo": "Juan Perez", "biografia": "", "foto_perfil_url": null,
+  "estado": "activo", "creado_en": "2025-10-21T12:00:00.000Z",
+  "perfil_cliente": {
+    "ocupacion": "Disenador UX", "ingreso_estimado": 285000, "objetivo_financiero": "Fondo de emergencia",
+    "perfil_de_gasto": { "id": "uuid", "nombre": "Equilibrista Cosmico", "descripcion": "..." },
+    "asesor": { "id": "uuid", "nombre_completo": "Maria Rodriguez" }
   }
 }
 ```
 
-#### GET `/auth/me`
-```javascript
-Headers:
-Authorization: Bearer <token>
+Para un asesor, en lugar de `perfil_cliente` viene `perfil_asesor: { matricula, especialidad, descripcion, clientes_asignados }`. `perfil_de_gasto` es el registro vigente de `clasificacion_de_perfil` (puede ser `null`).
 
-Response (200):
+**Gasto** (`gastos`):
+
+```json
 {
-  id: 1,
-  email: "usuario@example.com",
-  nombre: "Juan",
-  apellido: "Pérez",
-  perfil: "usuario",
-  createdAt: "2026-01-15T10:00:00Z"
+  "id": "uuid", "comercio": "Supermercado Central", "fecha_gasto": "2026-11-24", "monto": 18500,
+  "descripcion": "", "origen": "manual", "moneda": "ARS",
+  "categoria": { "id": "uuid", "nombre": "Alimentacion", "icono": "🛒" },
+  "ticket_principal_id": null, "creado_en": "...", "actualizado_en": "..."
 }
 ```
 
-### 10.2 Gastos
+**Recomendación** (`recomendaciones_financieras`):
 
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| **GET** | `/expenses` | Listar gastos del usuario |
-| **GET** | `/expenses/:id` | Obtener gasto específico |
-| **POST** | `/expenses` | Crear nuevo gasto |
-| **PUT** | `/expenses/:id` | Actualizar gasto |
-| **DELETE** | `/expenses/:id` | Eliminar gasto |
-| **POST** | `/expenses/filter` | Filtrar gastos |
-
-#### GET `/expenses?page=1&limit=20`
-```javascript
-Response (200):
+```json
 {
-  total: 150,
-  page: 1,
-  limit: 20,
-  data: [
-    {
-      id: 1,
-      monto: 45.50,
-      comercio: "Supermercado X",
-      categoria: "alimentos",
-      fecha: "2026-04-18",
-      descripcion: "Compra semanal",
-      usuarioId: 1
-    },
-    // ... más gastos
-  ]
+  "id": "uuid", "titulo": "Reduce gastos en streaming", "mensaje": "...",
+  "tipo": "sugerencia", "prioridad": "alta", "origen": "asesor",
+  "leida": false, "leida_en": null, "creado_en": "...",
+  "asesor": { "id": "uuid", "nombre_completo": "Maria Rodriguez" },
+  "cliente": { "id": "uuid", "nombre_completo": "Juan Perez" }
 }
 ```
 
-#### POST `/expenses`
-```javascript
-Request:
+`tipo`: `sugerencia` · `alerta` · `observacion`. `prioridad`: `baja` · `media` · `alta`. `origen`: `sistema` · `asesor` (`asesor` es `null` si lo generó el sistema).
+
+### 10.1 Autenticación y perfil
+
+| Método | Ruta | Rol | Cuerpo | Respuesta |
+|---|---|---|---|---|
+| POST | `/auth/register` | público | `{ nombre_completo, email, password, rol, matricula?, especialidad? }` (`matricula` y `especialidad` obligatorios si `rol = asesor`) | **201** `{ token, usuario }` |
+| POST | `/auth/login` | público | `{ email, password }` | **200** `{ token, usuario }` |
+| GET | `/auth/me` | ambos | — | **200** `usuario` |
+| PUT | `/auth/profile` | ambos | cliente: `{ nombre_completo, biografia?, ocupacion?, ingreso_estimado?, objetivo_financiero? }` · asesor: `{ nombre_completo, biografia?, matricula, especialidad, descripcion? }` | **200** `usuario` |
+
+El email no se modifica desde el perfil. Un cliente que se registra queda asignado a un asesor (regla del backend).
+
+### 10.2 Catálogos
+
+| Método | Ruta | Rol | Respuesta |
+|---|---|---|---|
+| GET | `/categories` | ambos | **200** `[{ id, nombre, icono }]` |
+| GET | `/spending-profiles` | ambos | **200** `[{ id, nombre, descripcion }]` |
+
+### 10.3 Gastos (cliente)
+
+| Método | Ruta | Cuerpo / query | Respuesta |
+|---|---|---|---|
+| GET | `/expenses` | query opcional: `busqueda`, `categoria_id`, `origen`, `desde`, `hasta`, `orden` (`fecha` · `monto_desc` · `monto_asc`), `limite` | **200** `{ datos: [gasto], total }` |
+| GET | `/expenses/:id` | — | **200** `gasto` |
+| POST | `/expenses` | `{ comercio, fecha_gasto, monto, categoria_id, descripcion?, origen?, ticket_id? }` | **201** `gasto` |
+| PUT | `/expenses/:id` | mismos campos (parcial) | **200** `gasto` |
+| DELETE | `/expenses/:id` | — | **204** |
+
+Validaciones: `monto > 0`, `fecha_gasto` con formato `AAAA-MM-DD`, `categoria_id` existente, `origen` en `manual` · `ticket` (por defecto `manual`). Un cliente solo ve y modifica sus gastos.
+
+### 10.4 Tickets / OCR (cliente)
+
+| Método | Ruta | Cuerpo | Respuesta |
+|---|---|---|---|
+| POST | `/tickets/upload` | `multipart/form-data` con el campo `archivo` (imagen) | **201** `{ ticket: { id, nombre_archivo, estado_procesamiento }, analisis: { comercio_detectado, fecha_detectada, monto_detectado, categoria_sugerida: { id, nombre } \| null, confianza_general } }` |
+
+El backend guarda la imagen (`tickets`), la envía al servicio de OCR/IA, persiste el resultado (`analisis_ocr`) y lo devuelve en la misma respuesta. El front precompleta el formulario y, al guardar, manda `POST /expenses` con `origen: "ticket"` y `ticket_id`.
+
+### 10.5 Recomendaciones
+
+| Método | Ruta | Rol | Cuerpo / query | Respuesta |
+|---|---|---|---|---|
+| GET | `/recommendations` | cliente | — | **200** `[recomendacion]` (propias, más recientes primero) |
+| PUT | `/recommendations/:id/read` | cliente | — | **200** `recomendacion` (`leida = true`, `leida_en`) |
+| GET | `/recommendations/sent` | asesor | query `limite`, `cliente_id` (opcional: solo las de ese cliente) | **200** `[recomendacion]` enviadas por el asesor |
+| POST | `/recommendations` | asesor | `{ cliente_id, titulo, mensaje, tipo, prioridad }` | **201** `recomendacion` (`origen = asesor`); 403 si el cliente no está asignado |
+
+### 10.6 Análisis de consumo
+
+| Método | Ruta | Rol | Respuesta |
+|---|---|---|---|
+| GET | `/analysis/me` | cliente | **200** `analisis` |
+| GET | `/analysis/clients/:id` | asesor | **200** `analisis` del cliente (403 si no está asignado) |
+| GET | `/analysis/advisor/summary` | asesor | **200** `resumen_asesor` |
+
+**`analisis`** (alimenta Dashboard, Patrones y, en la Fase 5, el análisis por cliente del asesor):
+
+```json
 {
-  monto: 45.50,
-  comercio: "Supermercado X",
-  categoria: "alimentos",
-  fecha: "2026-04-18",
-  descripcion: "Compra semanal"
-}
-
-Response (201):
-{
-  id: 1,
-  monto: 45.50,
-  comercio: "Supermercado X",
-  categoria: "alimentos",
-  fecha: "2026-04-18",
-  usuarioId: 1,
-  createdAt: "2026-04-18T15:30:00Z"
-}
-```
-
-### 10.3 Tickets/OCR
-
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| **POST** | `/tickets/upload` | Subir imagen de ticket |
-| **POST** | `/tickets/analyze` | Analizar ticket con IA |
-| **GET** | `/tickets/:id` | Obtener ticket procesado |
-
-#### POST `/tickets/upload`
-```javascript
-Request (FormData):
-{
-  file: <File> // Imagen del ticket
-}
-
-Response (201):
-{
-  id: 1,
-  fileName: "ticket_001.jpg",
-  uploadedAt: "2026-04-18T15:30:00Z",
-  status: "pending" // pending, analyzing, completed, failed
-}
-```
-
-#### POST `/tickets/analyze`
-```javascript
-Request:
-{
-  ticketId: 1
-}
-
-Response (200):
-{
-  id: 1,
-  extractedData: {
-    monto: 45.50,
-    comercio: "Supermercado X",
-    fecha: "2026-04-18",
-    categoria: null // opcional
-  },
-  confidence: 0.95,
-  status: "completed"
-}
-```
-
-### 10.4 Categorías
-
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| **GET** | `/categories` | Listar todas las categorías |
-
-#### GET `/categories`
-```javascript
-Response (200):
-{
-  data: [
-    { id: 1, nombre: "Alimentos", icono: "🍔" },
-    { id: 2, nombre: "Transporte", icono: "🚗" },
-    { id: 3, nombre: "Entretenimiento", icono: "🎬" },
-    // ... más categorías
-  ]
+  "cliente_id": "uuid",
+  "periodo": { "desde": "2026-05-01", "hasta": "2026-11-25" },
+  "gasto_mes_actual": 135880, "gasto_mes_anterior_a_la_fecha": 56900, "variacion_mes_anterior": 139,
+  "gasto_promedio_mensual": 101005, "cantidad_gastos": 97,
+  "categoria_dominante": { "id": "uuid", "nombre": "Alimentacion", "porcentaje": 41 },
+  "comercio_mas_frecuente": { "comercio": "Supermercado Central", "cantidad": 18 },
+  "dia_mayor_gasto": 5,
+  "gastos_por_categoria": [{ "categoria_id": "uuid", "categoria": "Alimentacion", "monto": 250000, "porcentaje": 41 }],
+  "gastos_por_mes": [{ "mes": "2026-11", "monto": 135880 }],
+  "gastos_por_mes_y_categoria": [{ "mes": "2026-11", "categoria": "Alimentacion", "monto": 60000 }],
+  "gastos_por_dia": [{ "fecha": "2026-11-25", "monto": 7200 }],
+  "ranking_comercios": [{ "comercio": "Supermercado Central", "monto": 120000, "cantidad": 18 }],
+  "gastos_inusuales": [{ "gasto_id": "uuid", "comercio": "...", "categoria": "...", "fecha_gasto": "...", "monto": 23400, "promedio_categoria": 9060, "desvio_porcentaje": 158 }],
+  "alertas": [{ "nivel": "danger", "titulo": "...", "descripcion": "..." }],
+  "perfil_de_gasto": { "id": "uuid", "nombre": "Equilibrista Cosmico", "descripcion": "..." },
+  "nivel_riesgo": "medio",
+  "ultimo_gasto_fecha": "2026-11-24"
 }
 ```
 
-### 10.5 Análisis (Solo Asesor)
+Reglas de cálculo (las implementa hoy el mock en `frontend/mocks/analytics.js` y el backend debe reproducirlas):
+- `gastos_por_mes`: últimos 7 meses incluido el actual. `gastos_por_dia`: últimos 14 días. `ranking_comercios`: top 5 por monto.
+- `variacion_mes_anterior`: mes en curso contra el mes anterior **hasta el mismo día** (porcentaje; `null` si no hay datos).
+- `gasto_promedio_mensual`: promedio de los meses completos anteriores con gastos.
+- `dia_mayor_gasto`: 0 = domingo … 6 = sábado.
+- **Gasto inusual**: gasto de los últimos 30 días que supera en más de 35% el promedio de su categoría (con al menos 3 gastos previos en esa categoría).
+- `alertas.nivel`: `danger` · `warning` · `success` · `info`.
+- **Perfil de gasto** (asignado automáticamente, sin intervención del cliente): participación de las categorías discrecionales (Entretenimiento, Suscripciones, Otros) en los últimos 3 meses, comparada con `perfiles_de_gasto.criterio_regla.discrecional_max` (Drácula Nocturno < 10%, Equilibrista Cósmico < 30%, Espíritu Libre el resto). El resultado se guarda en `clasificacion_de_perfil`.
+- `nivel_riesgo`: `alto` si hay 2 o más gastos inusuales o la variación supera 25%; `medio` si hay 1 o la variación supera 10%; `bajo` en otro caso.
 
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| **GET** | `/analysis/user/:userId` | Análisis general de usuario |
-| **GET** | `/analysis/patterns/:userId` | Patrones de consumo |
+**`resumen_asesor`**:
 
-#### GET `/analysis/user/:userId`
-```javascript
-Headers:
-Authorization: Bearer <asesor_token>
-
-Response (200):
+```json
 {
-  usuarioId: 1,
-  gastoTotal: 5000.00,
-  gastoPromedio: 150.00,
-  categoriaDestacada: "alimentos",
-  periodoAnalisis: "ultimo_mes"
+  "asesor_id": "uuid", "clientes_activos": 8, "clientes_con_alertas": 5,
+  "recomendaciones_enviadas": 7, "recomendaciones_leidas": 3,
+  "alertas": [{ "nivel": "danger", "titulo": "5 clientes con gastos inusuales", "descripcion": "..." }],
+  "distribucion_por_perfil": [{ "perfil": "Equilibrista Cosmico", "cantidad": 3 }],
+  "gasto_por_perfil": [{ "perfil": "Equilibrista Cosmico", "monto": 320000 }],
+  "actividad_mensual": [{ "mes": "2026-11", "clientes_activos": 8 }]
 }
 ```
 
-#### GET `/analysis/patterns/:userId`
-```javascript
-Headers:
-Authorization: Bearer <asesor_token>
+### 10.7 Clientes (asesor)
 
-Response (200):
-{
-  usuarioId: 1,
-  patrones: [
-    {
-      tipo: "gasto_diario_promedio",
-      valor: 150.00
-    },
-    {
-      tipo: "categoria_mas_gastada",
-      valor: "alimentos"
-    },
-    {
-      tipo: "dia_pico_gasto",
-      valor: "viernes"
-    }
-  ]
-}
-```
+| Método | Ruta | Respuesta |
+|---|---|---|
+| GET | `/clients` | **200** `[resumen_cliente]` de los clientes asignados (`asignaciones_de_clientes` activas) |
+| GET | `/clients/:id` | **200** `resumen_cliente` + `usuario` (403 si no está asignado) |
+| GET | `/clients/:id/expenses` | **200** `{ datos: [gasto], total }` con los mismos filtros que `GET /expenses` (403 si no está asignado) |
 
-### 10.6 Usuarios (Solo Asesor/Admin)
-
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| **GET** | `/admin/users` | Listar todos los usuarios |
-| **GET** | `/admin/users/:id` | Detalles de usuario específico |
-
-#### GET `/admin/users?page=1&limit=20`
-```javascript
-Headers:
-Authorization: Bearer <asesor_token>
-
-Response (200):
-{
-  total: 45,
-  page: 1,
-  limit: 20,
-  data: [
-    {
-      id: 1,
-      email: "usuario@example.com",
-      nombre: "Juan",
-      perfil: "usuario",
-      createdAt: "2026-01-15T10:00:00Z",
-      gastosTotales: 5000.00
-    },
-    // ... más usuarios
-  ]
-}
-```
-
-### 10.7 Manejo de Errores
-
-Todos los endpoints retornan errores en formato:
-
-```javascript
-Response (4xx/5xx):
-{
-  error: true,
-  message: "Descripción del error",
-  code: "ERROR_CODE",
-  details: {} // opcional
-}
-```
-
-**Códigos de error comunes:**
-- `401 Unauthorized` - Token inválido o expirado
-- `403 Forbidden` - Sin permiso para acceder
-- `404 Not Found` - Recurso no existe
-- `422 Unprocessable Entity` - Datos inválidos
-- `500 Internal Server Error` - Error del servidor
+**`resumen_cliente`**: `{ id, nombre_completo, email, estado, perfil_de_gasto, gasto_promedio_mensual, gasto_mes_actual, variacion_mes_anterior, ultimo_gasto_fecha, gastos_inusuales (cantidad), nivel_riesgo }`.
 
 ---
 
@@ -1253,11 +918,11 @@ DASHBOARD    DASHBOARD
 
 ---
 
-### 11.3 Páginas del Usuario Regular
+### 11.3 Páginas del Cliente
 
 #### 11.3.1 Dashboard Usuario
 
-**Archivo:** `pages/usuario/dashboard.html` + `pages/usuario/DashboardPage.js`
+**Archivo:** `pages/cliente/dashboard.html` + `pages/cliente/DashboardPage.js`
 
 **Diseño:** 3 columnas (Sidebar + Main + Right Panel)
 
@@ -1285,7 +950,7 @@ DASHBOARD    DASHBOARD
 
 #### 11.3.2 Cargar Gasto Page
 
-**Archivo:** `pages/usuario/cargar-gasto.html` + `pages/usuario/CargarGastoPage.js`
+**Archivo:** `pages/cliente/cargar-gasto.html` + `pages/cliente/CargarGastoPage.js`
 
 **2 Métodos de carga:**
 
@@ -1317,7 +982,7 @@ DASHBOARD    DASHBOARD
 
 #### 11.3.3 Historial Gastos Page
 
-**Archivo:** `pages/usuario/historial.html` + `pages/usuario/HistorialPage.js`
+**Archivo:** `pages/cliente/historial.html` + `pages/cliente/HistorialPage.js`
 
 **Contenido:**
 - Filtros (barra superior):
@@ -1344,7 +1009,7 @@ DASHBOARD    DASHBOARD
 
 #### 11.3.4 Patrones de Consumo Page
 
-**Archivo:** `pages/usuario/patrones.html` + `pages/usuario/PatronesPage.js`
+**Archivo:** `pages/cliente/patrones.html` + `pages/cliente/PatronesPage.js`
 
 **Contenido:**
 - Período seleccionable (último mes, últimos 3 meses, año)
@@ -1367,56 +1032,57 @@ DASHBOARD    DASHBOARD
 
 #### 11.3.5 Recomendaciones Page
 
-**Archivo:** `pages/usuario/recomendaciones.html` + `pages/usuario/RecomendacionesPage.js`
+**Archivo:** `pages/cliente/recomendaciones.html` + `pages/cliente/RecomendacionesPage.js` · Spec detallada: `paginasFront/05-Recomendaciones.md`
 
 **Contenido:**
-- Lista de recomendaciones (pueden ser del sistema o asesor)
-- Cards de recomendación con:
-  - Título
-  - Descripción
-  - Categoría relacionada
-  - Nivel de prioridad (info, warning, danger)
-  - Fecha
+- Recomendaciones del sistema o del asesor, con el modelo de `recomendaciones_financieras`: título, mensaje, tipo (sugerencia/alerta/observación), prioridad (alta/media/baja), origen (sistema/asesor), fecha y leída.
+- Filtros por prioridad, tipo y estado de lectura; orden por fecha o prioridad.
+- Acciones: marcar como leída y ver detalle.
 
 **Datos:**
-- GET `/recommendations/{userId}` → recomendaciones
+- GET `/recommendations` → recomendaciones del cliente
+- PUT `/recommendations/:id/read` → marcar como leída
 
 ---
 
 #### 11.3.6 Perfil Page
 
-**Archivo:** `pages/usuario/perfil.html` + `pages/usuario/PerfilPage.js`
+**Archivo:** `pages/cliente/perfil.html` + `pages/cliente/PerfilPage.js`
 
-**Contenido:**
-- Avatar (opcional)
-- Información del usuario:
-  - Nombre
-  - Email
-  - Teléfono
-  - Moneda preferida
-  - Tema (light/dark)
-- Botones:
-  - Editar perfil
-  - Cambiar contraseña
-  - Logout
+**Contenido (campos de `usuarios` y `perfiles_usuarios`):**
+- Nombre completo, ocupación, ingreso mensual estimado, objetivo financiero, biografía.
+- Email de acceso (solo lectura).
+- Tema visual (preferencia local, `ThemeManager`).
+- Resumen: perfil de gasto asignado, asesor asignado, miembro desde.
 
 **Datos:**
 - GET `/auth/me` → información del usuario
+- PUT `/auth/profile` → actualizar perfil
 
 ---
 
 #### 11.3.7 Perfiles de Gasto Page
 
-**Archivo:** `pages/usuario/perfiles.html` + `pages/usuario/PerfilesPage.js`
+**Archivo:** `pages/cliente/perfiles.html` + `pages/cliente/PerfilesPage.js` · Spec detallada: `paginasFront/04-PerfilesDeGasto.md`
 
 **Contenido:**
-- Sistema de clasificación del usuario:
-  - Perfil financiero generado por el sistema
-  - Ejemplos: "Consumidor equilibrado", "Consumidor ahorrador", etc.
-- Histórico de perfiles (opcional)
+- Catálogo informativo de los 3 perfiles y tabla comparativa.
+- Perfil asignado **automáticamente por el sistema** (`clasificacion_de_perfil`). El cliente no puede elegirlo.
 
 **Datos:**
-- GET `/analysis/user/{userId}` → perfil
+- GET `/spending-profiles` → catálogo
+- GET `/auth/me` → `perfil_cliente.perfil_de_gasto` (perfil vigente)
+
+---
+
+#### 11.3.8 Editar Gasto Page
+
+**Archivo:** `pages/cliente/editar-gasto.html` + `pages/cliente/EditarGastoPage.js` · Ruta `#/cliente/gastos/:id` (desde el historial, acción "Editar").
+
+- Formulario `ExpenseForm` (el mismo de la carga) con los datos del gasto: permite corregir comercio, monto, fecha y descripción y **cambiar la categoría** (consigna: "categorizar gastos").
+- Muestra el origen (manual o ticket) y permite eliminar el gasto con confirmación.
+
+**Datos:** GET `/expenses/:id`, GET `/categories`, PUT `/expenses/:id`, DELETE `/expenses/:id`.
 
 ---
 
@@ -1449,33 +1115,76 @@ DASHBOARD    DASHBOARD
 **Interacciones:**
 - Click en cliente → abrir modal o navegar a página de detalles
 
+Spec detallada: `paginasFront/03-AsesorDashboard.md`.
+
+#### 11.4.2 Mis Clientes
+
+**Archivo:** `pages/asesor/clientes.html` + `pages/asesor/AsesorClientesPage.js`
+
+- Búsqueda y filtros por riesgo y estado, vista en tarjetas o tabla, detalle del cliente y envío de recomendaciones.
+- "Ver análisis" abre el análisis completo del cliente (§11.4.4).
+
+#### 11.4.4 Análisis del Cliente
+
+**Archivo:** `pages/asesor/cliente-detalle.html` + `pages/asesor/AsesorClienteDetallePage.js` · Ruta `#/asesor/clientes/:id` (desde Mis Clientes o el dashboard, acción "Ver análisis").
+
+Cubre la consigna §3 y §4.5 para el asesor: analizar los gastos de cada cliente, identificar patrones y gastos problemáticos y generar recomendaciones.
+
+- Encabezado: nombre, email, **perfil de gasto asignado por el sistema**, nivel de riesgo y estado.
+- Alertas e indicadores (gasto del mes, promedio mensual, categoría principal, gastos inusuales).
+- Gráficos: gasto por día, por categoría y por mes con promedio.
+- Gastos inusuales, ranking de comercios y últimos gastos (`DataTable`).
+- Recomendaciones enviadas a ese cliente y botón para enviar una nueva (`RecommendationDialog` con el cliente preseleccionado).
+
+**Datos:** GET `/clients/:id`, GET `/analysis/clients/:id`, GET `/clients/:id/expenses`, GET `/recommendations/sent?cliente_id=…`, POST `/recommendations`.
+
+#### 11.4.3 Perfil del Asesor
+
+**Archivo:** `pages/asesor/perfil.html` + `pages/asesor/AsesorPerfilPage.js`
+
+- Campos de `usuarios` y `perfiles_asesores`: nombre completo, especialidad, matrícula, descripción profesional. Email de acceso en solo lectura.
+
 ---
 
 ### 11.5 Rutas y Navegación
 
-**URLs (hash-based):**
+**Fuente de verdad:** `frontend/routes.js` (los paths base están en `ROUTES`, `frontend/utils/constants.js`).
 
-| Página | Ruta |
-|--------|------|
-| Landing | `#/` |
-| Login (modal) | `#/?modal=login` |
-| Registro (modal) | `#/?modal=register` |
-| Dashboard Usuario | `#/usuario/dashboard` |
-| Cargar Gasto | `#/usuario/cargar-gasto` |
-| Historial | `#/usuario/historial` |
-| Patrones | `#/usuario/patrones` |
-| Recomendaciones | `#/usuario/recomendaciones` |
-| Perfil Usuario | `#/usuario/perfil` |
-| Perfiles Gasto | `#/usuario/perfiles` |
-| Dashboard Asesor | `#/asesor/dashboard` |
-| Placeholder | `#/utils/placeholder` |
+| Página | Ruta | Layout | Rol |
+|--------|------|--------|-----|
+| Landing | `#/` (`?modal=login` · `?modal=register` · `&next=<ruta>`) | public | público |
+| Placeholder | `#/utils/placeholder?title=…` | public | público |
+| Dashboard del cliente | `#/cliente/dashboard` | client | cliente |
+| Cargar Gasto | `#/cliente/cargar-gasto` | client | cliente |
+| Historial | `#/cliente/historial` | client | cliente |
+| Patrones | `#/cliente/patrones` | client | cliente |
+| Recomendaciones | `#/cliente/recomendaciones` | client | cliente |
+| Perfil de cuenta | `#/cliente/perfil` | client | cliente |
+| Perfiles de gasto | `#/cliente/perfiles` | client | cliente |
+| Editar gasto | `#/cliente/gastos/:id` | client | cliente |
+| Dashboard Asesor | `#/asesor/dashboard` | advisor | asesor |
+| Mis Clientes | `#/asesor/clientes` | advisor | asesor |
+| Análisis del cliente | `#/asesor/clientes/:id` | advisor | asesor |
+| Perfil del Asesor | `#/asesor/perfil` | advisor | asesor |
+| Ruta inexistente | cualquier otra: "Ruta no encontrada" en la misma URL | public | público |
 
-**Implementación:** Hash-based routing en `Router.js`
+**Funcionamiento del router (`core/Router.js`):**
+1. Cambia el hash → se busca la ruta (coincidencia por segmentos, con parámetros `:id`).
+2. Guard global `beforeEach` (en `app.js`): si la ruta tiene `meta.role` y no hay sesión → `#/?modal=login&next=<ruta>`; si el rol no coincide → dashboard del rol. Los redirects usan `replace` (no agregan entradas al historial).
+3. Si cambia el layout (public · client · advisor), se desmonta el anterior y se monta el nuevo **una sola vez**; navegar entre páginas del mismo rol no lo vuelve a montar.
+4. Se destruye la página anterior, se carga el template de la nueva en el `outlet` del layout y se monta. Si mientras tanto se pidió otra ruta, la activación se descarta.
+5. Si la ruta tiene `reuseOnQueryChange` y solo cambió la query, se llama `page.onRouteUpdate(to)` sin remontar (la landing lo usa para abrir el modal).
+6. El layout marca el link activo (`aria-current="page"`), actualiza el footer y el título del documento.
+
+La sesión se restaura (`authManager.init()`) antes de `router.start()`. El guard es experiencia de usuario: la seguridad la impone el backend validando el token.
 
 ```javascript
-router.navigate('usuario/dashboard')  // Cambia a #/usuario/dashboard
-router.navigate('/')                  // Cambia a #/
+router.navigate(ROUTES.CLIENT_HISTORIAL);                 // #/cliente/historial
+router.navigate(ROUTES.HOME, { modal: "login" });         // #/?modal=login
+router.navigate(ROUTES.ADVISOR_DASHBOARD, {}, { replace: true });
 ```
+
+**Pestañas nuevas** (`core/TabRegistry.js`): desde el dashboard, los links a secciones de detalle o análisis abren en pestaña nueva; la navegación principal no. "Volver al Dashboard" cierra la pestaña secundaria si el dashboard ya está abierto en otra.
 
 ---
 
@@ -1498,7 +1207,7 @@ export class EventBus {
   // ...
 }
 
-// Archivo: pages/usuario/DashboardPage.js
+// Archivo: pages/cliente/DashboardPage.js
 import { EventBus } from '../../core/EventBus.js';
 import { APIClient } from '../../core/APIClient.js';
 // ...
@@ -1513,30 +1222,31 @@ import { APIClient } from '../../core/APIClient.js';
 **Token JWT:**
 ```javascript
 // Al login exitoso
-localStorage.setItem('authToken', response.token);
+localStorage.setItem('fintrack.authToken', response.token);
 
 // Al hacer requests
 headers: {
-  'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+  'Authorization': `Bearer ${localStorage.getItem('fintrack.authToken')}`
 }
 
 // Al logout
-localStorage.removeItem('authToken');
+localStorage.removeItem('fintrack.authToken');
 ```
 
 **Tema:**
 ```javascript
 // Guardar preferencia
-localStorage.setItem('theme', 'dark');
+localStorage.setItem('fintrack.theme', 'dark');
 
 // Cargar al iniciar
-const theme = localStorage.getItem('theme') || 'light';
+const theme = localStorage.getItem('fintrack.theme') || 'dark';
 themeManager.setTheme(theme);
 ```
 
 **Estado temporal:**
 ```javascript
-localStorage.setItem('formDraft', JSON.stringify(formData));
+// Claves por usuario: `${STORAGE_KEYS.EXPENSE_DRAFT}.${userId}` (ver STORAGE_KEYS en utils/constants.js)
+localStorage.setItem(`fintrack.expenseDraft.${userId}`, JSON.stringify(formData));
 ```
 
 ---

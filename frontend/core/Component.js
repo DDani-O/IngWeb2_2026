@@ -1,5 +1,16 @@
 import { eventBus } from "./EventBus.js";
 
+/**
+ * Base de ciclo de vida de componentes y páginas.
+ *
+ * Comunicación (TeoriaComponentes.md §5):
+ * - Props hacia abajo: opciones del constructor (`this.options`, con `static DEFAULTS`). Son de
+ *   solo lectura para el componente; el padre las cambia con `update(nextOptions)`.
+ * - Avisos hacia arriba: `dispatch(nombre, detalle)` emite un CustomEvent que burbujea desde el
+ *   elemento raíz; el padre lo escucha con `listen(elemento, nombre, handler)`.
+ * - EventBus (`on`/`emit`): solo para hechos de aplicación entre módulos (sesión, gasto creado…).
+ * - Composición: `mountChild(Clase, elemento, opciones)` monta un hijo que se destruye con el padre.
+ */
 export class Component {
   static DEFAULTS = {};
 
@@ -41,34 +52,59 @@ export class Component {
 
   /**
    * Monta el componente ejecutando render y luego el binding de eventos.
-   * Maneja tanto renders síncronos como asíncronos.
    */
-  async mount() {
+  mount() {
     if (!this.element) {
       throw new Error(
         `${this.constructor.name} no encontro un elemento valido para montar.`
       );
     }
 
-    const renderResult = this.render();
-    if (renderResult instanceof Promise) {
-      await renderResult;
-    }
-
+    this.render();
     this.attachEvents();
     this._mounted = true;
     return this;
   }
 
   /**
-   * Reemplaza el HTML del nodo raiz del componente.
+   * Reemplaza las props (el padre es el dueño del dato) y vuelve a renderizar.
+   * @param {object} nextOptions
    */
-  setHTML(html = "") {
-    if (!this.element) {
-      return;
+  update(nextOptions = {}) {
+    this.options = { ...this.options, ...nextOptions };
+    if (this._mounted) {
+      this.render();
+    }
+    return this;
+  }
+
+  /**
+   * Avisa al padre que pasó algo: CustomEvent que burbujea desde el elemento raíz.
+   * @param {string} eventName
+   * @param {object} detail
+   */
+  dispatch(eventName, detail = {}) {
+    this.element?.dispatchEvent(new CustomEvent(eventName, { bubbles: true, detail }));
+  }
+
+  /**
+   * Monta un componente hijo sobre `element` y lo registra para destruirlo en cascada.
+   * @template T
+   * @param {new (element: HTMLElement, options: object) => T} ComponentClass
+   * @param {HTMLElement|string} element nodo o selector relativo a este componente
+   * @param {object} options props del hijo
+   * @returns {T}
+   */
+  mountChild(ComponentClass, element, options = {}) {
+    const target = typeof element === "string" ? this.element.querySelector(element) : element;
+    if (!target) {
+      throw new Error(`${this.constructor.name}: no existe el punto de montaje ${element}.`);
     }
 
-    this.element.innerHTML = html;
+    const child = new ComponentClass(target, options);
+    child.mount();
+    this.registerChild(child);
+    return child;
   }
 
   /**

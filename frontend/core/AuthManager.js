@@ -1,7 +1,8 @@
-import { EVENTS, ROUTES, STORAGE_KEYS } from "../utils/constants.js";
+import { EVENTS, ROLES, ROUTES, STORAGE_KEYS } from "../utils/constants.js";
+import { authService } from "../services/auth.service.js";
+import { apiClient } from "./APIClient.js";
 import { stateManager } from "./StateManager.js";
 import { eventBus } from "./EventBus.js";
-import { apiClient } from "./APIClient.js";
 
 export class AuthManager {
   /**
@@ -14,6 +15,7 @@ export class AuthManager {
 
     this.currentUser = null;
     this.token = null;
+    apiClient.setTokenProvider(() => this.token);
 
     AuthManager.instance = this;
   }
@@ -31,16 +33,19 @@ export class AuthManager {
 
     try {
       const parsed = JSON.parse(storedUser);
-      const normalizedRole = this._normalizeRole(parsed?.role);
-      this.currentUser = {
-        ...parsed,
-        role: normalizedRole,
-      };
+
+      // Sesiones guardadas con un rol que ya no existe (p. ej. el antiguo "usuario") se descartan.
+      if (!Object.values(ROLES).includes(parsed?.role)) {
+        this.logout({ emitEvent: false });
+        return;
+      }
+
+      this.currentUser = parsed;
       this.token = storedToken;
 
       stateManager.patch({
-        user: this.currentUser,
-        role: normalizedRole,
+        user: parsed,
+        role: parsed.role,
         isAuthenticated: true,
       });
     } catch {
@@ -49,74 +54,49 @@ export class AuthManager {
   }
 
   /**
-    * Autentica contra el backend y crea sesion activa.
+   * Inicia sesión contra la API (POST /auth/login) y persiste la sesión.
+   * @param {{email: string, password: string}} credentials
+   * @returns {Promise<object>} usuario autenticado (modelo UI)
    */
   async login(credentials) {
-    const response = await apiClient.post("/auth/login", {
-      email: credentials.email,
-      password: credentials.password,
-    });
-
-    if (!response?.access_token || !response?.user) {
-      throw new Error("Respuesta invalida del servidor.");
-    }
-
-    const user = this._mapAuthUser(response.user);
-    this._persistSession(user, response.access_token);
-
+    const { token, user } = await authService.login(credentials);
+    this._persistSession(user, token);
     eventBus.emit(EVENTS.AUTH.LOGIN, { user });
     return user;
   }
 
   /**
-    * Registra un usuario nuevo en backend y lo autentica automaticamente.
+   * Registra una cuenta (POST /auth/register) y deja la sesión iniciada.
+   * @param {object} form datos del formulario de registro (modelo UI)
    */
-  async register(payload) {
-    const normalizedRole = payload.role === "asesor" ? "asesor" : "cliente";
-    const registerPayload = {
-      email: payload.email,
-      password: payload.password,
-      fullName: payload.fullName,
-      role: normalizedRole,
-    };
-
-    if (normalizedRole === "asesor") {
-      registerPayload.licenseNumber = payload.licenseNumber;
-      registerPayload.specialty = payload.specialty;
-      if (payload.description) {
-        registerPayload.description = payload.description;
-      }
-    } else {
-      if (payload.occupation) {
-        registerPayload.occupation = payload.occupation;
-      }
-      if (payload.estimatedIncome !== undefined) {
-        registerPayload.estimatedIncome = payload.estimatedIncome;
-      }
-      if (payload.financialGoal) {
-        registerPayload.financialGoal = payload.financialGoal;
-      }
-      if (payload.preferredCurrency) {
-        registerPayload.preferredCurrency = payload.preferredCurrency;
-      }
-    }
-
-    const response = await apiClient.post("/auth/register", registerPayload);
-
-    if (!response?.access_token || !response?.user) {
-      throw new Error("Respuesta invalida del servidor.");
-    }
-
-    const user = this._mapAuthUser(response.user);
-    this._persistSession(user, response.access_token);
+  async register(form) {
+    const { token, user } = await authService.register(form);
+    this._persistSession(user, token);
     eventBus.emit(EVENTS.AUTH.REGISTER, { user });
     return user;
+  }
+
+  /**
+   * Reemplaza los datos del usuario en sesión (por ejemplo, después de editar el perfil).
+   * @param {object} user
+   */
+  updateCurrentUser(user) {
+    if (!user || !this.token) {
+      return;
+    }
+
+    this._persistSession(user, this.token);
   }
 
   /**
    * Cierra sesion, limpia almacenamiento y opcionalmente emite evento.
    */
   logout({ emitEvent = true } = {}) {
+    const userId = this.currentUser?.id;
+    if (userId) {
+      localStorage.removeItem(`${STORAGE_KEYS.EXPENSE_DRAFT}.${userId}`);
+    }
+
     this.currentUser = null;
     this.token = null;
 
@@ -145,7 +125,7 @@ export class AuthManager {
    * Verifica si el usuario actual coincide con un rol esperado.
    */
   hasRole(role) {
-    return this._normalizeRole(this.currentUser?.role) === this._normalizeRole(role);
+    return this.currentUser?.role === role;
   }
 
   /**
@@ -156,86 +136,34 @@ export class AuthManager {
   }
 
   /**
-   * Actualiza los datos del usuario actual en memoria y localStorage.
-   * Usar después de editar el perfil para sincronizar en todas las páginas.
-   */
-  updateUserData(updatedFields) {
-    if (!this.currentUser) {
-      return;
-    }
-
-    const updatedUser = {
-      ...this.currentUser,
-      ...updatedFields,
-    };
-
-    this.currentUser = updatedUser;
-    localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(updatedUser));
-
-    stateManager.patch({
-      user: updatedUser,
-    });
-
-    eventBus.emit(EVENTS.AUTH.USER_UPDATED, { user: updatedUser });
-  }
-
-  /**
    * Retorna el rol actual o null si no hay sesion.
    */
   getCurrentRole() {
-    return this._normalizeRole(this.currentUser?.role) || null;
+    return this.currentUser?.role || null;
   }
 
   /**
    * Devuelve ruta inicial recomendada segun rol.
    */
   getDefaultRouteForRole(role) {
-    const normalizedRole = this._normalizeRole(role);
-    return normalizedRole === "asesor"
-      ? ROUTES.ADVISOR_DASHBOARD
-      : ROUTES.USER_DASHBOARD;
+    return role === ROLES.ADVISOR ? ROUTES.ADVISOR_DASHBOARD : ROUTES.CLIENT_DASHBOARD;
   }
 
   /**
    * Persiste token/usuario y sincroniza estado global autenticado.
    */
   _persistSession(user, token) {
-    const normalizedRole = this._normalizeRole(user?.role);
-    const normalizedUser = {
-      ...user,
-      role: normalizedRole,
-    };
-
-    this.currentUser = normalizedUser;
+    this.currentUser = user;
     this.token = token;
 
     localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
-    localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(normalizedUser));
+    localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(user));
 
     stateManager.patch({
-      user: normalizedUser,
-      role: normalizedRole,
+      user,
+      role: user.role,
       isAuthenticated: true,
     });
-  }
-
-  _normalizeRole(role) {
-    if (!role) {
-      return role;
-    }
-
-    return role === "usuario" ? "cliente" : role;
-  }
-
-  _mapAuthUser(user) {
-    return {
-      id: user.id,
-      role: this._normalizeRole(user.role),
-      fullName: user.fullName,
-      email: user.email,
-      avatarUrl: user.avatarUrl ?? null,
-      createdAt: user.createdAt ?? null,
-    };
   }
 
   /**

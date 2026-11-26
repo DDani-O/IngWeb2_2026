@@ -1,126 +1,125 @@
 :root {
-  /* ═══════════════════════════════════════════════════════════════════════════
-     SANDWICH THEME — Paleta de Colores Primaria
-     Azul Marino Profundo + Turquesa Brillante
-     ═══════════════════════════════════════════════════════════════════════════ */
+  --color-primary: #39dfbf;
+  --color-primary-strong: #22bea1;
+  --color-secondary: #2fd6c4;
+  --color-success: #31d17d;
+  --color-warning: #f6b437;
+  --color-danger: #ff5d66;
+  --color-info: #31d4c7;
 
-  /* COLORES PIN CI PALES */
-  --color-primary: #2dd4bf;           /* Turquesa Brillante (Acento Principal) */
-  --color-primary-strong: #14b8a6;    /* Turquesa Oscuro (Hover/Active) */
-  --color-secondary: #2dd4bf;         /* Mismo turquesa para consistencia */
-  --color-success: #10b981;           /* Verde éxito (basado en tema) */
-  --color-warning: #f59e0b;           /* Naranja/Ámbar advertencia */
-  --color-danger: #ef4444;            /* Rojo peligro */
-  --color-info: #2dd4bf;              /* Turquesa info */
-  --accent: #2dd4bf;                   /* Acento principal turquesa */
-  --accent-hover: #14b8a6;             /* Hover/active acento */
-  --bg-main: #0b1120;                  /* Fondo base Sandwich Theme */
-  --text-main: #f8fafc;                /* Texto principal off-white */
-  --text-muted: #94a3b8;               /* Texto secundario gris azulado */
-  --accent-soft: rgba(45, 212, 191, 0.12);
-  --accent-strong: rgba(45, 212, 191, 0.35);
-  --accent-glow: rgba(45, 212, 191, 0.16);
+  --bg-950: #021312;
+  --bg-900: #031a1b;
 
-  /* FONDOS — Azul Marino Profundo con Variaciones de Profundidad */
-  --bg-950: #0b1120;                  /* Más oscuro (máx profundidad) */
-  --bg-900: #0f1628;                  /* Base principal */
-  --bg-850: #131f2d;                  /* Ligeramente más claro */
-  --bg-800: #172838;                  /* Para superficies elevadas */
-  --bg-750: #1f3347;                  /* Para elementos interactivos */
-  --bg-overlay: rgba(11, 17, 32, 0.92);  /* Overlay semi-transparente */
+  --text-100: #f2fffc;
+  --text-200: #d3ebe6;
+  --text-300: #a5c6c0;
+  --text-400: #7f9f99;
 
-  /* TEXTO — Esquema Blanco/Gris Azulado */
-  --text-100: #f8fafc;                /* Blanco frío principal */
-  --text-200: #cbd5e1;                /* Gris muy claro */
-  --text-300: #94a3b8;                /* Gris azulado (muted) */
-  --text-400: #64748b;                /* Gris oscuro (faint) */
+  --border-soft: rgba(66, 230, 202, 0.18);
+  --border-strong: rgba(66, 230, 202, 0.4);
 
-  /* BORDES — Turquesa con Transparencia */
-  --border-soft: rgba(45, 212, 191, 0.15);    /* Sutil */
-  --border-strong: rgba(45, 212, 191, 0.35);  /* Prominente */
+  --app-bg-start: var(--bg-900);
+  --app-bg-end: var(--bg-950);
+  --bg-bloom-1: rgba(50, 170, 145, 0.3);
+  --bg-bloom-2: rgba(22, 126, 116, 0.28);
 
-  /* FONDOS DE BLOOM/GLOW (Degradados de Fondo) */
-  --bg-bloom-1: rgba(45, 212, 191, 0.15);     /* Destello turquesa sutil #1 */
-  --bg-bloom-2: rgba(20, 184, 166, 0.12);     /* Destello turquesa sutil #2 */
+  --text-primary: var(--text-100);
+  --text-secondary: var(--text-200);
+  --text-muted: var(--text-300);
+  --text-faint: var(--text-400);
 
-  /* SUPERFICIES — Variaciones Transparentes para Capas */
-  --surface-1: rgba(20, 32, 52, 0.5);         /* Más transparente */
-  --surface-2: rgba(17, 25, 40, 0.65);        /* Moderadamente transparente */
-  --surface-3: rgba(15, 22, 35, 0.8);         /* Más opaco */
-  --surface-card: linear-gradient(145deg, rgba(15, 22, 35, 0.7), rgba(11, 17, 32, 0.6));
-  --surface-panel: linear-gradient(145deg, rgba(17, 25, 40, 0.85), rgba(13, 19, 32, 0.75));
+  --surface-1: rgba(7, 40, 42, 0.46);
+  --surface-2: rgba(7, 47, 49, 0.62);
+  --surface-card: linear-gradient(145deg, rgba(8, 48, 55, 0.66), rgba(5, 27, 35, 0.58));
+  --surface-panel: linear-gradient(145deg, rgba(8, 46, 49, 0.88), rgba(6, 29, 32, 0.72));
   --surface-hero: linear-gradient(
     130deg,
-    rgba(15, 22, 35, 0.8),
-    rgba(13, 20, 34, 0.7) 45%,
-    rgba(11, 17, 32, 0.65)
+    rgba(10, 56, 60, 0.86),
+    rgba(8, 49, 52, 0.74) 45%,
+    rgba(7, 40, 44, 0.62)
   );
-  --surface-overlay: rgba(11, 17, 32, 0.78);
 
-  /* CAMPOS DE FORMULARIOS */
-  --field-bg: rgba(255, 255, 255, 0.03);          /* Fondo input muy transparente */
-  --field-border: rgba(45, 212, 191, 0.25);       /* Borde turquesa sutil */
-  --field-focus: rgba(45, 212, 191, 0.3);         /* Focus más visible */
-  --modal-surface: linear-gradient(145deg, rgba(13, 19, 32, 0.98), rgba(11, 17, 32, 0.96));
+  --field-bg: rgba(255, 255, 255, 0.03);
+  --field-border: rgba(124, 214, 192, 0.32);
+  --field-focus: rgba(57, 223, 191, 0.24);
+  /* Texto de las opciones de <select>: el desplegable nativo es claro en ambos temas. */
+  --native-option-text: #102224;
+  --modal-surface: linear-gradient(145deg, rgba(6, 33, 40, 0.98), rgba(4, 23, 29, 0.95));
 
-  /* NAVBAR — Oscuro y Vidriano */
-  --navbar-bg: rgba(11, 17, 32, 0.85);            /* Semitransparente */
-  --navbar-bg-solid: rgba(11, 17, 32, 0.95);      /* Más opaco */
+  --navbar-bg: rgba(2, 22, 26, 0.84);
+  --navbar-bg-solid: rgba(2, 22, 26, 0.94);
 
-  /* TABLAS */
-  --table-head-bg: rgba(15, 22, 35, 0.6);         /* Encabezados */
-  --table-row-bg: rgba(13, 19, 32, 0.4);          /* Filas */
-  --table-row-hover: rgba(45, 212, 191, 0.12);    /* Hover con acento */
+  --table-head-bg: rgba(8, 46, 49, 0.55);
+  --table-row-bg: rgba(6, 31, 35, 0.44);
+  --table-row-hover: rgba(57, 223, 191, 0.1);
 
-  /* ACCIONES Y BOTONES */
-  --action-primary-bg: linear-gradient(125deg, var(--accent), var(--accent-hover));
-  --action-primary-text: var(--bg-main);           /* Texto oscuro en botón turquesa */
-  --action-ghost-bg: rgba(45, 212, 191, 0.08);    /* Ghost muy sutil */
+  --action-primary-bg: linear-gradient(125deg, #46e3c8, #2dcfb7);
+  --action-primary-text: #03231f;
+  --action-ghost-bg: rgba(57, 223, 191, 0.06);
   --action-ghost-border: var(--border-strong);
   --action-ghost-text: var(--color-primary);
 
-  /* SOMBRAS */
-  --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.4);
-  --shadow-accent: 0 18px 36px rgba(45, 212, 191, 0.15);  /* Glow turquesa */
+  --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.32);
+  --shadow-accent: 0 18px 36px rgba(29, 189, 160, 0.2);
 
-  /* RADIOS Y ESPACIADORES */
+  /* Radios */
   --radius-sm: 10px;
   --radius-md: 14px;
   --radius-lg: 20px;
   --radius-xl: 28px;
+  --radius-pill: 999px;
+  --radius-round: 50%;
 
-  /* TIPOGRAFÍA */
+  /*
+   * Escala de espaciado (gap, padding, margin). Todo espaciado sale de acá;
+   * un valor fuera de la escala tiene que justificarse con un comentario.
+   */
+  --space-1: 0.25rem; /* 4px */
+  --space-2: 0.5rem; /* 8px */
+  --space-3: 0.75rem; /* 12px */
+  --space-4: 1rem; /* 16px */
+  --space-5: 1.25rem; /* 20px */
+  --space-6: 1.5rem; /* 24px */
+  --space-7: 2rem; /* 32px */
+  --space-8: 3rem; /* 48px */
+
+  /*
+   * Escala tipográfica. Los pasos grandes son fluidos (clamp) para no romper en mobile.
+   */
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-md: 1.125rem;
+  --font-size-lg: 1.25rem;
+  --font-size-xl: clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem);
+  --font-size-2xl: clamp(1.5rem, 1.2rem + 1.2vw, 2rem);
+  --font-size-3xl: clamp(1.8rem, 1.3rem + 2vw, 3rem);
+  --font-size-display: clamp(2.5rem, 1.6rem + 3.5vw, 4.5rem);
+
   --font-display: "Outfit", "Segoe UI", sans-serif;
   --font-body: "Nunito Sans", "Segoe UI", sans-serif;
 
-  /* CONTENEDOR Y LAYOUT */
   --container-max: 1280px;
+  /* Alto de las barras de navegación (app y landing); los offsets del contenido dependen de este valor. */
   --nav-height: 74px;
 
   --app-shell-top-offset: calc(var(--nav-height) + clamp(0.75rem, 1.8vw, 1.5rem));
   --page-inline-padding: clamp(0.875rem, 2vw, 1.125rem);
   --page-block-end: clamp(1.75rem, 2.7vw, 2.125rem);
-  --anchor-extra-offset: clamp(0.5rem, 1.2vw, 0.75rem);
 
   --floating-edge-gap: clamp(0.75rem, 1.8vw, 1.5rem);
   --floating-bottom-gap: calc(clamp(0.75rem, 2.8vh, 1.5rem) + env(safe-area-inset-bottom, 0px));
-  --chat-fab-size: clamp(3.1rem, 6.6vw, 3.5rem);
-  --floating-teaser-bottom-gap: calc(
-    var(--floating-bottom-gap) + var(--chat-fab-size) + clamp(0.5rem, 1.4vw, 0.9rem)
-  );
 
-  --chat-panel-max-height: clamp(15rem, 38vh, 20rem);
-  --chart-canvas-min-height: clamp(14rem, 31vh, 16.75rem);
-  --chart-canvas-min-height-compact: clamp(13.5rem, 30vh, 16.25rem);
-  --kpi-card-min-height: clamp(11.5rem, 27vh, 13.125rem);
+  /* Paleta categórica de gráficos (la lee getChartPalette en utils/helpers.js). */
+  --chart-1: #39dfbf;
+  --chart-2: #31a8d4;
+  --chart-3: #f6b437;
+  --chart-4: #a78bfa;
+  --chart-5: #ff5d66;
+  --chart-6: #7dd87a;
+  --chart-7: #f08bd0;
+  --chart-8: #94a3b8;
 
-  /* MAPEOS DE VARIABLES (compatibilidad con resto del código) */
-  --app-bg-start: var(--bg-900);
-  --app-bg-end: var(--bg-950);
-  --text-primary: var(--text-100);
-  --text-secondary: var(--text-200);
-  --text-muted: var(--text-300);
-  --text-faint: var(--text-400);
 }
 
 * {
@@ -137,10 +136,10 @@ body {
 body {
   font-family: var(--font-body);
   background:
-    radial-gradient(circle at 8% 0%, var(--accent-soft), transparent 34%),
-    radial-gradient(circle at 84% 4%, var(--accent-glow), transparent 36%),
-    linear-gradient(180deg, var(--bg-900) 0%, var(--bg-main) 100%);
-  color: var(--text-main);
+    radial-gradient(circle at 8% 0%, var(--bg-bloom-1), transparent 34%),
+    radial-gradient(circle at 84% 4%, var(--bg-bloom-2), transparent 36%),
+    linear-gradient(180deg, var(--app-bg-start) 0%, var(--app-bg-end) 100%);
+  color: var(--text-primary);
   line-height: 1.5;
 }
 
@@ -184,7 +183,7 @@ textarea {
   background: var(--field-bg);
   border: 1px solid var(--field-border);
   border-radius: var(--radius-sm);
-  padding: 10px 12px;
+  padding: var(--space-2) var(--space-3);
 }
 
 input:focus,
@@ -197,14 +196,14 @@ textarea:focus {
 .section-title {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 16px;
-  font-size: clamp(1.06rem, 2.1vw, 1.34rem);
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  font-size: var(--font-size-lg);
   font-weight: 700;
 }
 
 .text-gradient {
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-strong) 100%);
+  background: linear-gradient(120deg, #effff8 0%, #65efcf 44%, #2ecfb8 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -212,11 +211,6 @@ textarea:focus {
 
 .text-muted {
   color: var(--text-muted) !important;
-}
-
-.text-secondary,
-.text-body-secondary {
-  color: var(--text-secondary) !important;
 }
 
 .accent {
@@ -227,35 +221,3 @@ textarea:focus {
   display: none !important;
 }
 
-.global-toast-container {
-  position: fixed;
-  right: 18px;
-  bottom: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  z-index: 2100;
-}
-
-.app-toast {
-  min-width: 250px;
-  max-width: 370px;
-  background: var(--surface-2);
-  border: 1px solid var(--border-soft);
-  border-left: 4px solid var(--color-primary);
-  border-radius: var(--radius-md);
-  padding: 11px 12px;
-  box-shadow: var(--shadow-soft);
-}
-
-.app-toast--success {
-  border-left-color: var(--color-success);
-}
-
-.app-toast--warning {
-  border-left-color: var(--color-warning);
-}
-
-.app-toast--danger {
-  border-left-color: var(--color-danger);
-}

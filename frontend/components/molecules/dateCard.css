@@ -1,0 +1,28 @@
+/* Molécula DateCard (mobile-first). Ver dateCard.js */
+.date-card {
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  text-align: center;
+  padding: var(--space-4);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-info) 18%, transparent), var(--surface-1));
+}
+
+.date-card__day {
+  font-family: var(--font-display);
+  font-size: var(--font-size-3xl);
+  line-height: 1;
+  font-weight: 700;
+  color: var(--color-info);
+}
+
+.date-card__month {
+  color: var(--color-primary);
+  font-weight: 700;
+  font-size: var(--font-size-2xl);
+  margin-top: var(--space-2);
+}
+
+.date-card__meta {
+  color: var(--text-muted);
+  margin-top: var(--space-2);
+}

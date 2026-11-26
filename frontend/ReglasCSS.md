@@ -1,120 +1,63 @@
-# ReglasCSS
+# Reglas CSS — FinTrack
 
-## Objetivo
-Establecer reglas de implementacion responsive para FinTrack y registrar los cambios aplicados en esta primera etapa de migracion desde layout rigido (px fijos) a layout fluido (rem, clamp, %, vh/dvh y tokens compartidos).
+Reglas obligatorias para escribir estilos. Vigentes desde la Fase 4 del refactor (`../especificaciones/DiagnosticoRefactor.md` §7). Al final hay un breve historial de cambios.
 
-## Politicas seguidas
-1. Evitar numeros magicos repetidos en layout y timing.
-2. Centralizar valores compartidos en variables globales o constantes JS.
-3. Mantener px solo para detalles de trazo fino (ejemplo: bordes de 1px) o microajustes iconograficos.
-4. Priorizar unidades fluidas (`clamp`, `%`, `rem`, `dvh`) para alturas, paddings, overlays y elementos flotantes.
-5. Usar fallback `vh` + `dvh` cuando la altura del viewport sea sensible en mobile.
-6. No alterar arquitectura SPA, rutas ni comportamiento funcional de negocio durante el refactor visual.
+## 1. Dónde va cada estilo
 
-## Cambios aplicados en esta iteracion
+| Archivo | Contenido |
+|---|---|
+| `assets/css/global.css` | Tokens (`:root`, tema oscuro por defecto), reset y utilidades de texto. |
+| `assets/css/themes/light.css` | Solo redefine tokens de color para `[data-theme="light"]` (más ajustes puntuales de color). |
+| `assets/css/layouts.css` | Estructura del layout de la app (navbar, sidebar, `app-main`, `section-block`, `hero-panel`) y patrones de página compartidos (`dashboard-hero`, `two-column`, `section-actions`, `section-header`, `tag-list`). |
+| `components/<nivel>/<componente>.css` | Estilos de cada componente, al lado de su JS. Los importa `components/components.css`. |
+| `assets/css/pages/<pagina>.css` | Solo lo que es propio de una página y no es reutilizable (landing, placeholder, perfiles, puntos de color de patrones). |
 
-### 1) Tokens globales de layout y overlays
-Archivo: `frontend/assets/css/global.css`
-- Se agregaron tokens globales:
-  - `--app-shell-top-offset`
-  - `--page-inline-padding`
-  - `--page-block-end`
-  - `--anchor-extra-offset`
-  - `--floating-edge-gap`
-  - `--floating-bottom-gap`
-  - `--chat-fab-size`
-  - `--floating-teaser-bottom-gap`
-  - `--chat-panel-max-height`
-  - `--chart-canvas-min-height`
-  - `--chart-canvas-min-height-compact`
-  - `--kpi-card-min-height`
+Si un estilo aparece en dos páginas, es un componente o un patrón de `layouts.css`, no se copia.
 
-### 2) Shell principal sin compensaciones fijas
-Archivo: `frontend/assets/css/layouts.css`
-- `app-route-container`, `route-view` y `app-page` usan `min-height: 100vh` + `min-height: 100dvh`.
-- `app-main--wide` paso de `padding: 98px 18px 34px` a:
-  - `padding: var(--app-shell-top-offset) var(--page-inline-padding) var(--page-block-end)`.
-- Se elimino override mobile hardcodeado de `90px 14px 28px`.
+## 2. Tokens: nada de valores sueltos
 
-### 3) Paginas internas con offset fluido
-Archivos:
-- `frontend/assets/css/components/patrones.css`
-- `frontend/assets/css/components/recomendaciones.css`
-- `frontend/assets/css/components/perfiles.css`
-- `frontend/assets/css/components/dashboard-asesor.css`
+- **Espaciado** (`gap`, `padding`, `margin`): siempre `var(--space-1…8)` → 4, 8, 12, 16, 20, 24, 32 y 48 px.
+- **Tipografía** (`font-size`): siempre `var(--font-size-*)`: `xs` 12 · `sm` 14 · `base` 16 · `md` 18 · `lg` 20 px, y los fluidos `xl`, `2xl`, `3xl`, `display` (con `clamp`, para que los títulos no rompan en mobile).
+- **Radios:** `--radius-sm` · `md` · `lg` · `xl` · `pill` · `round`.
+- **Colores:** siempre tokens de color (`--text-*`, `--surface-*`, `--border-*`, `--color-*`, `--action-*`, `--field-*`, `--navbar-bg`, `--modal-surface`). Para tonos derivados se usa `color-mix(in srgb, var(--color-x) N%, transparent)`. Un color literal fuera de `global.css` o `light.css` rompe el tema claro.
+- **Layout compartido:** `--nav-height`, `--container-max`, `--app-shell-top-offset`, `--page-inline-padding`, `--page-block-end`, `--floating-edge-gap`, `--floating-bottom-gap`.
+- **Se permiten valores fijos** para: bordes de 1–3 px, tamaños de íconos y controles táctiles (mínimo 2.25–2.75rem), anchos máximos de lectura y offsets calculados a partir de tokens (`calc(var(--nav-height) + …)`). Cualquier otra excepción lleva un comentario que la justifique.
 
-Cambios:
-- Se reemplazo `padding-top: 98px` por `var(--app-shell-top-offset)`.
-- En `patterns-main`, el padding completo ahora usa tokens globales.
-- En `patterns-kpi-card`, `min-height: 210px` paso a `var(--kpi-card-min-height)`.
-- En `recommendation-toolbar select`, `min-width` fijo paso a `min-inline-size` con `clamp` y en mobile ancho al 100%.
+## 3. Responsive
 
-### 4) Dashboard usuario: overlays y paneles flotantes
-Archivo: `frontend/assets/css/components/dashboard-usuario.css`
-- `advisor-teaser`:
-  - `right` y `bottom` migrados a tokens (`--floating-edge-gap`, `--floating-teaser-bottom-gap`).
-  - ancho migrado a formula fluida (`min(20rem, calc(100vw - ...))`).
-- `user-chat-fab`:
-  - `right`/`bottom` migrados a tokens.
-  - `width`/`height` migrados a `--chat-fab-size`.
-- `chat-messages`:
-  - `max-height` migrado a `--chat-panel-max-height`.
-- `user-chart-grid .chart-card canvas`:
-  - altura minima migrada a `--chart-canvas-min-height-compact`.
+- **Breakpoints únicos** (los de Bootstrap 5):
 
-### 5) Componentes compartidos de charts
-Archivo: `frontend/assets/css/components/page-shell.css`
-- `chart-card canvas`:
-  - `min-height: 260px` paso a `var(--chart-canvas-min-height)`.
+  | Nombre | Mobile-first (componentes nuevos) | Desktop-first (solo landing y legado) |
+  |---|---|---|
+  | sm | `@media (min-width: 576px)` | `@media (max-width: 575px)` |
+  | md | `@media (min-width: 768px)` | — |
+  | lg | `@media (min-width: 992px)` | `@media (max-width: 991px)` |
+  | xl | `@media (min-width: 1200px)` | — |
 
-### 6) Landing y modal de registro
-Archivo: `frontend/assets/css/components/landing.css`
-- First fold:
-  - `--landing-first-fold-offset` paso de fijo en px a `clamp`.
-  - `landing-main` (padding y gap) migrado a reglas fluidas.
-  - `landing-video-card` (padding y min-height) migrado a `clamp`.
-  - `landing-brands` y su titulo ahora usan espaciado fluido.
-- Anchors:
-  - `scroll-margin-top` ahora depende de `--anchor-extra-offset` global (sin hardcode de 12px).
-- Modal registro:
-  - `register-modal-dialog` con `max-width` y margenes fluidos.
-  - `registerModal .modal-content` y `.modal-body` con fallback `vh` + `dvh`.
-  - `register-role-item` mobile con `min-width` fluido via `clamp`.
+  CSS no permite usar variables dentro de `@media`, por eso esta tabla es la referencia. No se agregan breakpoints nuevos.
+- **Mobile-first** en todo componente o patrón nuevo: estilos base para 320–575 px y `min-width` para pantallas mayores. La landing conserva `max-width`; si se reescribe, pasa a mobile-first.
+- **Grillas:** columnas con `minmax(0, 1fr)` y `min-width: 0` en los puntos de montaje, para que un canvas o un texto largo no estire la grilla. Ningún layout debe desbordar en 320 px.
+- **Alturas de viewport:** siempre el par `vh` y `dvh` (primero `vh` como fallback, después `dvh`), también dentro de las media queries.
+- **Gráficos:** el alto lo define el contenedor (`.chart-card__canvas--sm/md/lg`); Chart.js usa `maintainAspectRatio: false`.
+- **Flotantes** (toast): tokens de borde y `--floating-bottom-gap`, que incluye `env(safe-area-inset-bottom)`.
+- **Navbars:** alto fijo `--nav-height` (incluido el borde); el contenido y los modales se desplazan con ese token.
 
-### 7) JS: centralizacion de magic numbers UI
-Archivos:
-- `frontend/utils/constants.js`
-- `frontend/app.js`
-- `frontend/core/AuthManager.js`
+## 4. Nombres y prácticas
 
-Cambios:
-- Nuevas constantes:
-  - `UI_LAYOUT.LANDING_SCROLL_OFFSET`
-  - `UI_TIMING.TOAST_DISMISS_MS`
-  - `UI_TIMING.AUTH_LOGIN_DELAY_MS`
-  - `UI_TIMING.AUTH_REGISTER_DELAY_MS`
-- `app.js`:
-  - `extraOffset` de scroll landing ahora viene de `UI_LAYOUT`.
-  - timeout del toast ahora usa `UI_TIMING`.
-- `AuthManager.js`:
-  - latencias mock de login/register ya no estan hardcodeadas; usan `UI_TIMING`.
+- BEM simple: `.bloque`, `.bloque__elemento`, `.bloque--modificador`. Las clases de los componentes no reutilizan nombres de Bootstrap (`badge`, `card`, `table`, `alert`, `modal`).
+- Sin estilos inline ni `element.style` desde JS (la única excepción es el router limpiando lo que deja Bootstrap).
+- Sin `!important`, salvo para pisar utilidades de Bootstrap (y con comentario).
+- Accesibilidad: foco visible (`:focus-visible`) en todo control propio y `prefers-reduced-motion` en animaciones.
 
-## Criterios de aceptacion usados en esta etapa
-1. No quedan compensaciones top fijas `98px/90px` en shell principal ni pantallas principales intervenidas.
-2. Componentes flotantes de usuario se posicionan con tokens y respetan safe-area.
-3. Scroll a secciones de landing mantiene compensacion dinamica sin numero magico local.
-4. Timeouts visuales y latencias mock pasan a constantes compartidas.
+## 5. Verificación de un cambio de estilos
 
-## Reglas para cambios futuros
-1. Si un valor de layout se repite 2 o mas veces, debe convertirse en token global.
-2. Evitar crear nuevos `padding-top` de compensacion manual por pagina.
-3. Para overlays flotantes, usar siempre:
-   - token de margen lateral
-   - token de margen inferior con `env(safe-area-inset-bottom)`
-4. Para alturas de paneles/canvas/chat, preferir `clamp` antes que `height`/`max-height` fijo.
-5. Cualquier nuevo timeout UI debe definirse en `UI_TIMING`.
+1. Recorrer las rutas en 320, 360, 768, 1024 y 1440 px sin scroll horizontal.
+2. Revisar ambos temas (oscuro y claro, desde Perfil de cuenta); el texto tiene que mantener contraste AA (4.5:1).
+3. Confirmar que no quedan valores literales de espaciado, tipografía o color fuera de los tokens.
 
-## Pendiente para siguientes etapas
-1. Revisar grillas internas del dashboard asesor para hacerlas mas elasticas en anchos intermedios.
-2. Completar normalizacion de escalas tipograficas mixtas en perfiles/recomendaciones.
-3. Ejecutar matriz completa de QA responsive (viewport, zoom, anchors y smoke funcional).
+## Historial
+
+- **Etapa inicial:** migración de px fijos a tokens de layout (`--app-shell-top-offset`, flotantes con safe-area, `clamp` en alturas, timing en `UI_TIMING`).
+- **Fase 0:** se eliminaron el teaser y el chat del asesor, con sus tokens.
+- **Fase 3:** biblioteca de componentes con CSS mobile-first; se borraron 8 hojas por página; gráficos con alto por contenedor; toast con safe-area.
+- **Fase 4:** escalas de espaciado y tipografía (de 49 a 9 tamaños de fuente; 0 espaciados ni colores literales), tema claro aplicado a la landing (antes mostraba texto oscuro sobre fondo oscuro), navbar de la landing con alto fijo y un solo botón en mobile, par `vh`/`dvh` completo, borrado de `themes/dark.css` (repetía `:root`), de tokens sin uso y del `scroll-margin` sin efecto; `assets/css/components/` pasó a `assets/css/pages/`.

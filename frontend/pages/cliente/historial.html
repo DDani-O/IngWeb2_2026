@@ -1,0 +1,25 @@
+<div class="app-page-content page-cliente-historial">
+  <section class="hero-panel">
+    <h1 class="text-gradient">Historial de Gastos</h1>
+    <p class="text-muted mt-2">
+      Consulta, filtra y revisa tus movimientos para detectar oportunidades de ahorro.
+    </p>
+  </section>
+
+  <section class="section-block">
+    <div id="historyFilters"></div>
+    <p class="text-muted mt-3" id="historyCount" aria-live="polite">0 movimientos</p>
+    <div class="mt-2" id="historyTable"></div>
+
+    <div class="section-actions">
+      <a class="action-btn action-btn--ghost" href="#/cliente/cargar-gasto">
+        <i class="fa-solid fa-circle-plus" aria-hidden="true"></i><span>Cargar nuevo gasto</span>
+      </a>
+      <button class="action-btn action-btn--primary js-dashboard-back" type="button">
+        <i class="fa-solid fa-arrow-left" aria-hidden="true"></i><span>Volver al Dashboard</span>
+      </button>
+    </div>
+  </section>
+
+  <div id="historyDetailModal"></div>
+</div>

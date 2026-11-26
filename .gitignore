@@ -1,12 +1,24 @@
-# Dependencias
+# Dependencias y builds
 node_modules/
-
-# Variables de entorno (¡CRÍTICO!)
-.env
-
-# Archivos de compilación
 dist/
-
+coverage/
 *.tsbuildinfo
 
+# Variables de entorno (nunca commitear secretos)
+.env
+.env.*
+!.env.example
+
+# Supabase CLI: estado local del proyecto vinculado
+backend/database/supabase/.temp/
+
+# Claude Code: config personal de cada uno
+.claude/settings.local.json
+CLAUDE.local.md
+
+# SO / editores
+.DS_Store
+Thumbs.db
+.vscode/
 .idea/
+*.log
