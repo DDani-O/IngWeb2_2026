@@ -1,97 +1,188 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
-import request from 'supertest';
-import { AppModule } from './../../src/app.module';
-import { SUPABASE_CLIENT } from './../../src/common/supabase/supabase.provider';
-import { SupabaseClient } from '@supabase/supabase-js';
-import { cleanupTestUser, generateTestEmail } from './test-utils';
+import { INestApplication } from "@nestjs/common";
+import { SupabaseClient } from "@supabase/supabase-js";
+import {
+  api,
+  cleanupTestUser,
+  createTestApp,
+  generateTestEmail,
+  TEST_PASSWORD,
+} from "./test-utils";
 
 /**
- * Pruebas de Integración (E2E) para el Módulo de Autenticación.
- * Cubre los procesos de registro, login y validación de restricciones.
+ * Autenticación y perfil propio (spec §10.1): registro, login, /auth/me y /auth/profile.
  */
-describe('AuthController (e2e)', () => {
+describe("Auth (e2e)", () => {
   let app: INestApplication;
   let supabase: SupabaseClient;
-  const testEmail = generateTestEmail('auth.user');
-  const testPassword = 'password123';
-  let userId: string;
+  const email = generateTestEmail("auth.cliente");
+  const createdIds: string[] = [];
+  let token: string;
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-    // Importante: El ValidationPipe es necesario para que las validaciones de los DTOs funcionen en los tests
-    app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
-    await app.init();
-    supabase = app.get(SUPABASE_CLIENT);
+    ({ app, supabase } = await createTestApp());
   });
 
   afterAll(async () => {
-    // Elimina el usuario creado durante los tests para mantener la BD limpia
-    await cleanupTestUser(supabase, userId);
+    for (const id of createdIds) await cleanupTestUser(supabase, id);
     await app.close();
   });
 
-  describe('/auth/register (POST)', () => {
-    /**
-     * Caso de prueba: Registro exitoso de un nuevo cliente.
-     * Verifica que se cree el usuario, se devuelva un token y los datos del perfil sean correctos.
-     */
-    it('should register a new client user', async () => {
-      const res = await request(app.getHttpServer())
-        .post('/auth/register')
+  describe("POST /auth/register", () => {
+    it("registra un cliente y devuelve { token, usuario } en español", async () => {
+      const res = await api(app)
+        .post("/auth/register")
         .send({
-          email: testEmail,
-          password: testPassword,
-          fullName: 'Test User',
-          role: 'cliente',
-          occupation: 'Engineer',
-          estimatedIncome: 50000,
+          nombre_completo: "Cliente de Prueba",
+          email,
+          password: TEST_PASSWORD,
+          rol: "cliente",
         })
         .expect(201);
 
-      expect(res.body).toHaveProperty('access_token');
-      expect(res.body.user).toHaveProperty('email', testEmail);
-      userId = res.body.user.id;
+      expect(typeof res.body.token).toBe("string");
+      expect(res.body.usuario).toMatchObject({
+        email,
+        rol: "cliente",
+        nombre_completo: "Cliente de Prueba",
+        estado: "activo",
+      });
+      expect(res.body.usuario.perfil_cliente).toMatchObject({
+        ocupacion: "",
+        ingreso_estimado: null,
+        objetivo_financiero: "",
+      });
+      expect(res.body.usuario).not.toHaveProperty("perfil_asesor");
+      createdIds.push(res.body.usuario.id);
+      token = res.body.token;
     });
 
-    /**
-     * Caso de prueba: Conflicto por email duplicado.
-     * Intenta registrar un usuario con el mismo email que el anterior y espera un error 409.
-     */
-    it('should throw 409 Conflict when registering with existing email', () => {
-      return request(app.getHttpServer())
-        .post('/auth/register')
+    it("registra un asesor con matrícula y especialidad", async () => {
+      const res = await api(app)
+        .post("/auth/register")
         .send({
-          email: testEmail,
-          password: testPassword,
-          fullName: 'Test User 2',
-          role: 'cliente',
+          nombre_completo: "Asesor de Prueba",
+          email: generateTestEmail("auth.asesor"),
+          password: TEST_PASSWORD,
+          rol: "asesor",
+          matricula: `MAT-${Date.now()}`,
+          especialidad: "Inversiones",
+        })
+        .expect(201);
+
+      expect(res.body.usuario.perfil_asesor).toMatchObject({
+        especialidad: "Inversiones",
+        clientes_asignados: 0,
+      });
+      createdIds.push(res.body.usuario.id);
+    });
+
+    it("responde 409 EMAIL_DUPLICADO con un email existente", async () => {
+      const res = await api(app)
+        .post("/auth/register")
+        .send({
+          nombre_completo: "Otro",
+          email,
+          password: TEST_PASSWORD,
+          rol: "cliente",
         })
         .expect(409);
+      expect(res.body).toMatchObject({
+        error: true,
+        codigo: "EMAIL_DUPLICADO",
+      });
+    });
+
+    it("responde 422 si un asesor no manda matrícula ni especialidad", async () => {
+      const res = await api(app)
+        .post("/auth/register")
+        .send({
+          nombre_completo: "Asesor",
+          email: generateTestEmail("auth.x"),
+          password: TEST_PASSWORD,
+          rol: "asesor",
+        })
+        .expect(422);
+      expect(res.body.detalles.campos).toEqual(["matricula", "especialidad"]);
+    });
+
+    it("rechaza los nombres de campo del contrato viejo", async () => {
+      const res = await api(app)
+        .post("/auth/register")
+        .send({
+          fullName: "X",
+          email: generateTestEmail("auth.x"),
+          password: TEST_PASSWORD,
+          role: "cliente",
+        })
+        .expect(422);
+      expect(res.body.codigo).toBe("VALIDACION");
     });
   });
 
-  describe('/auth/login (POST)', () => {
-    /**
-     * Caso de prueba: Login exitoso.
-     * Verifica que el usuario registrado anteriormente pueda iniciar sesión con sus credenciales.
-     */
-    it('should login successfully with valid credentials', () => {
-      return request(app.getHttpServer())
-        .post('/auth/login')
+  describe("POST /auth/login", () => {
+    it("inicia sesión con credenciales válidas", async () => {
+      const res = await api(app)
+        .post("/auth/login")
+        .send({ email, password: TEST_PASSWORD })
+        .expect(200);
+      expect(typeof res.body.token).toBe("string");
+      expect(res.body.usuario).toMatchObject({ email, rol: "cliente" });
+    });
+
+    it("responde 401 CREDENCIALES_INVALIDAS con una contraseña incorrecta", async () => {
+      const res = await api(app)
+        .post("/auth/login")
+        .send({ email, password: "Incorrecta123" })
+        .expect(401);
+      expect(res.body.codigo).toBe("CREDENCIALES_INVALIDAS");
+    });
+  });
+
+  describe("GET /auth/me y PUT /auth/profile", () => {
+    it("devuelve el usuario del token", async () => {
+      const res = await api(app)
+        .get("/auth/me")
+        .set("Authorization", `Bearer ${token}`)
+        .expect(200);
+      expect(res.body).toMatchObject({ email, rol: "cliente" });
+    });
+
+    it("responde 401 NO_AUTENTICADO sin token", async () => {
+      const res = await api(app).get("/auth/me").expect(401);
+      expect(res.body.codigo).toBe("NO_AUTENTICADO");
+    });
+
+    it("actualiza el perfil del cliente", async () => {
+      const res = await api(app)
+        .put("/auth/profile")
+        .set("Authorization", `Bearer ${token}`)
         .send({
-          email: testEmail,
-          password: testPassword,
+          nombre_completo: "Cliente Editado",
+          biografia: "Hola",
+          ocupacion: "Docente",
+          ingreso_estimado: 250000,
+          objetivo_financiero: "Ahorrar",
         })
-        .expect(200)
-        .expect((res: any) => {
-          expect(res.body).toHaveProperty('access_token');
-          expect(res.body.user).toHaveProperty('email', testEmail);
-        });
+        .expect(200);
+
+      expect(res.body).toMatchObject({
+        nombre_completo: "Cliente Editado",
+        biografia: "Hola",
+      });
+      expect(res.body.perfil_cliente).toMatchObject({
+        ocupacion: "Docente",
+        ingreso_estimado: 250000,
+        objetivo_financiero: "Ahorrar",
+      });
+    });
+
+    it("rechaza campos de asesor en el perfil de un cliente", async () => {
+      const res = await api(app)
+        .put("/auth/profile")
+        .set("Authorization", `Bearer ${token}`)
+        .send({ nombre_completo: "Cliente", matricula: "X" })
+        .expect(422);
+      expect(res.body.detalles.campos).toEqual(["matricula"]);
     });
   });
 });

@@ -1,22 +1,29 @@
-import { IsDateString, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, MaxLength, Min } from "class-validator";
+import { IsOptional } from "class-validator";
+import { ExpenseField, ExpenseOrigin } from "./expense-fields";
 
+/** POST /expenses (spec §10.3). Con `ticket_id` el gasto queda vinculado al ticket (spec §10.4). */
 export class CreateExpenseDto {
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0.01)
-  amount: number;
+  @ExpenseField.comercio()
+  comercio!: string;
 
-  @IsString()
-  @MaxLength(100)
-  merchant: string;
+  @ExpenseField.fecha()
+  fecha_gasto!: string;
 
-  @IsUUID("4")
-  categoryId: string;
+  @ExpenseField.monto()
+  monto!: number;
 
-  @IsDateString()
-  date: string;
+  @ExpenseField.categoria()
+  categoria_id!: string;
 
   @IsOptional()
-  @IsString()
-  @MaxLength(500)
-  notes?: string;
+  @ExpenseField.descripcion()
+  descripcion?: string;
+
+  @IsOptional()
+  @ExpenseField.origen()
+  origen?: ExpenseOrigin;
+
+  @IsOptional()
+  @ExpenseField.ticket()
+  ticket_id?: string;
 }

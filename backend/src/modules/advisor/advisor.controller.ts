@@ -1,28 +1,23 @@
 import {
   Body,
   Controller,
-  Delete,
   Get,
-  HttpCode,
-  HttpStatus,
   Param,
   ParseUUIDPipe,
   Patch,
-  Post,
   Query,
   UseGuards,
 } from "@nestjs/common";
 import { AdvisorService } from "./advisor.service";
 import { CurrentUser, JwtPayload, JwtAuthGuard, Roles, RolesGuard } from "../../common/auth";
 import { AdvisorClientsQueryDto } from "./dto/advisor-clients-query.dto";
-import { AdvisorClientExpensesQueryDto } from "./dto/advisor-client-expenses-query.dto";
-import { AdvisorRecommendationsQueryDto } from "./dto/advisor-recommendations-query.dto";
-import { CreateAdvisorRecommendationDto } from "./dto/create-advisor-recommendation.dto";
 import { AssignClientProfileDto } from "./dto/assign-client-profile.dto";
-import { UpdateRecommendationDto } from "./dto/update-recommendation.dto";
-import { UpdateAdvisorProfileDto } from "./dto/update-advisor-profile.dto";
 import { ConsumptionAnalyticsService } from "../analytics/services/consumption-analytics.service";
 
+/**
+ * Rutas heredadas del panel del asesor. Se reemplazan en la fase I3 por `/clients`,
+ * `/clients/:id` y `/analysis/*` (spec §10.6–10.7) y este módulo se elimina.
+ */
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles("asesor")
 @Controller("advisor")
@@ -35,19 +30,6 @@ export class AdvisorController {
   @Get("dashboard")
   getDashboard(@CurrentUser() user: JwtPayload) {
     return this.advisorService.getDashboard(user);
-  }
-
-  @Get("profile")
-  getProfile(@CurrentUser() user: JwtPayload) {
-    return this.advisorService.getAdvisorProfile(user);
-  }
-
-  @Patch("profile")
-  updateProfile(
-    @CurrentUser() user: JwtPayload,
-    @Body() dto: UpdateAdvisorProfileDto,
-  ) {
-    return this.advisorService.updateAdvisorProfile(user, dto);
   }
 
   @Get("clients")
@@ -64,49 +46,6 @@ export class AdvisorController {
     @Param("clientId", new ParseUUIDPipe()) clientId: string,
   ) {
     return this.advisorService.getClientDetail(user, clientId);
-  }
-
-  @Get("clients/:clientId/expenses")
-  getClientExpenses(
-    @CurrentUser() user: JwtPayload,
-    @Param("clientId", new ParseUUIDPipe()) clientId: string,
-    @Query() query: AdvisorClientExpensesQueryDto,
-  ) {
-    return this.advisorService.getClientExpenses(user, clientId, query);
-  }
-
-  @Get("recommendations")
-  getRecommendations(
-    @CurrentUser() user: JwtPayload,
-    @Query() query: AdvisorRecommendationsQueryDto,
-  ) {
-    return this.advisorService.getRecommendations(user, query);
-  }
-
-  @Post("recommendations")
-  createRecommendation(
-    @CurrentUser() user: JwtPayload,
-    @Body() dto: CreateAdvisorRecommendationDto,
-  ) {
-    return this.advisorService.createRecommendation(user, dto);
-  }
-
-  @Patch("recommendations/:id")
-  updateRecommendation(
-    @CurrentUser() user: JwtPayload,
-    @Param("id", new ParseUUIDPipe()) id: string,
-    @Body() dto: UpdateRecommendationDto,
-  ) {
-    return this.advisorService.updateRecommendation(user, id, dto);
-  }
-
-  @Delete("recommendations/:id")
-  @HttpCode(HttpStatus.NO_CONTENT)
-  deleteRecommendation(
-    @CurrentUser() user: JwtPayload,
-    @Param("id", new ParseUUIDPipe()) id: string,
-  ) {
-    return this.advisorService.deleteRecommendation(user, id);
   }
 
   @Get("reports")

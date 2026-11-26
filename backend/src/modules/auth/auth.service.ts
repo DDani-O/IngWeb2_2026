@@ -1,316 +1,267 @@
-import {
-  ConflictException,
-  Inject,
-  Injectable,
-  InternalServerErrorException,
-  UnauthorizedException,
-} from "@nestjs/common";
+import { HttpStatus, Inject, Injectable, Logger } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { SupabaseClient } from "@supabase/supabase-js";
+import { JwtPayload } from "../../common/auth";
+import {
+  ApiException,
+  internalError,
+  validationError,
+} from "../../common/errors";
 import {
   SUPABASE_CLIENT,
   SUPABASE_PUBLIC_CLIENT,
 } from "../../common/supabase/supabase.provider";
-import { RegisterDto, UserRoleEnum } from "./dto/register.dto";
+import { UsersService } from "../users/users.service";
+import { Usuario } from "../users/usuario.types";
 import { LoginDto } from "./dto/login.dto";
+import { RegisterDto } from "./dto/register.dto";
 
-export interface AuthUserResponse {
-  id: string;
-  email: string;
-  fullName: string;
-  role: string;
-  avatarUrl: string | null;
-  createdAt: string;
+/** Respuesta de login y registro (spec §10.1). */
+export interface Sesion {
+  token: string;
+  usuario: Usuario;
 }
 
-export interface AuthResponse {
-  access_token: string;
-  user: AuthUserResponse;
-}
+const UNIQUE_VIOLATION = "23505";
 
-interface UserProfileRow {
-  id: string;
-  nombre_completo: string;
-  rol: string;
-  foto_perfil_url: string | null;
-  creado_en: string;
-}
-
+/**
+ * Registro e inicio de sesión. Las cuentas viven en Supabase Auth (`auth.users`) y
+ * en `usuarios`; la API firma su propio JWT con `{ sub, email, role }`.
+ */
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     @Inject(SUPABASE_CLIENT) private readonly supabase: SupabaseClient,
     @Inject(SUPABASE_PUBLIC_CLIENT)
     private readonly supabasePublic: SupabaseClient,
     private readonly jwtService: JwtService,
+    private readonly usersService: UsersService,
   ) {}
 
-  async register(dto: RegisterDto): Promise<AuthResponse> {
-    const { email, password, fullName, role } = dto;
+  /**
+   * Crea la cuenta (Supabase Auth + `usuarios` + perfil del rol). Un cliente nuevo queda
+   * asignado al asesor con más capacidad libre (`obtener_asesor_disponible()`).
+   */
+  async register(dto: RegisterDto): Promise<Sesion> {
+    if (dto.rol === "cliente") {
+      const foreign = (["matricula", "especialidad"] as const).filter(
+        (field) => dto[field] !== undefined,
+      );
+      if (foreign.length) {
+        throw validationError(
+          "La matricula y la especialidad solo corresponden a asesores.",
+          [...foreign],
+        );
+      }
+    }
 
     const { data: created, error: createError } =
       await this.supabase.auth.admin.createUser({
-        email,
-        password,
+        email: dto.email,
+        password: dto.password,
         email_confirm: true,
       });
 
     if (createError || !created?.user) {
       if (this.isDuplicateEmail(createError)) {
-        throw new ConflictException("El email ya esta registrado");
+        throw new ApiException(
+          HttpStatus.CONFLICT,
+          "EMAIL_DUPLICADO",
+          "El email ya se encuentra registrado.",
+        );
       }
-      throw new InternalServerErrorException("No se pudo crear el usuario");
+      if ((createError as { code?: string } | null)?.code === "weak_password") {
+        throw validationError("La contrasena es demasiado debil.", [
+          "password",
+        ]);
+      }
+      this.logger.error(`auth.admin.createUser: ${createError?.message}`);
+      throw internalError("No se pudo crear la cuenta.");
     }
 
     const userId = created.user.id;
-    const { data: profile, error: profileError } = await this.supabase
-      .from("usuarios")
-      .insert({
-        id: userId,
-        rol: role,
-        nombre_completo: fullName,
-        email: email, // Guardamos el email también en la tabla pública
-      })
-      .select("id, nombre_completo, rol, foto_perfil_url, creado_en")
-      .single();
-
-    if (profileError || !profile) {
+    try {
+      await this.insertAccount(userId, dto);
+    } catch (error) {
       await this.cleanupUser(userId);
-      throw new InternalServerErrorException("No se pudo crear el perfil");
+      throw error;
     }
 
-    const { error: roleProfileError } = await this.createRoleProfile(
-      role,
-      userId,
-      dto,
-    );
-
-    if (roleProfileError) {
-      await this.cleanupUser(userId);
-
-      if (this.isUniqueViolation(roleProfileError)) {
-        if ((roleProfileError.message || "").toLowerCase().includes("matricula")) {
-          throw new ConflictException("La matricula ya esta registrada");
-        }
-        throw new ConflictException("Datos duplicados");
-      }
-
-      if (role === UserRoleEnum.Asesor) {
-        throw new InternalServerErrorException(
-          "No se pudo crear el perfil del asesor",
-        );
-      }
-
-      throw new InternalServerErrorException(
-        "No se pudo crear el perfil del cliente",
-      );
+    if (dto.rol === "cliente") {
+      await this.assignToAvailableAdvisor(userId);
     }
 
-    // 🆕 Asignar cliente a asesor automáticamente (mejor esfuerzo)
-    if (role === UserRoleEnum.Cliente) {
-      try {
-        await this.assignClientToAdvisorAuto(userId);
-      } catch (err) {
-        // No romper el registro si falla la asignación automática
-        console.warn('Failed to auto-assign client to advisor:', err);
-      }
-    }
-
-    const token = this.jwtService.sign({
-      sub: userId,
-      email,
-      role: profile.rol,
-    });
-
-    return {
-      access_token: token,
-      user: this.toAuthUser(email, profile),
-    };
+    return this.issueSession({ sub: userId, email: dto.email, role: dto.rol });
   }
 
-  async login(dto: LoginDto): Promise<AuthResponse> {
-    const { email, password } = dto;
-
+  /** Valida las credenciales contra Supabase Auth y emite el token de la API. */
+  async login(dto: LoginDto): Promise<Sesion> {
     const { data, error } = await this.supabasePublic.auth.signInWithPassword({
-      email,
-      password,
+      email: dto.email,
+      password: dto.password,
     });
 
     if (error || !data?.user) {
-      throw new UnauthorizedException("Credenciales invalidas");
+      throw new ApiException(
+        HttpStatus.UNAUTHORIZED,
+        "CREDENCIALES_INVALIDAS",
+        "Email o contrasena invalida.",
+      );
     }
 
-    const { data: profile, error: profileError } = await this.supabase
+    const { data: row } = await this.supabase
       .from("usuarios")
-      .select("id, nombre_completo, rol, foto_perfil_url, creado_en")
+      .select("id, rol")
       .eq("id", data.user.id)
-      .single();
-
-    if (profileError || !profile) {
-      throw new UnauthorizedException("Credenciales invalidas");
+      .maybeSingle();
+    if (!row) {
+      throw new ApiException(
+        HttpStatus.UNAUTHORIZED,
+        "CREDENCIALES_INVALIDAS",
+        "Email o contrasena invalida.",
+      );
     }
 
-    try {
-      await this.supabase
-        .from("usuarios")
-        .update({ ultimo_acceso: new Date().toISOString() })
-        .eq("id", profile.id);
-    } catch {
-      // Best-effort update to avoid blocking login.
+    // Registro de último acceso: si falla no debe impedir el login.
+    const { error: accessError } = await this.supabase
+      .from("usuarios")
+      .update({ ultimo_acceso: new Date().toISOString() })
+      .eq("id", row.id);
+    if (accessError) {
+      this.logger.warn(`ultimo_acceso: ${accessError.message}`);
     }
 
-    const token = this.jwtService.sign({
-      sub: profile.id,
-      email: data.user.email || email,
-      role: profile.rol,
+    return this.issueSession({
+      sub: row.id,
+      email: data.user.email ?? dto.email,
+      role: row.rol,
     });
-
-    return {
-      access_token: token,
-      user: this.toAuthUser(data.user.email || email, profile),
-    };
   }
 
-  private toAuthUser(email: string, profile: UserProfileRow): AuthUserResponse {
-    return {
-      id: profile.id,
-      email,
-      fullName: profile.nombre_completo,
-      role: profile.rol,
-      avatarUrl: profile.foto_perfil_url,
-      createdAt: profile.creado_en,
-    };
+  /** GET /auth/me: usuario del token. 401 si la cuenta ya no existe. */
+  async me(user: JwtPayload): Promise<Usuario> {
+    const usuario = await this.usersService.getUsuario(user.sub);
+    if (!usuario) {
+      throw new ApiException(
+        HttpStatus.UNAUTHORIZED,
+        "NO_AUTENTICADO",
+        "La sesion no es valida o expiro.",
+      );
+    }
+    return usuario;
+  }
+
+  private async issueSession(payload: JwtPayload): Promise<Sesion> {
+    const usuario = await this.usersService.getUsuario(payload.sub);
+    if (!usuario) {
+      throw internalError("No se pudo obtener el usuario.");
+    }
+    return { token: this.jwtService.sign(payload), usuario };
+  }
+
+  private async insertAccount(userId: string, dto: RegisterDto) {
+    const { error: accountError } = await this.supabase
+      .from("usuarios")
+      .insert({
+        id: userId,
+        rol: dto.rol,
+        nombre_completo: dto.nombre_completo,
+        email: dto.email,
+      });
+    if (accountError) {
+      this.logger.error(`usuarios insert: ${accountError.message}`);
+      throw internalError("No se pudo crear la cuenta.");
+    }
+
+    const { error: profileError } =
+      dto.rol === "asesor"
+        ? await this.supabase.from("perfiles_asesores").insert({
+            usuario_id: userId,
+            matricula: dto.matricula,
+            especialidad: dto.especialidad,
+          })
+        : await this.supabase
+            .from("perfiles_usuarios")
+            .insert({ usuario_id: userId });
+
+    if (profileError) {
+      if (profileError.code === UNIQUE_VIOLATION && dto.rol === "asesor") {
+        throw new ApiException(
+          HttpStatus.CONFLICT,
+          "MATRICULA_DUPLICADA",
+          "La matricula ya esta registrada.",
+        );
+      }
+      this.logger.error(`perfil insert: ${profileError.message}`);
+      throw internalError("No se pudo crear el perfil.");
+    }
   }
 
   /**
-   * 🆕 Asigna un cliente a un asesor disponible automáticamente.
-   * Usa la función SQL obtener_asesor_disponible para seleccionar el asesor
-   * con menos clientes que tenga capacidad disponible.
-   * No rompe el flujo si falla - es mejor esfuerzo.
+   * Asignación automática a un asesor. Es de mejor esfuerzo: si no hay asesores con
+   * capacidad libre, el cliente queda sin asesor y el registro igual se completa.
    */
-  private async assignClientToAdvisorAuto(clientId: string): Promise<void> {
-    try {
-      // 1. Obtener asesor disponible usando función SQL
-      const { data: advisorId, error: rpcError } = await this.supabase.rpc(
-        'obtener_asesor_disponible',
-        {}
+  private async assignToAvailableAdvisor(clientId: string) {
+    const { data: advisorId, error } = await this.supabase.rpc(
+      "obtener_asesor_disponible",
+    );
+    if (error || !advisorId) {
+      this.logger.warn(
+        `Sin asesor disponible para ${clientId}${error ? `: ${error.message}` : ""}`,
       );
+      return;
+    }
 
-      if (rpcError || !advisorId) {
-        console.warn('No available advisors for new client:', clientId);
-        return;
-      }
-
-      // 2. Crear asignación
-      const { error: assignError } = await this.supabase
-        .from('asignaciones_de_clientes')
-        .insert({
-          asesor_id: advisorId,
-          cliente_id: clientId,
-          activo: true,
-        });
-
-      if (assignError) {
-        console.warn('Failed to create assignment:', assignError);
-        return;
-      }
-
-      console.log(`Client ${clientId} assigned to advisor ${advisorId}`);
-    } catch (err) {
-      // Silenciosamente ignorar errores en asignación automática
-      console.error('Exception in assignClientToAdvisorAuto:', err);
+    const { error: assignError } = await this.supabase
+      .from("asignaciones_de_clientes")
+      .insert({ asesor_id: advisorId, cliente_id: clientId, activo: true });
+    if (assignError) {
+      this.logger.warn(
+        `asignaciones_de_clientes insert: ${assignError.message}`,
+      );
     }
   }
 
   private isDuplicateEmail(
-    error: { status?: number; message?: string } | null,
+    error: { status?: number; code?: string; message?: string } | null,
   ): boolean {
     if (!error) {
       return false;
     }
-
-    if (error.status === 409) {
-      return true;
-    }
-
     const message = (error.message || "").toLowerCase();
+    // Supabase usa 422 también para contraseñas débiles: se distingue por código o mensaje.
     return (
+      error.code === "email_exists" ||
+      error.status === 409 ||
       message.includes("already") ||
-      message.includes("duplicate") ||
       message.includes("registered")
     );
   }
 
-  private async tryDeleteAuthUser(userId: string) {
-    try {
-      await this.supabase.auth.admin.deleteUser(userId);
-    } catch {
-      // Ignore cleanup failures to avoid masking the root cause.
-    }
-  }
-
+  /** Deshace un registro a medio crear. Los fallos de limpieza no tapan el error original. */
   private async cleanupUser(userId: string) {
-    await Promise.all([
-      this.tryDeleteRoleProfiles(userId),
-      this.tryDeleteUserProfile(userId),
-      this.tryDeleteAuthUser(userId),
-    ]);
-  }
-
-  private async tryDeleteUserProfile(userId: string) {
-    try {
-      await this.supabase.from("usuarios").delete().eq("id", userId);
-    } catch {
-      // Best-effort cleanup.
+    const steps = [
+      () =>
+        this.supabase
+          .from("perfiles_usuarios")
+          .delete()
+          .eq("usuario_id", userId),
+      () =>
+        this.supabase
+          .from("perfiles_asesores")
+          .delete()
+          .eq("usuario_id", userId),
+      () => this.supabase.from("usuarios").delete().eq("id", userId),
+      () => this.supabase.auth.admin.deleteUser(userId),
+    ];
+    for (const step of steps) {
+      try {
+        await step();
+      } catch (error) {
+        this.logger.warn(`cleanup ${userId}: ${(error as Error).message}`);
+      }
     }
-  }
-
-  private async tryDeleteRoleProfiles(userId: string) {
-    try {
-      await Promise.all([
-        this.supabase.from("perfiles_usuarios").delete().eq("usuario_id", userId),
-        this.supabase.from("perfiles_asesores").delete().eq("usuario_id", userId),
-      ]);
-    } catch {
-      // Best-effort cleanup.
-    }
-  }
-
-  private createRoleProfile(
-    role: UserRoleEnum,
-    userId: string,
-    dto: RegisterDto,
-  ) {
-    if (role === UserRoleEnum.Asesor) {
-      return this.supabase.from("perfiles_asesores").insert({
-        usuario_id: userId,
-        matricula: dto.licenseNumber,
-        especialidad: dto.specialty,
-        descripcion: dto.description || null,
-      });
-    }
-
-    return this.supabase.from("perfiles_usuarios").insert({
-      usuario_id: userId,
-      ocupacion: dto.occupation || null,
-      ingreso_estimado: dto.estimatedIncome ?? null,
-      objetivo_financiero: dto.financialGoal || null,
-      moneda_preferida: dto.preferredCurrency || null,
-    });
-  }
-
-  private isUniqueViolation(
-    error: { code?: string; message?: string } | null,
-  ): boolean {
-    if (!error) {
-      return false;
-    }
-
-    if (error.code === "23505") {
-      return true;
-    }
-
-    const message = (error.message || "").toLowerCase();
-    return message.includes("duplicate") || message.includes("unique");
   }
 }

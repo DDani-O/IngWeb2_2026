@@ -1,11 +1,11 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
-    "rootDir": ".",
+    "rootDir": "..",
     "declaration": false,
     "noEmit": true,
     "esModuleInterop": true,
-    "types": ["jest", "node"]
+    "types": ["jest", "node", "multer"]
   },
   "include": ["**/*.ts"]
 }

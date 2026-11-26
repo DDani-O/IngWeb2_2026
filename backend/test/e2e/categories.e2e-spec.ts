@@ -1,43 +1,57 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
-import request from 'supertest';
-import { AppModule } from './../../src/app.module';
+import { INestApplication } from "@nestjs/common";
+import { SupabaseClient } from "@supabase/supabase-js";
+import {
+  api,
+  cleanupTestUser,
+  createTestApp,
+  registerAccount,
+  TestAccount,
+} from "./test-utils";
 
 /**
- * Pruebas de Integración (E2E) para el Módulo de Categorías.
- * Verifica la disponibilidad de los datos maestros del sistema.
+ * Catálogos (spec §10.2): categorías y perfiles de gasto, con token de cualquier rol.
  */
-describe('CategoriesController (e2e)', () => {
+describe("Catálogos (e2e)", () => {
   let app: INestApplication;
+  let supabase: SupabaseClient;
+  let cliente: TestAccount;
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-    await app.init();
+    ({ app, supabase } = await createTestApp());
+    cliente = await registerAccount(app, "cliente", "catalogos");
   });
 
   afterAll(async () => {
+    await cleanupTestUser(supabase, cliente?.id);
     await app.close();
   });
 
-  /**
-   * Caso de prueba: Listar categorías globales.
-   * Verifica que el endpoint retorne un arreglo de categorías con sus propiedades básicas.
-   * Este endpoint es público.
-   */
-  it('/categories (GET)', () => {
-    return request(app.getHttpServer())
-      .get('/categories')
-      .expect(200)
-      .expect((res: any) => {
-        expect(Array.isArray(res.body)).toBe(true);
-        if (res.body.length > 0) {
-          expect(res.body[0]).toHaveProperty('id');
-          expect(res.body[0]).toHaveProperty('nombre');
-        }
-      });
+  it("GET /categories requiere token", async () => {
+    const res = await api(app).get("/categories").expect(401);
+    expect(res.body.codigo).toBe("NO_AUTENTICADO");
+  });
+
+  it("GET /categories devuelve [{ id, nombre, icono }]", async () => {
+    const res = await api(app)
+      .get("/categories")
+      .set("Authorization", `Bearer ${cliente.token}`)
+      .expect(200);
+    expect(res.body.length).toBeGreaterThan(0);
+    expect(Object.keys(res.body[0]).sort()).toEqual(["icono", "id", "nombre"]);
+  });
+
+  it("GET /spending-profiles devuelve [{ id, nombre, descripcion }]", async () => {
+    const res = await api(app)
+      .get("/spending-profiles")
+      .set("Authorization", `Bearer ${cliente.token}`)
+      .expect(200);
+    expect(Array.isArray(res.body)).toBe(true);
+    res.body.forEach((perfil: Record<string, unknown>) => {
+      expect(Object.keys(perfil).sort()).toEqual([
+        "descripcion",
+        "id",
+        "nombre",
+      ]);
+    });
   });
 });

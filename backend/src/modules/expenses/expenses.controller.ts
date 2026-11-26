@@ -5,22 +5,24 @@ import {
   Get,
   HttpCode,
   Param,
-  Patch,
   Post,
+  Put,
   Query,
   UseGuards,
 } from "@nestjs/common";
-import { ExpensesService } from "./expenses.service";
+import {
+  CurrentUser,
+  JwtAuthGuard,
+  JwtPayload,
+  Roles,
+  RolesGuard,
+} from "../../common/auth";
 import { CreateExpenseDto } from "./dto/create-expense.dto";
-import { UpdateExpenseDto } from "./dto/update-expense.dto";
 import { QueryExpensesDto } from "./dto/query-expenses.dto";
-import { SummaryQueryDto } from "./dto/summary-query.dto";
-import { JwtAuthGuard } from "../../common/auth/jwt-auth.guard";
-import { RolesGuard } from "../../common/auth/roles.guard";
-import { Roles } from "../../common/auth/roles.decorator";
-import { CurrentUser } from "../../common/auth/current-user.decorator";
-import type { JwtPayload } from "../../common/auth/auth.types";
+import { UpdateExpenseDto } from "./dto/update-expense.dto";
+import { ExpensesService } from "./expenses.service";
 
+/** Gastos del cliente autenticado (spec §10.3). */
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles("cliente")
 @Controller("expenses")
@@ -28,36 +30,22 @@ export class ExpensesController {
   constructor(private readonly expensesService: ExpensesService) {}
 
   @Get()
-  async findAll(
-    @CurrentUser() user: JwtPayload,
-    @Query() query: QueryExpensesDto,
-  ) {
-    return this.expensesService.findAll(user.sub, query);
-  }
-
-  @Get("summary")
-  async summary(
-    @CurrentUser() user: JwtPayload,
-    @Query() query: SummaryQueryDto,
-  ) {
-    return this.expensesService.getSummary(user.sub, query);
+  list(@CurrentUser() user: JwtPayload, @Query() query: QueryExpensesDto) {
+    return this.expensesService.list(user.sub, query);
   }
 
   @Get(":id")
-  async findOne(@CurrentUser() user: JwtPayload, @Param("id") id: string) {
-    return this.expensesService.findOne(user.sub, id);
+  get(@CurrentUser() user: JwtPayload, @Param("id") id: string) {
+    return this.expensesService.get(user.sub, id);
   }
 
   @Post()
-  async create(
-    @CurrentUser() user: JwtPayload,
-    @Body() dto: CreateExpenseDto,
-  ) {
+  create(@CurrentUser() user: JwtPayload, @Body() dto: CreateExpenseDto) {
     return this.expensesService.create(user.sub, dto);
   }
 
-  @Patch(":id")
-  async update(
+  @Put(":id")
+  update(
     @CurrentUser() user: JwtPayload,
     @Param("id") id: string,
     @Body() dto: UpdateExpenseDto,
@@ -68,6 +56,6 @@ export class ExpensesController {
   @Delete(":id")
   @HttpCode(204)
   async remove(@CurrentUser() user: JwtPayload, @Param("id") id: string) {
-    return this.expensesService.remove(user.sub, id);
+    await this.expensesService.remove(user.sub, id);
   }
 }

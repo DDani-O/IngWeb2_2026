@@ -1,73 +1,62 @@
-import { Transform, Type } from "class-transformer";
+import { Transform } from "class-transformer";
 import {
   IsEmail,
-  IsEnum,
+  IsIn,
   IsNotEmpty,
-  IsNumber,
-  IsOptional,
   IsString,
-  Length,
-  Min,
+  MaxLength,
   MinLength,
   ValidateIf,
 } from "class-validator";
+import { UserRole } from "../../../common/auth";
 
-export enum UserRoleEnum {
-  Cliente = "cliente",
-  Asesor = "asesor",
-}
+const trim = ({ value }: { value: unknown }) =>
+  typeof value === "string" ? value.trim() : value;
 
+/** POST /auth/register (spec §10.1). `matricula` y `especialidad` son obligatorios para asesores. */
 export class RegisterDto {
-  @IsEmail()
+  @Transform(trim)
+  @IsString({ message: "El nombre es obligatorio." })
+  @MinLength(2, { message: "El nombre debe tener al menos 2 caracteres." })
+  @MaxLength(120, { message: "El nombre no puede superar los 120 caracteres." })
+  nombre_completo!: string;
+
+  @Transform(({ value }) =>
+    typeof value === "string" ? value.trim().toLowerCase() : value,
+  )
+  @IsEmail({}, { message: "El email no es valido." })
   email!: string;
 
-  @IsString()
-  @MinLength(8)
+  @IsString({ message: "La contrasena es obligatoria." })
+  @MinLength(8, { message: "La contrasena debe tener al menos 8 caracteres." })
+  @MaxLength(72, {
+    message: "La contrasena no puede superar los 72 caracteres.",
+  })
   password!: string;
 
-  @IsString()
-  @MinLength(2)
-  fullName!: string;
+  @IsIn(["cliente", "asesor"], { message: "El rol debe ser cliente o asesor." })
+  rol!: UserRole;
 
-  @Transform(({ value }) => (value === "usuario" ? "cliente" : value))
-  @IsEnum(UserRoleEnum)
-  role!: UserRoleEnum;
+  @ValidateIf(
+    (dto: RegisterDto) => dto.rol === "asesor" || dto.matricula !== undefined,
+  )
+  @Transform(trim)
+  @IsString({ message: "La matricula es obligatoria para asesores." })
+  @IsNotEmpty({ message: "La matricula es obligatoria para asesores." })
+  @MaxLength(60, {
+    message: "La matricula no puede superar los 60 caracteres.",
+  })
+  matricula?: string;
 
-  @ValidateIf((dto) => dto.role === UserRoleEnum.Asesor)
-  @IsString()
-  @IsNotEmpty()
-  licenseNumber!: string;
-
-  @ValidateIf((dto) => dto.role === UserRoleEnum.Asesor)
-  @IsString()
-  @IsNotEmpty()
-  specialty!: string;
-
-  @ValidateIf((dto) => dto.role === UserRoleEnum.Asesor)
-  @IsOptional()
-  @IsString()
-  description?: string;
-
-  @ValidateIf((dto) => dto.role === UserRoleEnum.Cliente)
-  @IsOptional()
-  @IsString()
-  occupation?: string;
-
-  @ValidateIf((dto) => dto.role === UserRoleEnum.Cliente)
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0)
-  estimatedIncome?: number;
-
-  @ValidateIf((dto) => dto.role === UserRoleEnum.Cliente)
-  @IsOptional()
-  @IsString()
-  financialGoal?: string;
-
-  @ValidateIf((dto) => dto.role === UserRoleEnum.Cliente)
-  @IsOptional()
-  @IsString()
-  @Length(3, 3)
-  preferredCurrency?: string;
+  @ValidateIf(
+    (dto: RegisterDto) =>
+      dto.rol === "asesor" || dto.especialidad !== undefined,
+  )
+  @Transform(trim)
+  @IsString({ message: "La especialidad es obligatoria para asesores." })
+  @IsNotEmpty({ message: "La especialidad es obligatoria para asesores." })
+  @MaxLength(120, {
+    message: "La especialidad no puede superar los 120 caracteres.",
+  })
+  especialidad?: string;
 }

@@ -41,17 +41,25 @@ Una fase por commit; los integrantes commitean a mano.
 
 **Cómo quedó:** la spec §10 ya usaba la convención en español, así que se conservan sus rutas orientadas a recursos (`/auth/me`, `/clients`, `/analysis/*`, `/recommendations`) y es el back el que se reacomoda. Se agregaron: prefijo `/api/v1`, rechazo de campos desconocidos, límites del upload, flujo de tickets en un paso (con la vinculación del ticket en `POST /expenses`), catálogo fijo de 3 perfiles y cuándo se recalcula la clasificación. El inventario está en la spec §10.8: 22 endpoints del contrato con su equivalente actual y la fase en que se resuelven, 10 endpoints del back que se eliminan y los cambios de BD.
 
-### I2 — Backend en español
+### I2 — Backend en español ✅ completada
 - DTOs de entrada, funciones de mapeo de salida, query params, filtro de errores y respuesta de auth según §2.
 - `PUT /expenses/:id` (mínimo de la consigna; hoy solo existe `PATCH`).
 - Tests e2e actualizados.
+
+**Cómo quedó:**
+- `src/app.setup.ts` (`configureApp`) concentra prefijo `/api/v1`, `ValidationPipe` (422 `VALIDACION` con `detalles.campos` y el mensaje de la primera regla que falla) y filtro de errores; la usan `main.ts` y los tests. `src/common/errors/` define `ApiException` y los códigos del contrato.
+- Implementadas todas las filas I2 de la spec §10.8: `auth` (registro, login, `/auth/me`, `/auth/profile`), `users` (arma el objeto `usuario`), `categories` (`/categories` y `/spending-profiles`), `expenses` (CRUD con `PUT`, filtros y orden de la spec, alta desde ticket), `tickets` (un paso, campo `archivo`, 5 MB, `analisis: null` si la IA falla), `recommendations` (módulo nuevo) y `clients` (módulo nuevo, por ahora `/clients/:id/expenses` y el control de asignación).
+- Eliminados `/expenses/summary`, `/users/me` y sus subrutas salvo el análisis, `/advisor/profile`, `/advisor/recommendations*`, `/advisor/clients/:id/expenses` y `/tickets/:id/confirm`, con sus DTOs.
+- `ocr.service.ts` devuelve los nombres de columna de `analisis_ocr` (se corrigieron `confianciaGeneral` y las menciones a Gemini).
+- Tests e2e reescritos contra el contrato (`auth`, `categories`, `expenses`, `recommendations`); se borraron `users` y `advisor`, que probaban rutas eliminadas o la mensajería. Verificado sin BD: compilan, y los casos que no tocan Supabase pasan. Correrlos completos queda para I5.
+- Prueba de humo sin BD (42 casos: guards, roles, validaciones, formato de errores, rutas eliminadas, límites del upload, fallos de Supabase como 500) en verde.
 
 ### I3 — Backend: faltantes funcionales
 - Análisis de consumo reescrito con las reglas de la spec §10.6 (portar `frontend/mocks/analytics.js`): `/analysis/me`, `/analysis/clients/:id`, `/analysis/advisor/summary`, `/clients`, `/clients/:id`.
 - Perfil de gasto asignado automáticamente por el sistema; se elimina la asignación manual del asesor (`PATCH /advisor/clients/:id/profile`).
 - Gastos inusuales con la regla del 35 % (se descarta el z-score).
 - Migración nueva: catálogo de 3 perfiles con `criterio_regla` en español (spec §10.8) y evaluar eliminar las vistas sin uso de la `0008`.
-- Eliminar los endpoints de la lista de la spec §10.8.
+- Eliminar los endpoints pendientes de la lista de la spec §10.8 y, con ellos, los módulos heredados `advisor` y `analytics` y el `UsersController` (sus servicios ya no tienen otros usuarios; la regla del z-score se va con `analytics`).
 
 ### I4 — Frontend alineado
 - Servicios, `adapters.js` y mock (`frontend/mocks/`) ajustados al contrato final; el mock queda como espejo exacto del back para demos sin conexión.
@@ -83,6 +91,6 @@ Pendiente (no bloquea):
 
 ## 5. Pendientes detectados en el merge
 
-- `tickets.service.ts` menciona `GEMINI_API_KEY` en el mensaje de error, pero el OCR usa `GROQ_API_KEY`.
 - Documentación heredada de `dev` desactualizada: `backend/database/README.md` (rutas `backend/src/database/` y solo dos migraciones), `backend/FINTRACK_BACKEND_CONTEXT.md` (mensajería, Gemini, rutas viejas) y `PENDIENTES_GENERALES.md` (rutas `/usuario/*`, mocks del front viejo).
-- `npm run lint` reporta 314 warnings (0 errores).
+- `npm run lint`: 0 errores; los 229 warnings que quedan son de formato (Prettier) en `advisor` y `analytics`, que se eliminan en I3.
+- Los `Logica_modulo_*.md` de `expenses` y `categories` describían el contrato viejo y se borraron en I2.

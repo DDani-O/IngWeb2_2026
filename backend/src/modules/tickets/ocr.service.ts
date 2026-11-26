@@ -2,14 +2,16 @@ import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import OpenAI from "openai";
 
+/** Resultado del modelo, con los nombres de las columnas de `analisis_ocr`. */
 export interface ParsedTicket {
-  comercio: string | null;
-  fecha: string | null;
-  montoDetectado: number | null;
-  categoriaSugerida: string | null;
-  confianciaGeneral: number;
-  textoExtraido: string | null;
-  respuestaModelo: Record<string, unknown>;
+  comercio_detectado: string | null;
+  fecha_detectada: string | null;
+  monto_detectado: number | null;
+  /** Nombre de la categoría sugerida; el servicio de tickets lo resuelve a `categoria_sugerida_id`. */
+  categoria_sugerida: string | null;
+  confianza_general: number;
+  texto_extraido: string | null;
+  respuesta_modelo: Record<string, unknown>;
 }
 
 const ALLOWED_CATEGORIES = [
@@ -115,18 +117,18 @@ export class OcrService {
       parsed = JSON.parse(clean);
     } catch {
       this.logger.warn(
-        `Gemini devolvió JSON no parseable: ${clean.slice(0, 200)}`,
+        `Groq devolvió JSON no parseable: ${clean.slice(0, 200)}`,
       );
     }
 
     return {
-      comercio: this.extractString(parsed.comercio),
-      fecha: this.extractDate(parsed.fecha),
-      montoDetectado: this.extractMonto(parsed.monto_total),
-      categoriaSugerida: this.extractCategory(parsed.categoria),
-      confianciaGeneral: this.extractConfianza(parsed.confianza),
-      textoExtraido: this.extractString(parsed.texto_extraido),
-      respuestaModelo: parsed,
+      comercio_detectado: this.extractString(parsed.comercio),
+      fecha_detectada: this.extractDate(parsed.fecha),
+      monto_detectado: this.extractMonto(parsed.monto_total),
+      categoria_sugerida: this.extractCategory(parsed.categoria),
+      confianza_general: this.extractConfianza(parsed.confianza),
+      texto_extraido: this.extractString(parsed.texto_extraido),
+      respuesta_modelo: parsed,
     };
   }
 

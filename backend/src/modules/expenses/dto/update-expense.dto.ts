@@ -1,26 +1,37 @@
-import { IsDateString, IsNumber, IsOptional, IsString, IsUUID, MaxLength, Min } from "class-validator";
+import { IsOptional } from "class-validator";
+import { ExpenseField, ExpenseOrigin } from "./expense-fields";
 
+/**
+ * PUT /expenses/:id (spec §10.3): mismos campos que el alta, todos opcionales.
+ * `origen` y `ticket_id` se aceptan (el front reenvía el gasto completo) pero no se
+ * modifican: el origen de un gasto es histórico.
+ */
 export class UpdateExpenseDto {
   @IsOptional()
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0.01)
-  amount?: number;
+  @ExpenseField.comercio()
+  comercio?: string;
 
   @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  merchant?: string;
+  @ExpenseField.fecha()
+  fecha_gasto?: string;
 
   @IsOptional()
-  @IsUUID("4")
-  categoryId?: string;
+  @ExpenseField.monto()
+  monto?: number;
 
   @IsOptional()
-  @IsDateString()
-  date?: string;
+  @ExpenseField.categoria()
+  categoria_id?: string;
 
   @IsOptional()
-  @IsString()
-  @MaxLength(500)
-  notes?: string;
+  @ExpenseField.descripcion()
+  descripcion?: string;
+
+  @IsOptional()
+  @ExpenseField.origen()
+  origen?: ExpenseOrigin;
+
+  @IsOptional()
+  @ExpenseField.ticket()
+  ticket_id?: string;
 }

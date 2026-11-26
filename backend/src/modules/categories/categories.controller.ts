@@ -1,18 +1,20 @@
 import { Controller, Get, UseGuards } from "@nestjs/common";
+import { JwtAuthGuard } from "../../common/auth";
 import { CategoriesService } from "./categories.service";
-import { JwtAuthGuard } from "../../common/auth/jwt-auth.guard";
-import { CategoryDto } from "./dto/category.dto";
 
-@Controller("categories")
+/** Catálogos (spec §10.2): requieren token, cualquier rol. */
+@UseGuards(JwtAuthGuard)
+@Controller()
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
-  /**
-   * GET /api/v1/categories
-   * Retorna solo las categorías globales del sistema
-   */
-  @Get()
-  async findAll(): Promise<CategoryDto[]> {
-    return this.categoriesService.findAll();
+  @Get("categories")
+  listCategories() {
+    return this.categoriesService.listCategories();
+  }
+
+  @Get("spending-profiles")
+  listSpendingProfiles() {
+    return this.categoriesService.listSpendingProfiles();
   }
 }

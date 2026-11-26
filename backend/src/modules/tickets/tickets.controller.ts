@@ -1,9 +1,5 @@
 import {
-  BadRequestException,
-  Body,
   Controller,
-  Param,
-  ParseUUIDPipe,
   Post,
   UploadedFile,
   UseGuards,
@@ -17,40 +13,24 @@ import {
   Roles,
   RolesGuard,
 } from "../../common/auth";
-import { ConfirmTicketDto } from "./dto/confirm-ticket.dto";
-import { TicketsService } from "./tickets.service";
+import { TICKET_MAX_BYTES, TicketsService } from "./tickets.service";
 
+/** Carga de tickets con OCR/IA (spec §10.4). */
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles("cliente")
 @Controller("tickets")
 export class TicketsController {
   constructor(private readonly ticketsService: TicketsService) {}
 
+  /** Multipart con el campo `archivo`. Multer corta en 5 MB (el filtro lo responde como 422). */
   @Post("upload")
   @UseInterceptors(
-    FileInterceptor("file", {
-      limits: { fileSize: 8 * 1024 * 1024 },
-      storage: undefined,
-    }),
+    FileInterceptor("archivo", { limits: { fileSize: TICKET_MAX_BYTES } }),
   )
-  async uploadTicket(
-    @UploadedFile() file: Express.Multer.File,
+  upload(
+    @UploadedFile() file: Express.Multer.File | undefined,
     @CurrentUser() user: JwtPayload,
   ) {
-    if (!file) {
-      throw new BadRequestException(
-        "No se recibió ningún archivo. Enviá el campo 'file' como multipart/form-data.",
-      );
-    }
-    return this.ticketsService.uploadAndProcess(file, user.sub);
-  }
-
-  @Post(":id/confirm")
-  async confirmTicket(
-    @Param("id", ParseUUIDPipe) id: string,
-    @CurrentUser() user: JwtPayload,
-    @Body() dto: ConfirmTicketDto,
-  ) {
-    return this.ticketsService.confirmTicket(id, user.sub, dto);
+    return this.ticketsService.upload(file, user.sub);
   }
 }

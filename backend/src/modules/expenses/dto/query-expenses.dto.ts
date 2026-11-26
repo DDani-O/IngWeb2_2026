@@ -1,34 +1,54 @@
-import { IsInt, IsOptional, IsString, IsUUID, Max, MaxLength, Min } from "class-validator";
-import { Type } from "class-transformer";
+import { Transform, Type } from "class-transformer";
+import {
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  Max,
+  MaxLength,
+  Min,
+} from "class-validator";
+import { ExpenseField, ExpenseOrigin } from "./expense-fields";
 
+export const EXPENSE_SORTS = ["fecha", "monto_desc", "monto_asc"] as const;
+export type ExpenseSort = (typeof EXPENSE_SORTS)[number];
+
+/** Query de GET /expenses y GET /clients/:id/expenses (spec §10.3). Todo opcional. */
 export class QueryExpensesDto {
   @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  page?: number;
+  @Transform(({ value }) => (typeof value === "string" ? value.trim() : value))
+  @IsString({ message: "La busqueda debe ser texto." })
+  @MaxLength(100, {
+    message: "La busqueda no puede superar los 100 caracteres.",
+  })
+  busqueda?: string;
+
+  @IsOptional()
+  @ExpenseField.categoria()
+  categoria_id?: string;
+
+  @IsOptional()
+  @ExpenseField.origen()
+  origen?: ExpenseOrigin;
+
+  @IsOptional()
+  @ExpenseField.rangoFecha()
+  desde?: string;
+
+  @IsOptional()
+  @ExpenseField.rangoFecha()
+  hasta?: string;
+
+  @IsOptional()
+  @IsIn([...EXPENSE_SORTS], {
+    message: "El orden debe ser fecha, monto_desc o monto_asc.",
+  })
+  orden?: ExpenseSort;
 
   @IsOptional()
   @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  @Max(100)
-  limit?: number;
-
-  @IsOptional()
-  @IsUUID("4")
-  categoryId?: string;
-
-  @IsOptional()
-  @IsString()
-  from?: string;
-
-  @IsOptional()
-  @IsString()
-  to?: string;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  search?: string;
+  @IsInt({ message: "El limite debe ser un numero entero." })
+  @Min(1, { message: "El limite debe ser al menos 1." })
+  @Max(1000, { message: "El limite no puede superar 1000." })
+  limite?: number;
 }

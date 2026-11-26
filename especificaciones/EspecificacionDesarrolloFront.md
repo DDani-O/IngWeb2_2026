@@ -620,13 +620,16 @@ DashboardPage {
 
 | Estado | `codigo` | Cuándo |
 |---|---|---|
+| 400 | `SOLICITUD_INVALIDA` | Cuerpo que no se puede interpretar (JSON mal formado) |
 | 401 | `CREDENCIALES_INVALIDAS` | Login con email o contraseña incorrectos |
 | 401 | `NO_AUTENTICADO` | Token ausente, inválido o vencido (el front cierra la sesión) |
 | 403 | `PROHIBIDO` | Rol incorrecto o cliente no asignado al asesor |
-| 404 | `NO_ENCONTRADO` | Recurso inexistente o ajeno |
+| 404 | `NO_ENCONTRADO` | Recurso inexistente o ajeno (un id con formato inválido también es 404) |
+| 404 | `RUTA_INEXISTENTE` | Método o ruta que la API no expone |
 | 409 | `EMAIL_DUPLICADO` | Registro con un email existente |
-| 422 | `VALIDACION` | Datos inválidos (`detalles.campos` lista los campos) |
-| 500 | `ERROR_INTERNO` | Error no controlado |
+| 409 | `MATRICULA_DUPLICADA` | Registro o perfil de asesor con una matrícula ya usada |
+| 422 | `VALIDACION` | Datos inválidos o campos que no son del contrato (`detalles.campos` lista los campos; `mensaje` describe el primero) |
+| 500 | `ERROR_INTERNO` | Error no controlado (el detalle técnico queda en el log del servidor) |
 
 ### Objetos comunes
 
@@ -681,7 +684,7 @@ Para un asesor, en lugar de `perfil_cliente` viene `perfil_asesor: { matricula, 
 | GET | `/auth/me` | ambos | — | **200** `usuario` |
 | PUT | `/auth/profile` | ambos | cliente: `{ nombre_completo, biografia?, ocupacion?, ingreso_estimado?, objetivo_financiero? }` · asesor: `{ nombre_completo, biografia?, matricula, especialidad, descripcion? }` | **200** `usuario` |
 
-El email no se modifica desde el perfil. Un cliente que se registra queda asignado a un asesor (regla del backend).
+El email no se modifica desde el perfil. La contraseña tiene entre 8 y 72 caracteres (el front además exige una mayúscula y un número). Un cliente que se registra queda asignado al asesor con más capacidad libre (`obtener_asesor_disponible()`); si no hay ninguno, queda sin asesor y el registro igual se completa.
 
 ### 10.2 Catálogos
 
@@ -697,10 +700,10 @@ El email no se modifica desde el perfil. Un cliente que se registra queda asigna
 | GET | `/expenses` | query opcional: `busqueda`, `categoria_id`, `origen`, `desde`, `hasta`, `orden` (`fecha` · `monto_desc` · `monto_asc`), `limite` | **200** `{ datos: [gasto], total }` |
 | GET | `/expenses/:id` | — | **200** `gasto` |
 | POST | `/expenses` | `{ comercio, fecha_gasto, monto, categoria_id, descripcion?, origen?, ticket_id? }` | **201** `gasto` |
-| PUT | `/expenses/:id` | mismos campos (parcial) | **200** `gasto` |
+| PUT | `/expenses/:id` | mismos campos (parcial); `origen` y `ticket_id` se aceptan pero no se modifican | **200** `gasto` |
 | DELETE | `/expenses/:id` | — | **204** |
 
-Validaciones: `monto > 0`, `fecha_gasto` con formato `AAAA-MM-DD`, `categoria_id` existente, `origen` en `manual` · `ticket` (por defecto `manual`). Un cliente solo ve y modifica sus gastos.
+Validaciones: `comercio` obligatorio (hasta 100 caracteres), `monto > 0` con hasta 2 decimales, `fecha_gasto` con formato `AAAA-MM-DD` y fecha real, `categoria_id` existente, `descripcion` hasta 500 caracteres, `origen` en `manual` · `ticket` (por defecto `manual`; con `ticket_id` siempre es `ticket`), `ticket_id` de un ticket propio. `limite` entre 1 y 1000; sin `limite` se devuelven todos. Un cliente solo ve y modifica sus gastos: uno ajeno responde 404.
 
 ### 10.4 Tickets / OCR (cliente)
 
@@ -786,7 +789,7 @@ Reglas de cálculo (las implementa hoy el mock en `frontend/mocks/analytics.js`;
 
 ### 10.8 Correspondencia con el backend actual (inventario de la fase I1)
 
-Estado del backend heredado de `dev` contra este contrato. Columna **Fase**: dónde se resuelve según `PlanIntegracionBackend.md` (I2 = nombres en español y forma de las respuestas; I3 = lógica que falta o se reescribe).
+Estado del backend heredado de `dev` contra este contrato. Columna **Fase**: dónde se resuelve según `PlanIntegracionBackend.md` (I2 = nombres en español y forma de las respuestas; I3 = lógica que falta o se reescribe). **Las filas I2 ya están implementadas** (fase I2 completada); quedan las filas I3.
 
 **Endpoints del contrato**
 
@@ -817,17 +820,17 @@ Estado del backend heredado de `dev` contra este contrato. Columna **Fase**: dó
 
 **Endpoints del backend que se eliminan** (no los usa el front y no suman a la consigna; `DiagnosticoRefactor.md` §6, decisiones 1 y 2):
 
-| Endpoint | Motivo |
-|---|---|
-| `GET /expenses/summary` | Lo cubre `GET /analysis/me`. |
-| `GET /users/me/dashboard` | Lo cubren `/auth/me` y `/analysis/me`. |
-| `GET /analytics/consumption` | Duplicado de `/users/me/consumption-analysis`. |
-| `GET /advisor/profile` | Lo cubre `/auth/me`. |
-| `PATCH /advisor/recommendations/:id` · `DELETE /advisor/recommendations/:id` | La consigna pide generar recomendaciones, no editarlas ni borrarlas. |
-| `GET /advisor/reports` | La página de reportes se eliminó en la Fase 0. |
-| `GET /advisor/risk-assessment` | El riesgo viene en `resumen_cliente.nivel_riesgo`. |
-| `PATCH /advisor/clients/:clientId/profile` | El perfil lo asigna el sistema (decisión 2). |
-| `POST /tickets/:id/confirm` | El flujo de tickets es en un paso (§10.4). |
+| Endpoint | Motivo | Estado |
+|---|---|---|
+| `GET /expenses/summary` | Lo cubre `GET /analysis/me`. | Eliminado (I2) |
+| `GET /users/me/dashboard` | Lo cubren `/auth/me` y `/analysis/me`. | Eliminado (I2) |
+| `GET /analytics/consumption` | Duplicado de `/users/me/consumption-analysis`. | Pendiente (I3) |
+| `GET /advisor/profile` | Lo cubre `/auth/me`. | Eliminado (I2) |
+| `PATCH /advisor/recommendations/:id` · `DELETE /advisor/recommendations/:id` | La consigna pide generar recomendaciones, no editarlas ni borrarlas. | Eliminado (I2) |
+| `GET /advisor/reports` | La página de reportes se eliminó en la Fase 0. | Pendiente (I3) |
+| `GET /advisor/risk-assessment` | El riesgo viene en `resumen_cliente.nivel_riesgo`. | Pendiente (I3) |
+| `PATCH /advisor/clients/:clientId/profile` | El perfil lo asigna el sistema (decisión 2). | Pendiente (I3) |
+| `POST /tickets/:id/confirm` | El flujo de tickets es en un paso (§10.4). | Eliminado (I2) |
 
 **Cambios de base de datos** (migración nueva, fase I3):
 - Reemplazar el catálogo de `perfiles_de_gasto` cargado por `seeds/seed_perfiles_de_gasto.sql` (7 perfiles con `criterio_regla` en inglés: `thresholds`, `savingsRatio`…) por los 3 perfiles de §10.6 con `criterio_regla = { discrecional_max }`, migrando o cerrando las clasificaciones que apunten a perfiles eliminados.
