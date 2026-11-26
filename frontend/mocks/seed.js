@@ -4,7 +4,7 @@
  * Las "tablas" respetan los nombres y columnas de la BD (migrations/0001_init_schema.sql).
  * Los gastos se generan de forma determinística y relativos a la fecha actual, para que
  * los gráficos y el análisis siempre tengan datos del mes en curso.
- * Solo se carga con API_CONFIG.DRIVER = "mock".
+ * Solo se carga con el driver "mock" (ver API_CONFIG.DRIVERS).
  */
 
 const MOCK_PASSWORD = "Fintrack2026*";

@@ -10,7 +10,9 @@ import {
   IsUUID,
   Matches,
   MaxLength,
+  ValidateBy,
 } from "class-validator";
+import { DEFAULT_TIMEZONE, todayIn } from "../../analysis/calendar";
 
 /** Valores de los ENUM de la BD que usa el contrato de gastos. */
 export const EXPENSE_ORIGINS = ["manual", "ticket"] as const;
@@ -18,6 +20,23 @@ export type ExpenseOrigin = (typeof EXPENSE_ORIGINS)[number];
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const DATE_MESSAGE = "La fecha debe tener formato AAAA-MM-DD.";
+
+/**
+ * La fecha del gasto no puede ser posterior a hoy en la zona de la app (`APP_TIMEZONE`,
+ * la misma que usa el análisis). Se lee del entorno en cada validación porque los
+ * decoradores no tienen acceso al ConfigService; ConfigModule ya cargó el `.env` en
+ * `process.env`. Compara strings AAAA-MM-DD (el formato lo validan las reglas previas).
+ */
+const NotAfterToday = () =>
+  ValidateBy({
+    name: "notAfterToday",
+    validator: {
+      validate: (value: unknown) =>
+        typeof value !== "string" ||
+        value <= todayIn(process.env.APP_TIMEZONE || DEFAULT_TIMEZONE),
+      defaultMessage: () => "La fecha no puede ser posterior a hoy.",
+    },
+  });
 
 const trim = Transform(({ value }) =>
   typeof value === "string" ? value.trim() : value,
@@ -49,6 +68,7 @@ export const ExpenseField = {
     rules(
       Matches(DATE_PATTERN, { message: DATE_MESSAGE }),
       IsISO8601({ strict: true }, { message: DATE_MESSAGE }),
+      NotAfterToday(),
     ),
   monto: () =>
     rules(

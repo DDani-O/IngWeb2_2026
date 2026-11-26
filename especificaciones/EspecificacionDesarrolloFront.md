@@ -703,7 +703,7 @@ El email no se modifica desde el perfil. La contraseña tiene entre 8 y 72 carac
 | PUT | `/expenses/:id` | mismos campos (parcial); `origen` y `ticket_id` se aceptan pero no se modifican | **200** `gasto` |
 | DELETE | `/expenses/:id` | — | **204** |
 
-Validaciones: `comercio` obligatorio (hasta 100 caracteres), `monto > 0` con hasta 2 decimales, `fecha_gasto` con formato `AAAA-MM-DD` y fecha real, `categoria_id` existente, `descripcion` hasta 500 caracteres, `origen` en `manual` · `ticket` (por defecto `manual`; con `ticket_id` siempre es `ticket`), `ticket_id` de un ticket propio. `limite` entre 1 y 1000; sin `limite` se devuelven todos. Un cliente solo ve y modifica sus gastos: uno ajeno responde 404.
+Validaciones: `comercio` obligatorio (hasta 100 caracteres), `monto > 0` con hasta 2 decimales, `fecha_gasto` con formato `AAAA-MM-DD`, fecha real y no posterior a hoy en `APP_TIMEZONE` (alta y edición; 422 "La fecha no puede ser posterior a hoy."; el input del front tiene `max` = hoy y el mock aplica la misma regla con la fecha local), `categoria_id` existente, `descripcion` hasta 500 caracteres, `origen` en `manual` · `ticket` (por defecto `manual`; con `ticket_id` siempre es `ticket`), `ticket_id` de un ticket propio. `limite` entre 1 y 1000; sin `limite` se devuelven todos. Un cliente solo ve y modifica sus gastos: uno ajeno responde 404.
 
 ### 10.4 Tickets / OCR (cliente)
 
@@ -755,12 +755,13 @@ Flujo **en un solo paso** (decisión de la fase I1): el backend sube la imagen a
 ```
 
 Reglas de cálculo. Las implementan el backend (`backend/src/modules/analysis/analysis.rules.ts`, funciones puras con tests en `analysis.rules.spec.ts`) y el mock (`frontend/mocks/analytics.js`); en la fase I3 se verificó que ambos dan resultados idénticos sobre el mismo juego de datos. Si cambia una regla, se cambia en los dos y en esta sección. "Hoy" es la fecha en la zona horaria de la app (`APP_TIMEZONE`, por defecto `America/Argentina/Buenos_Aires`), no la del servidor; el análisis se calcula en cada pedido a partir de `gastos` (no se persiste):
+- **Período analizado** (`periodo`): desde el día 1 del primer mes de la serie (hace 6 meses) hasta hoy. `gastos_por_categoria`, `categoria_dominante`, `ranking_comercios`, `comercio_mas_frecuente`, `dia_mayor_gasto` y `cantidad_gastos` se calculan **solo con los gastos del período** (así la torta, el ranking y las barras hablan de los mismos meses). El historial completo solo se usa como base de los gastos inusuales.
 - `gastos_por_mes`: últimos 7 meses incluido el actual. `gastos_por_dia`: últimos 14 días. `ranking_comercios`: top 5 por monto.
 - `variacion_mes_anterior`: mes en curso contra el mes anterior **hasta el mismo día** (porcentaje; `null` si no hay datos).
 - `gasto_promedio_mensual`: promedio de los meses completos anteriores con gastos.
 - `dia_mayor_gasto`: 0 = domingo … 6 = sábado.
 - **Gasto inusual**: gasto de los últimos 30 días que supera en más de 35% el promedio de su categoría (con al menos 3 gastos previos en esa categoría).
-- `alertas.nivel`: `danger` · `warning` · `success` · `info`.
+- `alertas.nivel`: `danger` · `warning` · `success` · `info`. Sin gastos en el período: una sola alerta `info` ("Sin gastos en el periodo analizado"). Con gastos inusuales: `danger`; con variación > 10 %: `warning`. Si no hay ninguna de esas y el mes en curso no tiene gastos: `info` ("Todavia no registraste gastos este mes"); si tiene: `success` ("Tus gastos estan dentro de lo habitual"). Nunca se muestra `success` con el mes en $0.
 - **Perfil de gasto** (asignado automáticamente por el sistema; ni el cliente ni el asesor lo eligen): participación de las categorías discrecionales (Entretenimiento, Suscripciones, Otros) en los últimos 3 meses (el mes en curso y los dos anteriores, desde el día 1), comparada con `perfiles_de_gasto.criterio_regla.discrecional_max` (Drácula Nocturno < 10%, Equilibrista Cósmico < 30%, Espíritu Libre el resto). El catálogo tiene **exactamente esos 3 perfiles** y `criterio_regla` solo guarda la regla (`{ "discrecional_max": 0.1 }`); los textos, emojis y la comparativa viven en el front (`frontend/content/spendingProfiles.js`) y se vinculan por nombre. El resultado se guarda en `clasificacion_de_perfil` (`asesor_id = null`, `motivo` con el porcentaje calculado, cierra la vigencia del anterior con `vigente_hasta`). Se calcula al armar el análisis o el resumen de un cliente (la ventana de 3 meses avanza con el tiempo aunque no haya gastos nuevos) y solo se escribe una clasificación nueva si el perfil cambió respecto del vigente. Sin gastos en la ventana, el perfil queda `null`.
 - `nivel_riesgo`: `alto` si hay 2 o más gastos inusuales o la variación supera 25%; `medio` si hay 1 o la variación supera 10%; `bajo` en otro caso.
 

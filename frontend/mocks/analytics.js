@@ -106,8 +106,8 @@ function buildAlerts({ unusual, variation, totalThisMonth, expenseCount }) {
     return [
       {
         nivel: "info",
-        titulo: "Todavia no registraste gastos",
-        descripcion: "Carga tu primer gasto (manual o con un ticket) para ver tu analisis.",
+        titulo: "Sin gastos en el periodo analizado",
+        descripcion: `No hay gastos registrados en los ultimos ${MONTHS_IN_SERIES} meses. Carga un gasto (manual o con un ticket) para ver tu analisis.`,
       },
     ];
   }
@@ -128,7 +128,15 @@ function buildAlerts({ unusual, variation, totalThisMonth, expenseCount }) {
     });
   }
 
-  if (!alerts.length && totalThisMonth >= 0) {
+  if (!alerts.length && !totalThisMonth) {
+    alerts.push({
+      nivel: "info",
+      titulo: "Todavia no registraste gastos este mes",
+      descripcion: "Cuando cargues los gastos del mes vas a ver como venis respecto del mes anterior.",
+    });
+  }
+
+  if (!alerts.length) {
     alerts.push({
       nivel: "success",
       titulo: "Tus gastos estan dentro de lo habitual",
@@ -161,6 +169,11 @@ export function computeClientAnalysis(db, clientId, today = new Date()) {
   const months = monthKeysUntil(today, MONTHS_IN_SERIES);
   const currentMonth = months[months.length - 1];
   const previousMonth = months[months.length - 2];
+  // Período analizado (el `periodo` de la respuesta): distribuciones, ranking y conteos se
+  // calculan sobre él, igual que la serie mensual. El historial completo solo se usa como
+  // base de los gastos inusuales. Igual que el back (analysis.rules.ts).
+  const periodStart = `${months[0]}-01`;
+  const periodExpenses = expenses.filter((expense) => expense.fecha_gasto >= periodStart && expense.fecha_gasto <= todayIso);
 
   const byMonth = sumBy(expenses, (expense) => monthKey(expense.fecha_gasto));
   const totalThisMonth = byMonth[currentMonth] || 0;
@@ -177,8 +190,8 @@ export function computeClientAnalysis(db, clientId, today = new Date()) {
     ? completedMonths.reduce((sum, key) => sum + byMonth[key], 0) / completedMonths.length
     : totalThisMonth;
 
-  const total = expenses.reduce((sum, expense) => sum + expense.monto, 0);
-  const byCategory = Object.entries(sumBy(expenses, (expense) => expense.categoria_id))
+  const total = periodExpenses.reduce((sum, expense) => sum + expense.monto, 0);
+  const byCategory = Object.entries(sumBy(periodExpenses, (expense) => expense.categoria_id))
     .map(([categoryId, amount]) => ({
       categoria_id: categoryId,
       categoria: categoriesById[categoryId]?.nombre || "Sin categoria",
@@ -204,7 +217,7 @@ export function computeClientAnalysis(db, clientId, today = new Date()) {
   });
 
   const merchants = {};
-  expenses.forEach((expense) => {
+  periodExpenses.forEach((expense) => {
     merchants[expense.comercio] = merchants[expense.comercio] || { comercio: expense.comercio, monto: 0, cantidad: 0 };
     merchants[expense.comercio].monto += expense.monto;
     merchants[expense.comercio].cantidad += 1;
@@ -215,7 +228,7 @@ export function computeClientAnalysis(db, clientId, today = new Date()) {
     .slice(0, 5);
   const mostFrequent = Object.values(merchants).sort((a, b) => b.cantidad - a.cantidad)[0] || null;
 
-  const byWeekday = sumBy(expenses, (expense) => {
+  const byWeekday = sumBy(periodExpenses, (expense) => {
     const [year, month, day] = expense.fecha_gasto.split("-").map(Number);
     return new Date(year, month - 1, day).getDay();
   });
@@ -226,12 +239,12 @@ export function computeClientAnalysis(db, clientId, today = new Date()) {
 
   return {
     cliente_id: clientId,
-    periodo: { desde: `${months[0]}-01`, hasta: todayIso },
+    periodo: { desde: periodStart, hasta: todayIso },
     gasto_mes_actual: round(totalThisMonth),
     gasto_mes_anterior_a_la_fecha: round(previousToDate),
     variacion_mes_anterior: variation,
     gasto_promedio_mensual: round(monthlyAverage),
-    cantidad_gastos: expenses.length,
+    cantidad_gastos: periodExpenses.length,
     categoria_dominante: byCategory[0]
       ? { id: byCategory[0].categoria_id, nombre: byCategory[0].categoria, porcentaje: byCategory[0].porcentaje }
       : null,
@@ -243,7 +256,7 @@ export function computeClientAnalysis(db, clientId, today = new Date()) {
     gastos_por_dia: byDay,
     ranking_comercios: ranking,
     gastos_inusuales: unusual,
-    alertas: buildAlerts({ unusual, variation, totalThisMonth, expenseCount: expenses.length }),
+    alertas: buildAlerts({ unusual, variation, totalThisMonth, expenseCount: periodExpenses.length }),
     perfil_de_gasto: assignSpendingProfile(expenses, profiles, today),
     nivel_riesgo: riskLevel(unusual.length, variation),
     ultimo_gasto_fecha: expenses.map((expense) => expense.fecha_gasto).sort().pop() || null,

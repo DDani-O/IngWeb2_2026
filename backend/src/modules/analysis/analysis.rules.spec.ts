@@ -249,6 +249,66 @@ describe("análisis del cliente", () => {
     });
   });
 
+  it("con gastos solo fuera del período: todo vacío y alerta informativa, sin 'success'", () => {
+    // Caso real de la base el 26/11: el último gasto es de abril, antes del período (desde 1/5).
+    const { analisis } = analyze([
+      gasto("2026-04-10", 50000, "ent", "Cine"),
+      gasto("2025-04-01", 25, "otr", "Zara"),
+    ]);
+    expect(analisis.periodo).toEqual({ desde: "2026-05-01", hasta: TODAY });
+    expect(analisis).toMatchObject({
+      cantidad_gastos: 0,
+      gasto_mes_actual: 0,
+      gastos_por_categoria: [],
+      ranking_comercios: [],
+      categoria_dominante: null,
+      comercio_mas_frecuente: null,
+      dia_mayor_gasto: null,
+      ultimo_gasto_fecha: "2026-04-10",
+    });
+    expect(analisis.alertas).toEqual([
+      expect.objectContaining({
+        nivel: "info",
+        titulo: "Sin gastos en el periodo analizado",
+      }),
+    ]);
+  });
+
+  it("la torta, el ranking y los conteos solo usan gastos del período", () => {
+    const { analisis } = analyze([
+      gasto("2026-04-30", 999999, "ent", "Viejo"),
+      gasto("2026-05-01", 1000, "ali", "Super"),
+      gasto("2026-11-20", 3000, "sus", "Netflix"),
+    ]);
+    expect(analisis.cantidad_gastos).toBe(2);
+    expect(analisis.gastos_por_categoria.map((item) => item.categoria)).toEqual(
+      ["Suscripciones", "Alimentación"],
+    );
+    expect(analisis.ranking_comercios.map((item) => item.comercio)).toEqual([
+      "Netflix",
+      "Super",
+    ]);
+    expect(analisis.categoria_dominante).toMatchObject({ porcentaje: 75 });
+  });
+
+  it("con gastos en el período pero ninguno este mes: alerta informativa del mes, no 'success'", () => {
+    const { analisis } = analyze([gasto("2026-09-10", 1000)]);
+    expect(analisis.gasto_mes_actual).toBe(0);
+    expect(analisis.alertas).toEqual([
+      expect.objectContaining({
+        nivel: "info",
+        titulo: "Todavia no registraste gastos este mes",
+      }),
+    ]);
+  });
+
+  it("con gastos este mes y sin alertas: success", () => {
+    const { analisis } = analyze([gasto("2026-11-02", 1000)]);
+    expect(analisis.alertas).toEqual([
+      expect.objectContaining({ nivel: "success" }),
+    ]);
+  });
+
   it.each([
     [0, null, "bajo"],
     [0, 11, "medio"],

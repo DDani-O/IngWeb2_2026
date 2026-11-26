@@ -1,7 +1,7 @@
 /**
  * mockServer.js - Backend simulado con el mismo contrato que la API NestJS.
  *
- * APIClient lo usa cuando API_CONFIG.DRIVER = "mock". Recibe { method, path, query, body, token }
+ * APIClient lo usa con el driver "mock" (ver API_CONFIG.DRIVERS). Recibe { method, path, query, body, token }
  * y devuelve { status, body } con los cuerpos en español definidos en
  * especificaciones/EspecificacionDesarrolloFront.md §10. Los datos se guardan en localStorage
  * para que sobrevivan a la navegación y a la recarga.
@@ -216,6 +216,11 @@ function validateExpense(body, { partial = false } = {}) {
 
   if (body.fecha_gasto !== undefined && !isRealDate(body.fecha_gasto)) {
     throw new HttpError(422, "VALIDACION", "La fecha debe tener formato AAAA-MM-DD.", { campos: ["fecha_gasto"] });
+  }
+
+  // Como el back: no se aceptan fechas posteriores a hoy (el back usa APP_TIMEZONE; el mock, la hora local).
+  if (body.fecha_gasto !== undefined && body.fecha_gasto > toIsoDate(new Date())) {
+    throw new HttpError(422, "VALIDACION", "La fecha no puede ser posterior a hoy.", { campos: ["fecha_gasto"] });
   }
 
   if (body.categoria_id !== undefined && !db.categorias_de_gasto.some((item) => item.id === body.categoria_id)) {

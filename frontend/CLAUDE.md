@@ -24,7 +24,7 @@ Antes de escribir código leer `PrincipiosDesarrollo.md` (SOLID, nomenclatura, a
 - Rutas, eventos, timeouts y magic numbers van a `utils/constants.js` (todo timeout UI en `UI_TIMING`).
 - CSS: todo espaciado, tamaño de fuente, radio y color sale de los tokens de `global.css` (`--space-*`, `--font-size-*`, `--radius-*`, colores de tema); BEM simple; sin estilos inline; componentes nuevos mobile-first (`min-width`). Reglas y breakpoints: `ReglasCSS.md`. Valores de layout repetidos → token global. Overlays con `env(safe-area-inset-bottom)`; alturas con `clamp()`.
 - JSDoc en métodos públicos; métodos privados con prefijo `_`; manejo de errores con `try/catch`; sin `console.log` sobrante.
-- Para usar el backend real: `API_CONFIG.DRIVER = "http"` (o `localStorage.setItem("fintrack.apiDriver", "http")` para probar) y completar `API_CONFIG.BASE_URLS`. Ninguna página cambia.
+- Driver por entorno (`API_CONFIG.DRIVERS`): en producción (cualquier host que no sea localhost) siempre `http` contra `API_CONFIG.BASE_URLS.production`; en local, `mock` por defecto. Para usar el back local: `localStorage.setItem("fintrack.apiDriver", "http")` y recargar (`"mock"` para volver). Ninguna página cambia.
 
 ## Verificación
 

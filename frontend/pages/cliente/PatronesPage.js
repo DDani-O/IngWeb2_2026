@@ -57,7 +57,7 @@ export class PatronesPage extends PageController {
         tone: "info",
         emoji: "🏪",
         title: `Tu comercio mas frecuente es ${analysis.mostFrequentMerchant.merchant}`,
-        description: `Registraste ${analysis.mostFrequentMerchant.count} compras ahi.`,
+        description: `Registraste ${analysis.mostFrequentMerchant.count} ${analysis.mostFrequentMerchant.count === 1 ? "compra" : "compras"} ahi.`,
       });
     }
 
@@ -70,20 +70,25 @@ export class PatronesPage extends PageController {
       });
     }
 
-    insights.push(
-      analysis.unusualExpenses.length
-        ? { tone: "warning", emoji: "⚠️", title: `${analysis.unusualExpenses.length} gasto(s) inusual(es) este mes`, description: "Revisalos en la seccion de gastos inusuales." }
-        : { tone: "success", emoji: "✅", title: "Sin gastos inusuales", description: "Tus gastos recientes estan dentro de tu patron habitual." }
-    );
+    if (!analysis.expenseCount) {
+      // Sin gastos en el período no hay patrón que evaluar: nada de "todo en orden".
+      insights.push({ tone: "info", emoji: "💡", title: "Todavia no hay gastos en el periodo analizado", description: "Carga gastos (manuales o con un ticket) para ver tus patrones de consumo." });
+    } else {
+      insights.push(
+        analysis.unusualExpenses.length
+          ? { tone: "warning", emoji: "⚠️", title: `${analysis.unusualExpenses.length} gasto(s) inusual(es) en los ultimos 30 dias`, description: "Revisalos en la seccion de gastos inusuales." }
+          : { tone: "success", emoji: "✅", title: "Sin gastos inusuales", description: "Tus gastos recientes estan dentro de tu patron habitual." }
+      );
+    }
 
     this.element.querySelector("#patternsInsights").innerHTML = html`${insights.map((insight) => alertItem(insight))}`;
   }
 
   _renderStats(analysis) {
     this.element.querySelector("#patternsStats").innerHTML = html`
-      ${statCard({ label: "Gasto promedio mensual", emoji: "📊", value: analysis.monthlyAverage, format: "currency", subtitle: "Meses completos anteriores" })}
+      ${statCard({ label: "Gasto promedio mensual", emoji: "📊", value: analysis.monthlyAverage, format: "currency", subtitle: "Meses completos anteriores con gastos" })}
       ${statCard({ label: "Gasto del mes", emoji: "💸", value: analysis.totalThisMonth, format: "currency", subtitle: "Mes en curso", trend: { value: analysis.changeVsPreviousMonth, label: "vs. mes anterior" } })}
-      ${statCard({ label: "Dia de mayor gasto", emoji: "📅", value: analysis.peakWeekday === null ? "--" : formatWeekday(analysis.peakWeekday), format: "text", subtitle: "Acumulado historico" })}
+      ${statCard({ label: "Dia de mayor gasto", emoji: "📅", value: analysis.peakWeekday === null ? "--" : formatWeekday(analysis.peakWeekday), format: "text", subtitle: "Periodo analizado" })}
       ${statCard({ label: "Gastos inusuales", emoji: "🔎", value: analysis.unusualExpenses.length, subtitle: "Ultimos 30 dias" })}
     `;
   }

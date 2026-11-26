@@ -5,14 +5,20 @@ export const APP_CONFIG = {
 };
 
 /**
- * Configuración de la API.
- * - DRIVER: "mock" usa el backend simulado de mocks/ (mismo contrato que NestJS); "http" usa fetch.
- *   Para probar sin tocar código: localStorage.setItem("fintrack.apiDriver", "http").
- * - BASE_URLS: se elige "local" cuando el front corre en localhost; si no, "production"
- *   (completar con la URL pública del backend al hacer el deploy).
+ * Configuración de la API. El entorno se deduce del host: "local" si el front corre en
+ * localhost/127.0.0.1, "production" en cualquier otro (el deploy).
+ * - DRIVERS: "mock" usa el backend simulado de mocks/ (mismo contrato que NestJS, para demos
+ *   sin conexión); "http" usa fetch contra la API real.
+ *   - production: siempre "http" (no se puede pisar desde el navegador).
+ *   - local: "mock" por defecto; para probar contra el back local sin tocar código:
+ *     localStorage.setItem("fintrack.apiDriver", "http") y recargar (o "mock" para volver).
+ * - BASE_URLS: URL de la API por entorno (production = la URL pública del backend).
  */
 export const API_CONFIG = {
-  DRIVER: "mock",
+  DRIVERS: {
+    local: "mock",
+    production: "http",
+  },
   BASE_URLS: {
     local: "http://localhost:3000/api/v1",
     production: "",

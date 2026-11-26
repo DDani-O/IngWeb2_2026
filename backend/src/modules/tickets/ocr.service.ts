@@ -45,21 +45,57 @@ Reglas importantes:
 - Si el ticket no es legible o está muy borroso, confianza < 30
 - Responde ÚNICAMENTE el JSON puro, sin markdown, sin explicaciones`;
 
-const GROQ_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
+/**
+ * Modelo de Groq con visión que se usa si no se configura `GROQ_MODEL`.
+ * Groq retira modelos sin aviso en el código (el 17/07/2026 dio de baja
+ * `meta-llama/llama-4-scout-17b-16e-instruct`): por eso es configurable.
+ * Los modelos con imagen de la cuenta se listan con GET /openai/v1/models.
+ */
+export const DEFAULT_GROQ_MODEL = "qwen/qwen3.8-27b";
+
+/**
+ * Convierte el monto que devuelve el modelo en un número con hasta 2 decimales.
+ * - Si ya es number, se usa tal cual.
+ * - Si es texto, el último `.` o `,` seguido de 1 o 2 dígitos al final es el separador
+ *   decimal y los demás separadores son de miles: "1.500,50" y "1,500.50" → 1500.5;
+ *   "35.537" → 35537 (tres dígitos: es separador de miles).
+ * Devuelve null si no es un monto positivo.
+ */
+export function parseMonto(value: unknown): number | null {
+  let amount: number;
+  if (typeof value === "number") {
+    amount = value;
+  } else if (typeof value === "string") {
+    const clean = value.replace(/\s/g, "").replace(/\$|ARS/gi, "");
+    if (!/^-?[\d.,]+$/.test(clean)) return null;
+    const decimal = clean.match(/^(.*)[.,](\d{1,2})$/);
+    const normalized = decimal
+      ? `${decimal[1].replace(/[.,]/g, "") || "0"}.${decimal[2]}`
+      : clean.replace(/[.,]/g, "");
+    amount = Number(normalized);
+  } else {
+    return null;
+  }
+  if (!Number.isFinite(amount) || amount <= 0) return null;
+  return Math.round(amount * 100) / 100;
+}
 
 @Injectable()
 export class OcrService {
   private readonly logger = new Logger(OcrService.name);
   private client: OpenAI | null = null;
+  private readonly model: string;
 
   constructor(private readonly configService: ConfigService) {
+    this.model =
+      this.configService.get<string>("GROQ_MODEL") || DEFAULT_GROQ_MODEL;
     const apiKey = this.configService.get<string>("GROQ_API_KEY");
     if (apiKey) {
       this.client = new OpenAI({
         apiKey,
         baseURL: "https://api.groq.com/openai/v1",
       });
-      this.logger.log(`Groq Vision inicializado (${GROQ_MODEL})`);
+      this.logger.log(`Groq Vision inicializado (${this.model})`);
     } else {
       this.logger.warn(
         "GROQ_API_KEY no configurada. El OCR no estará disponible.",
@@ -89,7 +125,7 @@ export class OcrService {
     );
 
     const response = await this.client.chat.completions.create({
-      model: GROQ_MODEL,
+      model: this.model,
       messages: [
         {
           role: "user",
@@ -124,7 +160,7 @@ export class OcrService {
     return {
       comercio_detectado: this.extractString(parsed.comercio),
       fecha_detectada: this.extractDate(parsed.fecha),
-      monto_detectado: this.extractMonto(parsed.monto_total),
+      monto_detectado: parseMonto(parsed.monto_total),
       categoria_sugerida: this.extractCategory(parsed.categoria),
       confianza_general: this.extractConfianza(parsed.confianza),
       texto_extraido: this.extractString(parsed.texto_extraido),
@@ -145,19 +181,6 @@ export class OcrService {
     if (!match) return null;
     const date = new Date(match[0]);
     return isNaN(date.getTime()) ? null : match[0];
-  }
-
-  private extractMonto(value: unknown): number | null {
-    if (value == null) return null;
-    const str = String(value)
-      .replace(/\s/g, "")
-      .replace(/\$|ARS/gi, "")
-      .trim();
-    if (str === "" || str === "null") return null;
-    const normalized = str.replace(/\./g, "").replace(",", ".");
-    const num = parseFloat(normalized);
-    if (isNaN(num) || num <= 0) return null;
-    return Math.round(num * 100) / 100;
   }
 
   private extractCategory(value: unknown): string | null {

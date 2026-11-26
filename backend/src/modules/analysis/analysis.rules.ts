@@ -153,18 +153,23 @@ export function assignSpendingProfile(
   };
 }
 
+/**
+ * Alertas del análisis. `expenseCount` es la cantidad de gastos del período analizado:
+ * sin gastos en el período o en el mes en curso no se muestra el "todo en orden" (success),
+ * para no felicitar a un cliente con todos los indicadores en $0.
+ */
 function buildAlerts(
   unusual: GastoInusual[],
   variation: number | null,
   expenseCount: number,
+  totalThisMonth: number,
 ): Alerta[] {
   if (!expenseCount) {
     return [
       {
         nivel: "info",
-        titulo: "Todavia no registraste gastos",
-        descripcion:
-          "Carga tu primer gasto (manual o con un ticket) para ver tu analisis.",
+        titulo: "Sin gastos en el periodo analizado",
+        descripcion: `No hay gastos registrados en los ultimos ${MONTHS_IN_SERIES} meses. Carga un gasto (manual o con un ticket) para ver tu analisis.`,
       },
     ];
   }
@@ -182,6 +187,14 @@ function buildAlerts(
       nivel: "warning",
       titulo: "Gastas mas que el mes pasado",
       descripcion: `A esta altura del mes llevas un ${variation}% mas que en el mismo periodo del mes anterior.`,
+    });
+  }
+  if (!alerts.length && !totalThisMonth) {
+    alerts.push({
+      nivel: "info",
+      titulo: "Todavia no registraste gastos este mes",
+      descripcion:
+        "Cuando cargues los gastos del mes vas a ver como venis respecto del mes anterior.",
     });
   }
   if (!alerts.length) {
@@ -241,6 +254,14 @@ export function computeClientAnalysis(input: ClientAnalysisInput): {
   const months = monthKeysUntil(today, MONTHS_IN_SERIES);
   const currentMonth = months[months.length - 1];
   const previousMonth = months[months.length - 2];
+  // Período analizado (el `periodo` de la respuesta): las distribuciones, el ranking y los
+  // conteos se calculan sobre él, igual que la serie mensual. El historial completo solo
+  // se usa como base de los gastos inusuales.
+  const periodStart = `${months[0]}-01`;
+  const periodExpenses = expenses.filter(
+    (expense) =>
+      expense.fecha_gasto >= periodStart && expense.fecha_gasto <= today,
+  );
 
   const byMonth = sumBy(expenses, (expense) => monthKey(expense.fecha_gasto));
   const totalThisMonth = byMonth.get(currentMonth) ?? 0;
@@ -266,8 +287,10 @@ export function computeClientAnalysis(input: ClientAnalysisInput): {
       ) / completedMonths.length
     : totalThisMonth;
 
-  const total = sum(expenses);
-  const byCategory = [...sumBy(expenses, (expense) => expense.categoria_id)]
+  const total = sum(periodExpenses);
+  const byCategory = [
+    ...sumBy(periodExpenses, (expense) => expense.categoria_id),
+  ]
     .map(([categoryId, amount]) => ({
       categoria_id: categoryId,
       categoria: nameOf(categoryId),
@@ -303,7 +326,7 @@ export function computeClientAnalysis(input: ClientAnalysisInput): {
     string,
     { comercio: string; monto: number; cantidad: number }
   >();
-  expenses.forEach((expense) => {
+  periodExpenses.forEach((expense) => {
     const entry = merchants.get(expense.comercio) ?? {
       comercio: expense.comercio,
       monto: 0,
@@ -321,7 +344,7 @@ export function computeClientAnalysis(input: ClientAnalysisInput): {
     [...merchants.values()].sort((a, b) => b.cantidad - a.cantidad)[0] ?? null;
 
   // Días de la semana en orden 0..6; ante empate gana el primero (igual que el mock).
-  const byWeekday = sumBy(expenses, (expense) =>
+  const byWeekday = sumBy(periodExpenses, (expense) =>
     String(weekday(expense.fecha_gasto)),
   );
   const peakWeekday = [...byWeekday]
@@ -338,12 +361,12 @@ export function computeClientAnalysis(input: ClientAnalysisInput): {
 
   const analisis: Analisis = {
     cliente_id: clientId,
-    periodo: { desde: `${months[0]}-01`, hasta: today },
+    periodo: { desde: periodStart, hasta: today },
     gasto_mes_actual: round(totalThisMonth),
     gasto_mes_anterior_a_la_fecha: round(previousToDate),
     variacion_mes_anterior: variation,
     gasto_promedio_mensual: round(monthlyAverage),
-    cantidad_gastos: expenses.length,
+    cantidad_gastos: periodExpenses.length,
     categoria_dominante: byCategory[0]
       ? {
           id: byCategory[0].categoria_id,
@@ -364,7 +387,12 @@ export function computeClientAnalysis(input: ClientAnalysisInput): {
     gastos_por_dia: byDay,
     ranking_comercios: ranking,
     gastos_inusuales: unusual,
-    alertas: buildAlerts(unusual, variation, expenses.length),
+    alertas: buildAlerts(
+      unusual,
+      variation,
+      periodExpenses.length,
+      totalThisMonth,
+    ),
     perfil_de_gasto: asignacion?.perfil ?? null,
     nivel_riesgo: riskLevel(unusual.length, variation),
     ultimo_gasto_fecha:

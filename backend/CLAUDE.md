@@ -1,6 +1,6 @@
 # Backend — NestJS + Supabase
 
-Estado: implementa todo el contrato de la spec §10 (fases I2 e I3 de `../especificaciones/PlanIntegracionBackend.md`). Quedan la alineación del front (I4), la prueba contra Supabase (I5) y el deploy (I6).
+Estado: implementa todo el contrato de la spec §10 y está probado contra Supabase con el front (fases I2–I5 de `../especificaciones/PlanIntegracionBackend.md`). Queda el deploy (I6).
 
 ## Estructura
 
@@ -10,7 +10,7 @@ Estado: implementa todo el contrato de la spec §10 (fases I2 e I3 de `../especi
 - `src/modules/<dominio>/` — `auth` (también `/auth/me` y `/auth/profile`), `users` (arma el objeto `usuario`; sin rutas propias), `categories` (catálogos), `expenses`, `tickets` (Storage + `ocr.service.ts` con Groq), `recommendations`, `analysis` y `clients`. Cada uno con `*.module.ts`, `*.controller.ts`, `*.service.ts`, `dto/`; los objetos del contrato se arman en un mapper o función `to*` por dominio.
 - `src/modules/analysis/` — `analysis.rules.ts` (reglas de la spec §10.6 como funciones puras, port exacto de `../frontend/mocks/analytics.js`; tests en `analysis.rules.spec.ts`), `calendar.ts` (fechas `AAAA-MM-DD` y "hoy" en `APP_TIMEZONE`) y `analysis.service.ts` (lee de Supabase, aplica las reglas y sincroniza `clasificacion_de_perfil` solo cuando cambia el perfil).
 - `test/e2e/` — tests e2e con Jest + Supertest contra un Supabase real; `test-utils.ts` levanta la app con `configureApp`, registra cuentas y limpia los datos.
-- `database/` — `migrations/0001..0015` (se ejecutan en orden en el SQL Editor de Supabase), `functions/` y `policies/` (referencia separada por archivo), `seeds/`, `DB_SCHEMA_SUMMARY.md`, `database.types.ts`. Tablas en español; leer el esquema antes de escribir DTOs. Cambios de esquema → migración nueva `00NN_*.sql`, nunca editar una ya aplicada.
+- `database/` — `migrations/0001..0017` (se ejecutan en orden en el SQL Editor de Supabase; la base de producción está al día con la `0017`), `functions/` y `policies/` (referencia separada por archivo), `seeds/` (`seed_demo_jun_nov_2026.sql`: datos de la demo, idempotente), `DB_SCHEMA_SUMMARY.md`, `database.types.ts`. Tablas en español; leer el esquema antes de escribir DTOs. Cambios de esquema → migración nueva `00NN_*.sql`, nunca editar una ya aplicada.
 
 ## Convenciones
 
@@ -18,7 +18,7 @@ Estado: implementa todo el contrato de la spec §10 (fases I2 e I3 de `../especi
 - El `id` del usuario nunca viene del body: siempre del JWT (`@CurrentUser()`). Endpoints por rol con `@UseGuards(JwtAuthGuard, RolesGuard)` + `@Roles(...)`; roles `cliente` y `asesor`.
 - El back usa el service role de Supabase (saltea RLS): la autorización y el control de pertenencia se hacen en los servicios Nest.
 - Validación de entrada con DTOs + `class-validator`, con mensaje en español en cada regla (la primera regla declarada es la que se informa). Errores de negocio con los helpers de `common/errors`, nunca con las excepciones de Nest con texto suelto; el detalle técnico va al `Logger`, no a la respuesta.
-- Configuración por variables de entorno (`@nestjs/config`): `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_KEY`, `JWT_SECRET`, `JWT_EXPIRATION`, `GROQ_API_KEY`, `PORT`, `FRONTEND_URL` y, opcional, `APP_TIMEZONE` (por defecto `America/Argentina/Buenos_Aires`). Mantener `.env.example` versionado con esas claves; el `.env` real nunca se commitea.
+- Configuración por variables de entorno (`@nestjs/config`): `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_KEY`, `JWT_SECRET`, `JWT_EXPIRATION`, `GROQ_API_KEY`, `PORT`, `FRONTEND_URL` y, opcionales, `GROQ_MODEL` (modelo de Groq con visión; por defecto `qwen/qwen3.8-27b`, ver `DEFAULT_GROQ_MODEL` en `ocr.service.ts`; Groq retira modelos, así que si el OCR empieza a dar 404 hay que listar los de la cuenta con `GET https://api.groq.com/openai/v1/models` y elegir uno con `image` en `input_modalities`) y `APP_TIMEZONE` (por defecto `America/Argentina/Buenos_Aires`). Mantener `.env.example` versionado con esas claves; el `.env` real nunca se commitea.
 
 ## Comandos
 

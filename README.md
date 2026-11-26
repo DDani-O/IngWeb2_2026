@@ -57,7 +57,7 @@ SPA con ES modules nativos, sin bundler ni frameworks de componentes. Bootstrap 
 | Backend simulado | `mocks/` | Implementa el contrato completo (tokens, roles, validaciones, errores) y calcula el análisis de consumo. Persiste en `localStorage`. |
 | Estilos | `assets/css/`, `components/**/*.css` | Tokens (escalas de espaciado y tipografía, colores por tema), componentes mobile-first. Reglas: [ReglasCSS.md](frontend/ReglasCSS.md). |
 
-Decisiones clave: todo el texto que viene de la API se escapa por defecto (`utils/html.js`); el guard de rutas es de experiencia de usuario y la seguridad la impone el backend con el token; pasar del mock a la API real es cambiar `API_CONFIG.DRIVER` sin tocar páginas ni servicios.
+Decisiones clave: todo el texto que viene de la API se escapa por defecto (`utils/html.js`); el guard de rutas es de experiencia de usuario y la seguridad la impone el backend con el token; el mock y la API real son dos drivers de `APIClient` que se eligen por entorno (`API_CONFIG.DRIVERS`), sin tocar páginas ni servicios.
 
 ### Backend (`backend/`)
 
@@ -161,7 +161,14 @@ También se puede registrar una cuenta nueva desde la landing (los clientes nuev
 
 **Backend simulado.** Mientras la API no esté lista, `APIClient` usa `frontend/mocks/mockServer.js`. Los datos (8 clientes con 7 meses de gastos generados a partir de la fecha actual, recomendaciones, asignaciones) se guardan en `localStorage` con la clave `fintrack.mockDb`; para volver a los datos iniciales, borrar esa clave desde las herramientas del navegador. Aplica las mismas validaciones que la API; para probar un ticket que la IA no puede leer, subir una imagen con "ilegible" en el nombre.
 
-**Conectar la API real.** En `frontend/utils/constants.js`: `API_CONFIG.DRIVER = "http"` y completar `API_CONFIG.BASE_URLS` (`local` para `localhost`, `production` para el dominio del deploy). Para probar sin tocar código: en la consola, `localStorage.setItem("fintrack.apiDriver", "http")` y recargar.
+**Mock o API real.** El front elige solo según dónde corre (`API_CONFIG` en `frontend/utils/constants.js`):
+
+| Dónde | Driver | API |
+|---|---|---|
+| Deploy (cualquier host que no sea `localhost`) | Siempre `http` (no se puede cambiar desde el navegador) | `API_CONFIG.BASE_URLS.production` |
+| `localhost` / `127.0.0.1` | `mock` por defecto (demo sin conexión) | `API_CONFIG.BASE_URLS.local` = `http://localhost:3000/api/v1` |
+
+Para usar la API local con el backend levantado: en la consola del navegador, `localStorage.setItem("fintrack.apiDriver", "http")` y recargar; para volver al mock, `"mock"`. Con el driver `http` se entra con las cuentas reales de Supabase, no con las del mock.
 
 ### Backend
 

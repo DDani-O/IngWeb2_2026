@@ -15,17 +15,22 @@ export class ApiError extends Error {
   }
 }
 
+const isLocalHost = () => ["localhost", "127.0.0.1"].includes(window.location.hostname);
+
 /**
- * Resuelve el driver activo: override en localStorage (para pruebas) o API_CONFIG.DRIVER.
+ * Resuelve el driver activo según el entorno (API_CONFIG.DRIVERS). En local se puede pisar
+ * con localStorage ("fintrack.apiDriver" = "http" | "mock"); en producción siempre es "http".
  */
 function resolveDriver() {
+  if (!isLocalHost()) {
+    return API_CONFIG.DRIVERS.production;
+  }
   const override = localStorage.getItem(STORAGE_KEYS.API_DRIVER);
-  return override === "http" || override === "mock" ? override : API_CONFIG.DRIVER;
+  return override === "http" || override === "mock" ? override : API_CONFIG.DRIVERS.local;
 }
 
 function resolveBaseUrl() {
-  const isLocal = ["localhost", "127.0.0.1"].includes(window.location.hostname);
-  return isLocal ? API_CONFIG.BASE_URLS.local : API_CONFIG.BASE_URLS.production;
+  return isLocalHost() ? API_CONFIG.BASE_URLS.local : API_CONFIG.BASE_URLS.production;
 }
 
 export class APIClient {

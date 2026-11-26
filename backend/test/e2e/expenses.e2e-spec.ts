@@ -7,6 +7,11 @@ import {
   registerAccount,
   TestAccount,
 } from "./test-utils";
+import {
+  addDays,
+  DEFAULT_TIMEZONE,
+  todayIn,
+} from "../../src/modules/analysis/calendar";
 
 /**
  * CRUD de gastos del cliente (spec §10.3).
@@ -139,6 +144,44 @@ describe("Gastos (e2e)", () => {
       .set(auth(cliente))
       .expect(200);
     expect(rango.body.total).toBe(1);
+  });
+
+  it("rechaza fecha_gasto posterior a hoy en APP_TIMEZONE (alta y edición) y acepta hoy", async () => {
+    const hoy = todayIn(process.env.APP_TIMEZONE || DEFAULT_TIMEZONE);
+    const manana = addDays(hoy, 1);
+    const gasto = { comercio: "X", monto: 10, categoria_id: categoriaId };
+
+    const alta = await api(app)
+      .post("/expenses")
+      .set(auth(cliente))
+      .send({ ...gasto, fecha_gasto: manana })
+      .expect(422);
+    expect(alta.body).toMatchObject({
+      codigo: "VALIDACION",
+      mensaje: "La fecha no puede ser posterior a hoy.",
+      detalles: { campos: ["fecha_gasto"] },
+    });
+
+    const lejana = await api(app)
+      .post("/expenses")
+      .set(auth(cliente))
+      .send({ ...gasto, fecha_gasto: "2099-01-01" })
+      .expect(422);
+    expect(lejana.body.detalles.campos).toEqual(["fecha_gasto"]);
+
+    const edicion = await api(app)
+      .put(`/expenses/${gastoId}`)
+      .set(auth(cliente))
+      .send({ fecha_gasto: manana })
+      .expect(422);
+    expect(edicion.body.detalles.campos).toEqual(["fecha_gasto"]);
+
+    const deHoy = await api(app)
+      .post("/expenses")
+      .set(auth(cliente))
+      .send({ ...gasto, fecha_gasto: hoy })
+      .expect(201);
+    expect(deHoy.body.fecha_gasto).toBe(hoy);
   });
 
   it("PUT /expenses/:id recategoriza y ignora origen", async () => {

@@ -14,7 +14,7 @@ import { statCard } from "./statCard.js";
 export function analysisStats(analysis) {
   return html`
     ${statCard({ label: "Gasto del mes", emoji: "💸", value: analysis.totalThisMonth, format: "currency", subtitle: "Mes en curso", trend: { value: analysis.changeVsPreviousMonth, label: "vs. mismo periodo del mes anterior" } })}
-    ${statCard({ label: "Promedio mensual", emoji: "📊", value: analysis.monthlyAverage, format: "currency", subtitle: "Ultimos 6 meses" })}
+    ${statCard({ label: "Promedio mensual", emoji: "📊", value: analysis.monthlyAverage, format: "currency", subtitle: "Meses completos anteriores con gastos" })}
     ${statCard({ label: "Categoria principal", emoji: "🏷️", value: analysis.dominantCategory?.name || "--", format: "text", subtitle: analysis.dominantCategory ? `${analysis.dominantCategory.percentage}% de los gastos` : "Sin gastos registrados" })}
     ${statCard({ label: "Gastos inusuales", emoji: "🔎", value: analysis.unusualExpenses.length, subtitle: "Ultimos 30 dias" })}
   `;
@@ -26,7 +26,9 @@ export function analysisStats(analysis) {
  * @param {{categoryLink?: object}} options
  */
 export function analysisCharts(analysis, { categoryLink = null } = {}) {
-  const average = analysis.byMonth.length ? analysis.byMonth.reduce((sum, item) => sum + item.amount, 0) / analysis.byMonth.length : 0;
+  // La línea de promedio es el mismo `gasto_promedio_mensual` del KPI (spec §10.6), no un
+  // promedio simple de la serie: así los dos números que se ven en pantalla coinciden.
+  const average = analysis.monthlyAverage || 0;
 
   return {
     daily: {
