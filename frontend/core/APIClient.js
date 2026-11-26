@@ -53,8 +53,11 @@ export class APIClient {
     return this._request("GET", endpoint, { query });
   }
 
-  async post(endpoint, data = {}) {
-    return this._request("POST", endpoint, { data });
+  /**
+   * @param {object} [options] - `timeoutMs` para pedidos que tardan más (carga de tickets).
+   */
+  async post(endpoint, data = {}, { timeoutMs } = {}) {
+    return this._request("POST", endpoint, { data, timeoutMs });
   }
 
   async put(endpoint, data = {}) {
@@ -68,7 +71,7 @@ export class APIClient {
   /**
    * Punto único de red: arma el pedido, aplica el driver y normaliza respuestas y errores.
    */
-  async _request(method, endpoint, { query = {}, data = null } = {}) {
+  async _request(method, endpoint, { query = {}, data = null, timeoutMs = this.timeoutMs } = {}) {
     const path = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
     const cleanQuery = Object.fromEntries(
       Object.entries(query || {}).filter(([, value]) => value !== undefined && value !== null && value !== "")
@@ -78,7 +81,7 @@ export class APIClient {
     const { status, body } =
       this.driver === "mock"
         ? await this._mockRequest(method, path, cleanQuery, data, token)
-        : await this._httpRequest(method, path, cleanQuery, data, token);
+        : await this._httpRequest(method, path, cleanQuery, data, token, timeoutMs);
 
     if (status >= 200 && status < 300) {
       return body;
@@ -109,7 +112,7 @@ export class APIClient {
     return this._mockHandler({ method, path, query, body: data, token });
   }
 
-  async _httpRequest(method, path, query, data, token) {
+  async _httpRequest(method, path, query, data, token, timeoutMs = this.timeoutMs) {
     if (!this.baseUrl) {
       throw new ApiError({ code: "SIN_CONFIGURAR", message: "Falta configurar la URL del backend (API_CONFIG.BASE_URLS)." });
     }
@@ -127,7 +130,7 @@ export class APIClient {
     }
 
     const controller = new AbortController();
-    const timeoutId = window.setTimeout(() => controller.abort(), this.timeoutMs);
+    const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
 
     try {
       const response = await fetch(url, {

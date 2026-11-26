@@ -24,7 +24,7 @@ export class RecommendationForm extends Component {
           ${formField({ id: id("title"), name: "title", label: "Titulo", required: true, inputAttrs: { maxlength: 120 } })}
           ${formField({ id: id("type"), name: "type", label: "Tipo", type: "select", required: true, width: "half", placeholderOption: "Seleccionar tipo", options: RECOMMENDATION_TYPES })}
           ${formField({ id: id("priority"), name: "priority", label: "Prioridad", type: "select", required: true, width: "half", value: "media", options: RECOMMENDATION_PRIORITIES })}
-          ${formField({ id: id("message"), name: "message", label: "Mensaje", type: "textarea", required: true, inputAttrs: { rows: 4 } })}
+          ${formField({ id: id("message"), name: "message", label: "Mensaje", type: "textarea", required: true, inputAttrs: { rows: 4, maxlength: 2000 } })}
         `)}
         <div class="recommendation-form__actions">
           ${button({ label: busy ? "Enviando..." : "Guardar y enviar", type: "submit", icon: "fa-paper-plane", disabled: busy })}

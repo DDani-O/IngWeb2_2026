@@ -10,9 +10,9 @@ import { buildHash } from "../../utils/helpers.js";
 const ADVISOR_PROFILE_FIELDS = [
   { name: "fullName", label: "Nombre completo", required: true, width: "half", inputAttrs: { maxlength: 120, autocomplete: "name" } },
   { name: "email", label: "Email", type: "email", readonly: true, width: "half", hint: "Es el email de acceso a la cuenta." },
-  { name: "specialty", label: "Especialidad", required: true, width: "half" },
-  { name: "licenseNumber", label: "Matricula", required: true, width: "half" },
-  { name: "description", label: "Descripcion profesional", type: "textarea", inputAttrs: { rows: 3 } },
+  { name: "specialty", label: "Especialidad", required: true, width: "half", inputAttrs: { maxlength: 120 } },
+  { name: "licenseNumber", label: "Matricula", required: true, width: "half", inputAttrs: { maxlength: 60 } },
+  { name: "description", label: "Descripcion profesional", type: "textarea", inputAttrs: { rows: 3, maxlength: 500 } },
 ];
 
 /**

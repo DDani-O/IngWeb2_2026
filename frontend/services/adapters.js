@@ -153,6 +153,8 @@ export function toTicketAnalysis(apiResult) {
   return {
     ticketId: apiResult.ticket?.id || null,
     fileName: apiResult.ticket?.nombre_archivo || "",
+    // false si la IA no pudo leer la imagen (analisis: null): el ticket queda guardado igual.
+    recognized: Boolean(apiResult.analisis),
     merchant: analysis.comercio_detectado || "",
     date: analysis.fecha_detectada || "",
     amount: analysis.monto_detectado ?? null,

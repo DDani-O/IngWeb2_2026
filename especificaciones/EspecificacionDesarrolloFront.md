@@ -601,7 +601,7 @@ DashboardPage {
 
 ## 10. ENDPOINTS DEL BACKEND
 
-> Contrato definitivo, fijado en la fase I1 de `PlanIntegracionBackend.md` (confirma la decisión 6 de `DiagnosticoRefactor.md` §6). Es la fuente de verdad para los tres lados: el backend NestJS (`backend/src/modules/`) lo implementa, el front lo consume desde `frontend/services/*.service.js` y lo traduce al modelo de la UI en `frontend/services/adapters.js`, y el backend simulado `frontend/mocks/mockServer.js` lo replica para trabajar sin conexión. Hasta terminar la fase I4 el backend todavía expone otro contrato: §10.8 detalla qué cambia en cada endpoint.
+> Contrato definitivo, fijado en la fase I1 de `PlanIntegracionBackend.md` (confirma la decisión 6 de `DiagnosticoRefactor.md` §6). Es la fuente de verdad para los tres lados: el backend NestJS (`backend/src/modules/`) lo implementa, el front lo consume desde `frontend/services/*.service.js` y lo traduce al modelo de la UI en `frontend/services/adapters.js`, y el backend simulado `frontend/mocks/mockServer.js` lo replica para trabajar sin conexión. Desde la fase I4 los tres lados implementan este contrato (§10.8 registra qué cambió en el backend heredado).
 
 ### Convenciones
 
@@ -711,7 +711,7 @@ Validaciones: `comercio` obligatorio (hasta 100 caracteres), `monto > 0` con has
 |---|---|---|---|
 | POST | `/tickets/upload` | `multipart/form-data` con el campo `archivo` (imagen JPEG, PNG o WebP de hasta 5 MB; si no, 422) | **201** `{ ticket: { id, nombre_archivo, estado_procesamiento }, analisis: { comercio_detectado, fecha_detectada, monto_detectado, categoria_sugerida: { id, nombre } \| null, confianza_general } }` |
 
-Flujo **en un solo paso** (decisión de la fase I1): el backend sube la imagen a Supabase Storage (`tickets`), la envía al modelo de IA con visión, persiste el resultado (`analisis_ocr`) y lo devuelve en la misma respuesta. El cliente revisa y corrige el formulario precompletado y, al guardar, el front manda `POST /expenses` con `origen: "ticket"` y `ticket_id`. Con un `ticket_id`, `POST /expenses` valida que el ticket sea del cliente, guarda `ticket_principal_id`, `ocr_estado = procesado` y `ocr_confianza`, y vincula el `analisis_ocr` con el gasto creado (`gasto_id`). Si la IA no responde, el upload contesta igual con `analisis` en `null` y `estado_procesamiento = error`, y el cliente completa el formulario a mano. No hay endpoint de confirmación aparte.
+Flujo **en un solo paso** (decisión de la fase I1): el backend sube la imagen a Supabase Storage (`tickets`), la envía al modelo de IA con visión, persiste el resultado (`analisis_ocr`) y lo devuelve en la misma respuesta. El cliente revisa y corrige el formulario precompletado y, al guardar, el front manda `POST /expenses` con `origen: "ticket"` y `ticket_id`. Con un `ticket_id`, `POST /expenses` valida que el ticket sea del cliente, guarda `ticket_principal_id`, `ocr_estado` (`procesado` si hay análisis, `fallido` si la IA no pudo leerlo) y `ocr_confianza`, y vincula el `analisis_ocr` con el gasto creado (`gasto_id`). Si la IA no responde, el upload contesta igual con `analisis` en `null` y `estado_procesamiento = error`, y el cliente completa el formulario a mano (la pantalla lo avisa y el gasto queda igual asociado al ticket). En el backend simulado, un archivo con "ilegible" en el nombre simula esa falla. No hay endpoint de confirmación aparte.
 
 ### 10.5 Recomendaciones
 

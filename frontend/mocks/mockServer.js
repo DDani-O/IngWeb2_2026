@@ -140,7 +140,50 @@ function serializeClientSummary(user) {
   };
 }
 
-// ---------- Validaciones ----------
+// ---------- Validaciones (las mismas reglas que los DTOs del backend) ----------
+
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const TICKET_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const TICKET_MAX_BYTES = 5 * 1024 * 1024;
+/** Un archivo con esta palabra en el nombre simula que la IA no pudo leer el ticket. */
+const OCR_FAILURE_MARKER = "ilegible";
+/** Capacidad por defecto de un asesor (perfiles_asesores.capacidad_maxima). */
+const DEFAULT_ADVISOR_CAPACITY = 5;
+
+/** Como el ValidationPipe del backend (forbidNonWhitelisted): rechaza campos fuera del contrato. */
+function allowOnly(values, fields) {
+  const extra = Object.keys(values || {}).filter((field) => !fields.includes(field));
+  if (extra.length) {
+    throw new HttpError(422, "VALIDACION", `El campo ${extra[0]} no esta permitido.`, { campos: extra });
+  }
+}
+
+/** Fecha AAAA-MM-DD que además existe en el calendario. */
+function isRealDate(value) {
+  if (!DATE_PATTERN.test(String(value))) {
+    return false;
+  }
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
+}
+
+function checkMaxLength(body, field, max, label) {
+  if (body[field] !== undefined && body[field] !== null && String(body[field]).trim().length > max) {
+    throw new HttpError(422, "VALIDACION", `${label} no puede superar los ${max} caracteres.`, { campos: [field] });
+  }
+}
+
+/** Entero opcional entre min y max (query `limite`). */
+function checkLimit(query, max) {
+  if (query.limite === undefined) {
+    return;
+  }
+  const value = Number(query.limite);
+  if (!Number.isInteger(value) || value < 1 || value > max) {
+    throw new HttpError(422, "VALIDACION", `El limite debe ser un entero entre 1 y ${max}.`, { campos: ["limite"] });
+  }
+}
 
 function requireFields(body, fields) {
   const missing = fields.filter((field) => body?.[field] === undefined || body?.[field] === null || String(body[field]).trim() === "");
@@ -154,11 +197,24 @@ function validateExpense(body, { partial = false } = {}) {
     requireFields(body, ["comercio", "fecha_gasto", "monto", "categoria_id"]);
   }
 
-  if (body.monto !== undefined && !(Number(body.monto) > 0)) {
+  allowOnly(body, ["comercio", "fecha_gasto", "monto", "categoria_id", "descripcion", "origen", "ticket_id"]);
+  checkMaxLength(body, "comercio", 100, "El comercio");
+  checkMaxLength(body, "descripcion", 500, "La descripcion");
+
+  if (body.comercio !== undefined && !String(body.comercio).trim()) {
+    throw new HttpError(422, "VALIDACION", "El comercio es obligatorio.", { campos: ["comercio"] });
+  }
+
+  const decimals = (value) => (String(value).split(".")[1] || "").length;
+  if (body.monto !== undefined && (typeof body.monto !== "number" || !Number.isFinite(body.monto) || decimals(body.monto) > 2)) {
+    throw new HttpError(422, "VALIDACION", "El monto debe ser un numero con hasta 2 decimales.", { campos: ["monto"] });
+  }
+
+  if (body.monto !== undefined && !(body.monto > 0)) {
     throw new HttpError(422, "VALIDACION", "El monto debe ser mayor a cero.", { campos: ["monto"] });
   }
 
-  if (body.fecha_gasto !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(body.fecha_gasto)) {
+  if (body.fecha_gasto !== undefined && !isRealDate(body.fecha_gasto)) {
     throw new HttpError(422, "VALIDACION", "La fecha debe tener formato AAAA-MM-DD.", { campos: ["fecha_gasto"] });
   }
 
@@ -190,6 +246,30 @@ function assertAssignedClient(advisor, clientId) {
   }
 }
 
+/** Como obtener_asesor_disponible(): el asesor activo con menos clientes que todavía tiene lugar. */
+function findAvailableAdvisor() {
+  const activeClients = (advisorId) =>
+    db.asignaciones_de_clientes.filter((item) => item.asesor_id === advisorId && item.activo).length;
+
+  return db.usuarios
+    .filter((item) => item.rol === "asesor" && item.estado === "activo")
+    .map((advisor) => {
+      const profile = db.perfiles_asesores.find((item) => item.usuario_id === advisor.id);
+      return { advisor, load: activeClients(advisor.id), capacity: profile?.capacidad_maxima ?? DEFAULT_ADVISOR_CAPACITY };
+    })
+    .filter((candidate) => candidate.load < candidate.capacity)
+    .sort((a, b) => a.load - b.load)[0]?.advisor || null;
+}
+
+function assertUniqueLicense(matricula, exceptUserId = null) {
+  const taken = db.perfiles_asesores.some(
+    (item) => item.usuario_id !== exceptUserId && String(item.matricula).toLowerCase() === String(matricula).trim().toLowerCase()
+  );
+  if (taken) {
+    throw new HttpError(409, "MATRICULA_DUPLICADA", "La matricula ya esta registrada.");
+  }
+}
+
 function issueSession(user) {
   return { token: `${TOKEN_PREFIX}${user.id}`, usuario: serializeUser(user) };
 }
@@ -213,6 +293,17 @@ function simulateOcr(fileName) {
 
 /** GET /expenses (cliente) y GET /clients/:id/expenses (asesor): mismo filtrado y orden. */
 function listExpenses(clientId, query) {
+  allowOnly(query, ["busqueda", "categoria_id", "origen", "desde", "hasta", "orden", "limite"]);
+  checkLimit(query, 1000);
+  if (query.orden !== undefined && !["fecha", "monto_desc", "monto_asc"].includes(query.orden)) {
+    throw new HttpError(422, "VALIDACION", "El orden debe ser fecha, monto_desc o monto_asc.", { campos: ["orden"] });
+  }
+  ["desde", "hasta"].forEach((field) => {
+    if (query[field] !== undefined && !DATE_PATTERN.test(query[field])) {
+      throw new HttpError(422, "VALIDACION", "La fecha debe tener formato AAAA-MM-DD.", { campos: [field] });
+    }
+  });
+
   let items = db.gastos.filter((item) => item.cliente_id === clientId);
   const search = String(query.busqueda || "").toLowerCase();
 
@@ -242,6 +333,7 @@ const routes = [
   {
     method: "POST", path: "/auth/login", auth: false,
     handler: ({ body }) => {
+      allowOnly(body, ["email", "password"]);
       requireFields(body, ["email", "password"]);
       const user = db.usuarios.find((item) => item.email.toLowerCase() === String(body.email).toLowerCase());
       if (!user || user.password !== body.password) {
@@ -253,12 +345,22 @@ const routes = [
   {
     method: "POST", path: "/auth/register", auth: false,
     handler: ({ body }) => {
+      allowOnly(body, ["nombre_completo", "email", "password", "rol", "matricula", "especialidad"]);
       requireFields(body, ["nombre_completo", "email", "password", "rol"]);
       if (!["cliente", "asesor"].includes(body.rol)) {
         throw new HttpError(422, "VALIDACION", "El rol debe ser cliente o asesor.", { campos: ["rol"] });
       }
+      if (String(body.password).length < 8 || String(body.password).length > 72) {
+        throw new HttpError(422, "VALIDACION", "La contrasena debe tener entre 8 y 72 caracteres.", { campos: ["password"] });
+      }
       if (body.rol === "asesor") {
         requireFields(body, ["matricula", "especialidad"]);
+        assertUniqueLicense(body.matricula);
+      } else {
+        const foreign = ["matricula", "especialidad"].filter((field) => body[field] !== undefined);
+        if (foreign.length) {
+          throw new HttpError(422, "VALIDACION", "La matricula y la especialidad solo corresponden a asesores.", { campos: foreign });
+        }
       }
       if (db.usuarios.some((item) => item.email.toLowerCase() === String(body.email).toLowerCase())) {
         throw new HttpError(409, "EMAIL_DUPLICADO", "El email ya se encuentra registrado.");
@@ -266,10 +368,10 @@ const routes = [
 
       const user = {
         id: newId(body.rol === "cliente" ? "cli" : "ase"),
-        email: body.email,
+        email: String(body.email).trim().toLowerCase(),
         password: body.password,
         rol: body.rol,
-        nombre_completo: body.nombre_completo,
+        nombre_completo: String(body.nombre_completo).trim(),
         biografia: "",
         foto_perfil_url: null,
         estado: "activo",
@@ -279,13 +381,19 @@ const routes = [
 
       if (user.rol === "cliente") {
         db.perfiles_usuarios.push({ usuario_id: user.id, ocupacion: "", ingreso_estimado: null, objetivo_financiero: "" });
-        // Demo: los clientes nuevos se asignan al primer asesor disponible.
-        const advisor = db.usuarios.find((item) => item.rol === "asesor");
+        // Como el backend: al asesor con menos clientes que tenga lugar; si no hay, queda sin asesor.
+        const advisor = findAvailableAdvisor();
         if (advisor) {
           db.asignaciones_de_clientes.push({ asesor_id: advisor.id, cliente_id: user.id, activo: true });
         }
       } else {
-        db.perfiles_asesores.push({ usuario_id: user.id, matricula: body.matricula, especialidad: body.especialidad, descripcion: "" });
+        db.perfiles_asesores.push({
+          usuario_id: user.id,
+          matricula: String(body.matricula).trim(),
+          especialidad: String(body.especialidad).trim(),
+          descripcion: "",
+          capacidad_maxima: DEFAULT_ADVISOR_CAPACITY,
+        });
       }
 
       persist();
@@ -296,8 +404,22 @@ const routes = [
   {
     method: "PUT", path: "/auth/profile",
     handler: ({ user, body }) => {
+      const clientFields = ["ocupacion", "ingreso_estimado", "objetivo_financiero"];
+      const advisorFields = ["matricula", "especialidad", "descripcion"];
+      allowOnly(body, ["nombre_completo", "biografia", ...clientFields, ...advisorFields]);
       requireFields(body, ["nombre_completo"]);
-      user.nombre_completo = body.nombre_completo;
+      const foreign = (user.rol === "cliente" ? advisorFields : clientFields).filter((field) => body[field] !== undefined);
+      if (foreign.length) {
+        throw new HttpError(422, "VALIDACION", `Campos que no corresponden al rol ${user.rol}: ${foreign.join(", ")}.`, { campos: foreign });
+      }
+      if (user.rol === "cliente" && body.ingreso_estimado != null && !(typeof body.ingreso_estimado === "number" && body.ingreso_estimado >= 0)) {
+        throw new HttpError(422, "VALIDACION", "El ingreso estimado no puede ser negativo.", { campos: ["ingreso_estimado"] });
+      }
+      if (user.rol === "asesor") {
+        requireFields(body, ["matricula", "especialidad"]);
+        assertUniqueLicense(body.matricula, user.id);
+      }
+      user.nombre_completo = String(body.nombre_completo).trim();
       user.biografia = body.biografia ?? user.biografia;
 
       if (user.rol === "cliente") {
@@ -308,7 +430,6 @@ const routes = [
           objetivo_financiero: body.objetivo_financiero ?? profile.objetivo_financiero,
         });
       } else {
-        requireFields(body, ["matricula", "especialidad"]);
         const profile = db.perfiles_asesores.find((item) => item.usuario_id === user.id);
         Object.assign(profile, {
           matricula: body.matricula,
@@ -321,10 +442,23 @@ const routes = [
       return { status: 200, body: serializeUser(user) };
     },
   },
-  { method: "GET", path: "/categories", handler: () => ({ status: 200, body: db.categorias_de_gasto }) },
+  {
+    method: "GET", path: "/categories",
+    handler: () => ({
+      status: 200,
+      body: [...db.categorias_de_gasto]
+        .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"))
+        .map(({ id, nombre, icono }) => ({ id, nombre, icono })),
+    }),
+  },
   {
     method: "GET", path: "/spending-profiles",
-    handler: () => ({ status: 200, body: db.perfiles_de_gasto.map(({ id, nombre, descripcion }) => ({ id, nombre, descripcion })) }),
+    handler: () => ({
+      status: 200,
+      body: [...db.perfiles_de_gasto]
+        .sort((a, b) => a.criterio_regla.discrecional_max - b.criterio_regla.discrecional_max)
+        .map(({ id, nombre, descripcion }) => ({ id, nombre, descripcion })),
+    }),
   },
   {
     method: "GET", path: "/expenses", role: "cliente",
@@ -342,6 +476,9 @@ const routes = [
     method: "POST", path: "/expenses", role: "cliente",
     handler: ({ user, body }) => {
       validateExpense(body);
+      if (body.ticket_id && !db.tickets.some((item) => item.id === body.ticket_id && item.cliente_id === user.id)) {
+        throw new HttpError(422, "VALIDACION", "El ticket no existe.", { campos: ["ticket_id"] });
+      }
       const expense = {
         id: newId("gas"),
         cliente_id: user.id,
@@ -350,7 +487,7 @@ const routes = [
         fecha_gasto: body.fecha_gasto,
         monto: Number(body.monto),
         descripcion: body.descripcion || "",
-        origen: body.origen || "manual",
+        origen: body.ticket_id ? "ticket" : body.origen || "manual",
         moneda: "ARS",
         ticket_principal_id: body.ticket_id || null,
         creado_en: nowIso(),
@@ -390,9 +527,13 @@ const routes = [
       if (!file || typeof file === "string") {
         throw new HttpError(422, "VALIDACION", "Falta la imagen del ticket.", { campos: ["archivo"] });
       }
-      if (file.type && !file.type.startsWith("image/")) {
-        throw new HttpError(422, "VALIDACION", "El archivo debe ser una imagen.", { campos: ["archivo"] });
+      if (!TICKET_MIME_TYPES.includes(file.type)) {
+        throw new HttpError(422, "VALIDACION", "El archivo debe ser una imagen JPEG, PNG o WebP.", { campos: ["archivo"] });
       }
+      if (file.size > TICKET_MAX_BYTES) {
+        throw new HttpError(422, "VALIDACION", "El archivo supera el tamano maximo de 5 MB.", { campos: ["archivo"] });
+      }
+      const ocrFails = file.name.toLowerCase().includes(OCR_FAILURE_MARKER);
 
       const ticket = {
         id: newId("tic"),
@@ -401,7 +542,7 @@ const routes = [
         nombre_archivo: file.name,
         tipo_mime: file.type || null,
         tamano_bytes: file.size || null,
-        estado_procesamiento: "procesado",
+        estado_procesamiento: ocrFails ? "error" : "procesado",
         subido_en: nowIso(),
       };
       db.tickets.push(ticket);
@@ -411,7 +552,8 @@ const routes = [
         status: 201,
         body: {
           ticket: { id: ticket.id, nombre_archivo: ticket.nombre_archivo, estado_procesamiento: ticket.estado_procesamiento },
-          analisis: simulateOcr(file.name),
+          // Si la IA falla, el backend responde igual: el cliente completa el formulario a mano.
+          analisis: ocrFails ? null : simulateOcr(file.name),
         },
       };
     },
@@ -431,7 +573,7 @@ const routes = [
     handler: ({ user, params }) => {
       const recommendation = db.recomendaciones_financieras.find((item) => item.id === params.id && item.cliente_id === user.id);
       if (!recommendation) {
-        throw notFound("Recomendacion");
+        throw new HttpError(404, "NO_ENCONTRADO", "Recomendacion no encontrada.");
       }
       if (!recommendation.leida) {
         recommendation.leida = true;
@@ -444,6 +586,8 @@ const routes = [
   {
     method: "GET", path: "/recommendations/sent", role: "asesor",
     handler: ({ user, query }) => {
+      allowOnly(query, ["limite", "cliente_id"]);
+      checkLimit(query, 100);
       const items = db.recomendaciones_financieras
         .filter((item) => item.asesor_id === user.id && (!query.cliente_id || item.cliente_id === query.cliente_id))
         .sort((a, b) => b.creado_en.localeCompare(a.creado_en));
@@ -454,7 +598,10 @@ const routes = [
   {
     method: "POST", path: "/recommendations", role: "asesor",
     handler: ({ user, body }) => {
+      allowOnly(body, ["cliente_id", "titulo", "mensaje", "tipo", "prioridad"]);
       requireFields(body, ["cliente_id", "titulo", "mensaje", "tipo", "prioridad"]);
+      checkMaxLength(body, "titulo", 120, "El titulo");
+      checkMaxLength(body, "mensaje", 2000, "El mensaje");
       assertAssignedClient(user, body.cliente_id);
       if (!["sugerencia", "alerta", "observacion"].includes(body.tipo)) {
         throw new HttpError(422, "VALIDACION", "Tipo de recomendacion invalido.", { campos: ["tipo"] });
@@ -494,7 +641,9 @@ const routes = [
     method: "GET", path: "/clients", role: "asesor",
     handler: ({ user }) => {
       const clientIds = db.asignaciones_de_clientes.filter((item) => item.asesor_id === user.id && item.activo).map((item) => item.cliente_id);
-      const clients = db.usuarios.filter((item) => clientIds.includes(item.id));
+      const clients = db.usuarios
+        .filter((item) => clientIds.includes(item.id))
+        .sort((a, b) => a.nombre_completo.localeCompare(b.nombre_completo, "es"));
       return { status: 200, body: clients.map(serializeClientSummary) };
     },
   },

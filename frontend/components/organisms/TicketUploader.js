@@ -7,10 +7,11 @@ import { icon } from "../atoms/icon.js";
  * Organismo TicketUploader: selección de la imagen del ticket por click, teclado o
  * arrastrar y soltar, con validación de tipo y tamaño. Emite `ticket-analyze` { file }.
  *
- * Props: accept (por defecto "image/*"), maxSizeMb (por defecto 5), inputId.
+ * Props: accept (por defecto JPEG, PNG y WebP: los tipos que acepta POST /tickets/upload),
+ * maxSizeMb (por defecto 5, el límite del backend), inputId.
  */
 export class TicketUploader extends Component {
-  static DEFAULTS = { accept: "image/*", maxSizeMb: 5, inputId: "ticketFile" };
+  static DEFAULTS = { accept: "image/jpeg,image/png,image/webp", maxSizeMb: 5, inputId: "ticketFile" };
 
   render() {
     const { accept, maxSizeMb, inputId } = this.options;
@@ -96,8 +97,8 @@ export class TicketUploader extends Component {
       return;
     }
 
-    if (!file.type.startsWith("image/")) {
-      this._showError("El archivo tiene que ser una imagen.");
+    if (!this.options.accept.split(",").includes(file.type)) {
+      this._showError("La imagen tiene que ser JPG, PNG o WEBP.");
       return;
     }
 

@@ -14,10 +14,12 @@ export const APP_CONFIG = {
 export const API_CONFIG = {
   DRIVER: "mock",
   BASE_URLS: {
-    local: "http://localhost:3000",
+    local: "http://localhost:3000/api/v1",
     production: "",
   },
   TIMEOUT_MS: 8000,
+  /** La carga de tickets espera al modelo de IA: más margen que el resto de los pedidos. */
+  UPLOAD_TIMEOUT_MS: 30000,
 };
 
 export const STORAGE_KEYS = {

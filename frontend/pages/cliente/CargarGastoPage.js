@@ -97,25 +97,30 @@ export class CargarGastoPage extends PageController {
 
   async _analyzeTicket(file) {
     this.uploader.setBusy(true);
-    const analysis = await this._runAction(() => ticketsService.upload(file), {
-      successMessage: "Ticket analizado. Revisa los datos antes de guardar.",
-    });
+    const analysis = await this._runAction(() => ticketsService.upload(file));
     this.uploader.setBusy(false);
 
     if (!analysis || !this._isAlive()) {
       return;
     }
 
+    // El gasto queda asociado al ticket aunque la IA no lo haya podido leer.
     this.ticketAnalysis = analysis;
-    this.form.update({
-      values: {
-        merchant: analysis.merchant,
-        amount: analysis.amount ?? "",
-        categoryId: analysis.categoryId,
-        date: analysis.date,
-        description: `Ticket: ${analysis.fileName}`,
-      },
-    });
+    if (analysis.recognized) {
+      this.options.showToast?.("Ticket analizado. Revisa los datos antes de guardar.", "success");
+      this.form.update({
+        values: {
+          merchant: analysis.merchant,
+          amount: analysis.amount ?? "",
+          categoryId: analysis.categoryId,
+          date: analysis.date,
+          description: `Ticket: ${analysis.fileName}`,
+        },
+      });
+    } else {
+      this.options.showToast?.("No pudimos leer el ticket. Completa los datos a mano.", "warning");
+      this.form.update({ values: { ...this.form.getValues(), description: `Ticket: ${analysis.fileName}` } });
+    }
     this._showOcrResult(analysis);
     this._persistDraft(this.form.getValues());
   }
@@ -124,6 +129,16 @@ export class CargarGastoPage extends PageController {
     const container = this.element.querySelector("#ocrResult");
     if (!analysis) {
       container.replaceChildren();
+      return;
+    }
+
+    if (!analysis.recognized) {
+      container.innerHTML = infoCard({
+        title: "No pudimos leer el ticket",
+        icon: "fa-triangle-exclamation",
+        subtitle: "La imagen quedo guardada junto al gasto. Completa el formulario a mano.",
+        body: keyValueList({ items: [{ label: "Archivo", value: analysis.fileName }] }),
+      });
       return;
     }
 

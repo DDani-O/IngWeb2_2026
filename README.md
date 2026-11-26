@@ -159,7 +159,7 @@ Abrir http://localhost:5500.
 
 También se puede registrar una cuenta nueva desde la landing (los clientes nuevos quedan asignados al asesor de prueba).
 
-**Backend simulado.** Mientras la API no esté lista, `APIClient` usa `frontend/mocks/mockServer.js`. Los datos (8 clientes con 7 meses de gastos generados a partir de la fecha actual, recomendaciones, asignaciones) se guardan en `localStorage` con la clave `fintrack.mockDb`; para volver a los datos iniciales, borrar esa clave desde las herramientas del navegador.
+**Backend simulado.** Mientras la API no esté lista, `APIClient` usa `frontend/mocks/mockServer.js`. Los datos (8 clientes con 7 meses de gastos generados a partir de la fecha actual, recomendaciones, asignaciones) se guardan en `localStorage` con la clave `fintrack.mockDb`; para volver a los datos iniciales, borrar esa clave desde las herramientas del navegador. Aplica las mismas validaciones que la API; para probar un ticket que la IA no puede leer, subir una imagen con "ilegible" en el nombre.
 
 **Conectar la API real.** En `frontend/utils/constants.js`: `API_CONFIG.DRIVER = "http"` y completar `API_CONFIG.BASE_URLS` (`local` para `localhost`, `production` para el dominio del deploy). Para probar sin tocar código: en la consola, `localStorage.setItem("fintrack.apiDriver", "http")` y recargar.
 

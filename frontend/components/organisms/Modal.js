@@ -69,8 +69,21 @@ export class Modal extends Component {
     this._instance()?.hide();
   }
 
+  /**
+   * Libera el modal. Si está abierto o cerrándose (p. ej. se navega justo después de
+   * enviar un formulario), espera a que Bootstrap termine el cierre: liberarlo en medio
+   * de la transición tira un error y puede dejar el fondo oscuro sobre la página.
+   */
   destroy() {
-    this._instance()?.dispose();
+    const instance = window.bootstrap && this._root ? window.bootstrap.Modal.getInstance(this._root) : null;
+    const visible = this._root && (this._root.classList.contains("show") || this._root.style.display === "block");
+
+    if (instance && visible) {
+      this._root.addEventListener("hidden.bs.modal", () => instance.dispose(), { once: true });
+      instance.hide();
+    } else {
+      instance?.dispose();
+    }
     super.destroy();
   }
 

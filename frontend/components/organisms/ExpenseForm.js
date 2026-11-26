@@ -31,7 +31,7 @@ export class ExpenseForm extends Component {
     this.element.innerHTML = html`
       <form class="expense-form" novalidate>
         ${formGrid(html`
-          ${formField({ id: id("merchant"), name: "merchant", label: "Comercio", required: true, width: "half", value: values.merchant, inputAttrs: { list: listId, autocomplete: "off", maxlength: 120 } })}
+          ${formField({ id: id("merchant"), name: "merchant", label: "Comercio", required: true, width: "half", value: values.merchant, inputAttrs: { list: listId, autocomplete: "off", maxlength: 100 } })}
           ${formField({ id: id("amount"), name: "amount", label: "Monto", type: "number", required: true, width: "half", value: values.amount, inputAttrs: { min: "0.01", step: "0.01", inputmode: "decimal" } })}
           ${formField({ id: id("category"), name: "categoryId", label: "Categoria", type: "select", required: true, width: "half", value: values.categoryId, placeholderOption: "Seleccionar categoria", options: categories.map((category) => ({ value: category.id, label: `${category.icon} ${category.name}` })) })}
           ${formField({ id: id("date"), name: "date", label: "Fecha", type: "date", required: true, width: "half", value: values.date || todayIsoDate(), inputAttrs: { max: todayIsoDate() } })}

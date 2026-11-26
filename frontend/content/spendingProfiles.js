@@ -1,12 +1,12 @@
 /**
  * Contenido visual de los perfiles de gasto (texto, emoji, comparativa).
  * Es estático del front: la BD solo guarda nombre y descripción (perfiles_de_gasto).
- * Se vincula con el catálogo de la API por nombre.
+ * Se vincula con el catálogo de la API por nombre (sin distinguir mayúsculas ni tildes).
  */
 export const SPENDING_PROFILES_CONTENT = [
   {
     id: "dracula",
-    name: "Dracula Nocturno",
+    name: "Drácula Nocturno",
     emoji: "🧛",
     tagline: "El Ahorrador Profesional",
     colorClass: "profile-card--dracula",
@@ -29,7 +29,7 @@ export const SPENDING_PROFILES_CONTENT = [
   },
   {
     id: "equilibrista",
-    name: "Equilibrista Cosmico",
+    name: "Equilibrista Cósmico",
     emoji: "⚖️",
     tagline: "El Balanceador Perfecto",
     colorClass: "profile-card--equilibrista",
@@ -52,7 +52,7 @@ export const SPENDING_PROFILES_CONTENT = [
   },
   {
     id: "espiritu-libre",
-    name: "Espiritu Libre",
+    name: "Espíritu Libre",
     emoji: "🦅",
     tagline: "El Gaudior Desenfrenado",
     colorClass: "profile-card--espiritu-libre",
@@ -75,11 +75,19 @@ export const SPENDING_PROFILES_CONTENT = [
   },
 ];
 
+/** Minúsculas y sin tildes, para comparar nombres. */
+const normalizeName = (name) =>
+  String(name)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+
 /**
- * Busca el contenido visual de un perfil por nombre (sin distinguir mayúsculas).
+ * Busca el contenido visual de un perfil por nombre (sin distinguir mayúsculas ni tildes).
  * @param {string} name
  */
 export function findSpendingProfileContent(name = "") {
-  const normalized = String(name).trim().toLowerCase();
-  return SPENDING_PROFILES_CONTENT.find((profile) => profile.name.toLowerCase() === normalized) || null;
+  const normalized = normalizeName(name);
+  return SPENDING_PROFILES_CONTENT.find((profile) => normalizeName(profile.name) === normalized) || null;
 }

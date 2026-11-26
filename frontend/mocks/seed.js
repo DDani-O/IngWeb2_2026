@@ -9,16 +9,19 @@
 
 const MOCK_PASSWORD = "Fintrack2026*";
 
-export const SEED_VERSION = 1;
+/** Subir al cambiar la forma de los datos: fuerza a regenerar la base guardada en localStorage. */
+export const SEED_VERSION = 2;
 
+/** Mismo catálogo que la BD (migración 0006: nombres e íconos). */
 const CATEGORIAS = [
-  { id: "cat-alimentacion", nombre: "Alimentacion", icono: "🛒" },
-  { id: "cat-transporte", nombre: "Transporte", icono: "🚌" },
-  { id: "cat-servicios", nombre: "Servicios", icono: "💡" },
+  { id: "cat-alimentacion", nombre: "Alimentación", icono: "🍔" },
+  { id: "cat-transporte", nombre: "Transporte", icono: "🚗" },
   { id: "cat-entretenimiento", nombre: "Entretenimiento", icono: "🎬" },
-  { id: "cat-salud", nombre: "Salud", icono: "💊" },
-  { id: "cat-educacion", nombre: "Educacion", icono: "📚" },
-  { id: "cat-suscripciones", nombre: "Suscripciones", icono: "📺" },
+  { id: "cat-salud", nombre: "Salud", icono: "⚕️" },
+  { id: "cat-educacion", nombre: "Educación", icono: "📚" },
+  { id: "cat-hogar", nombre: "Hogar", icono: "🏠" },
+  { id: "cat-servicios", nombre: "Servicios", icono: "⚙️" },
+  { id: "cat-suscripciones", nombre: "Suscripciones", icono: "🎬" },
   { id: "cat-otros", nombre: "Otros", icono: "📦" },
 ];
 
@@ -30,6 +33,7 @@ const COMERCIOS_POR_CATEGORIA = {
   "cat-entretenimiento": { base: 7000, comercios: ["Cine Hoyts", "Bar El Patio", "Teatro Gran Rex"] },
   "cat-salud": { base: 5500, comercios: ["Farmacia Sur", "Optica Vision"] },
   "cat-educacion": { base: 4500, comercios: ["Libreria Centro", "Udemy"] },
+  "cat-hogar": { base: 8000, comercios: ["Easy", "Sodimac", "Ferreteria El Tornillo"] },
   "cat-suscripciones": { base: 3200, comercios: ["Netflix", "Spotify", "Disney+"] },
   "cat-otros": { base: 6000, comercios: ["Mercado Libre", "Kiosco 24hs"] },
 };
@@ -199,6 +203,8 @@ export function buildSeed(today = new Date()) {
       matricula: "A-12345",
       especialidad: "Finanzas personales",
       descripcion: "Acompano a clientes en presupuesto mensual y control de gastos.",
+      // La BD limita los clientes activos por asesor (por defecto 5); la demo tiene 8.
+      capacidad_maxima: 10,
     },
   ];
 
@@ -209,9 +215,10 @@ export function buildSeed(today = new Date()) {
   }));
 
   const perfiles_de_gasto = [
-    { id: "pdg-ahorrista", nombre: "Dracula Nocturno", descripcion: "Gastos muy controlados y alto ahorro.", criterio_regla: { discrecional_max: 0.1 } },
-    { id: "pdg-equilibrado", nombre: "Equilibrista Cosmico", descripcion: "Balance entre gasto y ahorro.", criterio_regla: { discrecional_max: 0.3 } },
-    { id: "pdg-gastador", nombre: "Espiritu Libre", descripcion: "Gasto discrecional alto y poco control.", criterio_regla: { discrecional_max: 1 } },
+    // Mismo catálogo que la BD (migración 0016).
+    { id: "pdg-ahorrista", nombre: "Drácula Nocturno", descripcion: "Gastos muy controlados y alto ahorro.", criterio_regla: { discrecional_max: 0.1 } },
+    { id: "pdg-equilibrado", nombre: "Equilibrista Cósmico", descripcion: "Balance entre gasto y ahorro.", criterio_regla: { discrecional_max: 0.3 } },
+    { id: "pdg-gastador", nombre: "Espíritu Libre", descripcion: "Gasto discrecional alto y poco control.", criterio_regla: { discrecional_max: 1 } },
   ];
 
   const gastos = CLIENTES.flatMap((client, index) => generateExpenses(client, index, today));

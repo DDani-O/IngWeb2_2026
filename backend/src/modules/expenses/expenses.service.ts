@@ -109,7 +109,8 @@ export class ExpensesService {
         ...(dto.ticket_id
           ? {
               ticket_principal_id: dto.ticket_id,
-              ocr_estado: "procesado",
+              // Sin análisis guardado la IA no pudo leer el ticket (spec §10.4).
+              ocr_estado: analysis ? "procesado" : "fallido",
               ocr_confianza: analysis?.confianza_general ?? null,
             }
           : {}),

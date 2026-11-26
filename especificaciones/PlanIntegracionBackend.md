@@ -74,7 +74,7 @@ Una fase por commit; los integrantes commitean a mano.
   - Integración contra PostgreSQL + PostgREST locales con el seed del mock: análisis de los 8 clientes y resumen del asesor idénticos al mock, sincronización de perfiles, `/clients`, 403, gastos con ticket, recomendaciones, edición de perfil y rutas eliminadas.
   - Sin cubrir: Supabase Auth (registro y login) y Storage, que quedan para I5. Test e2e nuevo: `analysis.e2e-spec.ts`.
 
-### I4 — Frontend alineado
+### I4 — Frontend alineado ✅ completada
 - Servicios, `adapters.js` y mock (`frontend/mocks/`) ajustados al contrato final; el mock queda como espejo exacto del back para demos sin conexión.
 - `API_CONFIG.BASE_URLS.local` pasa a `http://localhost:3000/api/v1`.
 - Nombres de categorías del seed del mock iguales a los de la BD (con tildes, y se suma `Hogar`).
@@ -82,6 +82,8 @@ Una fase por commit; los integrantes commitean a mano.
 - La BD limita los clientes por asesor (`perfiles_asesores.capacidad_maxima`, 5 por defecto) y el mock le asigna 8 al asesor de prueba: reflejar el límite en el mock y darle capacidad suficiente al asesor de la demo en los datos de I5.
 - El upload responde `analisis: null` si la IA falla: `Cargar gasto` tiene que avisar y dejar el formulario para completar a mano.
 - Ninguna página debería cambiar.
+
+**Cómo quedó:** hechos todos los puntos. Además: timeout de 30 s para la carga de tickets (`API_CONFIG.UPLOAD_TIMEOUT_MS`), `TicketUploader` acepta solo JPEG/PNG/WebP, `maxlength` de los formularios iguales a los del back, `ocr_estado = fallido` en el back cuando la IA no leyó el ticket y corrección de `Modal.destroy()` (liberar el modal durante su animación de cierre tiraba un error). Único cambio de página: `Cargar gasto` avisa cuando el ticket no se pudo leer. Verificado en Firefox headless con los dos drivers: todas las pantallas de los dos roles y los flujos de gasto manual, ticket, edición, recomendación leída, perfil y envío de recomendación, sin errores de consola ni respuestas 4xx/5xx; con `http`, contra la API real sobre PostgreSQL + PostgREST locales y verificando lo persistido. Sin cubrir: registro y login reales (Supabase Auth), para I5.
 
 ### I5 — Integración real
 - Front con driver `http` contra el back y Supabase; checklist manual del README.
