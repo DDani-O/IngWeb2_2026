@@ -1,12 +1,36 @@
 import { Inject, Injectable, Logger } from "@nestjs/common";
 import { SupabaseClient } from "@supabase/supabase-js";
-import { isUUID } from "class-validator";
-import { forbiddenError, internalError } from "../../common/errors";
+import { AssignmentsService } from "../../common/assignments/assignments.service";
+import { internalError, notFoundError } from "../../common/errors";
 import { SUPABASE_CLIENT } from "../../common/supabase/supabase.provider";
+import { Analisis, ResumenCliente } from "../analysis/analysis.types";
+import { AnalysisService } from "../analysis/analysis.service";
+import { UsersService } from "../users/users.service";
+import { Usuario } from "../users/usuario.types";
+
+interface ClientRow {
+  id: string;
+  nombre_completo: string;
+  email: string | null;
+  estado: "activo" | "inactivo";
+}
+
+const toResumen = (row: ClientRow, analisis: Analisis): ResumenCliente => ({
+  id: row.id,
+  nombre_completo: row.nombre_completo,
+  email: row.email,
+  estado: row.estado,
+  perfil_de_gasto: analisis.perfil_de_gasto,
+  gasto_promedio_mensual: analisis.gasto_promedio_mensual,
+  gasto_mes_actual: analisis.gasto_mes_actual,
+  variacion_mes_anterior: analisis.variacion_mes_anterior,
+  ultimo_gasto_fecha: analisis.ultimo_gasto_fecha,
+  gastos_inusuales: analisis.gastos_inusuales.length,
+  nivel_riesgo: analisis.nivel_riesgo,
+});
 
 /**
- * Cartera del asesor. En la fase I3 suma el listado y el detalle de clientes;
- * por ahora expone el control de asignación que usan los demás módulos.
+ * Cartera del asesor (spec §10.7): resumen de cada cliente asignado y su detalle.
  */
 @Injectable()
 export class ClientsService {
@@ -14,28 +38,58 @@ export class ClientsService {
 
   constructor(
     @Inject(SUPABASE_CLIENT) private readonly supabase: SupabaseClient,
+    private readonly assignments: AssignmentsService,
+    private readonly analysisService: AnalysisService,
+    private readonly usersService: UsersService,
   ) {}
 
-  /** 403 si el cliente no tiene una asignación activa con el asesor (spec §10, errores). */
-  async assertAssigned(advisorId: string, clientId: string): Promise<void> {
-    if (!isUUID(clientId)) {
-      throw forbiddenError("El cliente no esta asignado a este asesor.");
+  /** `resumen_cliente` de cada cliente con asignación activa, por nombre. */
+  async list(advisorId: string): Promise<ResumenCliente[]> {
+    const clientIds = await this.assignments.listClientIds(advisorId);
+    if (!clientIds.length) {
+      return [];
     }
+
+    const [rows, analyses] = await Promise.all([
+      this.fetchClients(clientIds),
+      this.analysisService.analyzeClients(clientIds),
+    ]);
+    return rows
+      .sort((a, b) => a.nombre_completo.localeCompare(b.nombre_completo, "es"))
+      .map((row) => toResumen(row, analyses.get(row.id)!));
+  }
+
+  /** `resumen_cliente` + `usuario` de un cliente asignado (403 si no lo está). */
+  async get(
+    advisorId: string,
+    clientId: string,
+  ): Promise<ResumenCliente & { usuario: Usuario }> {
+    await this.assignments.assertAssigned(advisorId, clientId);
+    const [[row], analisis] = await Promise.all([
+      this.fetchClients([clientId]),
+      this.analysisService.getClientAnalysis(clientId),
+    ]);
+    const usuario = await this.usersService.getUsuario(
+      clientId,
+      analisis.perfil_de_gasto,
+    );
+    if (!row || !usuario) {
+      throw notFoundError("Cliente no encontrado.");
+    }
+    return { ...toResumen(row, analisis), usuario };
+  }
+
+  private async fetchClients(clientIds: string[]): Promise<ClientRow[]> {
     const { data, error } = await this.supabase
-      .from("asignaciones_de_clientes")
-      .select("id")
-      .eq("asesor_id", advisorId)
-      .eq("cliente_id", clientId)
-      .eq("activo", true)
-      .limit(1)
-      .maybeSingle();
+      .from("usuarios")
+      .select("id, nombre_completo, email, estado")
+      .in("id", clientIds)
+      .eq("rol", "cliente");
 
     if (error) {
-      this.logger.error(`asignaciones_de_clientes: ${error.message}`);
-      throw internalError("No se pudo verificar la asignacion del cliente.");
+      this.logger.error(`usuarios clientes: ${error.message}`);
+      throw internalError("No se pudieron obtener los clientes.");
     }
-    if (!data) {
-      throw forbiddenError("El cliente no esta asignado a este asesor.");
-    }
+    return (data ?? []) as ClientRow[];
   }
 }

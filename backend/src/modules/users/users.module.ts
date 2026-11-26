@@ -1,12 +1,11 @@
 import { Module } from "@nestjs/common";
 import { SupabaseModule } from "../../common/supabase/supabase.module";
-import { AnalyticsModule } from "../analytics/analytics.module";
-import { UsersController } from "./users.controller";
+import { AnalysisModule } from "../analysis/analysis.module";
 import { UsersService } from "./users.service";
 
+/** Cuentas de usuario. Sin rutas propias: las expone `auth` (`/auth/me`, `/auth/profile`). */
 @Module({
-  imports: [SupabaseModule, AnalyticsModule],
-  controllers: [UsersController],
+  imports: [SupabaseModule, AnalysisModule],
   providers: [UsersService],
   exports: [UsersService],
 })

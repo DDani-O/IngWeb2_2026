@@ -648,7 +648,7 @@ DashboardPage {
 }
 ```
 
-Para un asesor, en lugar de `perfil_cliente` viene `perfil_asesor: { matricula, especialidad, descripcion, clientes_asignados }`. `perfil_de_gasto` es el registro vigente de `clasificacion_de_perfil` (puede ser `null`).
+Para un asesor, en lugar de `perfil_cliente` viene `perfil_asesor: { matricula, especialidad, descripcion, clientes_asignados }`. `perfil_de_gasto` es el que asigna la regla de §10.6 al momento del pedido (el mismo que el análisis, y queda registrado en `clasificacion_de_perfil`); es `null` si el cliente no tiene gastos en la ventana.
 
 **Gasto** (`gastos`):
 
@@ -691,7 +691,7 @@ El email no se modifica desde el perfil. La contraseña tiene entre 8 y 72 carac
 | Método | Ruta | Rol | Respuesta |
 |---|---|---|---|
 | GET | `/categories` | ambos | **200** `[{ id, nombre, icono }]` |
-| GET | `/spending-profiles` | ambos | **200** `[{ id, nombre, descripcion }]` |
+| GET | `/spending-profiles` | ambos | **200** `[{ id, nombre, descripcion }]`, del perfil más austero al más gastador (`criterio_regla.discrecional_max`) |
 
 ### 10.3 Gastos (cliente)
 
@@ -754,7 +754,7 @@ Flujo **en un solo paso** (decisión de la fase I1): el backend sube la imagen a
 }
 ```
 
-Reglas de cálculo (las implementa hoy el mock en `frontend/mocks/analytics.js`; el backend las reproduce exactamente, confirmado en la fase I1):
+Reglas de cálculo. Las implementan el backend (`backend/src/modules/analysis/analysis.rules.ts`, funciones puras con tests en `analysis.rules.spec.ts`) y el mock (`frontend/mocks/analytics.js`); en la fase I3 se verificó que ambos dan resultados idénticos sobre el mismo juego de datos. Si cambia una regla, se cambia en los dos y en esta sección. "Hoy" es la fecha en la zona horaria de la app (`APP_TIMEZONE`, por defecto `America/Argentina/Buenos_Aires`), no la del servidor; el análisis se calcula en cada pedido a partir de `gastos` (no se persiste):
 - `gastos_por_mes`: últimos 7 meses incluido el actual. `gastos_por_dia`: últimos 14 días. `ranking_comercios`: top 5 por monto.
 - `variacion_mes_anterior`: mes en curso contra el mes anterior **hasta el mismo día** (porcentaje; `null` si no hay datos).
 - `gasto_promedio_mensual`: promedio de los meses completos anteriores con gastos.
@@ -789,7 +789,7 @@ Reglas de cálculo (las implementa hoy el mock en `frontend/mocks/analytics.js`;
 
 ### 10.8 Correspondencia con el backend actual (inventario de la fase I1)
 
-Estado del backend heredado de `dev` contra este contrato. Columna **Fase**: dónde se resuelve según `PlanIntegracionBackend.md` (I2 = nombres en español y forma de las respuestas; I3 = lógica que falta o se reescribe). **Las filas I2 ya están implementadas** (fase I2 completada); quedan las filas I3.
+Estado del backend heredado de `dev` contra este contrato. Columna **Fase**: dónde se resolvió según `PlanIntegracionBackend.md` (I2 = nombres en español y forma de las respuestas; I3 = lógica que faltaba o se reescribió). **Todas las filas están implementadas** (fases I2 e I3 completadas): el backend expone exactamente los endpoints de §10.1–10.7. La tabla queda como registro de qué cambió.
 
 **Endpoints del contrato**
 
@@ -824,17 +824,17 @@ Estado del backend heredado de `dev` contra este contrato. Columna **Fase**: dó
 |---|---|---|
 | `GET /expenses/summary` | Lo cubre `GET /analysis/me`. | Eliminado (I2) |
 | `GET /users/me/dashboard` | Lo cubren `/auth/me` y `/analysis/me`. | Eliminado (I2) |
-| `GET /analytics/consumption` | Duplicado de `/users/me/consumption-analysis`. | Pendiente (I3) |
+| `GET /analytics/consumption` | Duplicado de `/users/me/consumption-analysis`. | Eliminado (I3) |
 | `GET /advisor/profile` | Lo cubre `/auth/me`. | Eliminado (I2) |
 | `PATCH /advisor/recommendations/:id` · `DELETE /advisor/recommendations/:id` | La consigna pide generar recomendaciones, no editarlas ni borrarlas. | Eliminado (I2) |
-| `GET /advisor/reports` | La página de reportes se eliminó en la Fase 0. | Pendiente (I3) |
-| `GET /advisor/risk-assessment` | El riesgo viene en `resumen_cliente.nivel_riesgo`. | Pendiente (I3) |
-| `PATCH /advisor/clients/:clientId/profile` | El perfil lo asigna el sistema (decisión 2). | Pendiente (I3) |
+| `GET /advisor/reports` | La página de reportes se eliminó en la Fase 0. | Eliminado (I3) |
+| `GET /advisor/risk-assessment` | El riesgo viene en `resumen_cliente.nivel_riesgo`. | Eliminado (I3) |
+| `PATCH /advisor/clients/:clientId/profile` | El perfil lo asigna el sistema (decisión 2). | Eliminado (I3) |
 | `POST /tickets/:id/confirm` | El flujo de tickets es en un paso (§10.4). | Eliminado (I2) |
 
-**Cambios de base de datos** (migración nueva, fase I3):
-- Reemplazar el catálogo de `perfiles_de_gasto` cargado por `seeds/seed_perfiles_de_gasto.sql` (7 perfiles con `criterio_regla` en inglés: `thresholds`, `savingsRatio`…) por los 3 perfiles de §10.6 con `criterio_regla = { discrecional_max }`, migrando o cerrando las clasificaciones que apunten a perfiles eliminados.
-- Las vistas de la migración `0008` (`advisor_dashboard_view`, `client_anomaly_view`, etc.) no las usa ningún servicio del backend; se evalúa eliminarlas junto con la regla de z-score.
+**Cambios de base de datos** (migración `0016_spending_profiles_v2.sql`, fase I3):
+- El catálogo de `perfiles_de_gasto` pasa de los 7 perfiles del seed anterior (con `criterio_regla` en inglés: `thresholds`, `savingsRatio`…) a los 3 de §10.6 con `criterio_regla = { "discrecional_max": n }`. Las clasificaciones que apuntaban a los perfiles eliminados se borran (eran manuales; el sistema recalcula la de cada cliente en la próxima consulta). `seeds/seed_perfiles_de_gasto.sql` carga el catálogo nuevo.
+- Se eliminan las 5 vistas de las migraciones `0008`/`0009`: ningún servicio las usaba y `client_anomaly_view` implementaba la regla de z-score descartada.
 - Columnas que existen y quedan fuera del contrato (no se exponen, conservan sus valores por defecto): `perfiles_usuarios.pais/telefono/moneda_preferida/tema/umbral_alerta/ahorro_objetivo/notificar_*`, `perfiles_asesores.capacidad_maxima/telefono/pais/notificar_*` (`capacidad_maxima` sí la usa la asignación automática), `recomendaciones_financieras.estado/icono/problema/solucion/pasos_implementacion/ahorro_potencial`.
 
 ---

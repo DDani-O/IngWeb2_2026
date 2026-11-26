@@ -4,11 +4,10 @@ import { AuthModule } from "./modules/auth/auth.module";
 import { UsersModule } from "./modules/users/users.module";
 import { ExpensesModule } from "./modules/expenses/expenses.module";
 import { CategoriesModule } from "./modules/categories/categories.module";
-import { AdvisorModule } from "./modules/advisor/advisor.module";
-import { AnalyticsModule } from "./modules/analytics/analytics.module";
 import { TicketsModule } from "./modules/tickets/tickets.module";
 import { ClientsModule } from "./modules/clients/clients.module";
 import { RecommendationsModule } from "./modules/recommendations/recommendations.module";
+import { AnalysisModule } from "./modules/analysis/analysis.module";
 
 @Module({
   imports: [
@@ -17,11 +16,10 @@ import { RecommendationsModule } from "./modules/recommendations/recommendations
     UsersModule,
     ExpensesModule,
     CategoriesModule,
-    AdvisorModule,
-    AnalyticsModule,
     TicketsModule,
     ClientsModule,
     RecommendationsModule,
+    AnalysisModule,
   ],
 })
 export class AppModule {}

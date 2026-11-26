@@ -54,17 +54,33 @@ Una fase por commit; los integrantes commitean a mano.
 - Tests e2e reescritos contra el contrato (`auth`, `categories`, `expenses`, `recommendations`); se borraron `users` y `advisor`, que probaban rutas eliminadas o la mensajería. Verificado sin BD: compilan, y los casos que no tocan Supabase pasan. Correrlos completos queda para I5.
 - Prueba de humo sin BD (42 casos: guards, roles, validaciones, formato de errores, rutas eliminadas, límites del upload, fallos de Supabase como 500) en verde.
 
-### I3 — Backend: faltantes funcionales
+### I3 — Backend: faltantes funcionales ✅ completada
 - Análisis de consumo reescrito con las reglas de la spec §10.6 (portar `frontend/mocks/analytics.js`): `/analysis/me`, `/analysis/clients/:id`, `/analysis/advisor/summary`, `/clients`, `/clients/:id`.
 - Perfil de gasto asignado automáticamente por el sistema; se elimina la asignación manual del asesor (`PATCH /advisor/clients/:id/profile`).
 - Gastos inusuales con la regla del 35 % (se descarta el z-score).
 - Migración nueva: catálogo de 3 perfiles con `criterio_regla` en español (spec §10.8) y evaluar eliminar las vistas sin uso de la `0008`.
 - Eliminar los endpoints pendientes de la lista de la spec §10.8 y, con ellos, los módulos heredados `advisor` y `analytics` y el `UsersController` (sus servicios ya no tienen otros usuarios; la regla del z-score se va con `analytics`).
 
+**Cómo quedó:**
+- Módulo `analysis`: `analysis.rules.ts` porta las reglas del mock como funciones puras; `analysis.service.ts` lee gastos (paginando de a 1000, el máximo de PostgREST), aplica las reglas y deja una sola clasificación vigente por cliente en `clasificacion_de_perfil`, escribiendo solo cuando el perfil cambia. "Hoy" se calcula en `APP_TIMEZONE` (por defecto Argentina): un servidor en UTC daba el mes corrido entre las 21 y las 24 hs.
+- El objeto `usuario` toma el perfil del análisis en el momento (como el mock), así `/auth/me` nunca muestra uno desactualizado.
+- `clients` suma `GET /clients` y `GET /clients/:id`; el control de asignación pasó a `common/assignments` para compartirlo sin dependencias circulares.
+- Migración `0016_spending_profiles_v2.sql` y seed de perfiles nuevo. Se eliminaron `advisor`, `analytics`, `UsersController` y la dependencia `@google/generative-ai` (restos del OCR con Gemini).
+- `tsconfig.build.json` (estándar de Nest): el build excluye los tests y guarda el estado incremental dentro de `dist/`. Antes, borrar `dist/` a mano dejaba un build incompleto (sin `main.js`).
+- Verificación:
+  - 24 tests unitarios de reglas y calendario (`npm test`).
+  - Comparación de las reglas con el mock: 73 casos idénticos, con 8 clientes, varias fechas, bordes de mes y cambio de año.
+  - Las 16 migraciones aplicadas en orden sobre un PostgreSQL 16 local; la `0016` probada sobre el catálogo viejo y dos veces seguidas.
+  - Integración contra PostgreSQL + PostgREST locales con el seed del mock: análisis de los 8 clientes y resumen del asesor idénticos al mock, sincronización de perfiles, `/clients`, 403, gastos con ticket, recomendaciones, edición de perfil y rutas eliminadas.
+  - Sin cubrir: Supabase Auth (registro y login) y Storage, que quedan para I5. Test e2e nuevo: `analysis.e2e-spec.ts`.
+
 ### I4 — Frontend alineado
 - Servicios, `adapters.js` y mock (`frontend/mocks/`) ajustados al contrato final; el mock queda como espejo exacto del back para demos sin conexión.
 - `API_CONFIG.BASE_URLS.local` pasa a `http://localhost:3000/api/v1`.
 - Nombres de categorías del seed del mock iguales a los de la BD (con tildes, y se suma `Hogar`).
+- Nombres de perfiles con tildes, como en la BD (`Drácula Nocturno`, `Equilibrista Cósmico`, `Espíritu Libre`), en el seed del mock y en `content/spendingProfiles.js`; `findSpendingProfileContent` tiene que comparar sin distinguir tildes.
+- La BD limita los clientes por asesor (`perfiles_asesores.capacidad_maxima`, 5 por defecto) y el mock le asigna 8 al asesor de prueba: reflejar el límite en el mock y darle capacidad suficiente al asesor de la demo en los datos de I5.
+- El upload responde `analisis: null` si la IA falla: `Cargar gasto` tiene que avisar y dejar el formulario para completar a mano.
 - Ninguna página debería cambiar.
 
 ### I5 — Integración real
@@ -92,5 +108,5 @@ Pendiente (no bloquea):
 ## 5. Pendientes detectados en el merge
 
 - Documentación heredada de `dev` desactualizada: `backend/database/README.md` (rutas `backend/src/database/` y solo dos migraciones), `backend/FINTRACK_BACKEND_CONTEXT.md` (mensajería, Gemini, rutas viejas) y `PENDIENTES_GENERALES.md` (rutas `/usuario/*`, mocks del front viejo).
-- `npm run lint`: 0 errores; los 229 warnings que quedan son de formato (Prettier) en `advisor` y `analytics`, que se eliminan en I3.
+- `npm run lint`: 0 errores y 0 warnings desde I3.
 - Los `Logica_modulo_*.md` de `expenses` y `categories` describían el contrato viejo y se borraron en I2.

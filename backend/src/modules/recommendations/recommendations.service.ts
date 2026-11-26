@@ -1,9 +1,9 @@
 import { Inject, Injectable, Logger } from "@nestjs/common";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { isUUID } from "class-validator";
+import { AssignmentsService } from "../../common/assignments/assignments.service";
 import { internalError, notFoundError } from "../../common/errors";
 import { SUPABASE_CLIENT } from "../../common/supabase/supabase.provider";
-import { ClientsService } from "../clients/clients.service";
 import { UsuarioRef } from "../users/usuario.types";
 import { CreateRecommendationDto } from "./dto/create-recommendation.dto";
 import { QuerySentRecommendationsDto } from "./dto/query-sent.dto";
@@ -61,7 +61,7 @@ export class RecommendationsService {
 
   constructor(
     @Inject(SUPABASE_CLIENT) private readonly supabase: SupabaseClient,
-    private readonly clientsService: ClientsService,
+    private readonly assignments: AssignmentsService,
   ) {}
 
   /** Recomendaciones recibidas por el cliente, más recientes primero. */
@@ -130,7 +130,7 @@ export class RecommendationsService {
     advisorId: string,
     dto: CreateRecommendationDto,
   ): Promise<Recomendacion> {
-    await this.clientsService.assertAssigned(advisorId, dto.cliente_id);
+    await this.assignments.assertAssigned(advisorId, dto.cliente_id);
 
     const { data, error } = await this.supabase
       .from("recomendaciones_financieras")

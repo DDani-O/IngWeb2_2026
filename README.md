@@ -2,7 +2,7 @@
 
 Plataforma web de gestión de gastos personales con carga de tickets por OCR/IA, para la materia **Ingeniería Web II (2026)**. Grupo: Daniel Olguín y Celeste Núñez.
 
-> **Estado:** el **frontend está completo** y funciona contra un **backend simulado** (`frontend/mocks/`). La **API NestJS** está implementada (auth, gastos, categorías, tickets con OCR/IA, análisis, asesor) sobre **Supabase**, pero su contrato todavía no coincide con el del frontend: la alineación (API en español, igual que la BD) y el **deploy** están en curso según `especificaciones/PlanIntegracionBackend.md`. Las secciones marcadas con *(pendiente)* se completan cuando eso esté listo.
+> **Estado:** el **frontend está completo** y funciona contra un **backend simulado** (`frontend/mocks/`). La **API NestJS** implementa el contrato completo (auth, perfil, gastos, tickets con OCR/IA, recomendaciones, análisis de consumo y cartera del asesor) sobre **Supabase**. Falta conectar el frontend a la API real, probarlo contra Supabase y el **deploy**, según `especificaciones/PlanIntegracionBackend.md`. Las secciones marcadas con *(pendiente)* se completan cuando eso esté listo.
 
 ---
 
@@ -61,13 +61,13 @@ Decisiones clave: todo el texto que viene de la API se escapa por defecto (`util
 
 ### Backend (`backend/`)
 
-NestJS con un módulo por dominio en `src/modules/` (`auth`, `users`, `expenses`, `categories`, `tickets`, `analytics`, `advisor`), DTOs con `class-validator` (`ValidationPipe` global con `whitelist`), prefijo global `/api/v1`, JWT propio con `JwtAuthGuard` + `RolesGuard` (`@Roles('cliente' | 'asesor')`), filtro global de errores y configuración por variables de entorno. Habla con Supabase por `@supabase/supabase-js` (sin ORM): Supabase Auth para las cuentas, PostgREST para los datos y Storage para las imágenes de los tickets. Tests e2e en `backend/test/e2e/`. Ver `backend/CLAUDE.md`.
+NestJS con un módulo por dominio en `src/modules/` (`auth`, `users`, `categories`, `expenses`, `tickets`, `recommendations`, `analysis`, `clients`), DTOs con `class-validator` (`ValidationPipe` global con `whitelist`), prefijo global `/api/v1`, JWT propio con `JwtAuthGuard` + `RolesGuard` (`@Roles('cliente' | 'asesor')`), filtro global de errores y configuración por variables de entorno. Habla con Supabase por `@supabase/supabase-js` (sin ORM): Supabase Auth para las cuentas, PostgREST para los datos y Storage para las imágenes de los tickets. Las reglas del análisis de consumo son funciones puras (`analysis.rules.ts`) con tests unitarios; los tests e2e están en `backend/test/e2e/`. Ver `backend/CLAUDE.md`.
 
 ---
 
 ## 3. Modelo de datos
 
-Base PostgreSQL en Supabase, definida por las migraciones `backend/database/migrations/0001` a `0015` (tablas, ENUMs, funciones validadoras, triggers, políticas RLS, vistas de análisis e índices). Resumen del esquema: `backend/database/DB_SCHEMA_SUMMARY.md`.
+Base PostgreSQL en Supabase, definida por las migraciones `backend/database/migrations/0001` a `0016` (tablas, ENUMs, funciones validadoras, triggers, políticas RLS e índices; la `0016` deja el catálogo de 3 perfiles de gasto). Resumen del esquema: `backend/database/DB_SCHEMA_SUMMARY.md`.
 
 | Tabla | Contenido |
 |---|---|
@@ -89,7 +89,7 @@ El análisis de consumo se calcula en el momento a partir de `gastos` (la tabla 
 
 ## 4. Endpoints del backend
 
-Contrato completo (cuerpos, errores y reglas de cálculo) en la [spec §10](especificaciones/EspecificacionDesarrolloFront.md). Rutas en inglés, cuerpos en español. *(pendiente)* Esta tabla es el contrato que implementa el backend simulado; la API NestJS todavía expone otras rutas y nombres de campo y se alinea en las fases I1–I4 del plan de integración. Todas requieren `Authorization: Bearer <token>` salvo login y registro.
+Contrato completo (cuerpos, errores y reglas de cálculo) en la [spec §10](especificaciones/EspecificacionDesarrolloFront.md). Rutas en inglés, cuerpos en español. La API NestJS y el backend simulado implementan este mismo contrato. *(pendiente)* Falta pasar el frontend al driver `http` (fase I4 del plan de integración). Todas requieren `Authorization: Bearer <token>` salvo login y registro.
 
 | Método | Ruta | Rol | Descripción |
 |---|---|---|---|
@@ -130,7 +130,7 @@ El backend NestJS sube la imagen a Supabase Storage y se la pasa a un modelo de 
 | Parte | Tecnologías |
 |---|---|
 | Frontend | HTML5, CSS3 (custom properties, grid, `clamp`, `color-mix`), JavaScript ES2022 con ES modules nativos, Fetch API, Bootstrap 5.3 (CDN), Chart.js 4 (CDN), Font Awesome 6. |
-| Backend | Node.js, NestJS 11, TypeScript, `class-validator`, Passport + JWT, `@nestjs/config`, `@supabase/supabase-js`, Jest + Supertest (e2e). |
+| Backend | Node.js, NestJS 11, TypeScript, `class-validator`, Passport + JWT, `@nestjs/config`, `@supabase/supabase-js`, Jest (unitarios) + Supertest (e2e). |
 | Base de datos | Supabase (PostgreSQL, Auth, Storage, Row Level Security, funciones, triggers y vistas). |
 | OCR/IA | Groq, modelo con visión Llama 4 Scout (SDK `openai`). |
 | Deploy *(pendiente)* | Front: Netlify/Vercel/GitHub Pages · Back: Render/Railway/Fly.io · BD: Supabase. |
@@ -170,6 +170,7 @@ cd backend
 cp .env.example .env      # completar con las claves de Supabase y Groq
 npm install
 npm run start:dev         # http://localhost:3000/api/v1
+npm test                  # tests unitarios (reglas del análisis), sin BD
 npm run test:e2e          # requiere un proyecto de Supabase de prueba en el .env
 ```
 

@@ -7,6 +7,7 @@ import {
   validationError,
 } from "../../common/errors";
 import { SUPABASE_CLIENT } from "../../common/supabase/supabase.provider";
+import { AnalysisService } from "../analysis/analysis.service";
 import { UpdateProfileDto } from "./dto/update-profile.dto";
 import { PerfilDeGasto, Usuario, UsuarioRef } from "./usuario.types";
 
@@ -34,12 +35,18 @@ export class UsersService {
 
   constructor(
     @Inject(SUPABASE_CLIENT) private readonly supabase: SupabaseClient,
+    private readonly analysisService: AnalysisService,
   ) {}
 
   /**
    * Objeto `usuario` completo (cuenta + perfil del rol). `null` si la cuenta no existe.
+   * El perfil de gasto de un cliente se calcula en el momento (spec §10.6); quien ya lo
+   * tiene calculado puede pasarlo en `perfilDeGasto` para no repetir el análisis.
    */
-  async getUsuario(userId: string): Promise<Usuario | null> {
+  async getUsuario(
+    userId: string,
+    perfilDeGasto?: PerfilDeGasto | null,
+  ): Promise<Usuario | null> {
     const { data: row, error } = await this.supabase
       .from("usuarios")
       .select(
@@ -68,9 +75,11 @@ export class UsersService {
     };
 
     if (row.rol === "cliente") {
-      const [profile, perfilDeGasto, asesor] = await Promise.all([
+      const [profile, perfil, asesor] = await Promise.all([
         this.fetchClientProfile(userId),
-        this.getVigentSpendingProfile(userId),
+        perfilDeGasto !== undefined
+          ? perfilDeGasto
+          : this.analysisService.getSpendingProfile(userId),
         this.fetchAssignedAdvisor(userId),
       ]);
       usuario.perfil_cliente = {
@@ -80,7 +89,7 @@ export class UsersService {
             ? null
             : Number(profile.ingreso_estimado),
         objetivo_financiero: profile?.objetivo_financiero ?? "",
-        perfil_de_gasto: perfilDeGasto,
+        perfil_de_gasto: perfil,
         asesor,
       };
     } else {
@@ -177,41 +186,6 @@ export class UsersService {
       throw internalError("No se pudo obtener el usuario.");
     }
     return usuario;
-  }
-
-  /**
-   * Perfil de gasto vigente del cliente (`vigente_hasta` nulo). La asignación la hace el sistema (I3).
-   */
-  async getVigentSpendingProfile(
-    clientId: string,
-  ): Promise<PerfilDeGasto | null> {
-    const { data, error } = await this.supabase
-      .from("clasificacion_de_perfil")
-      .select("perfil:perfil_id (id, nombre, descripcion)")
-      .eq("cliente_id", clientId)
-      .is("vigente_hasta", null)
-      .order("vigente_desde", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (error) {
-      this.logger.warn(`clasificacion_de_perfil: ${error.message}`);
-      return null;
-    }
-    const perfil = first(
-      data?.perfil as Embedded<{
-        id: string;
-        nombre: string;
-        descripcion: string | null;
-      }>,
-    );
-    return perfil
-      ? {
-          id: perfil.id,
-          nombre: perfil.nombre,
-          descripcion: perfil.descripcion ?? "",
-        }
-      : null;
   }
 
   private async fetchClientProfile(userId: string) {

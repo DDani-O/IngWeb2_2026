@@ -1,13 +1,14 @@
 # Backend — NestJS + Supabase
 
-Estado: alineándose con el contrato por fases (`../especificaciones/PlanIntegracionBackend.md`). Desde la fase I2, `auth`, `users`, `categories`, `expenses`, `tickets`, `recommendations` y `clients` siguen el contrato. `advisor` y `analytics` (y `UsersController`) son heredados: responden en camelCase inglés hasta que la fase I3 los reemplace; no tomarlos como modelo.
+Estado: implementa todo el contrato de la spec §10 (fases I2 e I3 de `../especificaciones/PlanIntegracionBackend.md`). Quedan la alineación del front (I4), la prueba contra Supabase (I5) y el deploy (I6).
 
 ## Estructura
 
 - `src/main.ts` — arranque y CORS (`FRONTEND_URL` + `http://localhost:5500`).
 - `src/app.setup.ts` — `configureApp()`: prefijo global `/api/v1`, `ValidationPipe` (`whitelist`, `forbidNonWhitelisted`, `transform`; errores como 422 `VALIDACION`) y filtro global de errores. La usan `main.ts` y los tests e2e.
-- `src/common/` — `auth/` (`JwtStrategy`, `JwtAuthGuard`, `RolesGuard`, `@Roles()`, `@CurrentUser()`), `errors/` (`ApiException`, códigos del contrato y helpers `validationError`, `notFoundError`, `forbiddenError`, `internalError`), `filters/` (serializa todo error como `{error, mensaje, codigo, detalles}`), `supabase/` (clientes service role y anon).
-- `src/modules/<dominio>/` — `auth`, `users` (objeto `usuario`), `categories` (catálogos), `expenses`, `tickets` (Storage + `ocr.service.ts` con Groq), `recommendations`, `clients` y los heredados `analytics` y `advisor`. Cada uno con `*.module.ts`, `*.controller.ts`, `*.service.ts`, `dto/`; los objetos del contrato se arman en un mapper o función `to*` por dominio.
+- `src/common/` — `auth/` (`JwtStrategy`, `JwtAuthGuard`, `RolesGuard`, `@Roles()`, `@CurrentUser()`), `assignments/` (`AssignmentsService`: control de asignación asesor ↔ cliente, 403 si no está asignado), `errors/` (`ApiException`, códigos del contrato y helpers `validationError`, `notFoundError`, `forbiddenError`, `internalError`), `filters/` (serializa todo error como `{error, mensaje, codigo, detalles}`), `supabase/` (clientes service role y anon).
+- `src/modules/<dominio>/` — `auth` (también `/auth/me` y `/auth/profile`), `users` (arma el objeto `usuario`; sin rutas propias), `categories` (catálogos), `expenses`, `tickets` (Storage + `ocr.service.ts` con Groq), `recommendations`, `analysis` y `clients`. Cada uno con `*.module.ts`, `*.controller.ts`, `*.service.ts`, `dto/`; los objetos del contrato se arman en un mapper o función `to*` por dominio.
+- `src/modules/analysis/` — `analysis.rules.ts` (reglas de la spec §10.6 como funciones puras, port exacto de `../frontend/mocks/analytics.js`; tests en `analysis.rules.spec.ts`), `calendar.ts` (fechas `AAAA-MM-DD` y "hoy" en `APP_TIMEZONE`) y `analysis.service.ts` (lee de Supabase, aplica las reglas y sincroniza `clasificacion_de_perfil` solo cuando cambia el perfil).
 - `test/e2e/` — tests e2e con Jest + Supertest contra un Supabase real; `test-utils.ts` levanta la app con `configureApp`, registra cuentas y limpia los datos.
 - `database/` — `migrations/0001..0015` (se ejecutan en orden en el SQL Editor de Supabase), `functions/` y `policies/` (referencia separada por archivo), `seeds/`, `DB_SCHEMA_SUMMARY.md`, `database.types.ts`. Tablas en español; leer el esquema antes de escribir DTOs. Cambios de esquema → migración nueva `00NN_*.sql`, nunca editar una ya aplicada.
 
@@ -17,9 +18,10 @@ Estado: alineándose con el contrato por fases (`../especificaciones/PlanIntegra
 - El `id` del usuario nunca viene del body: siempre del JWT (`@CurrentUser()`). Endpoints por rol con `@UseGuards(JwtAuthGuard, RolesGuard)` + `@Roles(...)`; roles `cliente` y `asesor`.
 - El back usa el service role de Supabase (saltea RLS): la autorización y el control de pertenencia se hacen en los servicios Nest.
 - Validación de entrada con DTOs + `class-validator`, con mensaje en español en cada regla (la primera regla declarada es la que se informa). Errores de negocio con los helpers de `common/errors`, nunca con las excepciones de Nest con texto suelto; el detalle técnico va al `Logger`, no a la respuesta.
-- Configuración por variables de entorno (`@nestjs/config`): `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_KEY`, `JWT_SECRET`, `JWT_EXPIRATION`, `GROQ_API_KEY`, `PORT`, `FRONTEND_URL`. Mantener `.env.example` versionado con esas claves; el `.env` real nunca se commitea.
+- Configuración por variables de entorno (`@nestjs/config`): `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_KEY`, `JWT_SECRET`, `JWT_EXPIRATION`, `GROQ_API_KEY`, `PORT`, `FRONTEND_URL` y, opcional, `APP_TIMEZONE` (por defecto `America/Argentina/Buenos_Aires`). Mantener `.env.example` versionado con esas claves; el `.env` real nunca se commitea.
 
 ## Comandos
 
-- `npm install` · `npm run start:dev` · `npm run build` · `npm run lint` · `npm run test:e2e`
-- Después de cada cambio: `npx tsc --noEmit` (o `npm run build`) y, si hay `.env` de prueba, `npm run test:e2e`.
+- `npm install` · `npm run start:dev` · `npm run build` · `npm run lint` · `npm test` (unitarios, sin BD) · `npm run test:e2e`
+- Después de cada cambio: `npx tsc --noEmit`, `npm test` y, si hay `.env` de prueba, `npm run test:e2e`. Si se toca una regla del análisis, cambiarla también en el mock y en la spec §10.6.
+- El build usa `tsconfig.build.json` (excluye los `*.spec.ts` y guarda el estado incremental dentro de `dist/`).
