@@ -98,40 +98,26 @@ Una fase por commit; los integrantes commitean a mano.
 - **Base de datos:** migración `0017_security_functions.sql` aplicada (sin acceso anónimo a funciones `SECURITY DEFINER`, `obtener_gastos_inusuales` y `calcular_zscore` eliminadas, `search_path = public` en las 18 funciones); probada antes en un PostgreSQL 16 local con las 16 migraciones previas. Seed `seed_demo_jun_nov_2026.sql` aplicado (218 gastos de junio a hoy para bj@ y bi@, idempotente, sin fechas futuras; mj@ con capacidad 10; `asesorprueba@gmail.com` inactivo para que los registros de la demo vayan a mj@). Limpieza: el ticket en error del 24/11, 9 archivos huérfanos de Storage y las cuentas de prueba.
 - **Tests:** 56 unitarios y 39 e2e contra Supabase en verde. Los e2e fallaban por el timeout de 5 s de Jest (registrar cuentas en Supabase tarda más): `testTimeout` de 60 s en `jest-e2e.json`; no quedan cuentas de test después de correrlos.
 - **Recorrido con `http`:** registro y login reales, todas las pantallas de los dos roles, alta/edición/borrado de gasto, tickets, filtros, detalle de recomendaciones y análisis por cliente del asesor, sin errores de consola ni respuestas 4xx/5xx inesperadas; los números de dashboard, patrones y cartera coinciden con la base. El modo `mock` sigue andando.
-- **Pendiente detectado (no bloquea):** la UI muestra los montos sin centavos ($ 48.351 por 48.350,90); la categoría `Ropa` existe en Supabase pero no en las migraciones ni en las categorías que sugiere el OCR; falta agregar `GROQ_MODEL` a `backend/.env.example` (bloqueado por permisos en esta sesión).
+- Detalles menores detectados en esta fase: ver §5.
 
-### I6 — Deploy y documentación · en curso
+### I6 — Deploy y documentación ✅ completada
 - Deploy de front y back; URLs en el README.
 - Completar las secciones *(pendiente)* del README.
-- Actualizar o retirar la documentación heredada de `dev` que quedó desactualizada (ver §5).
+- Actualizar o retirar la documentación heredada de `dev` que quedó desactualizada.
 
-**Hecho hasta ahora (26/11):**
+**Parte 1 (26/11):**
 - Configuración versionada: `render.yaml` (API en Render, plan free, región Virginia junto a Supabase `us-east-1`, rama `main`, health check `/api/v1/health`) y `netlify.toml` (publica `frontend/` sin build). Build probado desde una copia limpia con los mismos comandos de Render (`npm ci && npm run build`, `npm run start`): arranca, `/health` responde y el CORS acepta solo `FRONTEND_URL`.
 - `GET /health` público (`src/health.controller.ts`, spec §10, mock y e2e).
 - Arranque en frío del plan gratuito: con el driver `http`, `APIClient.wakeUp()` llama a `/health` al abrir la app (hasta 90 s), los demás pedidos lo esperan y, si tarda más de 2,5 s, se muestra "Despertando el servidor…" hasta que responde. Probado demorando `/health` 8 s: el login enviado mientras tanto espera y entra sin errores.
 - README: estado, modelo de datos (`0017`, seed de demo), endpoints (`/health`), uso de la IA (modelo configurable, `parseMonto`), tecnologías y guía de deploy. Las URLs se completan después del deploy.
 - Documentación heredada: `backend/database/README.md` reescrito; `DB_SCHEMA_SUMMARY.md` actualizado (objetos eliminados por la `0013`, `0014`, `0016` y `0017`, migraciones hasta la `0017`); se retiraron `backend/database/INDEX.md`, `backend/FINTRACK_BACKEND_CONTEXT.md` y `PENDIENTES_GENERALES.md`, cuyo contenido vigente ya está en los `CLAUDE.md`, la spec y este plan.
 
-**Pasos del equipo para el deploy:**
-1. Commitear I6 en `dev` y llevar `main` a `dev` (ver abajo); push de las dos ramas.
-2. Render → New → **Blueprint** → este repo. Cargar `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_KEY`, `JWT_SECRET`, `GROQ_API_KEY` (los mismos valores del `backend/.env`) y, por ahora, `FRONTEND_URL` vacío.
-3. Netlify → Add new site → Import from Git → este repo, rama `main` (toma `netlify.toml`).
-4. Pasar las dos URLs: se completan `API_CONFIG.BASE_URLS.production` y `FRONTEND_URL` en Render, y se verifica online el recorrido de la demo.
-
-**Para llevar `main` a `dev`** (`main` es ancestro de `dev`, así que no hay merge commit):
-```bash
-git fetch origin
-git switch main
-git merge --ff-only origin/dev   # si falla, main tiene commits que dev no tiene: avisar antes de forzar nada
-git push origin main
-git switch dev
-```
-
-**Notas para el equipo (antes de la entrega):**
-- Activar en Supabase **Authentication → Policies → Leaked password protection** (aviso del revisor de seguridad; es un switch del panel, no SQL).
-- **Cambiar las claves de las cuentas reales de la demo** (`bj@`, `bi@`, `cn@`, `mj@` y `asesorprueba@`): usan `Fintrack2026*`, la misma clave que el README publica para el mock, y los emails aparecen en el seed. Con el sistema online, cualquiera que lea el repo podría entrar. Las nuevas se pasan a los docentes por privado (el README ya dice que se entregan por separado).
-- El día de la demo (1/12) "Gasto del mes" arranca en $0: volver a correr `seed_demo_jun_nov_2026.sql` esa mañana (es idempotente) o cargar un ticket durante la demo. Abrir la app un par de minutos antes para que Render despierte.
-- `backend/.env.example`: falta agregar `GROQ_MODEL=qwen/qwen3.8-27b` (no se pudo editar desde Claude Code por la regla de permisos sobre `.env*`).
+**Parte 2 (27/11) — deploy:**
+- Backend en Render (Blueprint de `render.yaml`): https://fintrack-api-5vmm.onrender.com/api/v1.
+- Frontend en Netlify (`netlify.toml`): https://fintrack-iua.netlify.app.
+- `API_CONFIG.BASE_URLS.production` apunta a Render y `FRONTEND_URL` en Render a Netlify.
+- Verificado online: `GET /health` responde `{ estado: "ok" }`; el preflight CORS desde la URL de Netlify devuelve `access-control-allow-origin` con ese origen; un login inválido responde 401 `CREDENCIALES_INVALIDAS` con el formato de error del contrato; Netlify sirve la versión de `constants.js` con la URL de producción.
+- README (URLs públicas y guía de deploy), spec §10 y `CLAUDE.md` actualizados.
 
 ## 4. Decisiones
 
@@ -141,12 +127,21 @@ Tomadas en I1:
 2. **Tickets:** flujo en un paso; el gasto se crea con `POST /expenses` (`origen: "ticket"`, `ticket_id`) y se elimina `POST /tickets/:id/confirm`.
 3. **Perfiles de gasto:** los 3 del front (Drácula Nocturno, Equilibrista Cósmico, Espíritu Libre) con regla automática por gasto discrecional; se reemplaza el seed de 7 perfiles de `dev`.
 
-Pendiente (no bloquea):
+Cerrada al terminar la integración:
 
-4. **Frontend de `dev`:** si hay algo del "sandwich theme" o de `i18n.js` que convenga rescatar (quedó fuera del merge; se recupera con `git show 2ca5c28:<ruta>`).
+4. **Frontend de `dev`:** no se rescata nada del "sandwich theme" ni de `i18n.js` para la entrega: la consigna no pide internacionalización y el front de `main` ya tiene su propio tema (`ThemeManager`, claro/oscuro). Si más adelante se quiere retomar, el código se recupera con `git show 2ca5c28:<ruta>`.
 
-## 5. Pendientes detectados en el merge
+## 5. Pendientes antes de la entrega (fuera de las fases)
 
-- Documentación heredada de `dev` desactualizada: `backend/database/README.md` (rutas `backend/src/database/` y solo dos migraciones), `backend/FINTRACK_BACKEND_CONTEXT.md` (mensajería, Gemini, rutas viejas) y `PENDIENTES_GENERALES.md` (rutas `/usuario/*`, mocks del front viejo).
-- `npm run lint`: 0 errores y 0 warnings desde I3.
-- Los `Logica_modulo_*.md` de `expenses` y `categories` describían el contrato viejo y se borraron en I2.
+La integración está cerrada. Lo resuelto de los pendientes del merge: la documentación heredada de `dev` se reescribió o retiró en I6; `npm run lint` da 0 errores y 0 warnings desde I3; los `Logica_modulo_*.md` se borraron en I2.
+
+Quedan tareas del equipo (paneles y archivos que Claude Code no toca):
+
+- **Seguridad:** cambiar las claves de las cuentas reales de la demo (`bj@`, `bi@`, `cn@`, `mj@` y `asesorprueba@`), que usan `Fintrack2026*` (la clave publicada para el mock), y pasar las nuevas a los docentes por privado. Activar en Supabase **Authentication → Policies → Leaked password protection**.
+- **`backend/.env.example`:** agregar `GROQ_MODEL=qwen/qwen3.8-27b` y `APP_TIMEZONE=America/Argentina/Buenos_Aires` (opcionales; la regla de permisos sobre `.env*` impide editarlo desde Claude Code).
+- **Día de la demo (1/12):** volver a correr `seed_demo_jun_nov_2026.sql` esa mañana (idempotente) para que "Gasto del mes" no arranque en $0, y abrir la app un par de minutos antes para que Render despierte.
+
+Detalles menores conocidos (no bloquean):
+
+- La UI muestra los montos sin centavos ($ 48.351 por 48.350,90).
+- La categoría `Ropa` existe en la base de Supabase pero no en las migraciones, en el seed del mock ni en las categorías que sugiere el OCR.

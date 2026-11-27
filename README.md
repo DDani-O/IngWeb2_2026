@@ -190,14 +190,14 @@ La configuración está versionada; el deploy sale de la rama `main`.
 
 1. **Backend en Render:** New → **Blueprint** → elegir este repo (lee `render.yaml`: servicio web Node, `rootDir: backend`, build `npm ci && npm run build`, start `npm run start`, health check `/api/v1/health`, región Virginia, cerca de Supabase `us-east-1`). Cargar las variables marcadas como secretas: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_KEY`, `JWT_SECRET`, `GROQ_API_KEY` y `FRONTEND_URL` (la URL de Netlify, sin barra final). `PORT` lo pone Render.
 2. **Frontend en Netlify:** Add new site → Import from Git → este repo (lee `netlify.toml`: publica `frontend/` sin build).
-3. Completar `API_CONFIG.BASE_URLS.production` en `frontend/utils/constants.js` con `https://<servicio>.onrender.com/api/v1`, y `FRONTEND_URL` en Render con la URL de Netlify. Commit y push: los dos se redeployan solos.
+3. `API_CONFIG.BASE_URLS.production` en `frontend/utils/constants.js` apunta a la URL de Render y `FRONTEND_URL` en Render a la de Netlify (ver [URLs públicas](#urls-públicas)). Cada push a `main` redeploya los dos.
 
 **Plan gratuito de Render:** el backend se duerme tras 15 minutos sin pedidos y tarda cerca de un minuto en despertar. El front lo despierta apenas se abre la app (`GET /health`), hace esperar a los demás pedidos y muestra "Despertando el servidor…" mientras tanto. Para una demo, abrir la app un par de minutos antes.
 
 ### URLs públicas
 
-- Frontend: *(se completa al hacer el deploy)*
-- Backend: *(se completa al hacer el deploy)*
+- Frontend: https://fintrack-iua.netlify.app
+- Backend: https://fintrack-api-5vmm.onrender.com/api/v1 (health check: [`/health`](https://fintrack-api-5vmm.onrender.com/api/v1/health))
 
 Las cuentas de demostración de la versión online se entregan por separado (no se publican en el repo).
 

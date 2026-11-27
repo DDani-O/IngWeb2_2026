@@ -1,6 +1,6 @@
 # Backend — NestJS + Supabase
 
-Estado: implementa todo el contrato de la spec §10 y está probado contra Supabase con el front (fases I2–I5 de `../especificaciones/PlanIntegracionBackend.md`). Queda el deploy (I6).
+Estado: implementa todo el contrato de la spec §10 y está probado contra Supabase con el front (fases I2–I6 de `../especificaciones/PlanIntegracionBackend.md`). Deployado en Render (`render.yaml`, rama `main`): https://fintrack-api-5vmm.onrender.com/api/v1.
 
 ## Estructura
 
