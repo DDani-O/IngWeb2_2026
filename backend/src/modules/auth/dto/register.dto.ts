@@ -4,6 +4,7 @@ import {
   IsIn,
   IsNotEmpty,
   IsString,
+  Matches,
   MaxLength,
   MinLength,
   ValidateIf,
@@ -12,6 +13,10 @@ import { UserRole } from "../../../common/auth";
 
 const trim = ({ value }: { value: unknown }) =>
   typeof value === "string" ? value.trim() : value;
+
+/** Misma regla que `isStrongPassword` del front: mayúscula y número (ASCII). */
+const PASSWORD_RULE_MESSAGE =
+  "La contrasena debe tener al menos 8 caracteres, una mayuscula y un numero.";
 
 /** POST /auth/register (spec §10.1). `matricula` y `especialidad` son obligatorios para asesores. */
 export class RegisterDto {
@@ -28,7 +33,9 @@ export class RegisterDto {
   email!: string;
 
   @IsString({ message: "La contrasena es obligatoria." })
-  @MinLength(8, { message: "La contrasena debe tener al menos 8 caracteres." })
+  @MinLength(8, { message: PASSWORD_RULE_MESSAGE })
+  @Matches(/[A-Z]/, { message: PASSWORD_RULE_MESSAGE })
+  @Matches(/\d/, { message: PASSWORD_RULE_MESSAGE })
   @MaxLength(72, {
     message: "La contrasena no puede superar los 72 caracteres.",
   })

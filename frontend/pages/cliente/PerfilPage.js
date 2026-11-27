@@ -13,7 +13,7 @@ const CLIENT_PROFILE_FIELDS = [
   { name: "fullName", label: "Nombre completo", required: true, width: "half", inputAttrs: { maxlength: 120, autocomplete: "name" } },
   { name: "email", label: "Email", type: "email", readonly: true, width: "half", hint: "Es el email de acceso a la cuenta." },
   { name: "occupation", label: "Ocupacion", width: "half", inputAttrs: { maxlength: 120 } },
-  { name: "estimatedIncome", label: "Ingreso mensual estimado", type: "number", width: "half", inputAttrs: { min: 0, inputmode: "numeric" } },
+  { name: "estimatedIncome", label: "Ingreso mensual estimado", type: "number", width: "half", inputAttrs: { min: 0, step: "0.01", inputmode: "decimal" } },
   { name: "financialGoal", label: "Objetivo financiero", inputAttrs: { placeholder: "Ej: juntar un fondo de emergencia", maxlength: 300 } },
   { name: "bio", label: "Sobre mi", type: "textarea", inputAttrs: { rows: 2, maxlength: 500 } },
   { name: "theme", label: "Tema visual", type: "select", width: "half", options: [{ value: "dark", label: "Oscuro" }, { value: "light", label: "Claro" }] },

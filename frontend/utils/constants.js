@@ -70,30 +70,16 @@ export const ROUTES = {
   PLACEHOLDER: "/utils/placeholder",
 };
 
+/**
+ * Eventos del EventBus. Solo los que alguien escucha: si se agrega uno, en el mismo
+ * cambio va el listener (un evento sin listener es código muerto).
+ */
 export const EVENTS = {
   AUTH: {
-    LOGIN: "auth:login",
-    LOGOUT: "auth:logout",
-    REGISTER: "auth:register",
     SESSION_EXPIRED: "auth:sessionExpired",
-  },
-  ROUTER: {
-    CHANGED: "router:changed",
   },
   THEME: {
     CHANGED: "theme:changed",
-  },
-  STATE: {
-    CHANGED: "state:changed",
-  },
-  EXPENSE: {
-    CREATED: "expense:created",
-    UPDATED: "expense:updated",
-    DELETED: "expense:deleted",
-  },
-  RECOMMENDATION: {
-    CREATED: "recommendation:created",
-    READ: "recommendation:read",
   },
   PROFILE: {
     UPDATED: "profile:updated",

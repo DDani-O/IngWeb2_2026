@@ -77,9 +77,10 @@ export class ChartCard extends Component {
     this._chart = null;
   }
 
-  _format(value) {
+  /** @param {boolean} [axisTick] las marcas del eje van sin centavos; los tooltips, con. */
+  _format(value, axisTick = false) {
     const { valueFormat } = this.options;
-    if (valueFormat === "currency") return formatCurrency(value);
+    if (valueFormat === "currency") return formatCurrency(value, { decimals: axisTick ? 0 : 2 });
     if (valueFormat === "percent") return `${value}%`;
     return Number(value).toLocaleString("es-AR");
   }
@@ -97,7 +98,7 @@ export class ChartCard extends Component {
     const palette = getChartPalette();
     const circular = CIRCULAR.includes(type);
     const axis = {
-      ticks: { color: theme.label, callback: (value) => this._format(value) },
+      ticks: { color: theme.label, callback: (value) => this._format(value, true) },
       grid: { color: theme.grid },
     };
 

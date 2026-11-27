@@ -167,7 +167,6 @@ export class LandingPage extends Component {
       const payload = {
         email: this.element.querySelector("#loginEmail")?.value || "",
         password: this.element.querySelector("#loginPassword")?.value || "",
-        remember: Boolean(this.element.querySelector("#loginRemember")?.checked),
       };
 
       const validation = validateLoginForm(payload);

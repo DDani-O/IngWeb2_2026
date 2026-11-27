@@ -1,16 +1,20 @@
 import { APP_CONFIG } from "./constants.js";
 
 /**
- * Convierte un valor numerico a texto monetario para mostrar montos en UI.
- * Tambien sirve para estandarizar moneda en reportes y tablas futuras.
+ * Convierte un monto a texto en pesos, con centavos ("$ 355,37"). Es el único formato de
+ * montos de la UI: tablas, KPIs, detalle y tooltips de los gráficos.
+ * @param {number|string} value
+ * @param {object} [options]
+ * @param {number} [options.decimals=2] 0 solo para marcas redondas, como el eje de un gráfico.
  */
-export function formatCurrency(value, currency = APP_CONFIG.DEFAULT_CURRENCY) {
+export function formatCurrency(value, { decimals = 2 } = {}) {
   const amount = Number(value || 0);
 
   return new Intl.NumberFormat(APP_CONFIG.DEFAULT_LOCALE, {
     style: "currency",
-    currency,
-    maximumFractionDigits: 0,
+    currency: APP_CONFIG.DEFAULT_CURRENCY,
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
   }).format(amount);
 }
 

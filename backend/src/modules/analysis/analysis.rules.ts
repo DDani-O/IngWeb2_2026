@@ -24,7 +24,7 @@ import {
 
 /** Un gasto es inusual si supera en más de este factor el promedio de su categoría. */
 export const UNUSUAL_FACTOR = 1.35;
-/** Mínimo de gastos previos en la categoría para poder comparar. */
+/** Mínimo de otros gastos en la categoría (de todo el historial) para poder comparar. */
 export const UNUSUAL_MIN_HISTORY = 3;
 /** Solo se marcan como inusuales los gastos de los últimos N días. */
 export const UNUSUAL_WINDOW_DAYS = 30;

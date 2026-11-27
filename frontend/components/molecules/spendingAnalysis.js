@@ -57,7 +57,7 @@ export function analysisCharts(analysis, { categoryLink = null } = {}) {
       labels: analysis.byMonth.map((item) => formatMonth(item.month)),
       datasets: [
         { label: "Gasto mensual", data: analysis.byMonth.map((item) => item.amount) },
-        { label: "Promedio", kind: "line", dashed: true, data: analysis.byMonth.map(() => Math.round(average)) },
+        { label: "Promedio", kind: "line", dashed: true, data: analysis.byMonth.map(() => Math.round(average * 100) / 100) },
       ],
     },
   };

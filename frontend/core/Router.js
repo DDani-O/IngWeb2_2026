@@ -1,6 +1,4 @@
-import { EVENTS } from "../utils/constants.js";
 import { buildHash, parseQueryString } from "../utils/helpers.js";
-import { eventBus } from "./EventBus.js";
 import { loadTemplate } from "./templateLoader.js";
 
 /**
@@ -242,7 +240,6 @@ export class Router {
       document.title = `${to.title} · FinTrack`;
     }
 
-    eventBus.emit(EVENTS.ROUTER.CHANGED, { path: to.path, query: to.query, params: to.params });
     this._listeners.forEach((listener) => listener(to));
   }
 

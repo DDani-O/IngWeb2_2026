@@ -7,6 +7,7 @@
  * para que sobrevivan a la navegación y a la recarga.
  */
 import { STORAGE_KEYS } from "../utils/constants.js";
+import { isStrongPassword } from "../utils/validators.js";
 import { computeAdvisorSummary, computeClientAnalysis } from "./analytics.js";
 import { MOCK_MERCHANTS_BY_CATEGORY, SEED_VERSION, buildSeed, toIsoDate } from "./seed.js";
 
@@ -290,7 +291,7 @@ function simulateOcr(fileName) {
   return {
     comercio_detectado: comercios[hash % comercios.length],
     fecha_detectada: toIsoDate(new Date()),
-    monto_detectado: Math.round(base * (0.8 + (hash % 40) / 100)),
+    monto_detectado: Math.round(base * (0.8 + (hash % 40) / 100) * 100) / 100,
     categoria_sugerida: category ? { id: category.id, nombre: category.nombre } : null,
     confianza_general: 80 + (hash % 18),
   };
@@ -359,8 +360,12 @@ const routes = [
       if (!["cliente", "asesor"].includes(body.rol)) {
         throw new HttpError(422, "VALIDACION", "El rol debe ser cliente o asesor.", { campos: ["rol"] });
       }
-      if (String(body.password).length < 8 || String(body.password).length > 72) {
-        throw new HttpError(422, "VALIDACION", "La contrasena debe tener entre 8 y 72 caracteres.", { campos: ["password"] });
+      // Misma regla que el back (register.dto.ts) y que isStrongPassword.
+      if (!isStrongPassword(body.password)) {
+        throw new HttpError(422, "VALIDACION", "La contrasena debe tener al menos 8 caracteres, una mayuscula y un numero.", { campos: ["password"] });
+      }
+      if (String(body.password).length > 72) {
+        throw new HttpError(422, "VALIDACION", "La contrasena no puede superar los 72 caracteres.", { campos: ["password"] });
       }
       if (body.rol === "asesor") {
         requireFields(body, ["matricula", "especialidad"]);

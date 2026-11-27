@@ -10,9 +10,9 @@
 const MOCK_PASSWORD = "Fintrack2026*";
 
 /** Subir al cambiar la forma de los datos: fuerza a regenerar la base guardada en localStorage. */
-export const SEED_VERSION = 2;
+export const SEED_VERSION = 3;
 
-/** Mismo catálogo que la BD (migración 0006: nombres e íconos). */
+/** Mismo catálogo que la BD (migraciones 0006 y 0018: nombres e íconos). */
 const CATEGORIAS = [
   { id: "cat-alimentacion", nombre: "Alimentación", icono: "🍔" },
   { id: "cat-transporte", nombre: "Transporte", icono: "🚗" },
@@ -20,6 +20,7 @@ const CATEGORIAS = [
   { id: "cat-salud", nombre: "Salud", icono: "⚕️" },
   { id: "cat-educacion", nombre: "Educación", icono: "📚" },
   { id: "cat-hogar", nombre: "Hogar", icono: "🏠" },
+  { id: "cat-ropa", nombre: "Ropa", icono: "👕" },
   { id: "cat-servicios", nombre: "Servicios", icono: "⚙️" },
   { id: "cat-suscripciones", nombre: "Suscripciones", icono: "🎬" },
   { id: "cat-otros", nombre: "Otros", icono: "📦" },
@@ -34,6 +35,7 @@ const COMERCIOS_POR_CATEGORIA = {
   "cat-salud": { base: 5500, comercios: ["Farmacia Sur", "Optica Vision"] },
   "cat-educacion": { base: 4500, comercios: ["Libreria Centro", "Udemy"] },
   "cat-hogar": { base: 8000, comercios: ["Easy", "Sodimac", "Ferreteria El Tornillo"] },
+  "cat-ropa": { base: 15000, comercios: ["Zara", "Falabella", "Dexter"] },
   "cat-suscripciones": { base: 3200, comercios: ["Netflix", "Spotify", "Disney+"] },
   "cat-otros": { base: 6000, comercios: ["Mercado Libre", "Kiosco 24hs"] },
 };

@@ -2,7 +2,6 @@ import { apiClient } from "./core/APIClient.js";
 import { authManager } from "./core/AuthManager.js";
 import { eventBus } from "./core/EventBus.js";
 import { Router } from "./core/Router.js";
-import { stateManager } from "./core/StateManager.js";
 import { tabRegistry } from "./core/TabRegistry.js";
 import { themeManager } from "./core/ThemeManager.js";
 import { ADVISOR_LAYOUT, AppLayout, CLIENT_LAYOUT } from "./components/layout/AppLayout.js";
@@ -31,10 +30,6 @@ function initializeApplication() {
   themeManager.init();
   // La sesión se restaura antes del primer guard: si no, se expulsaría a quien sí tenía sesión.
   authManager.init();
-
-  stateManager.patch({
-    theme: themeManager.getTheme(),
-  });
 
   router.beforeEach(requireRoleGuard);
   tabRegistry.start(router);

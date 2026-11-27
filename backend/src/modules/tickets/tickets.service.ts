@@ -158,7 +158,10 @@ export class TicketsService {
     return ticket.id;
   }
 
-  /** Análisis con IA; `null` si el servicio no está configurado o falla. */
+  /**
+   * Análisis con IA; `null` si el servicio no está configurado, no responde a tiempo o
+   * devuelve algo que no se pudo leer (JSON cortado o inválido).
+   */
   private async analyze(
     file: Express.Multer.File,
   ): Promise<ParsedTicket | null> {

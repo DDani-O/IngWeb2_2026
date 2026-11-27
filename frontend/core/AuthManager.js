@@ -1,8 +1,6 @@
-import { EVENTS, ROLES, ROUTES, STORAGE_KEYS } from "../utils/constants.js";
+import { ROLES, ROUTES, STORAGE_KEYS } from "../utils/constants.js";
 import { authService } from "../services/auth.service.js";
 import { apiClient } from "./APIClient.js";
-import { stateManager } from "./StateManager.js";
-import { eventBus } from "./EventBus.js";
 
 export class AuthManager {
   /**
@@ -36,20 +34,14 @@ export class AuthManager {
 
       // Sesiones guardadas con un rol que ya no existe (p. ej. el antiguo "usuario") se descartan.
       if (!Object.values(ROLES).includes(parsed?.role)) {
-        this.logout({ emitEvent: false });
+        this.logout();
         return;
       }
 
       this.currentUser = parsed;
       this.token = storedToken;
-
-      stateManager.patch({
-        user: parsed,
-        role: parsed.role,
-        isAuthenticated: true,
-      });
     } catch {
-      this.logout({ emitEvent: false });
+      this.logout();
     }
   }
 
@@ -61,7 +53,6 @@ export class AuthManager {
   async login(credentials) {
     const { token, user } = await authService.login(credentials);
     this._persistSession(user, token);
-    eventBus.emit(EVENTS.AUTH.LOGIN, { user });
     return user;
   }
 
@@ -72,7 +63,6 @@ export class AuthManager {
   async register(form) {
     const { token, user } = await authService.register(form);
     this._persistSession(user, token);
-    eventBus.emit(EVENTS.AUTH.REGISTER, { user });
     return user;
   }
 
@@ -89,9 +79,9 @@ export class AuthManager {
   }
 
   /**
-   * Cierra sesion, limpia almacenamiento y opcionalmente emite evento.
+   * Cierra sesion y limpia el almacenamiento de la sesion.
    */
-  logout({ emitEvent = true } = {}) {
+  logout() {
     const userId = this.currentUser?.id;
     if (userId) {
       localStorage.removeItem(`${STORAGE_KEYS.EXPENSE_DRAFT}.${userId}`);
@@ -102,16 +92,6 @@ export class AuthManager {
 
     localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
     localStorage.removeItem(STORAGE_KEYS.AUTH_USER);
-
-    stateManager.patch({
-      user: null,
-      role: null,
-      isAuthenticated: false,
-    });
-
-    if (emitEvent) {
-      eventBus.emit(EVENTS.AUTH.LOGOUT, {});
-    }
   }
 
   /**
@@ -150,7 +130,7 @@ export class AuthManager {
   }
 
   /**
-   * Persiste token/usuario y sincroniza estado global autenticado.
+   * Persiste token y usuario de la sesion.
    */
   _persistSession(user, token) {
     this.currentUser = user;
@@ -158,12 +138,6 @@ export class AuthManager {
 
     localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
     localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(user));
-
-    stateManager.patch({
-      user,
-      role: user.role,
-      isAuthenticated: true,
-    });
   }
 
   /**

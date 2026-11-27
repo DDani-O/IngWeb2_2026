@@ -105,6 +105,31 @@ describe("Auth (e2e)", () => {
       expect(res.body.detalles.campos).toEqual(["matricula", "especialidad"]);
     });
 
+    it.each([
+      ["corta", "Ab1"],
+      ["sin mayúscula", "prueba1234"],
+      ["sin número", "PruebaSinNumero"],
+    ])(
+      "responde 422 con una contraseña %s (misma regla que el front)",
+      async (_caso, password) => {
+        const res = await api(app)
+          .post("/auth/register")
+          .send({
+            nombre_completo: "Cliente",
+            email: generateTestEmail("auth.x"),
+            password,
+            rol: "cliente",
+          })
+          .expect(422);
+        expect(res.body).toMatchObject({
+          codigo: "VALIDACION",
+          mensaje:
+            "La contrasena debe tener al menos 8 caracteres, una mayuscula y un numero.",
+          detalles: { campos: ["password"] },
+        });
+      },
+    );
+
     it("rechaza los nombres de campo del contrato viejo", async () => {
       const res = await api(app)
         .post("/auth/register")

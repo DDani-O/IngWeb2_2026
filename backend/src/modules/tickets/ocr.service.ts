@@ -21,6 +21,7 @@ const ALLOWED_CATEGORIES = [
   "Salud",
   "Educación",
   "Hogar",
+  "Ropa",
   "Servicios",
   "Suscripciones",
   "Otros",
@@ -32,7 +33,7 @@ Analiza la imagen del ticket proporcionada y extrae la información en formato J
   "comercio": "nombre visible del comercio (no la razón social ni CUIT)",
   "fecha": "YYYY-MM-DD o null si no se detecta",
   "monto_total": número decimal o null (SOLO el total final pagado, sin símbolo de moneda),
-  "categoria": "una de: Alimentación, Transporte, Entretenimiento, Salud, Educación, Hogar, Servicios, Suscripciones, Otros",
+  "categoria": "una de: Alimentación, Transporte, Entretenimiento, Salud, Educación, Hogar, Ropa, Servicios, Suscripciones, Otros",
   "confianza": número entero entre 0 y 100,
   "texto_extraido": "todo el texto visible en el ticket"
 }
@@ -52,6 +53,16 @@ Reglas importantes:
  * Los modelos con imagen de la cuenta se listan con GET /openai/v1/models.
  */
 export const DEFAULT_GROQ_MODEL = "qwen/qwen3.8-27b";
+
+/**
+ * Límites del pedido a Groq. Un ticket tarda 3–5 s; con 12 s por intento y un solo
+ * reintento, el peor caso (~25 s) entra en los 30 s que espera el front
+ * (`API_CONFIG.UPLOAD_TIMEOUT_MS`). Si se excede, el ticket queda en `error`.
+ */
+export const OCR_TIMEOUT_MS = 12_000;
+export const OCR_MAX_RETRIES = 1;
+/** Alcanza para el JSON con `texto_extraido` de un ticket largo. */
+const OCR_MAX_TOKENS = 2048;
 
 /**
  * Convierte el monto que devuelve el modelo en un número con hasta 2 decimales.
@@ -94,6 +105,8 @@ export class OcrService {
       this.client = new OpenAI({
         apiKey,
         baseURL: "https://api.groq.com/openai/v1",
+        timeout: OCR_TIMEOUT_MS,
+        maxRetries: OCR_MAX_RETRIES,
       });
       this.logger.log(`Groq Vision inicializado (${this.model})`);
     } else {
@@ -107,6 +120,11 @@ export class OcrService {
     return this.client !== null;
   }
 
+  /**
+   * Analiza la imagen con el modelo. Lanza un error si el servicio no responde a tiempo,
+   * si la respuesta quedó cortada o si no es un JSON válido: en todos esos casos el
+   * ticket "no se pudo leer" y el servicio de tickets responde `analisis: null`.
+   */
   async analyzeTicket(
     fileBuffer: Buffer,
     mimeType: string,
@@ -135,64 +153,88 @@ export class OcrService {
           ],
         },
       ],
-      max_tokens: 1024,
+      max_tokens: OCR_MAX_TOKENS,
       temperature: 0.1,
     });
 
-    const rawText = response.choices[0]?.message?.content?.trim() ?? "";
+    const choice = response.choices[0];
+    if (choice?.finish_reason === "length") {
+      throw new Error("la respuesta del modelo quedó cortada (max_tokens)");
+    }
+    const rawText = choice?.message?.content?.trim() ?? "";
     this.logger.debug(`Respuesta Groq: ${rawText.slice(0, 300)}`);
 
-    return this.parseResponse(rawText);
+    return parseTicketResponse(rawText);
   }
+}
 
-  private parseResponse(rawText: string): ParsedTicket {
-    const clean = rawText.replace(/```json\s*|\s*```/g, "").trim();
+/**
+ * Convierte el texto del modelo en un `ParsedTicket`. Lanza un error si no es un objeto
+ * JSON (respuesta cortada, texto libre, etc.) o si no trae comercio, fecha ni monto:
+ * un ticket vacío no se informa como leído.
+ */
+export function parseTicketResponse(rawText: string): ParsedTicket {
+  const clean = rawText.replace(/```json\s*|\s*```/g, "").trim();
 
-    let parsed: Record<string, unknown> = {};
-    try {
-      parsed = JSON.parse(clean);
-    } catch {
-      this.logger.warn(
-        `Groq devolvió JSON no parseable: ${clean.slice(0, 200)}`,
-      );
-    }
-
-    return {
-      comercio_detectado: this.extractString(parsed.comercio),
-      fecha_detectada: this.extractDate(parsed.fecha),
-      monto_detectado: parseMonto(parsed.monto_total),
-      categoria_sugerida: this.extractCategory(parsed.categoria),
-      confianza_general: this.extractConfianza(parsed.confianza),
-      texto_extraido: this.extractString(parsed.texto_extraido),
-      respuesta_modelo: parsed,
-    };
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(clean);
+  } catch {
+    throw new Error(`JSON no parseable: ${clean.slice(0, 200)}`);
   }
-
-  private extractString(value: unknown): string | null {
-    if (typeof value === "string" && value.trim().length > 0) {
-      return value.trim();
-    }
-    return null;
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new Error("la respuesta del modelo no es un objeto JSON");
   }
-
-  private extractDate(value: unknown): string | null {
-    if (typeof value !== "string") return null;
-    const match = value.match(/\d{4}-\d{2}-\d{2}/);
-    if (!match) return null;
-    const date = new Date(match[0]);
-    return isNaN(date.getTime()) ? null : match[0];
+  const ticket = toParsedTicket(parsed as Record<string, unknown>);
+  if (
+    !ticket.comercio_detectado &&
+    !ticket.fecha_detectada &&
+    ticket.monto_detectado === null
+  ) {
+    throw new Error("el modelo no detectó comercio, fecha ni monto");
   }
+  return ticket;
+}
 
-  private extractCategory(value: unknown): string | null {
-    if (typeof value !== "string") return null;
-    const found = ALLOWED_CATEGORIES.find(
-      (cat) => cat.toLowerCase() === value.toLowerCase(),
-    );
-    return found ?? "Otros";
-  }
+function toParsedTicket(parsed: Record<string, unknown>): ParsedTicket {
+  return {
+    comercio_detectado: extractString(parsed.comercio),
+    fecha_detectada: extractDate(parsed.fecha),
+    monto_detectado: parseMonto(parsed.monto_total),
+    categoria_sugerida: extractCategory(parsed.categoria),
+    confianza_general: extractConfianza(parsed.confianza),
+    texto_extraido: extractString(parsed.texto_extraido),
+    respuesta_modelo: parsed,
+  };
+}
 
-  private extractConfianza(value: unknown): number {
-    if (typeof value !== "number") return 50;
-    return Math.min(100, Math.max(0, Math.round(value)));
+function extractString(value: unknown): string | null {
+  if (typeof value === "string" && value.trim().length > 0) {
+    return value.trim();
   }
+  return null;
+}
+
+/** Fecha `AAAA-MM-DD` que exista en el calendario (descarta, por ejemplo, 2026-02-30). */
+function extractDate(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const match = value.match(/\d{4}-\d{2}-\d{2}/);
+  if (!match) return null;
+  const date = new Date(`${match[0]}T00:00:00Z`);
+  return !isNaN(date.getTime()) && date.toISOString().startsWith(match[0])
+    ? match[0]
+    : null;
+}
+
+function extractCategory(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const found = ALLOWED_CATEGORIES.find(
+    (cat) => cat.toLowerCase() === value.toLowerCase(),
+  );
+  return found ?? "Otros";
+}
+
+function extractConfianza(value: unknown): number {
+  if (typeof value !== "number") return 50;
+  return Math.min(100, Math.max(0, Math.round(value)));
 }

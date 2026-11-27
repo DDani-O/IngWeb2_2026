@@ -1,6 +1,4 @@
 import { apiClient } from "../core/APIClient.js";
-import { eventBus } from "../core/EventBus.js";
-import { EVENTS } from "../utils/constants.js";
 import { toRecommendation, toRecommendationPayload } from "./adapters.js";
 
 /**
@@ -14,9 +12,7 @@ export const recommendationsService = {
   },
 
   async markAsRead(id) {
-    const recommendation = toRecommendation(await apiClient.put(`/recommendations/${encodeURIComponent(id)}/read`));
-    eventBus.emit(EVENTS.RECOMMENDATION.READ, { recommendation });
-    return recommendation;
+    return toRecommendation(await apiClient.put(`/recommendations/${encodeURIComponent(id)}/read`));
   },
 
   /**
@@ -30,8 +26,6 @@ export const recommendationsService = {
    * @param {{clientId, title, message, type, priority}} recommendation
    */
   async create(recommendation) {
-    const created = toRecommendation(await apiClient.post("/recommendations", toRecommendationPayload(recommendation)));
-    eventBus.emit(EVENTS.RECOMMENDATION.CREATED, { recommendation: created });
-    return created;
+    return toRecommendation(await apiClient.post("/recommendations", toRecommendationPayload(recommendation)));
   },
 };
