@@ -21,7 +21,7 @@ export const API_CONFIG = {
   },
   BASE_URLS: {
     local: "http://localhost:3000/api/v1",
-    production: "",
+    production: "https://fintrack-api-5vmm.onrender.com/api/v1",
   },
   TIMEOUT_MS: 8000,
   /** La carga de tickets espera al modelo de IA: más margen que el resto de los pedidos. */
