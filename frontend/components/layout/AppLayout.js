@@ -67,57 +67,14 @@ export class AppLayout extends Component {
 
     this.element.innerHTML = html`
       <div class="app-page">
-        <header class="app-navbar">
-          <div class="app-navbar__content">
-            <a class="app-brand" href="${buildHash(ROUTES.HOME)}">
-              <i class="fa-solid fa-chart-pie"></i>
-              <span>FinTrack</span>
-            </a>
-
-            <div class="dashboard-topbar-user">
-              <span class="dashboard-topbar-user__name" data-user-name>${fullName}</span>
-              <button class="action-btn action-btn--ghost d-none d-md-inline-flex" data-action="logout" type="button">
-                <i class="fa-solid fa-right-from-bracket"></i>
-                Salir
-              </button>
-              <button class="navbar-icon-btn" type="button" data-bs-toggle="offcanvas" data-bs-target="#${OFFCANVAS_ID}" aria-controls="${OFFCANVAS_ID}" aria-label="Abrir navegacion">
-                <i class="fa-solid fa-bars"></i>
-              </button>
-            </div>
-          </div>
-        </header>
+        ${this._topbar(fullName)}
 
         <main class="app-main app-main--wide">
           <div class="app-outlet" data-layout-outlet></div>
           <footer class="app-footer" data-layout-footer>FinTrack 2026</footer>
         </main>
 
-        <aside class="offcanvas offcanvas-start app-offcanvas" tabindex="-1" id="${OFFCANVAS_ID}" aria-labelledby="${OFFCANVAS_ID}Label">
-          <div class="offcanvas-header">
-            <h5 class="offcanvas-title" id="${OFFCANVAS_ID}Label">${config.panelTitle}</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
-          </div>
-          <div class="offcanvas-body d-flex flex-column gap-2">
-            <div class="sidebar-user-card">
-              <span class="sidebar-user-card__avatar" data-user-initials>${getInitials(fullName)}</span>
-              <div>
-                <p class="sidebar-user-card__name" data-user-name>${fullName}</p>
-                <a class="sidebar-user-card__meta" href="${buildHash(config.userMeta.route)}">${config.userMeta.label}</a>
-              </div>
-            </div>
-
-            <p class="sidebar-section-title mt-2">Navegacion</p>
-            <nav aria-label="Navegacion principal">${this._links(config.navigation)}</nav>
-
-            <p class="sidebar-section-title mt-2">Acciones</p>
-            <nav aria-label="Acciones de cuenta">${this._links(config.actions)}</nav>
-
-            <div class="sidebar-spacer"></div>
-            <button class="sidebar-link sidebar-logout" data-action="logout" type="button">
-              <i class="fa-solid fa-right-from-bracket"></i>Salir
-            </button>
-          </div>
-        </aside>
+        ${this._sidebar(config, fullName)}
       </div>
     `;
   }
@@ -182,6 +139,70 @@ export class AppLayout extends Component {
     this._hideSidebar();
     super.destroy();
     this.element?.replaceChildren();
+  }
+
+  /** Barra superior: marca, nombre del usuario, "Salir" (escritorio) y botón del menú. */
+  _topbar(fullName) {
+    return html`
+      <header class="app-navbar">
+        <div class="app-navbar__content">
+          <a class="app-brand" href="${buildHash(ROUTES.HOME)}">
+            <i class="fa-solid fa-chart-pie"></i>
+            <span>FinTrack</span>
+          </a>
+
+          <div class="dashboard-topbar-user">
+            <span class="dashboard-topbar-user__name" data-user-name>${fullName}</span>
+            <button class="action-btn action-btn--ghost d-none d-md-inline-flex" data-action="logout" type="button">
+              <i class="fa-solid fa-right-from-bracket"></i>
+              Salir
+            </button>
+            <button class="navbar-icon-btn" type="button" data-bs-toggle="offcanvas" data-bs-target="#${OFFCANVAS_ID}" aria-controls="${OFFCANVAS_ID}" aria-label="Abrir navegacion">
+              <i class="fa-solid fa-bars"></i>
+            </button>
+          </div>
+        </div>
+      </header>
+    `;
+  }
+
+  /** Menú lateral (offcanvas de Bootstrap): usuario, navegación del rol, acciones y "Salir". */
+  _sidebar(config, fullName) {
+    return html`
+      <aside class="offcanvas offcanvas-start app-offcanvas" tabindex="-1" id="${OFFCANVAS_ID}" aria-labelledby="${OFFCANVAS_ID}Label">
+        <div class="offcanvas-header">
+          <h5 class="offcanvas-title" id="${OFFCANVAS_ID}Label">${config.panelTitle}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
+        </div>
+        <div class="offcanvas-body d-flex flex-column gap-2">
+          ${this._userCard(config, fullName)}
+
+          <p class="sidebar-section-title mt-2">Navegacion</p>
+          <nav aria-label="Navegacion principal">${this._links(config.navigation)}</nav>
+
+          <p class="sidebar-section-title mt-2">Acciones</p>
+          <nav aria-label="Acciones de cuenta">${this._links(config.actions)}</nav>
+
+          <div class="sidebar-spacer"></div>
+          <button class="sidebar-link sidebar-logout" data-action="logout" type="button">
+            <i class="fa-solid fa-right-from-bracket"></i>Salir
+          </button>
+        </div>
+      </aside>
+    `;
+  }
+
+  /** Tarjeta del usuario en el menú: iniciales, nombre y link a su perfil. */
+  _userCard(config, fullName) {
+    return html`
+      <div class="sidebar-user-card">
+        <span class="sidebar-user-card__avatar" data-user-initials>${getInitials(fullName)}</span>
+        <div>
+          <p class="sidebar-user-card__name" data-user-name>${fullName}</p>
+          <a class="sidebar-user-card__meta" href="${buildHash(config.userMeta.route)}">${config.userMeta.label}</a>
+        </div>
+      </div>
+    `;
   }
 
   _links(links) {
