@@ -1,6 +1,6 @@
 # FinTrack 2026 — Ingeniería Web II (IUA)
 
-Plataforma de gestión de gastos personales con OCR/IA, roles **cliente** y **asesor**. Grupo: Daniel y Cele. Requisitos: `Consigna_Plataforma Gestion de Gastos Personales.pdf` (fuente de verdad).
+Plataforma de gestión de gastos personales con OCR/IA, roles **cliente** y **asesor**. Grupo: Daniel y Cele. Requisitos: [docs/consigna.pdf](docs/consigna.pdf) (fuente de verdad).
 
 ## Dónde está cada cosa
 

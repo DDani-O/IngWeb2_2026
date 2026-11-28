@@ -19,6 +19,7 @@ python3 -m http.server 5500    # desde frontend/ → http://localhost:5500 (no a
 | `pages/{public,cliente,asesor}/` | Cada pantalla: `nombre.html` (template, kebab-case) + `NombrePage.js` (controlador, PascalCase). |
 | `content/` | Contenido fijo que no vive en la base (textos y comparativa de los perfiles de gasto). |
 | `assets/css/` | Tokens, layout, tema claro y estilos propios de cada página (§5). |
+| `assets/video/` | Video de demo de la landing: MP4 (H.264) y WebM de respaldo, sin audio, y su portada. |
 | `utils/` | `constants.js` (rutas, roles, eventos, tiempos, configuración de la API, enums de la base), `formatters.js`, `validators.js`, `helpers.js` y `html.js`. |
 
 ## 2. Ruteo y layouts

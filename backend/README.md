@@ -303,7 +303,7 @@ PostgreSQL en Supabase. Tablas en español; antes de escribir un DTO, leer el es
 - RLS está activo en todas las tablas: con la clave anónima y sin login no se lee nada.
 - Ninguna función `SECURITY DEFINER` la puede ejecutar `anon`, y todas tienen `search_path` fijo.
 
-**Columnas sin uso** (existen, el contrato no las expone y conservan sus valores por defecto):
+**Columnas sin uso** (existen, el contrato no las expone y conservan sus valores por defecto; ver §10):
 - `perfiles_usuarios`: `telefono`, `pais`, `ahorro_objetivo`, `umbral_alerta`, `tema`, `moneda_preferida`, `notificar_email`, `notificar_push`;
 - `perfiles_asesores`: `telefono`, `pais`, `notificar_email`, `notificar_push`;
 - `recomendaciones_financieras`: `ahorro_potencial`, `pasos_implementacion`, `problema`, `solucion`.
@@ -349,3 +349,10 @@ Pasos:
 1. Render → New → **Blueprint** → este repo.
 2. Cargar a mano los secretos: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_KEY`, `JWT_SECRET`, `GROQ_API_KEY` y `FRONTEND_URL`.
 3. Cada push a `main` redeploya. En el plan gratuito, el servicio se duerme tras 15 minutos sin uso.
+
+## 10. Pendientes internos
+
+Para después de la entrega (los pendientes generales están en el [README principal §14](../README.md#14-pendientes-después-de-la-entrega)):
+
+- **Columnas sin uso:** borrar las 16 columnas del §6 con una migración nueva, después de confirmar que el front y el mock no las leen.
+- **Cliente de Supabase:** crear los clientes de `src/common/supabase/supabase.provider.ts` con `auth: { persistSession: false }`. En el servidor no hay sesión que guardar.

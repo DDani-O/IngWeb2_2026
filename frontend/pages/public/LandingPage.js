@@ -38,6 +38,7 @@ export class LandingPage extends Component {
     this.listen(this.element, "auth-success", (event) => this._navigateByRole(event.detail.user.role));
     this._wireLandingInteractions();
     this._startTestimonialsAutoplay();
+    this._playDemoVideo();
     this._openModalFromQuery(this.options.query);
 
     this.listen(document, "visibilitychange", () => {
@@ -74,6 +75,21 @@ export class LandingPage extends Component {
     this._stopTestimonialsAutoplay();
     this.authModals = null;
     super.destroy();
+  }
+
+  /**
+   * Arranca el video de demo al entrar. Va desde acá y no con `autoplay` en el HTML para
+   * respetar `prefers-reduced-motion`: con esa preferencia queda quieto, con su portada, y
+   * solo se descarga si el usuario le da play. Está silenciado, así que el navegador lo deja
+   * reproducirse solo; si igual lo bloquea, queda la portada con los controles.
+   */
+  _playDemoVideo() {
+    const video = this.element.querySelector(".landing-video-card__player");
+    if (!video || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      return;
+    }
+
+    video.play().catch(() => {});
   }
 
   _wireLandingInteractions() {

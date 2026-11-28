@@ -40,12 +40,21 @@
       </div>
 
       <article class="landing-video-card">
-        <div class="landing-video-card__icon">
-          <i class="fa-solid fa-play"></i>
-        </div>
-        <h2>Demo en video</h2>
-        <p>Aqui ira un video corto que muestra como funciona la app.</p>
-        <span class="landing-soon-chip">Proximamente</span>
+        <video
+          class="landing-video-card__player"
+          controls
+          muted
+          playsinline
+          preload="none"
+          poster="./assets/video/demo-fintrack-poster.webp"
+          aria-label="Demo de FinTrack: carga de un ticket con IA, dashboard, historial, patrones y el análisis del asesor"
+        >
+          <source src="./assets/video/demo-fintrack.mp4" type="video/mp4" />
+          <source src="./assets/video/demo-fintrack.webm" type="video/webm" />
+          Tu navegador no puede reproducir el video.
+          <a href="./assets/video/demo-fintrack.mp4">Descargalo acá</a>.
+        </video>
+        <h2>¡Asi funciona FinTrack!</h2>
       </article>
     </section>
 

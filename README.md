@@ -3,7 +3,8 @@
 Plataforma web de gestión de gastos personales con carga de tickets por OCR/IA, para la materia **Ingeniería Web II (2026)**. Grupo: Daniel Olguín y Celeste Núñez.
 
 - **Online:** front https://fintrack-iua.netlify.app · API https://fintrack-api-5vmm.onrender.com/api/v1
-- **Consigna:** `Consigna_Plataforma Gestion de Gastos Personales.pdf`
+- **Consigna:** [docs/consigna.pdf](docs/consigna.pdf)
+- **Video de demo** (1:20, sin audio): en la landing, o directo en [`frontend/assets/video/demo-fintrack.mp4`](frontend/assets/video/demo-fintrack.mp4).
 - **Detalle técnico:** [backend/README.md](backend/README.md) (contrato de la API, reglas, base de datos, tests) y [frontend/README.md](frontend/README.md) (estructura, componentes, estilos).
 
 ---
@@ -14,6 +15,10 @@ FinTrack permite a una persona registrar sus gastos, a mano o subiendo la foto d
 
 - **Usuario** es cualquier cuenta. El rol que carga gastos se llama siempre **cliente**.
 - **Asesor**: atiende a los clientes que tiene asignados. Al registrarse, cada cliente queda asignado al asesor activo con lugar libre que tenga menos clientes.
+
+> Las capturas son del backend simulado, con datos ficticios.
+
+![Landing de FinTrack en tema oscuro: titular "Convierte el caos de tus gastos en paz financiera", botones para empezar, navegación a Como funciona, Ventajas y Planes, y la tarjeta del video de demo, "¡Asi funciona FinTrack!"](docs/capturas/landing.webp)
 
 ## 2. Funcionalidades
 
@@ -26,21 +31,37 @@ FinTrack permite a una persona registrar sus gastos, a mano o subiendo la foto d
 - **Perfil de gasto**: el vigente y si lo asignó el asesor (el cliente no lo elige).
 - **Recomendaciones** del asesor: filtros y "marcar como leída".
 
+![Dashboard del cliente: saludo con la fecha, alertas de 2 gastos inusuales y de aumento del 80 % contra el mes anterior, indicadores del mes, perfil activo Equilibrista Cósmico, resúmenes de patrones, recomendaciones y últimos gastos, y gráficos de gasto por día, torta por categoría y barras por mes con la línea de promedio](docs/capturas/dashboard-cliente.webp)
+
+<img src="docs/capturas/dashboard-cliente-movil.webp" width="260" alt="El mismo dashboard en un celular de 375 px: el saludo, la tarjeta de la fecha y las alertas quedan apiladas en una sola columna">
+
 **Asesor**
 - Dashboard de la cartera: clientes activos, clientes con alertas, recomendaciones leídas, gráficos por perfil y actividad mensual.
 - **Mis clientes**: búsqueda y filtros por riesgo y estado, en tarjetas o tabla.
 - **Análisis por cliente**: perfil de gasto (sugerido o asignado por el asesor, con motivo), nivel de riesgo, indicadores, gráficos, gastos inusuales, ranking de comercios, últimos gastos y recomendaciones enviadas.
 - **Generar recomendaciones** (título, tipo, prioridad y mensaje) y perfil profesional (especialidad, matrícula, descripción).
 
+![Análisis de un cliente visto por el asesor: nombre con las etiquetas de perfil, riesgo alto y estado activo, alertas de gastos inusuales, tarjeta "Perfil de gasto" con el perfil sugerido por el sistema y el formulario para asignar otro con un motivo opcional, e indicadores del mes](docs/capturas/analisis-cliente-asesor.webp)
+
 **Extras opcionales de la consigna:** categoría sugerida por la IA (1), dashboard con varios gráficos (2), alertas de gasto inusual y de aumento mensual (3, sin límites de presupuesto), comparación con el mes anterior (6), patrones de consumo (7), ranking de comercios (8), búsqueda y filtros (9, sin rango de fechas ni montos en la UI), modo oscuro (11), edición de los datos detectados en el ticket (13) y perfil financiero del usuario (16).
 
 ## 3. Arquitectura
 
-```
-Frontend (HTML + CSS + JS vanilla, SPA por hash)
-  páginas → servicios → APIClient ──HTTP/REST (JSON, JWT)──▶ Backend NestJS ──▶ Supabase (PostgreSQL, Auth, Storage)
-                          │                                        │
-                          └─ driver "mock": backend simulado        └─ OCR: Groq (modelo con visión)
+```mermaid
+flowchart TB
+  subgraph FE["Frontend JS vanilla (Netlify)"]
+    PG["Páginas y componentes"] --> SV["Servicios y adapters.js"]
+    SV --> AC["APIClient"]
+    AC -. "driver mock, solo en localhost" .-> MK["Backend simulado<br/>(localStorage)"]
+  end
+  subgraph BE["Backend NestJS (Render)"]
+    CT["Controllers, guards y DTOs"] --> SR["Services y reglas del análisis"]
+  end
+  AC -- "HTTP/REST, JSON, JWT" --> CT
+  SR --> DB[("Supabase PostgreSQL")]
+  SR --> AU["Supabase Auth"]
+  SR --> ST["Supabase Storage<br/>(imágenes de tickets)"]
+  SR --> GQ["Groq<br/>(modelo con visión)"]
 ```
 
 - **Frontend** (`frontend/`): ES modules nativos, sin bundler ni frameworks de componentes; Bootstrap 5 y Chart.js por CDN. Las páginas componen una biblioteca de componentes (Atomic Design) y piden datos a servicios; `services/adapters.js` es la única capa que traduce el contrato de la API al modelo de la UI. En `localhost` puede usar un backend simulado (`frontend/mocks/`) con el mismo contrato.
@@ -49,6 +70,42 @@ Frontend (HTML + CSS + JS vanilla, SPA por hash)
 ## 4. Modelo de datos
 
 PostgreSQL en Supabase, definido por las migraciones `backend/database/migrations/0001` a `0018`.
+
+```mermaid
+erDiagram
+  usuarios ||--o| perfiles_usuarios : "datos del cliente"
+  usuarios ||--o| perfiles_asesores : "datos del asesor"
+  usuarios ||--o{ asignaciones_de_clientes : "asesor y cliente"
+  usuarios ||--o{ gastos : registra
+  categorias_de_gasto ||--o{ gastos : clasifica
+  usuarios ||--o{ tickets : sube
+  tickets |o--o{ gastos : respalda
+  tickets ||--o{ analisis_ocr : "lectura de la IA"
+  usuarios ||--o{ recomendaciones_financieras : "envía y recibe"
+  usuarios ||--o{ clasificacion_de_perfil : "perfil del cliente"
+  perfiles_de_gasto ||--o{ clasificacion_de_perfil : asigna
+
+  usuarios {
+    uuid id PK
+    rol_usuario rol
+    text nombre_completo
+  }
+  gastos {
+    uuid id PK
+    uuid cliente_id FK
+    uuid categoria_id FK
+    text comercio
+    date fecha_gasto
+    numeric monto
+    origen_gasto origen
+  }
+  clasificacion_de_perfil {
+    uuid cliente_id FK
+    uuid perfil_id FK
+    uuid asesor_id FK "null si la asignó el sistema"
+    timestamptz vigente_hasta "null si está vigente"
+  }
+```
 
 | Tabla | Contenido |
 |---|---|
@@ -93,6 +150,8 @@ La IA se usa para una sola tarea: **leer la foto de un ticket** y ahorrarle al c
 2. El front la manda a `POST /tickets/upload`.
 3. El backend la guarda en Supabase Storage y se la pasa a un **modelo con visión de Groq** (por defecto `qwen/qwen3.8-27b`, configurable con `GROQ_MODEL`) con un prompt que pide un JSON con comercio, fecha, **total final** (no el subtotal) y una categoría de la lista. Normaliza la respuesta (montos `1.500,50` o `1,500.50`) y guarda el resultado en `analisis_ocr`.
 4. El front precompleta el formulario; el cliente revisa, corrige y guarda (el gasto queda con origen `ticket`).
+
+![Carga de un gasto a partir de un ticket: a la derecha, el archivo elegido y la tarjeta "Datos detectados" con comercio Supermercado Central, monto $ 9.000, categoría sugerida Alimentación, fecha y 88 % de confianza; a la izquierda, el formulario ya completado con esos datos para revisar y guardar](docs/capturas/carga-ticket-ia.webp)
 
 Si la IA falla, tarda más de lo previsto (12 s por intento, un reintento) o devuelve algo que no se puede leer, la API responde `analisis: null` y el cliente completa el formulario a mano. Con el backend simulado, un archivo con "ilegible" en el nombre simula esa falla. Detalle: [backend/README.md §5](backend/README.md#5-ocr).
 
@@ -213,6 +272,5 @@ Valen para el back y el front; los propios del front están en [frontend/README.
 - Recomendaciones generadas por el sistema (el origen `sistema` existe en la base, pero nadie las crea).
 - Simplificar `Router._handleHashChange` y el carrusel de testimonios de la landing.
 - Revisar las vulnerabilidades de las `devDependencies` del backend (26; algunas piden `npm audit fix --force`, con cambios de versión mayor).
-- Borrar las 16 columnas que no usa nadie (`perfiles_usuarios`, `perfiles_asesores` y `recomendaciones_financieras`; lista en [backend/README.md §6](backend/README.md#6-base-de-datos)).
 - Activar en Supabase *Authentication → Leaked password protection*.
-- `persistSession: false` en el cliente de Supabase del backend (`src/common/supabase/supabase.provider.ts`).
+- Pendientes internos del backend (columnas sin uso, cliente de Supabase): [backend/README.md §10](backend/README.md#10-pendientes-internos).
