@@ -5,6 +5,7 @@ import request from "supertest";
 import { AppModule } from "../../src/app.module";
 import { API_PREFIX, configureApp } from "../../src/app.setup";
 import { SUPABASE_CLIENT } from "../../src/common/supabase/supabase.provider";
+import { OcrService } from "../../src/modules/tickets/ocr.service";
 
 /**
  * Los tests e2e corren contra un proyecto de Supabase real (el del `.env`): crean sus
@@ -13,14 +14,22 @@ import { SUPABASE_CLIENT } from "../../src/common/supabase/supabase.provider";
 
 export const TEST_PASSWORD = "Prueba1234";
 
-/** Levanta la app con la misma configuración que `main.ts` (prefijo, validación y errores). */
-export async function createTestApp(): Promise<{
+/** Reemplazo del OCR para no llamar a Groq: cada test decide qué devuelve. */
+export type FakeOcr = Pick<OcrService, "isAvailable" | "analyzeTicket">;
+
+/**
+ * Levanta la app con la misma configuración que `main.ts` (prefijo, validación y errores).
+ * Con `ocr`, el servicio de IA se reemplaza por ese objeto.
+ */
+export async function createTestApp({ ocr }: { ocr?: FakeOcr } = {}): Promise<{
   app: INestApplication;
   supabase: SupabaseClient;
 }> {
-  const moduleFixture: TestingModule = await Test.createTestingModule({
-    imports: [AppModule],
-  }).compile();
+  const builder = Test.createTestingModule({ imports: [AppModule] });
+  if (ocr) {
+    builder.overrideProvider(OcrService).useValue(ocr);
+  }
+  const moduleFixture: TestingModule = await builder.compile();
   const app = moduleFixture.createNestApplication();
   configureApp(app);
   await app.init();
@@ -72,7 +81,7 @@ export async function registerAccount(
 
 /**
  * Deja al cliente asignado solo al asesor dado (el registro lo asigna automáticamente
- * al asesor con más capacidad libre, que puede ser cualquiera).
+ * al asesor activo con lugar libre y menos clientes, que puede ser cualquiera).
  */
 export async function assignClient(
   supabase: SupabaseClient,
@@ -113,6 +122,15 @@ export async function cleanupTestUser(
     const ticketIds = (tickets ?? []).map((ticket) => ticket.id);
     if (ticketIds.length) {
       await supabase.from("analisis_ocr").delete().in("ticket_id", ticketIds);
+    }
+    // Las imágenes de los tickets se guardan en `tickets/<id del cliente>/`.
+    const { data: files } = await supabase.storage
+      .from("tickets")
+      .list(userId, { limit: 1000 });
+    if (files?.length) {
+      await supabase.storage
+        .from("tickets")
+        .remove(files.map((file) => `${userId}/${file.name}`));
     }
 
     await supabase

@@ -1,4 +1,13 @@
-import { parseMonto, parseTicketResponse } from "./ocr.service";
+import { ConfigService } from "@nestjs/config";
+import { APIConnectionTimeoutError } from "openai";
+import {
+  DEFAULT_GROQ_MODEL,
+  OCR_MAX_RETRIES,
+  OCR_TIMEOUT_MS,
+  OcrService,
+  parseMonto,
+  parseTicketResponse,
+} from "./ocr.service";
 
 /**
  * Normalización del monto que devuelve el modelo de IA. El bug original borraba todos
@@ -117,5 +126,80 @@ describe("parseTicketResponse", () => {
     ],
   ])("lanza un error con %s", (_caso, raw) => {
     expect(() => parseTicketResponse(raw)).toThrow();
+  });
+});
+
+/** El servicio con el cliente de Groq simulado: no sale a la red. */
+describe("OcrService", () => {
+  const config = (values: Record<string, string>) =>
+    ({ get: (key: string) => values[key] }) as unknown as ConfigService;
+
+  const withFakeClient = (create: jest.Mock) => {
+    const service = new OcrService(config({ GROQ_API_KEY: "clave-de-prueba" }));
+    const client = (service as unknown as { client: { chat: unknown } }).client;
+    client.chat = { completions: { create } };
+    return service;
+  };
+  const respuesta = (content: string, finish_reason = "stop") => ({
+    choices: [{ finish_reason, message: { content } }],
+  });
+
+  it("configura el cliente con timeout y reintentos acotados", () => {
+    const service = new OcrService(config({ GROQ_API_KEY: "clave-de-prueba" }));
+    const client = (
+      service as unknown as {
+        client: { timeout: number; maxRetries: number };
+      }
+    ).client;
+    expect(client.timeout).toBe(OCR_TIMEOUT_MS);
+    expect(client.maxRetries).toBe(OCR_MAX_RETRIES);
+    // Peor caso (intento + reintento) por debajo de los 30 s que espera el front.
+    expect(OCR_TIMEOUT_MS * (OCR_MAX_RETRIES + 1)).toBeLessThan(30_000);
+  });
+
+  it("sin GROQ_API_KEY no está disponible y analyzeTicket falla", async () => {
+    const service = new OcrService(config({}));
+    expect(service.isAvailable()).toBe(false);
+    await expect(
+      service.analyzeTicket(Buffer.from("x"), "image/png"),
+    ).rejects.toThrow("OCR no disponible");
+  });
+
+  it("manda la imagen como data URL al modelo configurado", async () => {
+    const create = jest
+      .fn()
+      .mockResolvedValue(
+        respuesta(JSON.stringify({ comercio: "YPF", monto_total: 990 })),
+      );
+    const parsed = await withFakeClient(create).analyzeTicket(
+      Buffer.from("abc"),
+      "image/jpeg",
+    );
+
+    expect(parsed).toMatchObject({
+      comercio_detectado: "YPF",
+      monto_detectado: 990,
+    });
+    const [body] = create.mock.calls[0];
+    expect(body.model).toBe(DEFAULT_GROQ_MODEL);
+    expect(body.messages[0].content[1].image_url.url).toBe(
+      `data:image/jpeg;base64,${Buffer.from("abc").toString("base64")}`,
+    );
+  });
+
+  it("propaga el timeout del cliente (el servicio de tickets responde analisis: null)", async () => {
+    const create = jest.fn().mockRejectedValue(new APIConnectionTimeoutError());
+    await expect(
+      withFakeClient(create).analyzeTicket(Buffer.from("x"), "image/png"),
+    ).rejects.toBeInstanceOf(APIConnectionTimeoutError);
+  });
+
+  it("rechaza una respuesta cortada por max_tokens aunque parezca JSON", async () => {
+    const create = jest
+      .fn()
+      .mockResolvedValue(respuesta('{"comercio": "YPF"}', "length"));
+    await expect(
+      withFakeClient(create).analyzeTicket(Buffer.from("x"), "image/png"),
+    ).rejects.toThrow("cortada");
   });
 });
