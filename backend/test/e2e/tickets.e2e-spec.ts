@@ -14,7 +14,7 @@ import {
 } from "./test-utils";
 
 /**
- * Carga de tickets (spec §10.4) contra Supabase real (Storage, `tickets` y `analisis_ocr`)
+ * Carga de tickets (contrato §3.4, backend/README.md) contra Supabase real (Storage, `tickets` y `analisis_ocr`)
  * con el OCR simulado: cada test decide qué responde la IA, así se prueban el éxito, la
  * falla, el timeout y el OCR sin configurar sin llamar a Groq. El parseo de la respuesta
  * del modelo está en src/modules/tickets/ocr.service.spec.ts.

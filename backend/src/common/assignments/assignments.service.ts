@@ -17,7 +17,7 @@ export class AssignmentsService {
   ) {}
 
   /**
-   * 403 si el cliente no tiene una asignación activa con el asesor (spec §10, errores).
+   * 403 si el cliente no tiene una asignación activa con el asesor (contrato §3.0, backend/README.md).
    * Un id que no es UUID da 403 sin consultar la base: PostgreSQL rechazaría el filtro
    * por la columna uuid con un error que terminaría en 500.
    */

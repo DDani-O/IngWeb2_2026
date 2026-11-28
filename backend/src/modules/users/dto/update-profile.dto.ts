@@ -10,7 +10,7 @@ import {
 import { Trim } from "../../../common/validation/transforms";
 
 /**
- * PUT /auth/profile (spec §10.1). Los campos de cada rol se controlan en UsersService:
+ * PUT /auth/profile (contrato §3.1, backend/README.md). Los campos de cada rol se controlan en UsersService:
  * cliente → ocupacion, ingreso_estimado, objetivo_financiero; asesor → matricula, especialidad, descripcion.
  */
 export class UpdateProfileDto {

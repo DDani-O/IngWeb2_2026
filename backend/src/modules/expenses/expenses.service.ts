@@ -12,7 +12,7 @@ import { QueryExpensesDto } from "./dto/query-expenses.dto";
 import { UpdateExpenseDto } from "./dto/update-expense.dto";
 import { Gasto, GASTO_SELECT, GastoRow, toGasto } from "./gasto.mapper";
 
-/** Respuesta de los listados de gastos (spec §10.3). */
+/** Respuesta de los listados de gastos (contrato §3.3, backend/README.md). */
 export interface ListaDeGastos {
   datos: Gasto[];
   total: number;
@@ -34,7 +34,7 @@ export class ExpensesService {
   ) {}
 
   /**
-   * Gastos de un cliente con los filtros y el orden de la spec §10.3. Lo usan
+   * Gastos de un cliente con los filtros y el orden del contrato §3.3 (backend/README.md). Lo usan
    * `GET /expenses` (cliente) y `GET /clients/:id/expenses` (asesor).
    */
   async list(
@@ -88,7 +88,7 @@ export class ExpensesService {
 
   /**
    * Alta de un gasto. Con `ticket_id` valida que el ticket sea del cliente, marca el gasto
-   * como de origen `ticket` con el OCR procesado y vincula el `analisis_ocr` (spec §10.4).
+   * como de origen `ticket` con el OCR procesado y vincula el `analisis_ocr` (contrato §3.4, backend/README.md).
    */
   async create(clientId: string, dto: CreateExpenseDto): Promise<Gasto> {
     await this.assertCategoryExists(dto.categoria_id);
@@ -110,7 +110,7 @@ export class ExpensesService {
         ...(dto.ticket_id
           ? {
               ticket_principal_id: dto.ticket_id,
-              // Sin análisis guardado la IA no pudo leer el ticket (spec §10.4).
+              // Sin análisis guardado la IA no pudo leer el ticket (contrato §3.4, backend/README.md).
               ocr_estado: analysis ? "procesado" : "fallido",
               ocr_confianza: analysis?.confianza_general ?? null,
             }

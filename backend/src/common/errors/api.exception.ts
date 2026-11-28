@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus } from "@nestjs/common";
 
 /**
- * Códigos de error del contrato (spec §10, "Convenciones").
+ * Códigos de error del contrato (§3.0, backend/README.md).
  */
 export type ErrorCode =
   | "SOLICITUD_INVALIDA"

@@ -9,7 +9,7 @@ import {
 } from "./test-utils";
 
 /**
- * Autenticación y perfil propio (spec §10.1): registro, login, /auth/me y /auth/profile.
+ * Autenticación y perfil propio (contrato §3.1, backend/README.md): registro, login, /auth/me y /auth/profile.
  */
 describe("Auth (e2e)", () => {
   let app: INestApplication;

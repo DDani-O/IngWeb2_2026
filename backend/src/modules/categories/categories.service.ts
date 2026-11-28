@@ -3,14 +3,14 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { internalError } from "../../common/errors";
 import { SUPABASE_CLIENT } from "../../common/supabase/supabase.provider";
 
-/** Elemento de `GET /categories` (spec §10.2). */
+/** Elemento de `GET /categories` (contrato §3.2, backend/README.md). */
 export interface Categoria {
   id: string;
   nombre: string;
   icono: string;
 }
 
-/** Elemento de `GET /spending-profiles` (spec §10.2). */
+/** Elemento de `GET /spending-profiles` (contrato §3.2, backend/README.md). */
 export interface PerfilDeGastoCatalogo {
   id: string;
   nombre: string;

@@ -9,7 +9,7 @@ import {
 } from "./test-utils";
 
 /**
- * Catálogos (spec §10.2): categorías y perfiles de gasto, con token de cualquier rol.
+ * Catálogos (contrato §3.2, backend/README.md): categorías y perfiles de gasto, con token de cualquier rol.
  */
 describe("Catálogos (e2e)", () => {
   let app: INestApplication;

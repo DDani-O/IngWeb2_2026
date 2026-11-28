@@ -8,7 +8,7 @@ import { UsuarioRef } from "../users/usuario.types";
 import { CreateRecommendationDto } from "./dto/create-recommendation.dto";
 import { QuerySentRecommendationsDto } from "./dto/query-sent.dto";
 
-/** Objeto `recomendacion` del contrato (spec §10, "Objetos comunes"). */
+/** Objeto `recomendacion` del contrato (§3.0, backend/README.md). */
 export interface Recomendacion {
   id: string;
   titulo: string;

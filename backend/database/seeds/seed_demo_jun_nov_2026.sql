@@ -1,6 +1,6 @@
 -- =============================================================================
 -- SEED DE DEMO: gastos desde el 1/06/2026 hasta HOY para bj@fintrack.com y bi@fintrack.com
--- PROYECTO: FinTrack 2026 · fase I5 de especificaciones/PlanIntegracionBackend.md
+-- PROYECTO: FinTrack 2026. Cómo y cuándo correrlo: backend/README.md §6.
 --
 -- Qué hace:
 --   * Borra los gastos que cargó una ejecución anterior de este seed (los marca la
@@ -9,9 +9,9 @@
 --   * Genera gastos mensuales recurrentes con comercios argentinos, montos con decimales
 --     y una variación determinística (dos ejecuciones el mismo día dan lo mismo).
 --   * Nunca inserta fechas posteriores a hoy (hoy = fecha en America/Argentina/Buenos_Aires).
---   * Agrega 2 gastos inusuales por cliente en los últimos 30 días (regla del 35 % de la
---     spec §10.6: superan en más de 35 % el promedio de su categoría, que tiene más de 3
---     gastos previos).
+--   * Agrega 2 gastos inusuales por cliente en los últimos 30 días (regla del 35 % de
+--     backend/README.md §4: superan en más de 35 % el promedio de los otros gastos de su
+--     categoría, con al menos 3 para comparar).
 --   * Perfiles esperados (gasto discrecional = Entretenimiento + Suscripciones + Otros en los
 --     últimos 3 meses): bj ≈ 15 % → Equilibrista Cósmico; bi ≈ 40 % → Espíritu Libre.
 --   * Sube la capacidad del asesor de la demo (mj@fintrack.com) a 10 clientes.

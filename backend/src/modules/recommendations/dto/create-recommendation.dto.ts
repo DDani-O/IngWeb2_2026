@@ -9,7 +9,7 @@ export const RECOMMENDATION_TYPES = [
 ] as const;
 export const RECOMMENDATION_PRIORITIES = ["baja", "media", "alta"] as const;
 
-/** POST /recommendations (spec §10.5). */
+/** POST /recommendations (contrato §3.5, backend/README.md). */
 export class CreateRecommendationDto {
   @IsUUID(undefined, { message: "El cliente es obligatorio." })
   cliente_id!: string;

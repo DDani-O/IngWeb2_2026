@@ -3,12 +3,13 @@ import { eventBus } from "./EventBus.js";
 /**
  * Base de ciclo de vida de componentes y páginas.
  *
- * Comunicación (TeoriaComponentes.md §5):
+ * Comunicación (frontend/README.md §4):
  * - Props hacia abajo: opciones del constructor (`this.options`, con `static DEFAULTS`). Son de
  *   solo lectura para el componente; el padre las cambia con `update(nextOptions)`.
  * - Avisos hacia arriba: `dispatch(nombre, detalle)` emite un CustomEvent que burbujea desde el
  *   elemento raíz; el padre lo escucha con `listen(elemento, nombre, handler)`.
- * - EventBus (`on`/`emit`): solo para hechos de aplicación entre módulos (sesión, gasto creado…).
+ * - EventBus (`on`/`emit`): solo para hechos de aplicación entre módulos (sesión vencida, tema, perfil,
+ *   servidor despertando).
  * - Composición: `mountChild(Clase, elemento, opciones)` monta un hijo que se destruye con el padre.
  */
 export class Component {

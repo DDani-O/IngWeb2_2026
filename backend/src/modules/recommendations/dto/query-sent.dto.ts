@@ -1,7 +1,7 @@
 import { Type } from "class-transformer";
 import { IsInt, IsOptional, IsUUID, Max, Min } from "class-validator";
 
-/** Query de GET /recommendations/sent (spec §10.5). */
+/** Query de GET /recommendations/sent (contrato §3.5, backend/README.md). */
 export class QuerySentRecommendationsDto {
   @IsOptional()
   @Type(() => Number)

@@ -32,7 +32,7 @@ const toResumen = (row: ClientRow, analisis: Analisis): ResumenCliente => ({
 });
 
 /**
- * Cartera del asesor (spec §10.7): resumen de cada cliente asignado y su detalle.
+ * Cartera del asesor (contrato §3.7, backend/README.md): resumen de cada cliente asignado y su detalle.
  */
 @Injectable()
 export class ClientsService {

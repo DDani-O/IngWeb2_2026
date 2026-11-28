@@ -2,7 +2,7 @@ import { IsOptional } from "class-validator";
 import { ExpenseField, ExpenseOrigin } from "./expense-fields";
 
 /**
- * PUT /expenses/:id (spec §10.3): mismos campos que el alta, todos opcionales.
+ * PUT /expenses/:id (contrato §3.3, backend/README.md): mismos campos que el alta, todos opcionales.
  * `origen` y `ticket_id` se aceptan (el front reenvía el gasto completo) pero no se
  * modifican: el origen de un gasto es histórico.
  */

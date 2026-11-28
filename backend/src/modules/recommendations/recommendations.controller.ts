@@ -19,7 +19,7 @@ import { CreateRecommendationDto } from "./dto/create-recommendation.dto";
 import { QuerySentRecommendationsDto } from "./dto/query-sent.dto";
 import { RecommendationsService } from "./recommendations.service";
 
-/** Recomendaciones (spec §10.5): el rol de cada ruta lo fija `@Roles`. */
+/** Recomendaciones (contrato §3.5, backend/README.md): el rol de cada ruta lo fija `@Roles`. */
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller("recommendations")
 export class RecommendationsController {

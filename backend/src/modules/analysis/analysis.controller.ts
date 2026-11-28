@@ -9,7 +9,7 @@ import {
 } from "../../common/auth";
 import { AnalysisService } from "./analysis.service";
 
-/** Análisis de consumo (spec §10.6). */
+/** Análisis de consumo (contrato §3.6, backend/README.md). */
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller("analysis")
 export class AnalysisController {

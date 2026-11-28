@@ -1,7 +1,7 @@
 /**
- * Reglas del análisis de consumo (spec §10.6), como funciones puras: no leen la BD ni
+ * Reglas del análisis de consumo (§4, backend/README.md), como funciones puras: no leen la BD ni
  * el reloj. Son el port exacto de `frontend/mocks/analytics.js`, que sigue siendo la
- * referencia ejecutable; si cambia una regla, se cambia en los dos lados y en la spec.
+ * referencia ejecutable; si cambia una regla, se cambia en los dos lados y en ese §4.
  */
 import {
   addDays,

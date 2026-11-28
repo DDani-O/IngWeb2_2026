@@ -6,7 +6,7 @@ import {
 import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
 import { validationError } from "./common/errors/api.exception";
 
-/** Prefijo global de la API (spec §10, "Convenciones"). */
+/** Prefijo global de la API (contrato §3.0, backend/README.md). */
 export const API_PREFIX = "api/v1";
 
 /**

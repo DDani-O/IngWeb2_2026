@@ -14,7 +14,7 @@ import { AuthService } from "./auth.service";
 import { LoginDto } from "./dto/login.dto";
 import { RegisterDto } from "./dto/register.dto";
 
-/** Autenticación y perfil propio (spec §10.1). */
+/** Autenticación y perfil propio (contrato §3.1, backend/README.md). */
 @Controller("auth")
 export class AuthController {
   constructor(

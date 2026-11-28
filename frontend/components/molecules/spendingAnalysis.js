@@ -26,7 +26,7 @@ export function analysisStats(analysis) {
  * @param {{categoryLink?: object}} options
  */
 export function analysisCharts(analysis, { categoryLink = null } = {}) {
-  // La línea de promedio es el mismo `gasto_promedio_mensual` del KPI (spec §10.6), no un
+  // La línea de promedio es el mismo `gasto_promedio_mensual` del KPI (backend/README.md §4), no un
   // promedio simple de la serie: así los dos números que se ven en pantalla coinciden.
   const average = analysis.monthlyAverage || 0;
 

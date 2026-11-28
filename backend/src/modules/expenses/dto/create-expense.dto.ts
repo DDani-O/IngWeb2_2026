@@ -1,7 +1,7 @@
 import { IsOptional } from "class-validator";
 import { ExpenseField, ExpenseOrigin } from "./expense-fields";
 
-/** POST /expenses (spec §10.3). Con `ticket_id` el gasto queda vinculado al ticket (spec §10.4). */
+/** POST /expenses (contrato §3.3, backend/README.md). Con `ticket_id` el gasto queda vinculado al ticket (§3.4). */
 export class CreateExpenseDto {
   @ExpenseField.comercio()
   comercio!: string;

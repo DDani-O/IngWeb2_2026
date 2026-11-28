@@ -11,7 +11,7 @@ import {
 } from "./test-utils";
 
 /**
- * Análisis de consumo (spec §10.6) y cartera del asesor (spec §10.7). Las reglas en
+ * Análisis de consumo (contrato §3.6 y reglas del §4) y cartera del asesor (§3.7), en backend/README.md. Las reglas en
  * detalle están en src/modules/analysis/analysis.rules.spec.ts; acá se prueba el
  * recorrido completo contra la BD, incluida la clasificación automática del perfil.
  */
@@ -191,7 +191,7 @@ describe("Análisis y clientes (e2e)", () => {
   });
 
   /**
-   * Clasificación manual (spec §10.7): el asesor elige el perfil, la regla automática no
+   * Clasificación manual (contrato §3.7, backend/README.md): el asesor elige el perfil, la regla automática no
    * lo pisa y el asesor puede volver a la sugerencia. Arranca con el cliente en
    * "Espíritu Libre" (automático), que dejan los tests anteriores.
    */

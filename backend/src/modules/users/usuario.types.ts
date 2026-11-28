@@ -26,7 +26,7 @@ export interface PerfilVigente extends PerfilDeGasto {
   motivo: string | null;
 }
 
-/** Objeto `usuario` del contrato (spec §10, "Objetos comunes"). */
+/** Objeto `usuario` del contrato (§3.0, backend/README.md). */
 export interface Usuario {
   id: string;
   email: string | null;

@@ -47,7 +47,7 @@ const rules = (...decorators: PropertyDecorator[]) =>
   applyDecorators(...decorators.reverse());
 
 /**
- * Reglas de cada campo de un gasto (spec §10.3), compartidas por el alta y la edición
+ * Reglas de cada campo de un gasto (contrato §3.3, backend/README.md), compartidas por el alta y la edición
  * para que los dos validen exactamente igual.
  */
 export const ExpenseField = {

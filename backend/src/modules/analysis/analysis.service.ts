@@ -34,7 +34,7 @@ interface ClasificacionVigente {
 }
 
 /**
- * Análisis de consumo calculado en el momento a partir de `gastos` (spec §10.6). Al
+ * Análisis de consumo calculado en el momento a partir de `gastos` (reglas en §4, backend/README.md). Al
  * calcularlo, persiste el perfil de gasto asignado por el sistema en
  * `clasificacion_de_perfil` cuando cambió respecto del vigente, salvo que el asesor haya
  * elegido uno: esa clasificación manual se respeta hasta que el asesor la quite.

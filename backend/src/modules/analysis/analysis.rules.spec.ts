@@ -16,7 +16,7 @@ import {
 import { GastoAnalizable, PerfilConRegla } from "./analysis.types";
 
 /**
- * Reglas de la spec §10.6. La equivalencia completa con `frontend/mocks/analytics.js`
+ * Reglas del §4 de backend/README.md. La equivalencia completa con `frontend/mocks/analytics.js`
  * se verificó comparando ambos sobre el seed del mock; acá quedan los casos límite.
  */
 

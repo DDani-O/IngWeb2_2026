@@ -21,7 +21,7 @@ import { ExpensesService } from "../expenses/expenses.service";
 import { ClientsService } from "./clients.service";
 import { AssignProfileDto } from "./dto/assign-profile.dto";
 
-/** Clientes asignados al asesor (spec §10.7). */
+/** Clientes asignados al asesor (contrato §3.7, backend/README.md). */
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles("asesor")
 @Controller("clients")

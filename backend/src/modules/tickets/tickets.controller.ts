@@ -15,7 +15,7 @@ import {
 } from "../../common/auth";
 import { TICKET_MAX_BYTES, TicketsService } from "./tickets.service";
 
-/** Carga de tickets con OCR/IA (spec §10.4). */
+/** Carga de tickets con OCR/IA (contrato §3.4, backend/README.md). */
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles("cliente")
 @Controller("tickets")

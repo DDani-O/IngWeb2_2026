@@ -1,4 +1,4 @@
-# Front estático en Netlify (fase I6 de especificaciones/PlanIntegracionBackend.md).
+# Front estático en Netlify (deploy: README.md §9).
 # Sin build: se publica la carpeta frontend/ tal cual (ES modules nativos, ruteo por hash, así
 # que no hacen falta redirects). En producción el front usa siempre el driver "http" contra
 # API_CONFIG.BASE_URLS.production (frontend/utils/constants.js).

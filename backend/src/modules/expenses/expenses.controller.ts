@@ -22,7 +22,7 @@ import { QueryExpensesDto } from "./dto/query-expenses.dto";
 import { UpdateExpenseDto } from "./dto/update-expense.dto";
 import { ExpensesService } from "./expenses.service";
 
-/** Gastos del cliente autenticado (spec §10.3). */
+/** Gastos del cliente autenticado (contrato §3.3, backend/README.md). */
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles("cliente")
 @Controller("expenses")

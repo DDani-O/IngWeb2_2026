@@ -15,7 +15,7 @@ import { ExpenseField, ExpenseOrigin } from "./expense-fields";
 export const EXPENSE_SORTS = ["fecha", "monto_desc", "monto_asc"] as const;
 export type ExpenseSort = (typeof EXPENSE_SORTS)[number];
 
-/** Query de GET /expenses y GET /clients/:id/expenses (spec §10.3). Todo opcional. */
+/** Query de GET /expenses y GET /clients/:id/expenses (contrato §3.3, backend/README.md). Todo opcional. */
 export class QueryExpensesDto {
   @IsOptional()
   @Trim()

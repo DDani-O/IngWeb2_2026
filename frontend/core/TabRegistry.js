@@ -1,7 +1,7 @@
 import { STORAGE_KEYS, UI_TIMING } from "../utils/constants.js";
 
 /**
- * TabRegistry - Registro de pestañas abiertas de la app (decisión 3 del refactor).
+ * TabRegistry - Registro de pestañas abiertas de la app (frontend/README.md §2).
  *
  * Criterio de uso: desde el dashboard, los links a secciones de detalle o análisis
  * (patrones, historial, recomendaciones, perfiles) abren en pestaña nueva

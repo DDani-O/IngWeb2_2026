@@ -45,7 +45,7 @@ export class UsersService {
 
   /**
    * Objeto `usuario` completo (cuenta + perfil del rol). `null` si la cuenta no existe.
-   * El perfil de gasto de un cliente se calcula en el momento (spec §10.6); quien ya lo
+   * El perfil de gasto de un cliente se calcula en el momento (§4, backend/README.md); quien ya lo
    * tiene calculado puede pasarlo en `perfilDeGasto` para no repetir el análisis.
    */
   async getUsuario(

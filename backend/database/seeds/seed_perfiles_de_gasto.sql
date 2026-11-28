@@ -1,6 +1,6 @@
 -- Seed: catálogo de perfiles de gasto (v2, migración 0016).
--- Los perfiles los asigna el sistema automáticamente según la participación del gasto
--- discrecional (spec §10.6); ni el cliente ni el asesor los eligen.
+-- El sistema sugiere el perfil según la participación del gasto discrecional y el asesor
+-- puede asignar otro (backend/README.md §4); el cliente no lo elige.
 -- criterio_regla guarda solo la regla; los textos de cada perfil viven en el front
 -- (frontend/content/spendingProfiles.js).
 

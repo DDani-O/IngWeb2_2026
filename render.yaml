@@ -1,4 +1,4 @@
-# Blueprint de Render para la API NestJS (fase I6 de especificaciones/PlanIntegracionBackend.md).
+# Blueprint de Render para la API NestJS (guía: backend/README.md §9).
 # Render → New → Blueprint → elegir este repo. Los valores con `sync: false` se cargan a mano
 # en el panel la primera vez (son secretos o dependen del deploy del front); nunca van al repo.
 services:

@@ -2,7 +2,7 @@ import { INestApplication } from "@nestjs/common";
 import { api, createTestApp } from "./test-utils";
 
 /**
- * GET /health (spec §10): público y sin BD. Lo usan Render (health check) y el front
+ * GET /health (contrato §3.0, backend/README.md): público y sin BD. Lo usan Render (health check) y el front
  * (despertar el servidor del plan gratuito antes del primer pedido real).
  */
 describe("Health (e2e)", () => {

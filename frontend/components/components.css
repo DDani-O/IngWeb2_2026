@@ -1,5 +1,5 @@
 /*
- * Estilos de la biblioteca de componentes (Fase 3 del refactor).
+ * Estilos de la biblioteca de componentes (catálogo en frontend/README.md §4).
  * Cada componente tiene su CSS al lado de su JS; este archivo solo los importa.
  * Reglas: mobile-first (media queries min-width), tokens de global.css, BEM simple.
  */

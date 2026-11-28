@@ -16,7 +16,7 @@ import { Usuario } from "../users/usuario.types";
 import { LoginDto } from "./dto/login.dto";
 import { RegisterDto } from "./dto/register.dto";
 
-/** Respuesta de login y registro (spec §10.1). */
+/** Respuesta de login y registro (contrato §3.1, backend/README.md). */
 export interface Sesion {
   token: string;
   usuario: Usuario;

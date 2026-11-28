@@ -38,7 +38,7 @@ export interface GastoInusual {
   desvio_porcentaje: number;
 }
 
-/** Objeto `analisis` del contrato (spec §10.6). */
+/** Objeto `analisis` del contrato (§3.6, backend/README.md). */
 export interface Analisis {
   cliente_id: string;
   periodo: { desde: string; hasta: string };
@@ -95,7 +95,7 @@ export interface AsignacionDePerfil {
   participacion: number;
 }
 
-/** Objeto `resumen_asesor` del contrato (spec §10.6). */
+/** Objeto `resumen_asesor` del contrato (§3.6, backend/README.md). */
 export interface ResumenAsesor {
   asesor_id: string;
   clientes_activos: number;
@@ -108,7 +108,7 @@ export interface ResumenAsesor {
   actividad_mensual: Array<{ mes: string; clientes_activos: number }>;
 }
 
-/** Objeto `resumen_cliente` del contrato (spec §10.7). */
+/** Objeto `resumen_cliente` del contrato (§3.7, backend/README.md). */
 export interface ResumenCliente {
   id: string;
   nombre_completo: string;

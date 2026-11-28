@@ -2,7 +2,7 @@ import { Controller, Get, UseGuards } from "@nestjs/common";
 import { JwtAuthGuard } from "../../common/auth";
 import { CategoriesService } from "./categories.service";
 
-/** Catálogos (spec §10.2): requieren token, cualquier rol. */
+/** Catálogos (contrato §3.2, backend/README.md): requieren token, cualquier rol. */
 @UseGuards(JwtAuthGuard)
 @Controller()
 export class CategoriesController {

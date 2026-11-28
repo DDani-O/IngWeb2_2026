@@ -2,8 +2,8 @@
  * mockServer.js - Backend simulado con el mismo contrato que la API NestJS.
  *
  * APIClient lo usa con el driver "mock" (ver API_CONFIG.DRIVERS). Recibe { method, path, query, body, token }
- * y devuelve { status, body } con los cuerpos en español definidos en
- * especificaciones/EspecificacionDesarrolloFront.md §10. Los datos se guardan en localStorage
+ * y devuelve { status, body } con los cuerpos en español del contrato de la API
+ * (backend/README.md §3). Los datos se guardan en localStorage
  * para que sobrevivan a la navegación y a la recarga.
  */
 import { STORAGE_KEYS } from "../utils/constants.js";

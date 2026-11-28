@@ -14,7 +14,7 @@ import {
 } from "../../src/modules/analysis/calendar";
 
 /**
- * CRUD de gastos del cliente (spec §10.3).
+ * CRUD de gastos del cliente (contrato §3.3, backend/README.md).
  */
 describe("Gastos (e2e)", () => {
   let app: INestApplication;

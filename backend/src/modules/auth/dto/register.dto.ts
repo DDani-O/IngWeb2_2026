@@ -16,7 +16,7 @@ import { Trim, TrimLowercase } from "../../../common/validation/transforms";
 const PASSWORD_RULE_MESSAGE =
   "La contrasena debe tener al menos 8 caracteres, una mayuscula y un numero.";
 
-/** POST /auth/register (spec §10.1). `matricula` y `especialidad` son obligatorios para asesores. */
+/** POST /auth/register (contrato §3.1, backend/README.md). `matricula` y `especialidad` son obligatorios para asesores. */
 export class RegisterDto {
   @Trim()
   @IsString({ message: "El nombre es obligatorio." })

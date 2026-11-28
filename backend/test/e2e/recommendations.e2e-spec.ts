@@ -10,7 +10,7 @@ import {
 } from "./test-utils";
 
 /**
- * Recomendaciones (spec §10.5) y gastos de un cliente vistos por su asesor (spec §10.7).
+ * Recomendaciones (contrato §3.5) y gastos de un cliente vistos por su asesor (§3.7), en backend/README.md.
  */
 describe("Recomendaciones y clientes (e2e)", () => {
   let app: INestApplication;

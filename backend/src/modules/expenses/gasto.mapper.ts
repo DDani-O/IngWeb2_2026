@@ -1,4 +1,4 @@
-/** Objeto `gasto` del contrato (spec §10, "Objetos comunes"). */
+/** Objeto `gasto` del contrato (§3.0, backend/README.md). */
 export interface Gasto {
   id: string;
   comercio: string;

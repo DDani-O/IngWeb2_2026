@@ -4,7 +4,7 @@ import { internalError, validationError } from "../../common/errors";
 import { SUPABASE_CLIENT } from "../../common/supabase/supabase.provider";
 import { OcrService, ParsedTicket } from "./ocr.service";
 
-/** Tipos de imagen aceptados y tamaño máximo (spec §10.4). */
+/** Tipos de imagen aceptados y tamaño máximo (contrato §3.4, backend/README.md). */
 export const TICKET_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"];
 export const TICKET_MAX_BYTES = 5 * 1024 * 1024;
 
@@ -12,7 +12,7 @@ const STORAGE_BUCKET = "tickets";
 
 type EstadoTicket = "procesado" | "error";
 
-/** Respuesta de `POST /tickets/upload` (spec §10.4). */
+/** Respuesta de `POST /tickets/upload` (contrato §3.4, backend/README.md). */
 export interface ResultadoTicket {
   ticket: {
     id: string;
