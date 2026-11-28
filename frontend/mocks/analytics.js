@@ -10,13 +10,17 @@ import { toIsoDate } from "./seed.js";
 
 /** Un gasto es inusual si supera en más de este factor el promedio de su categoría. */
 const UNUSUAL_FACTOR = 1.35;
-/** Mínimo de gastos previos en la categoría para poder comparar. */
+/** Mínimo de otros gastos en la categoría (de todo el historial) para poder comparar. */
 const UNUSUAL_MIN_HISTORY = 3;
 /** Solo se marcan como inusuales los gastos de los últimos N días. */
 const UNUSUAL_WINDOW_DAYS = 30;
 /** Categorías discrecionales para la regla de perfil (perfiles_de_gasto.criterio_regla). */
 const DISCRETIONARY_CATEGORIES = ["cat-entretenimiento", "cat-suscripciones", "cat-otros"];
 const DAILY_SERIES_DAYS = 14;
+/** Mismos umbrales que analysis.rules.ts del back (variación en % y cantidad de inusuales). */
+const VARIATION_WARNING_PERCENT = 10;
+const VARIATION_HIGH_RISK_PERCENT = 25;
+const HIGH_RISK_UNUSUAL_COUNT = 2;
 const MONTHS_IN_SERIES = 7;
 
 const round = (value) => Math.round(value * 100) / 100;
@@ -139,7 +143,7 @@ function buildAlerts({ unusual, variation, totalThisMonth, expenseCount }) {
     });
   }
 
-  if (variation !== null && variation > 10) {
+  if (variation !== null && variation > VARIATION_WARNING_PERCENT) {
     alerts.push({
       nivel: "warning",
       titulo: "Gastas mas que el mes pasado",
@@ -167,11 +171,11 @@ function buildAlerts({ unusual, variation, totalThisMonth, expenseCount }) {
 }
 
 function riskLevel(unusualCount, variation) {
-  if (unusualCount >= 2 || (variation !== null && variation > 25)) {
+  if (unusualCount >= HIGH_RISK_UNUSUAL_COUNT || (variation !== null && variation > VARIATION_HIGH_RISK_PERCENT)) {
     return "alto";
   }
 
-  if (unusualCount >= 1 || (variation !== null && variation > 10)) {
+  if (unusualCount >= 1 || (variation !== null && variation > VARIATION_WARNING_PERCENT)) {
     return "medio";
   }
 

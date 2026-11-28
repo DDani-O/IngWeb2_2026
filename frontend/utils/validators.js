@@ -1,14 +1,14 @@
 /**
- * Valida que un campo tenga contenido util (no null, undefined o vacio).
+ * Valida que un campo tenga contenido (no null, undefined ni solo espacios).
  */
-export function isRequired(value) {
+function isRequired(value) {
   return value !== undefined && value !== null && String(value).trim() !== "";
 }
 
 /**
  * Verifica formato basico de email para formularios de autenticacion o perfil.
  */
-export function isValidEmail(email) {
+function isValidEmail(email) {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(String(email).trim().toLowerCase());
 }
@@ -25,8 +25,8 @@ export function isStrongPassword(password) {
 }
 
 /**
- * Agrupa validaciones del login y devuelve un resultado uniforme con errores.
- * Tambien puede usarse en pruebas unitarias del formulario.
+ * Validaciones del login antes de llamar a la API.
+ * @returns {{isValid: boolean, errors: string[]}}
  */
 export function validateLoginForm(formData) {
   const errors = [];

@@ -17,6 +17,11 @@ import { formatCurrency } from "../../utils/formatters.js";
 import { buildHash } from "../../utils/helpers.js";
 import { html } from "../../utils/html.js";
 
+/** Filas de cada tarjeta resumen del dashboard (gastos, categorías, recomendaciones). */
+const SUMMARY_ITEMS = 3;
+/** Categorías principales que se muestran como etiquetas junto al perfil. */
+const PROFILE_TAGS = 4;
+
 /**
  * Dashboard del cliente: resumen del mes, alertas, perfil asignado, resúmenes, gráficos y
  * ranking de comercios (consigna §4.4). Compone átomos, moléculas y ChartCard.
@@ -33,7 +38,7 @@ export class DashboardPage extends PageController {
     this._loadData(async () => {
       const [analysis, recent, recommendations] = await Promise.all([
         analysisService.getMine(),
-        expensesService.list({ limit: 3 }),
+        expensesService.list({ limit: SUMMARY_ITEMS }),
         recommendationsService.listMine(),
       ]);
       if (!this._isAlive()) {
@@ -68,7 +73,7 @@ export class DashboardPage extends PageController {
       subtitle: content?.description || profile?.description || "El sistema te asigna un perfil cuando registras tus primeros gastos.",
       body: html`<div class="tag-list">
         ${profile?.origin === "asesor" ? badge({ text: "Asignado por tu asesor", tone: "info", icon: "fa-user-tie", title: profile.reason || null }) : ""}
-        ${analysis.byCategory.slice(0, 4).map((item) => badge({ text: item.category }))}
+        ${analysis.byCategory.slice(0, PROFILE_TAGS).map((item) => badge({ text: item.category }))}
       </div>`,
       footer: button({ label: "Ver perfiles de gasto", variant: "ghost", icon: "fa-user-tag", href: buildHash(ROUTES.CLIENT_PERFILES), newTab: true }),
     });
@@ -91,14 +96,14 @@ export class DashboardPage extends PageController {
         title: "Patrones de Consumo",
         icon: "fa-chart-pie",
         subtitle: "Donde se va tu dinero",
-        items: analysis.byCategory.slice(0, 3).map((item) => ({ label: item.category, value: `${item.percentage}%` })),
+        items: analysis.byCategory.slice(0, SUMMARY_ITEMS).map((item) => ({ label: item.category, value: `${item.percentage}%` })),
         route: ROUTES.CLIENT_PATRONES,
       })}
       ${summary({
         title: "Recomendaciones",
         icon: "fa-lightbulb",
         subtitle: unread.length ? `${unread.length} sin leer` : "Estas al dia",
-        items: unread.slice(0, 3).map((item) => ({ label: item.title, value: badge({ text: recommendationLabels.priority(item.priority), tone: PRIORITY_TONES[item.priority] }) })),
+        items: unread.slice(0, SUMMARY_ITEMS).map((item) => ({ label: item.title, value: badge({ text: recommendationLabels.priority(item.priority), tone: PRIORITY_TONES[item.priority] }) })),
         route: ROUTES.CLIENT_RECOMENDACIONES,
       })}
       ${summary({

@@ -6,10 +6,12 @@ import { toClientSummary, toExpense, toExpenseQuery, toSpendingProfile, toUser }
  * PUT/DELETE /clients/:id/spending-profile (perfil elegido por el asesor).
  */
 export const clientsService = {
+  /** Clientes asignados, por nombre. */
   async list() {
     return (await apiClient.get("/clients")).map(toClientSummary);
   },
 
+  /** Resumen del cliente y su `user` completo (403 si no está asignado). */
   async get(clientId) {
     const response = await apiClient.get(`/clients/${encodeURIComponent(clientId)}`);
     return { ...toClientSummary(response), user: toUser(response.usuario) };

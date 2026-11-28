@@ -49,6 +49,7 @@ export class Modal extends Component {
     return this.element.querySelector("[data-modal-body]");
   }
 
+  /** Cambia el título visible. */
   setTitle(title) {
     const node = this.element.querySelector("[data-modal-title]");
     if (node) {
@@ -61,10 +62,12 @@ export class Modal extends Component {
     this.bodyElement.innerHTML = html`${content}`;
   }
 
+  /** Abre el modal de Bootstrap. */
   open() {
     this._instance()?.show();
   }
 
+  /** Lo cierra; al terminar emite `modal-close`. */
   close() {
     this._instance()?.hide();
   }

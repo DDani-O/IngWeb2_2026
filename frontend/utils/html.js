@@ -14,6 +14,7 @@ export class SafeHtml {
     this.value = String(value);
   }
 
+  /** Permite usarlo dentro de template strings comunes como texto ya escapado. */
   toString() {
     return this.value;
   }
@@ -24,7 +25,7 @@ export class SafeHtml {
  * @param {*} value
  * @returns {string}
  */
-export function escapeHtml(value) {
+function escapeHtml(value) {
   if (value === null || value === undefined) {
     return "";
   }

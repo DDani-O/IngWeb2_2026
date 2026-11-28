@@ -1,8 +1,10 @@
+/** Página genérica de aviso ("ruta no encontrada", "próximamente"), configurada por query. */
 import { Component } from "../../core/Component.js";
 import { ROUTES } from "../../utils/constants.js";
 import { isSafeRelativeUrl } from "../../utils/helpers.js";
 import { html } from "../../utils/html.js";
 
+/** Lee título, descripción, ícono y destinos de `query`; sin query muestra el aviso por defecto. */
 export class PlaceholderPage extends Component {
   static template = "./pages/public/placeholder.html";
 

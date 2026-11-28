@@ -685,7 +685,7 @@ Para un asesor, en lugar de `perfil_cliente` viene `perfil_asesor: { matricula, 
 | GET | `/auth/me` | ambos | — | **200** `usuario` |
 | PUT | `/auth/profile` | ambos | cliente: `{ nombre_completo, biografia?, ocupacion?, ingreso_estimado?, objetivo_financiero? }` · asesor: `{ nombre_completo, biografia?, matricula, especialidad, descripcion? }` | **200** `usuario` |
 
-El email no se modifica desde el perfil. La contraseña tiene entre 8 y 72 caracteres, con al menos una mayúscula y un número (la misma regla en el front, el mock y el back). Un cliente que se registra queda asignado al asesor con más capacidad libre (`obtener_asesor_disponible()`); si no hay ninguno, queda sin asesor y el registro igual se completa.
+El email no se modifica desde el perfil. La contraseña tiene entre 8 y 72 caracteres, con al menos una mayúscula y un número (la misma regla en el front, el mock y el back). Un cliente que se registra queda asignado, con `obtener_asesor_disponible()`, al asesor activo con lugar libre (menos clientes activos que su `capacidad_maxima`) que tenga **menos clientes activos**; si no hay ninguno, queda sin asesor y el registro igual se completa.
 
 ### 10.2 Catálogos
 

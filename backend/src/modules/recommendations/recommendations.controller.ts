@@ -28,18 +28,21 @@ export class RecommendationsController {
   ) {}
 
   @Roles("cliente")
+  /** GET /recommendations: las recibidas por el cliente, más nuevas primero. */
   @Get()
   listMine(@CurrentUser() user: JwtPayload) {
     return this.recommendationsService.listForClient(user.sub);
   }
 
   @Roles("cliente")
+  /** PUT /recommendations/:id/read: la marca como leída (404 si es de otro cliente). */
   @Put(":id/read")
   markAsRead(@CurrentUser() user: JwtPayload, @Param("id") id: string) {
     return this.recommendationsService.markAsRead(user.sub, id);
   }
 
   @Roles("asesor")
+  /** GET /recommendations/sent: las enviadas por el asesor (filtro opcional por cliente). */
   @Get("sent")
   listSent(
     @CurrentUser() user: JwtPayload,
@@ -49,6 +52,7 @@ export class RecommendationsController {
   }
 
   @Roles("asesor")
+  /** POST /recommendations: crea una para un cliente asignado (403 si no lo está). */
   @Post()
   create(
     @CurrentUser() user: JwtPayload,

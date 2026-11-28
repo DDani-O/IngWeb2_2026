@@ -1,3 +1,4 @@
+/** Servicio de la cartera del asesor: arma `resumen_cliente` y delega el perfil en `AnalysisService`. */
 import { Inject, Injectable, Logger } from "@nestjs/common";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { AssignmentsService } from "../../common/assignments/assignments.service";

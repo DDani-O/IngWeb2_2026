@@ -8,11 +8,13 @@ import { CategoriesService } from "./categories.service";
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
+  /** GET /categories: `[{ id, nombre, icono }]` por nombre. */
   @Get("categories")
   listCategories() {
     return this.categoriesService.listCategories();
   }
 
+  /** GET /spending-profiles: los perfiles activos, del más austero al más gastador. */
   @Get("spending-profiles")
   listSpendingProfiles() {
     return this.categoriesService.listSpendingProfiles();

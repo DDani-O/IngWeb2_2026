@@ -1,3 +1,4 @@
+/** Página #/cliente/cargar-gasto (cliente): alta manual o desde un ticket leído con IA. */
 import { PageController } from "../../core/PageController.js";
 import { badge } from "../../components/atoms/badge.js";
 import { infoCard } from "../../components/molecules/infoCard.js";

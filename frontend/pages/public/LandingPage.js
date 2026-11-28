@@ -1,9 +1,11 @@
+/** Landing pública: secciones informativas y modales de login y registro. */
 import { Component } from "../../core/Component.js";
 import { LANDING_CONTENT, ROLES, UI_LAYOUT, UI_TIMING } from "../../utils/constants.js";
 import { isSafeRelativeUrl, parseQueryString, renderStars } from "../../utils/helpers.js";
 import { validateLoginForm, validateRegisterForm } from "../../utils/validators.js";
 import { html } from "../../utils/html.js";
 
+/** Página `#/`. `?modal=login|register` abre el modal correspondiente al entrar. */
 export class LandingPage extends Component {
   static template = "./pages/public/landing.html";
 
@@ -60,6 +62,7 @@ export class LandingPage extends Component {
     }
   }
 
+  /** Abre el modal de login o de registro (cierra el otro). @param {"login"|"register"} mode */
   openAuthModal(mode = "login") {
     this._hideError("#loginError");
     this._hideError("#registerError");

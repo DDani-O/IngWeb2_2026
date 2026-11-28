@@ -18,6 +18,7 @@ export class AnalysisController {
     private readonly assignments: AssignmentsService,
   ) {}
 
+  /** GET /analysis/me: análisis propio del cliente. */
   @Roles("cliente")
   @Get("me")
   getMine(@CurrentUser() user: JwtPayload) {
@@ -25,12 +26,13 @@ export class AnalysisController {
   }
 
   @Roles("asesor")
+  /** GET /analysis/advisor/summary: resumen de la cartera del asesor. */
   @Get("advisor/summary")
   getAdvisorSummary(@CurrentUser() user: JwtPayload) {
     return this.analysisService.getAdvisorSummary(user.sub);
   }
 
-  /** 403 si el cliente no está asignado al asesor. */
+  /** GET /analysis/clients/:id: análisis de un cliente del asesor (403 si no está asignado). */
   @Roles("asesor")
   @Get("clients/:id")
   async getForClient(

@@ -13,9 +13,8 @@ export class PublicLayout {
     return this;
   }
 
-  setActive() {
-    // Sin navegación propia que marcar.
-  }
+  /** Lo llama el router en cada navegación; el layout público no tiene menú que marcar. */
+  setActive() {}
 
   destroy() {
     this.element?.replaceChildren();

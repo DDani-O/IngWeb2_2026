@@ -7,6 +7,7 @@ import { Controller, Get } from "@nestjs/common";
  */
 @Controller()
 export class HealthController {
+  /** GET /health: `{ estado: "ok" }`. */
   @Get("health")
   check() {
     return { estado: "ok" };

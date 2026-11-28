@@ -28,6 +28,7 @@ export class CategoriesService {
     @Inject(SUPABASE_CLIENT) private readonly supabase: SupabaseClient,
   ) {}
 
+  /** Categorías globales, por nombre. */
   async listCategories(): Promise<Categoria[]> {
     const { data, error } = await this.supabase
       .from("categorias_de_gasto")

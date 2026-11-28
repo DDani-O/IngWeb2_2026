@@ -34,7 +34,6 @@ function toLocalDate(dateValue) {
 
 /**
  * Formatea una fecha completa en formato legible segun locale.
- * Es util para historiales, listados y auditorias.
  */
 export function formatDate(dateValue, locale = APP_CONFIG.DEFAULT_LOCALE) {
   const date = toLocalDate(dateValue);
@@ -51,7 +50,6 @@ export function formatDate(dateValue, locale = APP_CONFIG.DEFAULT_LOCALE) {
 
 /**
  * Formatea una fecha corta (mes y dia) para vistas compactas.
- * Puede reutilizarse en ejes de graficos o resumenes rapidos.
  */
 export function formatShortDate(dateValue, locale = APP_CONFIG.DEFAULT_LOCALE) {
   const date = toLocalDate(dateValue);

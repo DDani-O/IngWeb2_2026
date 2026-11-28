@@ -1,3 +1,4 @@
+/** DTO de `POST /auth/register`, con los mensajes de validación del contrato. */
 import { Transform } from "class-transformer";
 import {
   IsEmail,

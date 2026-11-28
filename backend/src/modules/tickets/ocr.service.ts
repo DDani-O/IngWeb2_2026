@@ -91,6 +91,10 @@ export function parseMonto(value: unknown): number | null {
   return Math.round(amount * 100) / 100;
 }
 
+/**
+ * Lectura de tickets con un modelo de visión de Groq (API compatible con OpenAI). Sin
+ * `GROQ_API_KEY` la app arranca igual y los tickets se cargan a mano.
+ */
 @Injectable()
 export class OcrService {
   private readonly logger = new Logger(OcrService.name);
@@ -116,6 +120,7 @@ export class OcrService {
     }
   }
 
+  /** `false` si no se configuró `GROQ_API_KEY`. */
   isAvailable(): boolean {
     return this.client !== null;
   }

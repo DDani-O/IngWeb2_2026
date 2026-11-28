@@ -1,3 +1,4 @@
+/** Página #/cliente/recomendaciones (cliente): recomendaciones recibidas, con filtros y marca de leída. */
 import { PageController } from "../../core/PageController.js";
 import { badge } from "../../components/atoms/badge.js";
 import { keyValueList } from "../../components/molecules/keyValueList.js";

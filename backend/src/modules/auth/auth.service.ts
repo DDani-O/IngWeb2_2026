@@ -22,6 +22,7 @@ export interface Sesion {
   usuario: Usuario;
 }
 
+/** Código de PostgreSQL para una violación de UNIQUE (acá, la matrícula del asesor). */
 const UNIQUE_VIOLATION = "23505";
 
 /**
@@ -42,7 +43,7 @@ export class AuthService {
 
   /**
    * Crea la cuenta (Supabase Auth + `usuarios` + perfil del rol). Un cliente nuevo queda
-   * asignado al asesor con más capacidad libre (`obtener_asesor_disponible()`).
+   * asignado automáticamente a un asesor (ver `assignToAvailableAdvisor`).
    */
   async register(dto: RegisterDto): Promise<Sesion> {
     if (dto.rol === "cliente") {
@@ -200,8 +201,11 @@ export class AuthService {
   }
 
   /**
-   * Asignación automática a un asesor. Es de mejor esfuerzo: si no hay asesores con
-   * capacidad libre, el cliente queda sin asesor y el registro igual se completa.
+   * Asignación automática a un asesor con `obtener_asesor_disponible()`: elige, entre los
+   * asesores activos con lugar libre (menos clientes activos que `capacidad_maxima`), el
+   * que tiene **menos clientes activos**; no el de más lugar libre. Así la cartera se
+   * reparte pareja aunque las capacidades sean distintas. Es de mejor esfuerzo: si no
+   * hay asesores con lugar, el cliente queda sin asesor y el registro igual se completa.
    */
   private async assignToAvailableAdvisor(clientId: string) {
     const { data: advisorId, error } = await this.supabase.rpc(

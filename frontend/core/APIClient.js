@@ -5,7 +5,7 @@ import { eventBus } from "./EventBus.js";
 /**
  * Error normalizado de la API. El backend responde { error, mensaje, codigo, detalles }.
  */
-export class ApiError extends Error {
+class ApiError extends Error {
   constructor({ status = 0, code = "ERROR", message = "Error de comunicacion con el servidor.", details = null } = {}) {
     super(message);
     this.name = "ApiError";
@@ -33,6 +33,10 @@ function resolveBaseUrl() {
   return isLocalHost() ? API_CONFIG.BASE_URLS.local : API_CONFIG.BASE_URLS.production;
 }
 
+/**
+ * Cliente HTTP único del front: agrega el token, aplica el timeout, normaliza errores a
+ * `ApiError` y, según el driver, va a la API real o al backend simulado de mocks/.
+ */
 export class APIClient {
   /**
    * Cliente HTTP único de la app. Con driver "mock" atiende los pedidos con el backend
@@ -91,6 +95,7 @@ export class APIClient {
     this._tokenProvider = provider;
   }
 
+  /** @param {{query?: object}} [options] los valores vacíos de `query` se omiten */
   async get(endpoint, { query } = {}) {
     return this._request("GET", endpoint, { query });
   }
@@ -102,10 +107,12 @@ export class APIClient {
     return this._request("POST", endpoint, { data, timeoutMs });
   }
 
+  /** PUT con cuerpo JSON. */
   async put(endpoint, data = {}) {
     return this._request("PUT", endpoint, { data });
   }
 
+  /** DELETE; devuelve `null` en un 204. */
   async delete(endpoint) {
     return this._request("DELETE", endpoint, {});
   }

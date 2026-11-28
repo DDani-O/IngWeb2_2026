@@ -38,6 +38,12 @@ export const DISCRETIONARY_CATEGORY_NAMES = [
   "suscripciones",
   "otros",
 ];
+/** Variación contra el mes anterior (%) que dispara la alerta y el riesgo `medio`. */
+export const VARIATION_WARNING_PERCENT = 10;
+/** Variación (%) a partir de la cual el riesgo es `alto`. */
+export const VARIATION_HIGH_RISK_PERCENT = 25;
+/** Cantidad de gastos inusuales a partir de la cual el riesgo es `alto`. */
+export const HIGH_RISK_UNUSUAL_COUNT = 2;
 /** Días sin gastos a partir de los cuales un cliente cuenta como inactivo. */
 export const INACTIVITY_DAYS = 7;
 export const DAILY_SERIES_DAYS = 14;
@@ -184,7 +190,7 @@ function buildAlerts(
       descripcion: `El mayor: ${unusual[0].comercio}, un ${unusual[0].desvio_porcentaje}% sobre tu promedio en ${unusual[0].categoria}.`,
     });
   }
-  if (variation !== null && variation > 10) {
+  if (variation !== null && variation > VARIATION_WARNING_PERCENT) {
     alerts.push({
       nivel: "warning",
       titulo: "Gastas mas que el mes pasado",
@@ -214,10 +220,16 @@ export function riskLevel(
   unusualCount: number,
   variation: number | null,
 ): NivelRiesgo {
-  if (unusualCount >= 2 || (variation !== null && variation > 25)) {
+  if (
+    unusualCount >= HIGH_RISK_UNUSUAL_COUNT ||
+    (variation !== null && variation > VARIATION_HIGH_RISK_PERCENT)
+  ) {
     return "alto";
   }
-  if (unusualCount >= 1 || (variation !== null && variation > 10)) {
+  if (
+    unusualCount >= 1 ||
+    (variation !== null && variation > VARIATION_WARNING_PERCENT)
+  ) {
     return "medio";
   }
   return "bajo";
@@ -308,7 +320,9 @@ export function computeClientAnalysis(input: ClientAnalysisInput): {
   const byMonth = sumBy(expenses, (expense) => monthKey(expense.fecha_gasto));
   const totalThisMonth = byMonth.get(currentMonth) ?? 0;
 
-  // Comparación justa: el mes anterior hasta el mismo día del mes.
+  // Comparación justa: el mes en curso está incompleto, así que se compara con el mes
+  // anterior hasta el mismo día. Si ese día no existe (31 contra un mes de 30), la
+  // comparación de textos "AAAA-MM-31" toma el mes anterior completo.
   const sameDayPrevious = `${previousMonth}-${today.slice(8, 10)}`;
   const previousToDate = sum(
     expenses.filter(
@@ -321,6 +335,9 @@ export function computeClientAnalysis(input: ClientAnalysisInput): {
     ? Math.round(((totalThisMonth - previousToDate) / previousToDate) * 100)
     : null;
 
+  // Promedio de los meses completos con gastos: el mes en curso bajaría el promedio y los
+  // meses vacíos (antes de que el cliente empezara a cargar) también. Sin meses completos,
+  // se usa lo que va del mes.
   const completedMonths = months.slice(0, -1).filter((key) => byMonth.get(key));
   const monthlyAverage = completedMonths.length
     ? completedMonths.reduce(

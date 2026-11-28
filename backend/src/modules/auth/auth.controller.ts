@@ -22,11 +22,13 @@ export class AuthController {
     private readonly usersService: UsersService,
   ) {}
 
+  /** POST /auth/register: crea la cuenta y devuelve `{ token, usuario }` (201). */
   @Post("register")
   register(@Body() dto: RegisterDto) {
     return this.authService.register(dto);
   }
 
+  /** POST /auth/login: `{ token, usuario }` (200); 401 `CREDENCIALES_INVALIDAS`. */
   @Post("login")
   @HttpCode(200)
   login(@Body() dto: LoginDto) {
@@ -34,12 +36,14 @@ export class AuthController {
   }
 
   @UseGuards(JwtAuthGuard)
+  /** GET /auth/me: el `usuario` de la sesión, con su perfil de gasto vigente si es cliente. */
   @Get("me")
   me(@CurrentUser() user: JwtPayload) {
     return this.authService.me(user);
   }
 
   @UseGuards(JwtAuthGuard)
+  /** PUT /auth/profile: edita el perfil propio; los campos permitidos dependen del rol. */
   @Put("profile")
   updateProfile(
     @CurrentUser() user: JwtPayload,

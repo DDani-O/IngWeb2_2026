@@ -1,3 +1,4 @@
+/** Página #/asesor/dashboard (asesor): panel de la cartera. */
 import { PageController } from "../../core/PageController.js";
 import { alertItem } from "../../components/molecules/alertItem.js";
 import { CLIENT_TABLE_COLUMNS, CLIENT_VIEW_MODES, clientCard } from "../../components/molecules/clientCard.js";

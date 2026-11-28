@@ -32,17 +32,19 @@ export class ClientsController {
     private readonly expensesService: ExpensesService,
   ) {}
 
+  /** GET /clients: `resumen_cliente` de cada cliente asignado, por nombre. */
   @Get()
   list(@CurrentUser() user: JwtPayload) {
     return this.clientsService.list(user.sub);
   }
 
+  /** GET /clients/:id: `resumen_cliente` + `usuario` (403 si no está asignado). */
   @Get(":id")
   get(@CurrentUser() user: JwtPayload, @Param("id") clientId: string) {
     return this.clientsService.get(user.sub, clientId);
   }
 
-  /** Mismos filtros y forma que `GET /expenses`; 403 si el cliente no está asignado. */
+  /** GET /clients/:id/expenses: mismos filtros y forma que `GET /expenses` (403 si no está asignado). */
   @Get(":id/expenses")
   async listExpenses(
     @CurrentUser() user: JwtPayload,
@@ -53,7 +55,7 @@ export class ClientsController {
     return this.expensesService.list(clientId, query);
   }
 
-  /** El asesor elige el perfil de gasto del cliente; la regla automática deja de pisarlo. */
+  /** PUT /clients/:id/spending-profile: el asesor elige el perfil; la regla automática deja de pisarlo. */
   @Put(":id/spending-profile")
   assignProfile(
     @CurrentUser() user: JwtPayload,
@@ -63,7 +65,7 @@ export class ClientsController {
     return this.clientsService.assignProfile(user.sub, clientId, dto);
   }
 
-  /** Quita la elección del asesor: vuelve a valer el perfil que sugiere el sistema. */
+  /** DELETE /clients/:id/spending-profile: vuelve a valer el perfil que sugiere el sistema. */
   @Delete(":id/spending-profile")
   resetProfile(@CurrentUser() user: JwtPayload, @Param("id") clientId: string) {
     return this.clientsService.resetProfile(user.sub, clientId);

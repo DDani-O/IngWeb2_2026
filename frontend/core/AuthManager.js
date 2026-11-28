@@ -1,7 +1,12 @@
+/** Sesión del front: token y usuario en memoria y en localStorage, rol y ruta inicial. */
 import { ROLES, ROUTES, STORAGE_KEYS } from "../utils/constants.js";
 import { authService } from "../services/auth.service.js";
 import { apiClient } from "./APIClient.js";
 
+/**
+ * Singleton: `APIClient` le pide el token en cada pedido. Es la única fuente de verdad
+ * de la sesión en el front.
+ */
 export class AuthManager {
   /**
    * Inicializa el gestor de autenticacion como singleton.

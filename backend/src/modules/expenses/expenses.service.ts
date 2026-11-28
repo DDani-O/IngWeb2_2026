@@ -81,6 +81,7 @@ export class ExpensesService {
     return { datos, total: count ?? datos.length };
   }
 
+  /** Un gasto del cliente; 404 si no existe o es de otro (no se distingue a propósito). */
   async get(clientId: string, id: string): Promise<Gasto> {
     return toGasto(await this.findOwnRow(clientId, id));
   }
@@ -176,6 +177,7 @@ export class ExpensesService {
     return toGasto(data as unknown as GastoRow);
   }
 
+  /** Baja de un gasto propio (404 si no lo es). */
   async remove(clientId: string, id: string): Promise<void> {
     await this.findOwnRow(clientId, id);
     const { error } = await this.supabase

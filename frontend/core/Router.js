@@ -54,11 +54,13 @@ export class Router {
     return () => this._listeners.delete(listener);
   }
 
+  /** Empieza a escuchar `hashchange` y resuelve la ruta actual. */
   start() {
     window.addEventListener("hashchange", this._handleHashChange);
     this._handleHashChange();
   }
 
+  /** Deja de escuchar los cambios de ruta. */
   stop() {
     window.removeEventListener("hashchange", this._handleHashChange);
   }

@@ -3,7 +3,7 @@
  * Es estático del front: la BD solo guarda nombre y descripción (perfiles_de_gasto).
  * Se vincula con el catálogo de la API por nombre (sin distinguir mayúsculas ni tildes).
  */
-export const SPENDING_PROFILES_CONTENT = [
+const SPENDING_PROFILES_CONTENT = [
   {
     id: "dracula",
     name: "Drácula Nocturno",

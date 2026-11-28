@@ -1,3 +1,4 @@
+/** Página #/cliente/perfiles (cliente): catálogo de perfiles de gasto y cuál es el suyo. */
 import { PageController } from "../../core/PageController.js";
 import { badge } from "../../components/atoms/badge.js";
 import { DataTable } from "../../components/organisms/DataTable.js";
@@ -14,8 +15,8 @@ const COMPARISON_ROWS = [
 ];
 
 /**
- * Página informativa de perfiles de gasto. El perfil del cliente lo asigna
- * el sistema a partir de sus gastos: acá solo se muestra, no se elige.
+ * Página informativa de perfiles de gasto. El perfil del cliente lo sugiere el sistema a
+ * partir de sus gastos o lo asigna su asesor: acá se muestra cuál es, no se elige.
  */
 export class PerfilesPage extends PageController {
   static template = "./pages/cliente/perfiles.html";

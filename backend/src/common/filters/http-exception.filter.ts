@@ -1,3 +1,4 @@
+/** Filtro global: todo error sale con la forma `{ error, mensaje, codigo, detalles }` del contrato. */
 import {
   ArgumentsHost,
   Catch,
@@ -9,6 +10,7 @@ import {
 import { Response } from "express";
 import { ApiErrorBody, ErrorCode } from "../errors/api.exception";
 
+/** Código y mensaje por defecto de los errores que no vienen de `ApiException`. */
 const DEFAULTS: Partial<
   Record<number, { codigo: ErrorCode; mensaje: string }>
 > = {

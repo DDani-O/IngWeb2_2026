@@ -56,10 +56,12 @@ export class RecommendationForm extends Component {
   }
 
   /** Cambia el cliente preseleccionado y la lista de destinatarios. */
+  /** Opciones de destinatario y el elegido. */
   setRecipients(recipients, selectedId = "") {
     this.update({ recipients, selectedId });
   }
 
+  /** Bloquea el envío y muestra "Enviando...". */
   setBusy(busy) {
     const submit = this.element.querySelector('[type="submit"]');
     if (submit) {
@@ -68,6 +70,7 @@ export class RecommendationForm extends Component {
     }
   }
 
+  /** Vuelve al formulario vacío, sin destinatario elegido. */
   reset() {
     this.update({ selectedId: "" });
   }

@@ -20,9 +20,8 @@ export function parseQueryString(queryString = "") {
 
 /**
  * Convierte un objeto en query string, omitiendo valores vacios.
- * Es util para construir URLs limpias en navegacion y filtros.
  */
-export function stringifyQuery(params = {}) {
+function stringifyQuery(params = {}) {
   const searchParams = new URLSearchParams();
 
   Object.entries(params).forEach(([key, value]) => {
@@ -62,13 +61,13 @@ export function buildHash(path, query = {}) {
 /**
  * Limita un valor numerico a un rango minimo y maximo.
  */
-export function clamp(value, min, max) {
+function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
 
 /**
- * Retrasa ejecucion de una funcion para evitar llamadas excesivas.
- * Se puede usar en buscadores, resize o inputs reactivos.
+ * Devuelve una versión de `fn` que solo corre cuando pasan `delay` ms sin nuevas llamadas
+ * (los buscadores de `FilterBar` no filtran en cada tecla).
  */
 export function debounce(fn, delay = 250) {
   let timeoutId;
@@ -80,7 +79,7 @@ export function debounce(fn, delay = 250) {
 }
 
 /**
- * Pausa asincrona util para simular latencia o encadenar transiciones.
+ * Pausa asincrona (la usa el driver mock para simular la latencia de la red).
  */
 export function sleep(ms = 200) {
   return new Promise((resolve) => {
@@ -130,7 +129,7 @@ export function getInitials(fullName = "") {
 /**
  * Lee una variable CSS global con fallback para estilos dinamicos.
  */
-export function getCssVar(name, fallback = "") {
+function getCssVar(name, fallback = "") {
   const value = window
     .getComputedStyle(document.documentElement)
     .getPropertyValue(name)

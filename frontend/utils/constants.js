@@ -1,3 +1,4 @@
+/** Constantes de la app: configuración de la API, rutas, eventos, claves de almacenamiento y textos fijos. */
 export const APP_CONFIG = {
   DEFAULT_THEME: "dark",
   DEFAULT_LOCALE: "es-AR",

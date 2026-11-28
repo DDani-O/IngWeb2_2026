@@ -1,3 +1,4 @@
+/** Módulo de autenticación: registro, login, JWT propio (`JWT_SECRET`, vence en `JWT_EXPIRATION`) y estrategia de Passport. */
 import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { JwtModule } from "@nestjs/jwt";
@@ -9,6 +10,7 @@ import { JwtStrategy } from "../../common/auth/jwt.strategy";
 import { SupabaseModule } from "../../common/supabase/supabase.module";
 import { UsersModule } from "../users/users.module";
 
+/** Controller, servicios y dependencias del dominio. */
 @Module({
   imports: [
     ConfigModule,

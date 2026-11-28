@@ -1,3 +1,4 @@
+/** DTO de `POST /recommendations` y valores válidos de `tipo` y `prioridad`. */
 import { Transform } from "class-transformer";
 import { IsIn, IsNotEmpty, IsString, IsUUID, MaxLength } from "class-validator";
 

@@ -3,11 +3,11 @@ import { html } from "../../utils/html.js";
 import { trend as renderTrend } from "../atoms/trend.js";
 
 /**
- * Formatea un valor de KPI. Único lugar donde se decide el formato (antes había 3 versiones).
+ * Formatea un valor de KPI según su tipo; es el único lugar donde se decide ese formato.
  * @param {*} value
  * @param {"currency"|"number"|"percent"|"text"} format
  */
-export function formatStatValue(value, format = "number") {
+function formatStatValue(value, format = "number") {
   if (value === null || value === undefined || value === "") {
     return "--";
   }

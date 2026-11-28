@@ -16,7 +16,11 @@ export class AssignmentsService {
     @Inject(SUPABASE_CLIENT) private readonly supabase: SupabaseClient,
   ) {}
 
-  /** 403 si el cliente no tiene una asignación activa con el asesor (spec §10, errores). */
+  /**
+   * 403 si el cliente no tiene una asignación activa con el asesor (spec §10, errores).
+   * Un id que no es UUID da 403 sin consultar la base: PostgreSQL rechazaría el filtro
+   * por la columna uuid con un error que terminaría en 500.
+   */
   async assertAssigned(advisorId: string, clientId: string): Promise<void> {
     if (!isUUID(clientId)) {
       throw forbiddenError("El cliente no esta asignado a este asesor.");

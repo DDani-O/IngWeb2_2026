@@ -7,10 +7,12 @@ import { toRecommendation, toRecommendationPayload } from "./adapters.js";
  * Asesor: GET /recommendations/sent, POST /recommendations.
  */
 export const recommendationsService = {
+  /** Recomendaciones recibidas por el cliente. */
   async listMine() {
     return (await apiClient.get("/recommendations")).map(toRecommendation);
   },
 
+  /** La marca como leída y devuelve la recomendación actualizada. */
   async markAsRead(id) {
     return toRecommendation(await apiClient.put(`/recommendations/${encodeURIComponent(id)}/read`));
   },

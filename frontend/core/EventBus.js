@@ -1,3 +1,5 @@
+/** Bus de eventos global (publicar/suscribir) para avisos entre módulos sin acoplarlos. */
+/** Singleton. Los nombres de evento válidos están en `EVENTS` (utils/constants.js). */
 export class EventBus {
   /**
    * Crea el bus de eventos como singleton para compartir mensajeria global.
@@ -68,19 +70,6 @@ export class EventBus {
     group.forEach((callback) => {
       callback(payload);
     });
-  }
-
-  /**
-   * Limpia listeners de un evento puntual o de todo el bus.
-   * Util para pruebas o para resetear estado de la app.
-   */
-  clear(eventName) {
-    if (eventName) {
-      this.listeners.delete(eventName);
-      return;
-    }
-
-    this.listeners.clear();
   }
 
   /**

@@ -1,3 +1,4 @@
+/** DTO de los filtros de `GET /expenses` y `GET /clients/:id/expenses` (query en español). */
 import { Transform, Type } from "class-transformer";
 import {
   IsIn,

@@ -26,20 +26,24 @@ export class RecommendationDialog extends Component {
    * Abre el diálogo con el formulario limpio y, opcionalmente, un cliente preseleccionado.
    * @param {string} clientId
    */
+  /** Abre el formulario; con `clientId`, ese cliente queda elegido. */
   open(clientId = "") {
     this.form.setRecipients(this.options.recipients, clientId);
     this.modal.open();
   }
 
+  /** Cierra el diálogo. */
   close() {
     this.modal.close();
   }
 
+  /** Clientes que se pueden elegir como destinatarios. @param {{id: string, fullName: string}[]} recipients */
   setRecipients(recipients) {
     this.options.recipients = recipients;
     this.form.setRecipients(recipients);
   }
 
+  /** Bloquea el envío mientras se guarda. */
   setBusy(busy) {
     this.form.setBusy(busy);
   }

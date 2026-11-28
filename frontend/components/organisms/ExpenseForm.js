@@ -81,6 +81,7 @@ export class ExpenseForm extends Component {
     };
   }
 
+  /** Deshabilita el envío mientras se guarda (evita el doble envío). */
   setBusy(busy) {
     const submit = this.element.querySelector('[type="submit"]');
     if (submit) {

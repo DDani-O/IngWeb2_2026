@@ -1,6 +1,8 @@
+/** Tema claro/oscuro: lo aplica en `<html data-theme>`, lo guarda y avisa el cambio. */
 import { APP_CONFIG, EVENTS, STORAGE_KEYS } from "../utils/constants.js";
 import { eventBus } from "./EventBus.js";
 
+/** Singleton; emite `EVENTS.THEME.CHANGED` para que los gráficos se redibujen. */
 export class ThemeManager {
   /**
    * Crea el gestor de tema global como singleton.

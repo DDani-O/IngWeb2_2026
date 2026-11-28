@@ -1,3 +1,7 @@
+/**
+ * Arranque de la SPA: crea el router con sus layouts, restaura la sesión, registra el
+ * guard de roles y los avisos globales (sesión vencida, servidor despertando).
+ */
 import { apiClient } from "./core/APIClient.js";
 import { authManager } from "./core/AuthManager.js";
 import { eventBus } from "./core/EventBus.js";
@@ -26,6 +30,7 @@ const router = new Router({
 
 initializeApplication();
 
+/** El orden importa: tema y sesión antes del primer guard, el router al final. */
 function initializeApplication() {
   themeManager.init();
   // La sesión se restaura antes del primer guard: si no, se expulsaría a quien sí tenía sesión.
@@ -93,6 +98,7 @@ function requireRoleGuard(to) {
   return true;
 }
 
+/** Layout autenticado (cliente o asesor) con el usuario actual y el cierre de sesión. */
 function createAppLayout(config) {
   return new AppLayout(null, {
     config,

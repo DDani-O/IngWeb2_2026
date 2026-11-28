@@ -1,3 +1,4 @@
+/** Módulo raíz: configuración global (`.env`) y los módulos de cada dominio de la API. */
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { AuthModule } from "./modules/auth/auth.module";
@@ -10,6 +11,7 @@ import { RecommendationsModule } from "./modules/recommendations/recommendations
 import { AnalysisModule } from "./modules/analysis/analysis.module";
 import { HealthController } from "./health.controller";
 
+/** Arma la app: el health check y los módulos de dominio. */
 @Module({
   controllers: [HealthController],
   imports: [

@@ -1,9 +1,16 @@
+/** Carga de las plantillas `.html` de las páginas, con caché en memoria. */
 const templateCache = new Map();
 
 function normalizeTemplatePath(templatePath) {
   return String(templatePath || "").trim();
 }
 
+/**
+ * Devuelve el HTML de la plantilla. Se pide con `no-cache` para que el navegador valide
+ * contra el servidor (los cambios se ven sin vaciar caché); en memoria se guarda por sesión.
+ * @param {string} templatePath ruta relativa a la raíz del front
+ * @returns {Promise<string>}
+ */
 export async function loadTemplate(templatePath) {
   const normalizedPath = normalizeTemplatePath(templatePath);
 

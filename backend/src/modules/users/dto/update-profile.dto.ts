@@ -1,3 +1,4 @@
+/** DTO de `PUT /auth/profile`: todos los campos son opcionales. */
 import { Transform } from "class-transformer";
 import {
   IsNumber,

@@ -7,6 +7,10 @@ let cache = null;
  * Categorías de gasto (GET /categories). Cambian muy poco, así que se cachean en memoria.
  */
 export const categoriesService = {
+  /**
+   * Si el pedido falla, se borra la caché para que el próximo reintente.
+   * @returns {Promise<{id: string, name: string, icon: string}[]>}
+   */
   async list() {
     if (!cache) {
       cache = apiClient.get("/categories").then((items) => items.map(toCategory));

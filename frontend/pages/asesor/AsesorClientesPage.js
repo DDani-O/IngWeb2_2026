@@ -1,3 +1,4 @@
+/** Página #/asesor/clientes (asesor): cartera de clientes con búsqueda y acceso al análisis. */
 import { PageController } from "../../core/PageController.js";
 import { CLIENT_TABLE_COLUMNS, CLIENT_VIEW_MODES, clientCard } from "../../components/molecules/clientCard.js";
 import { emptyState } from "../../components/molecules/stateBlock.js";

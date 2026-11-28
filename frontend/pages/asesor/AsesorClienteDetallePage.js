@@ -1,3 +1,4 @@
+/** Página #/asesor/clientes/:id (asesor): análisis de un cliente, su perfil de gasto y sus recomendaciones. */
 import { PageController } from "../../core/PageController.js";
 import { badge } from "../../components/atoms/badge.js";
 import { button } from "../../components/atoms/button.js";

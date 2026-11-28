@@ -1,7 +1,13 @@
+/** Base de las páginas con datos: carga con estado, acciones con aviso y helpers de DOM. */
 import { ROUTES } from "../utils/constants.js";
 import { errorState, loadingState } from "../components/molecules/stateBlock.js";
 import { Component } from "./Component.js";
 
+/**
+ * Las páginas que piden datos a la API extienden esta clase: `_loadData` y `_runAction`
+ * unifican "Cargando…", errores, reintento y toasts, y descartan respuestas que llegan
+ * después de salir de la página.
+ */
 export class PageController extends Component {
   /**
    * Ejecuta una carga de datos mostrando "Cargando…" y, si falla, un aviso con "Reintentar".
@@ -84,11 +90,11 @@ export class PageController extends Component {
     this._statusElement?.remove();
   }
 
+  /** Marca la página como destruida para que las respuestas tardías no toquen el DOM. */
   destroy() {
     this._destroyed = true;
     super.destroy();
   }
-
 
   /**
    * Actualiza texto de un nodo si existe en el arbol del componente.

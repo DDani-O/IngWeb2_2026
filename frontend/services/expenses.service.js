@@ -14,18 +14,22 @@ export const expensesService = {
     return { items: response.datos.map(toExpense), total: response.total };
   },
 
+  /** Un gasto propio (404 si no existe o es de otro cliente). */
   async get(id) {
     return toExpense(await apiClient.get(`/expenses/${encodeURIComponent(id)}`));
   },
 
+  /** Alta de un gasto; con `ticketId`, queda vinculado al ticket. */
   async create(expense) {
     return toExpense(await apiClient.post("/expenses", toExpensePayload(expense)));
   },
 
+  /** Edición parcial (también cambia la categoría). */
   async update(id, expense) {
     return toExpense(await apiClient.put(`/expenses/${encodeURIComponent(id)}`, toExpensePayload(expense)));
   },
 
+  /** Baja de un gasto propio. */
   async remove(id) {
     await apiClient.delete(`/expenses/${encodeURIComponent(id)}`);
   },

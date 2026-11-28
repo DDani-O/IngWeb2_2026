@@ -22,7 +22,10 @@ import { TICKET_MAX_BYTES, TicketsService } from "./tickets.service";
 export class TicketsController {
   constructor(private readonly ticketsService: TicketsService) {}
 
-  /** Multipart con el campo `archivo`. Multer corta en 5 MB (el filtro lo responde como 422). */
+  /**
+   * POST /tickets/upload: multipart con el campo `archivo`. Multer corta en 5 MB y el
+   * filtro lo responde como 422; el tipo lo valida el servicio.
+   */
   @Post("upload")
   @UseInterceptors(
     FileInterceptor("archivo", { limits: { fileSize: TICKET_MAX_BYTES } }),

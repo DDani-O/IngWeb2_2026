@@ -9,6 +9,10 @@ const dateOnly = (value) => (value ? String(value).slice(0, 10) : null);
 
 // ---------- Usuarios ----------
 
+/**
+ * `usuario` de la API → usuario de la UI, con `client` o `advisor` según el rol.
+ * @returns {object|null}
+ */
 export function toUser(apiUser) {
   if (!apiUser) {
     return null;
@@ -49,10 +53,12 @@ export function toUser(apiUser) {
   return user;
 }
 
+/** `{ token, usuario }` del login o el registro → `{ token, user }`. */
 export function toSession(apiSession) {
   return { token: apiSession.token, user: toUser(apiSession.usuario) };
 }
 
+/** Formulario de registro → cuerpo de `POST /auth/register` (matrícula y especialidad solo para asesores). */
 export function toRegisterPayload(form) {
   const payload = {
     nombre_completo: form.fullName,
@@ -69,6 +75,7 @@ export function toRegisterPayload(form) {
   return payload;
 }
 
+/** Formulario de perfil → cuerpo de `PUT /auth/profile` con los campos que acepta ese rol. */
 export function toProfilePayload(profile, role) {
   const payload = { nombre_completo: profile.fullName, biografia: profile.bio || "" };
 
@@ -91,6 +98,7 @@ export function toProfilePayload(profile, role) {
 
 // ---------- Catálogos ----------
 
+/** Categoría del catálogo → `{ id, name, icon }`. */
 export function toCategory(apiCategory) {
   return { id: apiCategory.id, name: apiCategory.nombre, icon: apiCategory.icono || "" };
 }
@@ -114,6 +122,7 @@ export function toSpendingProfile(apiProfile) {
 
 // ---------- Gastos y tickets ----------
 
+/** `gasto` de la API → gasto de la UI (el monto, como número). */
 export function toExpense(apiExpense) {
   return {
     id: apiExpense.id,
@@ -130,6 +139,7 @@ export function toExpense(apiExpense) {
   };
 }
 
+/** Gasto de la UI → cuerpo de `POST`/`PUT /expenses` (con `ticket_id` si vino de un ticket). */
 export function toExpensePayload(expense) {
   const payload = {
     comercio: expense.merchant,
@@ -149,6 +159,7 @@ export function toExpensePayload(expense) {
   return payload;
 }
 
+/** Filtros del historial → query de `GET /expenses` (los vacíos los descarta `APIClient`). */
 export function toExpenseQuery(filters = {}) {
   return {
     busqueda: filters.search,
@@ -161,6 +172,7 @@ export function toExpenseQuery(filters = {}) {
   };
 }
 
+/** Respuesta de `POST /tickets/upload` → datos para precompletar el formulario. */
 export function toTicketAnalysis(apiResult) {
   const analysis = apiResult.analisis || {};
   return {
@@ -179,6 +191,7 @@ export function toTicketAnalysis(apiResult) {
 
 // ---------- Recomendaciones ----------
 
+/** `recomendacion` de la API → recomendación de la UI. */
 export function toRecommendation(apiRecommendation) {
   return {
     id: apiRecommendation.id,
@@ -196,6 +209,7 @@ export function toRecommendation(apiRecommendation) {
   };
 }
 
+/** Formulario del asesor → cuerpo de `POST /recommendations`. */
 export function toRecommendationPayload(recommendation) {
   return {
     cliente_id: recommendation.clientId,
@@ -208,6 +222,7 @@ export function toRecommendationPayload(recommendation) {
 
 // ---------- Análisis ----------
 
+/** `analisis` de la API → modelo de dashboard, patrones y detalle del cliente. */
 export function toClientAnalysis(api) {
   return {
     clientId: api.cliente_id,
@@ -251,10 +266,12 @@ export function toClientAnalysis(api) {
   };
 }
 
-export function toAlert(apiAlert) {
+/** Alerta del análisis → `{ level, title, description }`. */
+function toAlert(apiAlert) {
   return { level: apiAlert.nivel, title: apiAlert.titulo, description: apiAlert.descripcion };
 }
 
+/** `resumen_cliente` → fila de la cartera del asesor. */
 export function toClientSummary(api) {
   return {
     id: api.id,
@@ -271,6 +288,7 @@ export function toClientSummary(api) {
   };
 }
 
+/** `resumen_asesor` → indicadores y series del dashboard del asesor. */
 export function toAdvisorSummary(api) {
   return {
     activeClients: api.clientes_activos,

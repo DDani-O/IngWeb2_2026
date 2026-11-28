@@ -1,3 +1,4 @@
+/** Página #/cliente/historial (cliente): listado de gastos con filtros, detalle, edición y baja. */
 import { PageController } from "../../core/PageController.js";
 import { badge } from "../../components/atoms/badge.js";
 import { keyValueList } from "../../components/molecules/keyValueList.js";

@@ -1,3 +1,4 @@
+/** Servicio de cuentas: objeto `usuario` del contrato y edición del perfil propio por rol. */
 import { HttpStatus, Inject, Injectable, Logger } from "@nestjs/common";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { JwtPayload } from "../../common/auth";
@@ -18,9 +19,13 @@ const CLIENT_FIELDS = [
 ] as const;
 const ADVISOR_FIELDS = ["matricula", "especialidad", "descripcion"] as const;
 
+/** PostgREST devuelve una relación embebida como objeto o como array según la FK. */
 type Embedded<T> = T | T[] | null | undefined;
 const first = <T>(value: Embedded<T>): T | null =>
   Array.isArray(value) ? (value[0] ?? null) : (value ?? null);
+
+/** Código de PostgreSQL para una violación de UNIQUE (acá, la matrícula del asesor). */
+const UNIQUE_VIOLATION = "23505";
 
 /** Texto opcional: vacío → null al guardar. */
 const emptyToNull = (value: string | undefined) =>
@@ -170,7 +175,7 @@ export class UsersService {
           );
 
     if (profileError) {
-      if (profileError.code === "23505") {
+      if (profileError.code === UNIQUE_VIOLATION) {
         throw new ApiException(
           HttpStatus.CONFLICT,
           "MATRICULA_DUPLICADA",
