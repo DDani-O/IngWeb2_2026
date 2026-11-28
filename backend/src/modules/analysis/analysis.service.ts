@@ -2,15 +2,20 @@ import { Inject, Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { AssignmentsService } from "../../common/assignments/assignments.service";
-import { internalError } from "../../common/errors";
+import { internalError, validationError } from "../../common/errors";
 import { SUPABASE_CLIENT } from "../../common/supabase/supabase.provider";
-import { PerfilDeGasto } from "../users/usuario.types";
+import { PerfilVigente } from "../users/usuario.types";
 import { DEFAULT_TIMEZONE, todayIn } from "./calendar";
-import { computeAdvisorSummary, computeClientAnalysis } from "./analysis.rules";
+import {
+  computeAdvisorSummary,
+  computeClientAnalysis,
+  systemProfileReason,
+} from "./analysis.rules";
 import {
   Analisis,
   AsignacionDePerfil,
   CategoriaAnalizable,
+  ClasificacionManual,
   GastoAnalizable,
   PerfilConRegla,
   ResumenAsesor,
@@ -19,10 +24,20 @@ import {
 /** PostgREST devuelve como máximo 1000 filas por pedido: se pagina de a este tamaño. */
 const PAGE_SIZE = 1000;
 
+/** Fila vigente de `clasificacion_de_perfil` (sin `vigente_hasta`). */
+interface ClasificacionVigente {
+  id: string;
+  cliente_id: string;
+  perfil_id: string;
+  asesor_id: string | null;
+  motivo: string | null;
+}
+
 /**
  * Análisis de consumo calculado en el momento a partir de `gastos` (spec §10.6). Al
  * calcularlo, persiste el perfil de gasto asignado por el sistema en
- * `clasificacion_de_perfil` cuando cambió respecto del vigente.
+ * `clasificacion_de_perfil` cuando cambió respecto del vigente, salvo que el asesor haya
+ * elegido uno: esa clasificación manual se respeta hasta que el asesor la quite.
  */
 @Injectable()
 export class AnalysisService {
@@ -44,7 +59,7 @@ export class AnalysisService {
   }
 
   /** Perfil de gasto actual del cliente (lo usa el objeto `usuario`). */
-  async getSpendingProfile(clientId: string): Promise<PerfilDeGasto | null> {
+  async getSpendingProfile(clientId: string): Promise<PerfilVigente | null> {
     return (await this.getClientAnalysis(clientId)).perfil_de_gasto;
   }
 
@@ -54,10 +69,11 @@ export class AnalysisService {
    */
   async analyzeClients(clientIds: string[]): Promise<Map<string, Analisis>> {
     const today = todayIn(this.timeZone);
-    const [expenses, categories, profiles] = await Promise.all([
+    const [expenses, categories, profiles, vigentes] = await Promise.all([
       this.fetchExpenses(clientIds),
       this.fetchCategories(),
       this.fetchProfiles(),
+      this.fetchCurrentClassifications(clientIds),
     ]);
 
     const results = new Map<string, Analisis>();
@@ -69,13 +85,62 @@ export class AnalysisService {
         categories,
         profiles,
         today,
+        manual: toManual(vigentes, clientId),
       });
       results.set(clientId, analisis);
       assignments.set(clientId, asignacion);
     });
 
-    await this.syncProfiles(assignments);
+    if (vigentes) {
+      await this.syncProfiles(assignments, vigentes);
+    }
     return results;
+  }
+
+  /**
+   * El asesor elige el perfil del cliente (PUT /clients/:id/spending-profile). Cierra la
+   * clasificación vigente, sea automática o manual, y deja la nueva con `asesor_id`.
+   * La asignación asesor ↔ cliente la controla quien llama.
+   */
+  async assignManualProfile(
+    clientId: string,
+    advisorId: string,
+    profileId: string,
+    motivo: string | null,
+  ): Promise<PerfilVigente | null> {
+    const profiles = await this.fetchProfiles();
+    if (!profiles.some((profile) => profile.id === profileId)) {
+      throw validationError("El perfil de gasto no existe.", ["perfil_id"]);
+    }
+
+    await this.closeClassifications(clientId, { onlyManual: false });
+    const { error } = await this.supabase
+      .from("clasificacion_de_perfil")
+      .insert({
+        cliente_id: clientId,
+        perfil_id: profileId,
+        asesor_id: advisorId,
+        puntaje: null,
+        motivo,
+        vigente_desde: new Date().toISOString(),
+      });
+    if (error) {
+      this.logger.error(`clasificacion_de_perfil manual: ${error.message}`);
+      throw internalError("No se pudo asignar el perfil de gasto.");
+    }
+    return this.getSpendingProfile(clientId);
+  }
+
+  /**
+   * Vuelve a la regla automática (DELETE /clients/:id/spending-profile): cierra la
+   * clasificación manual y recalcula, lo que deja vigente la sugerencia del sistema.
+   * Sin clasificación manual no cambia nada.
+   */
+  async resetToAutomaticProfile(
+    clientId: string,
+  ): Promise<PerfilVigente | null> {
+    await this.closeClassifications(clientId, { onlyManual: true });
+    return this.getSpendingProfile(clientId);
   }
 
   /** Resumen de la cartera del asesor (GET /analysis/advisor/summary). */
@@ -97,33 +162,63 @@ export class AnalysisService {
   }
 
   /**
+   * Clasificaciones vigentes de los clientes. `null` si no se pudieron leer: el análisis
+   * se responde igual (con la sugerencia del sistema) y no se sincroniza nada.
+   */
+  private async fetchCurrentClassifications(
+    clientIds: string[],
+  ): Promise<ClasificacionVigente[] | null> {
+    const { data, error } = await this.supabase
+      .from("clasificacion_de_perfil")
+      .select("id, cliente_id, perfil_id, asesor_id, motivo")
+      .in("cliente_id", clientIds)
+      .is("vigente_hasta", null);
+    if (error) {
+      this.logger.warn(`clasificacion_de_perfil select: ${error.message}`);
+      return null;
+    }
+    return (data ?? []) as ClasificacionVigente[];
+  }
+
+  /** Cierra (`vigente_hasta = ahora`) las vigentes del cliente: todas o solo las manuales. */
+  private async closeClassifications(
+    clientId: string,
+    { onlyManual }: { onlyManual: boolean },
+  ) {
+    let query = this.supabase
+      .from("clasificacion_de_perfil")
+      .update({ vigente_hasta: new Date().toISOString() })
+      .eq("cliente_id", clientId)
+      .is("vigente_hasta", null);
+    if (onlyManual) {
+      query = query.not("asesor_id", "is", null);
+    }
+    const { error } = await query;
+    if (error) {
+      this.logger.error(`clasificacion_de_perfil cierre: ${error.message}`);
+      throw internalError("No se pudo actualizar el perfil de gasto.");
+    }
+  }
+
+  /**
    * Deja en `clasificacion_de_perfil` una sola clasificación vigente por cliente, igual
    * al perfil calculado. Solo escribe cuando hay diferencias; sin perfil calculado,
-   * cierra la vigente. Un fallo acá no impide responder el análisis.
+   * cierra la vigente. Los clientes con una clasificación manual vigente no se tocan.
+   * Un fallo acá no impide responder el análisis.
    */
   private async syncProfiles(
     assignments: Map<string, AsignacionDePerfil | null>,
+    vigentes: ClasificacionVigente[],
   ) {
-    const clientIds = [...assignments.keys()];
-    const { data: vigentes, error } = await this.supabase
-      .from("clasificacion_de_perfil")
-      .select("id, cliente_id, perfil_id")
-      .in("cliente_id", clientIds)
-      .is("vigente_hasta", null);
-
-    if (error) {
-      this.logger.warn(`clasificacion_de_perfil select: ${error.message}`);
-      return;
-    }
-
     const now = new Date().toISOString();
     const toClose: string[] = [];
     const toInsert: Array<Record<string, unknown>> = [];
 
     assignments.forEach((asignacion, clientId) => {
-      const current = (vigentes ?? []).filter(
-        (row) => row.cliente_id === clientId,
-      );
+      const current = vigentes.filter((row) => row.cliente_id === clientId);
+      if (current.some((row) => row.asesor_id)) {
+        return;
+      }
       const unchanged = asignacion
         ? current.length === 1 && current[0].perfil_id === asignacion.perfil.id
         : !current.length;
@@ -131,15 +226,14 @@ export class AnalysisService {
         return;
       }
 
-      toClose.push(...current.map((row) => row.id as string));
+      toClose.push(...current.map((row) => row.id));
       if (asignacion) {
-        const porcentaje = Math.round(asignacion.participacion * 100);
         toInsert.push({
           cliente_id: clientId,
           perfil_id: asignacion.perfil.id,
           asesor_id: null,
-          puntaje: porcentaje,
-          motivo: `Asignado por el sistema: el gasto discrecional fue el ${porcentaje}% de los ultimos 3 meses.`,
+          puntaje: Math.round(asignacion.participacion * 100),
+          motivo: systemProfileReason(asignacion),
           vigente_desde: now,
         });
       }
@@ -268,4 +362,15 @@ export class AnalysisService {
     }
     return (data ?? []).map((row) => ({ leida: Boolean(row.leida) }));
   }
+}
+
+/** Clasificación manual vigente del cliente, si la hay. */
+function toManual(
+  vigentes: ClasificacionVigente[] | null,
+  clientId: string,
+): ClasificacionManual | null {
+  const row = vigentes?.find(
+    (item) => item.cliente_id === clientId && item.asesor_id,
+  );
+  return row ? { perfil_id: row.perfil_id, motivo: row.motivo } : null;
 }

@@ -1,4 +1,4 @@
-import { PerfilDeGasto } from "../users/usuario.types";
+import { PerfilDeGasto, PerfilVigente } from "../users/usuario.types";
 
 /** Datos mínimos de un gasto para el análisis. */
 export interface GastoAnalizable {
@@ -74,9 +74,18 @@ export interface Analisis {
   }>;
   gastos_inusuales: GastoInusual[];
   alertas: Alerta[];
-  perfil_de_gasto: PerfilDeGasto | null;
+  /** Perfil vigente: el que eligió el asesor o, si no eligió ninguno, el sugerido. */
+  perfil_de_gasto: PerfilVigente | null;
+  /** Lo que calcula la regla automática, aunque el asesor haya elegido otro. */
+  perfil_sugerido: PerfilDeGasto | null;
   nivel_riesgo: NivelRiesgo;
   ultimo_gasto_fecha: string | null;
+}
+
+/** Clasificación vigente que cargó un asesor (`clasificacion_de_perfil.asesor_id` no nulo). */
+export interface ClasificacionManual {
+  perfil_id: string;
+  motivo: string | null;
 }
 
 /** Resultado de la regla de perfil, con la participación discrecional que la justifica. */
@@ -105,7 +114,7 @@ export interface ResumenCliente {
   nombre_completo: string;
   email: string | null;
   estado: "activo" | "inactivo";
-  perfil_de_gasto: PerfilDeGasto | null;
+  perfil_de_gasto: PerfilVigente | null;
   gasto_promedio_mensual: number;
   gasto_mes_actual: number;
   variacion_mes_anterior: number | null;

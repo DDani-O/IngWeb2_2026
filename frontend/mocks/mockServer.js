@@ -672,7 +672,37 @@ const routes = [
       return { status: 200, body: { ...serializeClientSummary(client), usuario: serializeUser(client) } };
     },
   },
+  {
+    method: "PUT", path: "/clients/:id/spending-profile", role: "asesor",
+    handler: ({ user, params, body }) => {
+      assertAssignedClient(user, params.id);
+      allowOnly(body, ["perfil_id", "motivo"]);
+      if (!db.perfiles_de_gasto.some((profile) => profile.id === body?.perfil_id)) {
+        throw new HttpError(422, "VALIDACION", "El perfil de gasto no existe.", { campos: ["perfil_id"] });
+      }
+      checkMaxLength(body, "motivo", 300, "El motivo");
+      const now = new Date().toISOString();
+      db.clasificacion_de_perfil = closeClassifications(params.id, now);
+      db.clasificacion_de_perfil.push({ cliente_id: params.id, perfil_id: body.perfil_id, asesor_id: user.id, motivo: String(body.motivo ?? "").trim() || null, vigente_desde: now, vigente_hasta: null });
+      persist();
+      return { status: 200, body: { perfil_de_gasto: computeClientAnalysis(db, params.id).perfil_de_gasto } };
+    },
+  },
+  {
+    method: "DELETE", path: "/clients/:id/spending-profile", role: "asesor",
+    handler: ({ user, params }) => {
+      assertAssignedClient(user, params.id);
+      db.clasificacion_de_perfil = closeClassifications(params.id, new Date().toISOString());
+      persist();
+      return { status: 200, body: { perfil_de_gasto: computeClientAnalysis(db, params.id).perfil_de_gasto } };
+    },
+  },
 ];
+
+/** Cierra la clasificación manual vigente del cliente (el mock no guarda las automáticas). */
+function closeClassifications(clientId, now) {
+  return (db.clasificacion_de_perfil || []).map((row) => (row.cliente_id === clientId && !row.vigente_hasta ? { ...row, vigente_hasta: now } : row));
+}
 
 function matchRoute(method, path) {
   const pathParts = path.split("/").filter(Boolean);

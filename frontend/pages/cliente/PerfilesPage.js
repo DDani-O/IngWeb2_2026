@@ -33,7 +33,7 @@ export class PerfilesPage extends PageController {
         .map((profile) => ({ ...profile, content: findSpendingProfileContent(profile.name) }))
         .filter((profile) => profile.content);
 
-      this._renderProfiles(profiles, user.client?.spendingProfile?.id || null);
+      this._renderProfiles(profiles, user.client?.spendingProfile || null);
       this._renderComparison(profiles);
     });
   }
@@ -42,11 +42,16 @@ export class PerfilesPage extends PageController {
     this._bindDashboardBackButtons();
   }
 
-  _renderProfiles(profiles, assignedId) {
+  /**
+   * @param {object[]} profiles catálogo con su contenido
+   * @param {object|null} current perfil vigente del cliente (origin "sistema" o "asesor")
+   */
+  _renderProfiles(profiles, current) {
+    const byAdvisor = current?.origin === "asesor";
     this.element.querySelector("#profilesGrid").innerHTML = html`
-      ${assignedId ? "" : html`<p class="text-muted">Todavia no tenes un perfil asignado: el sistema lo calcula cuando registras tus primeros gastos.</p>`}
+      ${current ? "" : html`<p class="text-muted">Todavia no tenes un perfil asignado: el sistema lo calcula cuando registras tus primeros gastos.</p>`}
       ${profiles.map(({ id, content }) => {
-        const isAssigned = id === assignedId;
+        const isAssigned = id === current?.id;
         return html`
           <article class="profile-showcase profile-card ${content.colorClass} ${isAssigned ? "profile-card--active" : ""}" ${isAssigned ? html`aria-current="true"` : ""}>
             <div class="profile-card__emoji" aria-hidden="true">${content.emoji}</div>
@@ -57,7 +62,8 @@ export class PerfilesPage extends PageController {
             <ul class="profile-card__list">
               ${content.characteristics.map((item) => html`<li>${item}</li>`)}
             </ul>
-            ${isAssigned ? badge({ text: "Tu perfil actual, asignado automaticamente", tone: "success", icon: "fa-circle-check" }) : ""}
+            ${isAssigned ? badge({ text: byAdvisor ? "Tu perfil actual, asignado por tu asesor" : "Tu perfil actual, asignado automaticamente", tone: "success", icon: "fa-circle-check" }) : ""}
+            ${isAssigned && byAdvisor && current.reason ? html`<p class="profile-card__description">Motivo: ${current.reason}</p>` : ""}
           </article>
         `;
       })}

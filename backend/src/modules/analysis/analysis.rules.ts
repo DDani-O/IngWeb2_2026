@@ -15,12 +15,14 @@ import {
   Analisis,
   AsignacionDePerfil,
   CategoriaAnalizable,
+  ClasificacionManual,
   GastoAnalizable,
   GastoInusual,
   NivelRiesgo,
   PerfilConRegla,
   ResumenAsesor,
 } from "./analysis.types";
+import { PerfilVigente } from "../users/usuario.types";
 
 /** Un gasto es inusual si supera en más de este factor el promedio de su categoría. */
 export const UNUSUAL_FACTOR = 1.35;
@@ -221,12 +223,51 @@ export function riskLevel(
   return "bajo";
 }
 
+/** Texto de `motivo` de una clasificación automática (se guarda y se muestra). */
+export function systemProfileReason(asignacion: AsignacionDePerfil): string {
+  const porcentaje = Math.round(asignacion.participacion * 100);
+  return `Asignado por el sistema: el gasto discrecional fue el ${porcentaje}% de los ultimos 3 meses.`;
+}
+
+/**
+ * Perfil vigente del cliente. La elección del asesor tiene prioridad sobre la regla
+ * automática: el sistema sigue calculando su sugerencia, pero no la pisa. Si el perfil
+ * que eligió el asesor ya no está en el catálogo activo, se vuelve a la sugerencia.
+ */
+export function resolveSpendingProfile(
+  asignacion: AsignacionDePerfil | null,
+  manual: ClasificacionManual | null,
+  profiles: PerfilConRegla[],
+): PerfilVigente | null {
+  const chosen =
+    manual && profiles.find((profile) => profile.id === manual.perfil_id);
+  if (chosen) {
+    return {
+      id: chosen.id,
+      nombre: chosen.nombre,
+      descripcion: chosen.descripcion,
+      origen: "asesor",
+      motivo: manual.motivo,
+    };
+  }
+  if (!asignacion) {
+    return null;
+  }
+  return {
+    ...asignacion.perfil,
+    origen: "sistema",
+    motivo: systemProfileReason(asignacion),
+  };
+}
+
 export interface ClientAnalysisInput {
   clientId: string;
   expenses: GastoAnalizable[];
   categories: CategoriaAnalizable[];
   profiles: PerfilConRegla[];
   today: string;
+  /** Clasificación vigente cargada por el asesor, si la hay. */
+  manual?: ClasificacionManual | null;
 }
 
 /**
@@ -238,6 +279,7 @@ export function computeClientAnalysis(input: ClientAnalysisInput): {
   asignacion: AsignacionDePerfil | null;
 } {
   const { clientId, expenses, categories, profiles, today } = input;
+  const manual = input.manual ?? null;
   const categoryNames = new Map(
     categories.map((category) => [category.id, category.nombre]),
   );
@@ -393,7 +435,8 @@ export function computeClientAnalysis(input: ClientAnalysisInput): {
       periodExpenses.length,
       totalThisMonth,
     ),
-    perfil_de_gasto: asignacion?.perfil ?? null,
+    perfil_de_gasto: resolveSpendingProfile(asignacion, manual, profiles),
+    perfil_sugerido: asignacion?.perfil ?? null,
     nivel_riesgo: riskLevel(unusual.length, variation),
     ultimo_gasto_fecha:
       expenses

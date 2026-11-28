@@ -63,7 +63,7 @@ export class PerfilPage extends PageController {
       fullName: user.fullName,
       email: user.email,
       items: [
-        { label: "Perfil de gasto", value: client.spendingProfile?.name || "Sin asignar todavia" },
+        { label: "Perfil de gasto", value: spendingProfileLabel(client.spendingProfile) },
         { label: "Ingreso estimado", value: client.estimatedIncome ? formatCurrency(client.estimatedIncome) : "-" },
         { label: "Asesor asignado", value: client.advisor?.fullName || "Sin asignar" },
         { label: "Miembro desde", value: user.createdAt ? new Date(user.createdAt).toLocaleDateString("es-AR", { month: "long", year: "numeric" }) : "-" },
@@ -82,4 +82,12 @@ export class PerfilPage extends PageController {
       this._show(user);
     }
   }
+}
+
+/** Nombre del perfil vigente y, si lo eligió el asesor, quién lo asignó. */
+function spendingProfileLabel(profile) {
+  if (!profile) {
+    return "Sin asignar todavia";
+  }
+  return profile.origin === "asesor" ? `${profile.name} (asignado por tu asesor)` : profile.name;
 }

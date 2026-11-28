@@ -6,11 +6,24 @@ export interface UsuarioRef {
   nombre_completo: string;
 }
 
-/** Perfil de gasto vigente (clasificacion_de_perfil + perfiles_de_gasto). */
+/** Perfil del catálogo `perfiles_de_gasto`. */
 export interface PerfilDeGasto {
   id: string;
   nombre: string;
   descripcion: string;
+}
+
+/** Quién asignó el perfil vigente: la regla automática o el asesor del cliente. */
+export type OrigenPerfil = "sistema" | "asesor";
+
+/**
+ * Perfil vigente del cliente (`clasificacion_de_perfil` sin `vigente_hasta`). Con
+ * `origen = "asesor"`, `motivo` es el que escribió el asesor (puede ser `null`); con
+ * `"sistema"`, explica el porcentaje discrecional que lo justifica.
+ */
+export interface PerfilVigente extends PerfilDeGasto {
+  origen: OrigenPerfil;
+  motivo: string | null;
 }
 
 /** Objeto `usuario` del contrato (spec §10, "Objetos comunes"). */
@@ -27,7 +40,7 @@ export interface Usuario {
     ocupacion: string;
     ingreso_estimado: number | null;
     objetivo_financiero: string;
-    perfil_de_gasto: PerfilDeGasto | null;
+    perfil_de_gasto: PerfilVigente | null;
     asesor: UsuarioRef | null;
   };
   perfil_asesor?: {

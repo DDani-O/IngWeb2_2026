@@ -643,13 +643,13 @@ DashboardPage {
   "estado": "activo", "creado_en": "2025-10-21T12:00:00.000Z",
   "perfil_cliente": {
     "ocupacion": "Disenador UX", "ingreso_estimado": 285000, "objetivo_financiero": "Fondo de emergencia",
-    "perfil_de_gasto": { "id": "uuid", "nombre": "Equilibrista Cosmico", "descripcion": "..." },
+    "perfil_de_gasto": { "id": "uuid", "nombre": "Equilibrista Cosmico", "descripcion": "...", "origen": "sistema", "motivo": "Asignado por el sistema: ..." },
     "asesor": { "id": "uuid", "nombre_completo": "Maria Rodriguez" }
   }
 }
 ```
 
-Para un asesor, en lugar de `perfil_cliente` viene `perfil_asesor: { matricula, especialidad, descripcion, clientes_asignados }`. `perfil_de_gasto` es el que asigna la regla de §10.6 al momento del pedido (el mismo que el análisis, y queda registrado en `clasificacion_de_perfil`); es `null` si el cliente no tiene gastos en la ventana.
+Para un asesor, en lugar de `perfil_cliente` viene `perfil_asesor: { matricula, especialidad, descripcion, clientes_asignados }`. `perfil_de_gasto` es el perfil vigente (el mismo que el análisis, §10.6): el que eligió el asesor (`origen: "asesor"`, con su `motivo` o `null`) o, si no eligió ninguno, el que sugiere la regla automática al momento del pedido (`origen: "sistema"`, `motivo` con el porcentaje). Es `null` si no hay elección del asesor ni gastos en la ventana.
 
 **Gasto** (`gastos`):
 
@@ -749,7 +749,8 @@ Flujo **en un solo paso** (decisión de la fase I1): el backend sube la imagen a
   "ranking_comercios": [{ "comercio": "Supermercado Central", "monto": 120000, "cantidad": 18 }],
   "gastos_inusuales": [{ "gasto_id": "uuid", "comercio": "...", "categoria": "...", "fecha_gasto": "...", "monto": 23400, "promedio_categoria": 9060, "desvio_porcentaje": 158 }],
   "alertas": [{ "nivel": "danger", "titulo": "...", "descripcion": "..." }],
-  "perfil_de_gasto": { "id": "uuid", "nombre": "Equilibrista Cosmico", "descripcion": "..." },
+  "perfil_de_gasto": { "id": "uuid", "nombre": "Equilibrista Cosmico", "descripcion": "...", "origen": "asesor", "motivo": "Está ahorrando para mudarse" },
+  "perfil_sugerido": { "id": "uuid", "nombre": "Espiritu Libre", "descripcion": "..." },
   "nivel_riesgo": "medio",
   "ultimo_gasto_fecha": "2026-11-24"
 }
@@ -763,7 +764,8 @@ Reglas de cálculo. Las implementan el backend (`backend/src/modules/analysis/an
 - `dia_mayor_gasto`: 0 = domingo … 6 = sábado.
 - **Gasto inusual**: gasto de los últimos 30 días que supera en más de 35% el promedio de **todos los otros gastos** de su categoría en el historial completo (anteriores y posteriores, sin contarse a sí mismo), con al menos 3 de esos otros gastos para comparar.
 - `alertas.nivel`: `danger` · `warning` · `success` · `info`. Sin gastos en el período: una sola alerta `info` ("Sin gastos en el periodo analizado"). Con gastos inusuales: `danger`; con variación > 10 %: `warning`. Si no hay ninguna de esas y el mes en curso no tiene gastos: `info` ("Todavia no registraste gastos este mes"); si tiene: `success` ("Tus gastos estan dentro de lo habitual"). Nunca se muestra `success` con el mes en $0.
-- **Perfil de gasto** (asignado automáticamente por el sistema; ni el cliente ni el asesor lo eligen): participación de las categorías discrecionales (Entretenimiento, Suscripciones, Otros) en los últimos 3 meses (el mes en curso y los dos anteriores, desde el día 1), comparada con `perfiles_de_gasto.criterio_regla.discrecional_max` (Drácula Nocturno < 10%, Equilibrista Cósmico < 30%, Espíritu Libre el resto). El catálogo tiene **exactamente esos 3 perfiles** y `criterio_regla` solo guarda la regla (`{ "discrecional_max": 0.1 }`); los textos, emojis y la comparativa viven en el front (`frontend/content/spendingProfiles.js`) y se vinculan por nombre. El resultado se guarda en `clasificacion_de_perfil` (`asesor_id = null`, `motivo` con el porcentaje calculado, cierra la vigencia del anterior con `vigente_hasta`). Se calcula al armar el análisis o el resumen de un cliente (la ventana de 3 meses avanza con el tiempo aunque no haya gastos nuevos) y solo se escribe una clasificación nueva si el perfil cambió respecto del vigente. Sin gastos en la ventana, el perfil queda `null`.
+- **Perfil de gasto sugerido** (`perfil_sugerido`, regla automática): participación de las categorías discrecionales (Entretenimiento, Suscripciones, Otros) en los últimos 3 meses (el mes en curso y los dos anteriores, desde el día 1), comparada con `perfiles_de_gasto.criterio_regla.discrecional_max` (Drácula Nocturno < 10%, Equilibrista Cósmico < 30%, Espíritu Libre el resto). El catálogo tiene **exactamente esos 3 perfiles** y `criterio_regla` solo guarda la regla (`{ "discrecional_max": 0.1 }`); los textos, emojis y la comparativa viven en el front (`frontend/content/spendingProfiles.js`) y se vinculan por nombre. El resultado se guarda en `clasificacion_de_perfil` (`asesor_id = null`, `motivo` con el porcentaje calculado, cierra la vigencia del anterior con `vigente_hasta`). Se calcula al armar el análisis o el resumen de un cliente (la ventana de 3 meses avanza con el tiempo aunque no haya gastos nuevos) y solo se escribe una clasificación nueva si el perfil cambió respecto del vigente. Sin gastos en la ventana, el perfil sugerido queda `null`.
+- **Perfil vigente** (`perfil_de_gasto`): el asesor puede elegir otro perfil (§10.7, `PUT /clients/:id/spending-profile`). Se guarda en `clasificacion_de_perfil` con su `asesor_id` y el `motivo` opcional, y mientras esté vigente la regla automática no la pisa: el sistema sigue calculando `perfil_sugerido`, pero no escribe clasificaciones para ese cliente. `DELETE /clients/:id/spending-profile` cierra la elección del asesor y vuelve a valer la sugerencia. Sin elección del asesor, `perfil_de_gasto` es la sugerencia con `origen: "sistema"`. Si el perfil elegido sale del catálogo activo, vale la sugerencia. La distribución y el gasto por perfil del resumen del asesor usan el perfil vigente.
 - `nivel_riesgo`: `alto` si hay 2 o más gastos inusuales o la variación supera 25%; `medio` si hay 1 o la variación supera 10%; `bajo` en otro caso.
 
 **`resumen_asesor`**:
@@ -786,6 +788,8 @@ Reglas de cálculo. Las implementan el backend (`backend/src/modules/analysis/an
 | GET | `/clients` | **200** `[resumen_cliente]` de los clientes asignados (`asignaciones_de_clientes` activas) |
 | GET | `/clients/:id` | **200** `resumen_cliente` + `usuario` (403 si no está asignado) |
 | GET | `/clients/:id/expenses` | **200** `{ datos: [gasto], total }` con los mismos filtros que `GET /expenses` (403 si no está asignado) |
+| PUT | `/clients/:id/spending-profile` | Cuerpo `{ perfil_id, motivo? }` (`motivo` hasta 300 caracteres; vacío = `null`). **200** `{ perfil_de_gasto }` con `origen: "asesor"`. Cierra la clasificación vigente y guarda la nueva con `asesor_id`. 422 si `perfil_id` no es un perfil activo; 403 si no está asignado |
+| DELETE | `/clients/:id/spending-profile` | **200** `{ perfil_de_gasto }` con la sugerencia del sistema (`origen: "sistema"`, o `null` sin gastos). Cierra la elección del asesor; sin elección, no cambia nada. 403 si no está asignado |
 
 **`resumen_cliente`**: `{ id, nombre_completo, email, estado, perfil_de_gasto, gasto_promedio_mensual, gasto_mes_actual, variacion_mes_anterior, ultimo_gasto_fecha, gastos_inusuales (cantidad), nivel_riesgo }`.
 
@@ -1124,7 +1128,7 @@ DASHBOARD    DASHBOARD
 
 **Contenido:**
 - Catálogo informativo de los 3 perfiles y tabla comparativa.
-- Perfil asignado **automáticamente por el sistema** (`clasificacion_de_perfil`). El cliente no puede elegirlo.
+- Perfil vigente (`clasificacion_de_perfil`): el que sugiere el sistema o, si lo cambió, el que eligió su asesor (se indica "asignado por tu asesor" y el motivo). El cliente no puede elegirlo.
 
 **Datos:**
 - GET `/spending-profiles` → catálogo

@@ -10,6 +10,7 @@ import {
   computeAdvisorSummary,
   computeClientAnalysis,
   findUnusualExpenses,
+  resolveSpendingProfile,
   riskLevel,
 } from "./analysis.rules";
 import { GastoAnalizable, PerfilConRegla } from "./analysis.types";
@@ -197,6 +198,107 @@ describe("perfil de gasto", () => {
   });
 });
 
+describe("perfil vigente: sugerencia del sistema y elección del asesor", () => {
+  const sugerencia = {
+    perfil: { id: "p2", nombre: "Equilibrista Cósmico", descripcion: "" },
+    participacion: 0.214,
+  };
+
+  it("sin elección del asesor vale la sugerencia, con su motivo", () => {
+    expect(resolveSpendingProfile(sugerencia, null, PROFILES)).toEqual({
+      id: "p2",
+      nombre: "Equilibrista Cósmico",
+      descripcion: "",
+      origen: "sistema",
+      motivo:
+        "Asignado por el sistema: el gasto discrecional fue el 21% de los ultimos 3 meses.",
+    });
+  });
+
+  it("la elección del asesor tiene prioridad, aun sin motivo", () => {
+    expect(
+      resolveSpendingProfile(
+        sugerencia,
+        { perfil_id: "p1", motivo: null },
+        PROFILES,
+      ),
+    ).toMatchObject({ id: "p1", origen: "asesor", motivo: null });
+  });
+
+  it("vale la elección del asesor aunque el sistema no tenga sugerencia", () => {
+    expect(
+      resolveSpendingProfile(
+        null,
+        { perfil_id: "p3", motivo: "Gastos de mudanza" },
+        PROFILES,
+      ),
+    ).toMatchObject({
+      id: "p3",
+      origen: "asesor",
+      motivo: "Gastos de mudanza",
+    });
+  });
+
+  it("si el perfil elegido ya no está en el catálogo, vuelve a la sugerencia", () => {
+    expect(
+      resolveSpendingProfile(
+        sugerencia,
+        { perfil_id: "borrado", motivo: "x" },
+        PROFILES,
+      ),
+    ).toMatchObject({ id: "p2", origen: "sistema" });
+    expect(
+      resolveSpendingProfile(
+        null,
+        { perfil_id: "borrado", motivo: "x" },
+        PROFILES,
+      ),
+    ).toBeNull();
+  });
+
+  it("el análisis informa el perfil vigente y la sugerencia por separado", () => {
+    const { analisis, asignacion } = computeClientAnalysis({
+      clientId: "c1",
+      expenses: [gasto("2026-11-10", 95), gasto("2026-11-11", 5, "ent")],
+      categories: CATEGORIES,
+      profiles: PROFILES,
+      today: TODAY,
+      manual: { perfil_id: "p3", motivo: "Viaje planificado" },
+    });
+    expect(analisis.perfil_de_gasto).toMatchObject({
+      id: "p3",
+      origen: "asesor",
+      motivo: "Viaje planificado",
+    });
+    expect(analisis.perfil_sugerido).toEqual({
+      id: "p1",
+      nombre: "Drácula Nocturno",
+      descripcion: "",
+    });
+    expect(asignacion?.perfil.id).toBe("p1");
+  });
+
+  it("el resumen del asesor agrupa por el perfil vigente", () => {
+    const { analisis } = computeClientAnalysis({
+      clientId: "c1",
+      expenses: [gasto("2026-11-10", 100)],
+      categories: CATEGORIES,
+      profiles: PROFILES,
+      today: TODAY,
+      manual: { perfil_id: "p3", motivo: null },
+    });
+    const resumen = computeAdvisorSummary({
+      advisorId: "a1",
+      analyses: [analisis],
+      sent: [],
+      today: TODAY,
+    });
+    expect(resumen.distribucion_por_perfil).toEqual([
+      { perfil: "Espíritu Libre", cantidad: 1 },
+    ]);
+  });
+});
+
 describe("análisis del cliente", () => {
   it("compara el mes en curso con el anterior hasta el mismo día", () => {
     const { analisis } = analyze([
@@ -244,6 +346,7 @@ describe("análisis del cliente", () => {
     expect(analisis).toMatchObject({
       nivel_riesgo: "bajo",
       perfil_de_gasto: null,
+      perfil_sugerido: null,
       ultimo_gasto_fecha: null,
       dia_mayor_gasto: null,
     });

@@ -6,7 +6,8 @@ import { SUPABASE_CLIENT } from "../../common/supabase/supabase.provider";
 import { Analisis, ResumenCliente } from "../analysis/analysis.types";
 import { AnalysisService } from "../analysis/analysis.service";
 import { UsersService } from "../users/users.service";
-import { Usuario } from "../users/usuario.types";
+import { PerfilVigente, Usuario } from "../users/usuario.types";
+import { AssignProfileDto } from "./dto/assign-profile.dto";
 
 interface ClientRow {
   id: string;
@@ -77,6 +78,32 @@ export class ClientsService {
       throw notFoundError("Cliente no encontrado.");
     }
     return { ...toResumen(row, analisis), usuario };
+  }
+
+  /** Perfil elegido por el asesor (403 si el cliente no está asignado). */
+  async assignProfile(
+    advisorId: string,
+    clientId: string,
+    dto: AssignProfileDto,
+  ): Promise<{ perfil_de_gasto: PerfilVigente | null }> {
+    await this.assignments.assertAssigned(advisorId, clientId);
+    const perfil = await this.analysisService.assignManualProfile(
+      clientId,
+      advisorId,
+      dto.perfil_id,
+      dto.motivo ?? null,
+    );
+    return { perfil_de_gasto: perfil };
+  }
+
+  /** Vuelve al perfil automático (403 si el cliente no está asignado). */
+  async resetProfile(
+    advisorId: string,
+    clientId: string,
+  ): Promise<{ perfil_de_gasto: PerfilVigente | null }> {
+    await this.assignments.assertAssigned(advisorId, clientId);
+    const perfil = await this.analysisService.resetToAutomaticProfile(clientId);
+    return { perfil_de_gasto: perfil };
   }
 
   private async fetchClients(clientIds: string[]): Promise<ClientRow[]> {

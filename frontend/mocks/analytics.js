@@ -76,8 +76,9 @@ function findUnusualExpenses(expenses, categoriesById, today) {
 
 /**
  * Regla automática de perfil: participación del gasto discrecional en los últimos 3 meses.
+ * @returns {{perfil: object, participacion: number}|null} igual que assignSpendingProfile del back
  */
-export function assignSpendingProfile(expenses, profiles, today) {
+function assignSpendingProfile(expenses, profiles, today) {
   const from = toIsoDate(new Date(today.getFullYear(), today.getMonth() - 2, 1));
   const recent = expenses.filter((expense) => expense.fecha_gasto >= from);
   const total = recent.reduce((sum, expense) => sum + expense.monto, 0);
@@ -96,7 +97,25 @@ export function assignSpendingProfile(expenses, profiles, today) {
   );
   const profile = ordered.find((candidate) => share < candidate.criterio_regla.discrecional_max) || ordered[ordered.length - 1];
 
-  return { id: profile.id, nombre: profile.nombre, descripcion: profile.descripcion };
+  return { perfil: { id: profile.id, nombre: profile.nombre, descripcion: profile.descripcion }, participacion: share };
+}
+
+/** Mismo texto que systemProfileReason del back. */
+function systemProfileReason(asignacion) {
+  const porcentaje = Math.round(asignacion.participacion * 100);
+  return `Asignado por el sistema: el gasto discrecional fue el ${porcentaje}% de los ultimos 3 meses.`;
+}
+
+/**
+ * Perfil vigente: la elección del asesor tiene prioridad sobre la sugerencia del sistema
+ * (igual que resolveSpendingProfile del back).
+ */
+function resolveSpendingProfile(asignacion, manual, profiles) {
+  const chosen = manual && profiles.find((profile) => profile.id === manual.perfil_id);
+  if (chosen) {
+    return { id: chosen.id, nombre: chosen.nombre, descripcion: chosen.descripcion, origen: "asesor", motivo: manual.motivo };
+  }
+  return asignacion ? { ...asignacion.perfil, origen: "sistema", motivo: systemProfileReason(asignacion) } : null;
 }
 
 function buildAlerts({ unusual, variation, totalThisMonth, expenseCount }) {
@@ -236,6 +255,8 @@ export function computeClientAnalysis(db, clientId, today = new Date()) {
 
   const unusual = findUnusualExpenses(expenses, categoriesById, today);
   const profiles = db.perfiles_de_gasto;
+  const asignacion = assignSpendingProfile(expenses, profiles, today);
+  const manual = (db.clasificacion_de_perfil || []).find((row) => row.cliente_id === clientId && !row.vigente_hasta) || null;
 
   return {
     cliente_id: clientId,
@@ -257,7 +278,8 @@ export function computeClientAnalysis(db, clientId, today = new Date()) {
     ranking_comercios: ranking,
     gastos_inusuales: unusual,
     alertas: buildAlerts({ unusual, variation, totalThisMonth, expenseCount: periodExpenses.length }),
-    perfil_de_gasto: assignSpendingProfile(expenses, profiles, today),
+    perfil_de_gasto: resolveSpendingProfile(asignacion, manual, profiles),
+    perfil_sugerido: asignacion?.perfil ?? null,
     nivel_riesgo: riskLevel(unusual.length, variation),
     ultimo_gasto_fecha: expenses.map((expense) => expense.fecha_gasto).sort().pop() || null,
   };

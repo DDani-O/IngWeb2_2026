@@ -95,8 +95,21 @@ export function toCategory(apiCategory) {
   return { id: apiCategory.id, name: apiCategory.nombre, icon: apiCategory.icono || "" };
 }
 
+/**
+ * Perfil de gasto. En el perfil vigente de un cliente llegan además `origen` ("sistema"
+ * o "asesor") y `motivo`; en el catálogo, no (quedan en null).
+ */
 export function toSpendingProfile(apiProfile) {
-  return apiProfile ? { id: apiProfile.id, name: apiProfile.nombre, description: apiProfile.descripcion || "" } : null;
+  if (!apiProfile) {
+    return null;
+  }
+  return {
+    id: apiProfile.id,
+    name: apiProfile.nombre,
+    description: apiProfile.descripcion || "",
+    origin: apiProfile.origen || null,
+    reason: apiProfile.motivo ?? null,
+  };
 }
 
 // ---------- Gastos y tickets ----------
@@ -232,6 +245,7 @@ export function toClientAnalysis(api) {
     })),
     alerts: (api.alertas || []).map(toAlert),
     spendingProfile: toSpendingProfile(api.perfil_de_gasto),
+    suggestedProfile: toSpendingProfile(api.perfil_sugerido),
     riskLevel: api.nivel_riesgo,
     lastExpenseDate: api.ultimo_gasto_fecha || null,
   };

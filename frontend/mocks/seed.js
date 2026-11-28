@@ -10,7 +10,7 @@
 const MOCK_PASSWORD = "Fintrack2026*";
 
 /** Subir al cambiar la forma de los datos: fuerza a regenerar la base guardada en localStorage. */
-export const SEED_VERSION = 3;
+export const SEED_VERSION = 4;
 
 /** Mismo catálogo que la BD (migraciones 0006 y 0018: nombres e íconos). */
 const CATEGORIAS = [
@@ -257,6 +257,8 @@ export function buildSeed(today = new Date()) {
     gastos,
     tickets: [],
     recomendaciones_financieras,
+    // Solo las clasificaciones que carga el asesor: la automática se calcula en cada pedido.
+    clasificacion_de_perfil: [],
   };
 }
 

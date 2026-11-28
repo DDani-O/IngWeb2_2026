@@ -18,13 +18,13 @@ FinTrack permite a una persona registrar sus gastos, a mano o subiendo la foto d
 - **Historial**: búsqueda, filtros por categoría y origen, orden, detalle, **edición y recategorización** y borrado.
 - **Dashboard**: gasto del mes con variación, promedio mensual, categoría principal, gastos inusuales, alertas, gráficos (por día, **torta por categoría**, **barras por mes** con promedio) y **ranking de comercios**.
 - **Patrones de consumo**: promedio mensual, categorías con más gasto, evolución en el tiempo (total y por categoría), día de mayor gasto y **gastos inusuales**.
-- **Perfil de gasto**: el sistema lo **asigna automáticamente** según los hábitos (Drácula Nocturno, Equilibrista Cósmico, Espíritu Libre); el cliente lo ve, no lo elige.
+- **Perfil de gasto**: el sistema lo **sugiere automáticamente** según los hábitos (Drácula Nocturno, Equilibrista Cósmico, Espíritu Libre) y el asesor puede asignar otro; el cliente ve el vigente y si lo asignó su asesor, pero no lo elige.
 - **Recomendaciones** del sistema o del asesor (sugerencias, alertas y observaciones con prioridad): filtros y "marcar como leída".
 
 **Asesor**
 - Dashboard de la cartera: clientes activos, clientes con gastos inusuales, recomendaciones leídas, alertas y gráficos (clientes por perfil, gasto por perfil, actividad mensual).
 - **Mis clientes**: búsqueda y filtros por riesgo y estado, vista en tarjetas o tabla.
-- **Análisis por cliente**: perfil asignado, nivel de riesgo, indicadores, gráficos, gastos inusuales, ranking de comercios, últimos gastos y recomendaciones enviadas.
+- **Análisis por cliente**: perfil de gasto (sugerido por el sistema o **asignado por el asesor**, con motivo opcional y vuelta al automático), nivel de riesgo, indicadores, gráficos, gastos inusuales, ranking de comercios, últimos gastos y recomendaciones enviadas.
 - **Generar recomendaciones** (título, tipo, prioridad y mensaje) para un cliente.
 - Perfil profesional (especialidad, matrícula, descripción).
 
@@ -81,7 +81,7 @@ Base PostgreSQL en Supabase, definida por las migraciones `backend/database/migr
 | `analisis_ocr` | Resultado del OCR/IA por ticket: texto, comercio, fecha y monto detectados, categoría sugerida, confianza. |
 | `recomendaciones_financieras` | Título, mensaje, tipo, prioridad, origen (`sistema` · `asesor`), leída. |
 | `perfiles_de_gasto` | Catálogo de perfiles con su regla de asignación (`criterio_regla`). |
-| `clasificacion_de_perfil` | Perfil asignado a cada cliente y su vigencia. |
+| `clasificacion_de_perfil` | Perfil asignado a cada cliente y su vigencia: por el sistema (`asesor_id` nulo) o por el asesor, con su motivo. |
 
 El análisis de consumo se calcula en el momento a partir de `gastos` (la tabla `analisis_de_consumo` se eliminó en la migración 0014; la mensajería asesor-cliente, en la 0013). Datos de la demo: `backend/database/seeds/seed_demo_jun_nov_2026.sql` (idempotente; gastos de junio a hoy para dos clientes, con gastos inusuales).
 
@@ -106,6 +106,7 @@ Contrato completo (cuerpos, errores y reglas de cálculo) en la [spec §10](espe
 | GET | `/analysis/me` | cliente | Análisis de consumo propio. |
 | GET | `/analysis/clients/:id` · `/analysis/advisor/summary` | asesor | Análisis de un cliente · resumen de la cartera. |
 | GET | `/clients` · `/clients/:id` · `/clients/:id/expenses` | asesor | Clientes asignados · detalle · gastos del cliente. |
+| PUT · DELETE | `/clients/:id/spending-profile` | asesor | Asignar el perfil de gasto del cliente (con motivo) · volver al automático. |
 
 Errores: `{ error, mensaje, codigo, detalles }` con 401, 403, 404, 409, 422 o 500.
 
@@ -120,7 +121,7 @@ La IA reduce la carga manual al interpretar la foto de un ticket (consigna §4.3
 3. El backend guarda la imagen (`tickets`), la manda al **servicio de OCR/IA** y persiste el resultado (`analisis_ocr`): comercio, fecha, monto, **categoría sugerida** y confianza.
 4. El front precompleta el formulario y muestra los datos detectados; el cliente los revisa y corrige antes de guardar (el gasto queda con origen `ticket`).
 
-Además, el sistema calcula de forma automática el análisis de consumo: gastos inusuales (más de 35% sobre el promedio de su categoría), nivel de riesgo y asignación del perfil de gasto según la participación del gasto discrecional (reglas en la spec §10.6).
+Además, el sistema calcula de forma automática el análisis de consumo: gastos inusuales (más de 35% sobre el promedio de su categoría), nivel de riesgo y sugerencia del perfil de gasto según la participación del gasto discrecional, que el asesor puede reemplazar (reglas en la spec §10.6).
 
 El backend NestJS sube la imagen a Supabase Storage y se la pasa a un modelo de IA con visión en **Groq** (por defecto `qwen/qwen3.8-27b`, configurable con `GROQ_MODEL`; vía la API compatible con OpenAI), con un prompt que pide el JSON del ticket argentino: comercio, fecha, **total final** (no el subtotal) y categoría sugerida (`backend/src/modules/tickets/ocr.service.ts`). La respuesta se normaliza antes de guardarla: el monto acepta formatos `1.500,50` y `1,500.50` (`parseMonto`, con tests). Si la IA no puede leer el ticket, la API responde `analisis: null` y el front deja el formulario para completar a mano. Con el driver mock, el paso 3 lo simula `frontend/mocks/mockServer.js` a partir del nombre del archivo.
 
@@ -214,7 +215,7 @@ El backend tiene tests automáticos (`npm test` y `npm run test:e2e`); el front 
 5. **Historial**: filtrar, ver detalle, **editar** (cambiar categoría) y eliminar con confirmación.
 6. **Recomendaciones**: filtrar y marcar como leída (persiste al recargar).
 7. **Perfil de cuenta**: editar datos y tema; el nombre se actualiza en la barra superior.
-8. **Asesor**: filtrar clientes, abrir **Ver análisis**, enviar una recomendación y comprobar que el cliente la recibe.
+8. **Asesor**: filtrar clientes, abrir **Ver análisis**, enviar una recomendación y comprobar que el cliente la recibe. En el mismo análisis, **asignar otro perfil** con un motivo: el cliente lo ve como "asignado por tu asesor" en su dashboard y en Perfiles; con **Volver al automático**, vuelve el sugerido.
 9. Una ruta inexistente (`#/no-existe`) muestra "Ruta no encontrada" y "Volver" regresa.
 10. Probar en 360 px de ancho y en tema claro: sin scroll horizontal y con texto legible.
 

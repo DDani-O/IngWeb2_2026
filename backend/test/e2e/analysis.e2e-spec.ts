@@ -189,4 +189,110 @@ describe("Análisis y clientes (e2e)", () => {
       .set(auth(cliente))
       .expect(403);
   });
+
+  /**
+   * Clasificación manual (spec §10.7): el asesor elige el perfil, la regla automática no
+   * lo pisa y el asesor puede volver a la sugerencia. Arranca con el cliente en
+   * "Espíritu Libre" (automático), que dejan los tests anteriores.
+   */
+  describe("perfil elegido por el asesor", () => {
+    let perfiles: Record<string, string>;
+    const ruta = () => `/clients/${cliente.id}/spending-profile`;
+
+    beforeAll(async () => {
+      const res = await api(app)
+        .get("/spending-profiles")
+        .set(auth(asesor))
+        .expect(200);
+      perfiles = Object.fromEntries(
+        res.body.map((p: { id: string; nombre: string }) => [p.nombre, p.id]),
+      );
+    });
+
+    it("solo lo puede cambiar el asesor asignado, con un perfil válido", async () => {
+      const body = { perfil_id: perfiles["Drácula Nocturno"] };
+      await api(app).put(ruta()).set(auth(otroAsesor)).send(body).expect(403);
+      await api(app).put(ruta()).set(auth(cliente)).send(body).expect(403);
+      await api(app).delete(ruta()).set(auth(otroAsesor)).expect(403);
+
+      for (const perfil_id of [
+        "no-es-un-uuid",
+        "00000000-0000-4000-8000-000000000000",
+      ]) {
+        const res = await api(app)
+          .put(ruta())
+          .set(auth(asesor))
+          .send({ perfil_id })
+          .expect(422);
+        expect(res.body).toMatchObject({
+          codigo: "VALIDACION",
+          detalles: { campos: ["perfil_id"] },
+        });
+      }
+    });
+
+    it("guarda la elección con asesor_id y motivo, y deja una sola vigente", async () => {
+      const res = await api(app)
+        .put(ruta())
+        .set(auth(asesor))
+        .send({
+          perfil_id: perfiles["Drácula Nocturno"],
+          motivo: "  Está ahorrando para mudarse  ",
+        })
+        .expect(200);
+      expect(res.body.perfil_de_gasto).toMatchObject({
+        nombre: "Drácula Nocturno",
+        origen: "asesor",
+        motivo: "Está ahorrando para mudarse",
+      });
+
+      const actuales = await vigentes();
+      expect(actuales).toHaveLength(1);
+      expect(actuales[0].asesor_id).toBe(asesor.id);
+    });
+
+    it("la regla automática no la pisa aunque cambien los gastos", async () => {
+      await cargarGasto(15000, "Suscripciones", "Streaming");
+
+      const analisis = await api(app)
+        .get("/analysis/me")
+        .set(auth(cliente))
+        .expect(200);
+      expect(analisis.body.perfil_de_gasto).toMatchObject({
+        nombre: "Drácula Nocturno",
+        origen: "asesor",
+      });
+      expect(analisis.body.perfil_sugerido.nombre).toBe("Espíritu Libre");
+
+      const me = await api(app).get("/auth/me").set(auth(cliente)).expect(200);
+      expect(me.body.perfil_cliente.perfil_de_gasto.origen).toBe("asesor");
+
+      const lista = await api(app)
+        .get("/clients")
+        .set(auth(asesor))
+        .expect(200);
+      const resumen = lista.body.find(
+        (c: { id: string }) => c.id === cliente.id,
+      );
+      expect(resumen.perfil_de_gasto.nombre).toBe("Drácula Nocturno");
+
+      const actuales = await vigentes();
+      expect(actuales).toHaveLength(1);
+      expect(actuales[0].asesor_id).toBe(asesor.id);
+    });
+
+    it("volver a la automática deja vigente la sugerencia del sistema", async () => {
+      for (let vez = 0; vez < 2; vez++) {
+        const res = await api(app).delete(ruta()).set(auth(asesor)).expect(200);
+        expect(res.body.perfil_de_gasto).toMatchObject({
+          nombre: "Espíritu Libre",
+          origen: "sistema",
+        });
+      }
+
+      const actuales = await vigentes();
+      expect(actuales).toHaveLength(1);
+      expect(actuales[0].asesor_id).toBeNull();
+    });
+  });
 });

@@ -66,7 +66,10 @@ export class DashboardPage extends PageController {
       icon: "fa-user-shield",
       title: profile ? `Perfil activo: ${profile.name}` : "Todavia no tenes un perfil asignado",
       subtitle: content?.description || profile?.description || "El sistema te asigna un perfil cuando registras tus primeros gastos.",
-      body: html`<div class="tag-list">${analysis.byCategory.slice(0, 4).map((item) => badge({ text: item.category }))}</div>`,
+      body: html`<div class="tag-list">
+        ${profile?.origin === "asesor" ? badge({ text: "Asignado por tu asesor", tone: "info", icon: "fa-user-tie", title: profile.reason || null }) : ""}
+        ${analysis.byCategory.slice(0, 4).map((item) => badge({ text: item.category }))}
+      </div>`,
       footer: button({ label: "Ver perfiles de gasto", variant: "ghost", icon: "fa-user-tag", href: buildHash(ROUTES.CLIENT_PERFILES), newTab: true }),
     });
   }

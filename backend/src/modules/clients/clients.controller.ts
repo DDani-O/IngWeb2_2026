@@ -1,4 +1,13 @@
-import { Controller, Get, Param, Query, UseGuards } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Put,
+  Query,
+  UseGuards,
+} from "@nestjs/common";
 import { AssignmentsService } from "../../common/assignments/assignments.service";
 import {
   CurrentUser,
@@ -10,6 +19,7 @@ import {
 import { QueryExpensesDto } from "../expenses/dto/query-expenses.dto";
 import { ExpensesService } from "../expenses/expenses.service";
 import { ClientsService } from "./clients.service";
+import { AssignProfileDto } from "./dto/assign-profile.dto";
 
 /** Clientes asignados al asesor (spec §10.7). */
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -41,5 +51,21 @@ export class ClientsController {
   ) {
     await this.assignments.assertAssigned(user.sub, clientId);
     return this.expensesService.list(clientId, query);
+  }
+
+  /** El asesor elige el perfil de gasto del cliente; la regla automática deja de pisarlo. */
+  @Put(":id/spending-profile")
+  assignProfile(
+    @CurrentUser() user: JwtPayload,
+    @Param("id") clientId: string,
+    @Body() dto: AssignProfileDto,
+  ) {
+    return this.clientsService.assignProfile(user.sub, clientId, dto);
+  }
+
+  /** Quita la elección del asesor: vuelve a valer el perfil que sugiere el sistema. */
+  @Delete(":id/spending-profile")
+  resetProfile(@CurrentUser() user: JwtPayload, @Param("id") clientId: string) {
+    return this.clientsService.resetProfile(user.sub, clientId);
   }
 }

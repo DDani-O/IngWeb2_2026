@@ -9,7 +9,7 @@ import {
 import { SUPABASE_CLIENT } from "../../common/supabase/supabase.provider";
 import { AnalysisService } from "../analysis/analysis.service";
 import { UpdateProfileDto } from "./dto/update-profile.dto";
-import { PerfilDeGasto, Usuario, UsuarioRef } from "./usuario.types";
+import { PerfilVigente, Usuario, UsuarioRef } from "./usuario.types";
 
 const CLIENT_FIELDS = [
   "ocupacion",
@@ -45,7 +45,7 @@ export class UsersService {
    */
   async getUsuario(
     userId: string,
-    perfilDeGasto?: PerfilDeGasto | null,
+    perfilDeGasto?: PerfilVigente | null,
   ): Promise<Usuario | null> {
     const { data: row, error } = await this.supabase
       .from("usuarios")
