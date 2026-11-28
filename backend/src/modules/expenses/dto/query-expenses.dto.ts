@@ -1,5 +1,5 @@
 /** DTO de los filtros de `GET /expenses` y `GET /clients/:id/expenses` (query en español). */
-import { Transform, Type } from "class-transformer";
+import { Type } from "class-transformer";
 import {
   IsIn,
   IsInt,
@@ -9,6 +9,7 @@ import {
   MaxLength,
   Min,
 } from "class-validator";
+import { Trim } from "../../../common/validation/transforms";
 import { ExpenseField, ExpenseOrigin } from "./expense-fields";
 
 export const EXPENSE_SORTS = ["fecha", "monto_desc", "monto_asc"] as const;
@@ -17,7 +18,7 @@ export type ExpenseSort = (typeof EXPENSE_SORTS)[number];
 /** Query de GET /expenses y GET /clients/:id/expenses (spec §10.3). Todo opcional. */
 export class QueryExpensesDto {
   @IsOptional()
-  @Transform(({ value }) => (typeof value === "string" ? value.trim() : value))
+  @Trim()
   @IsString({ message: "La busqueda debe ser texto." })
   @MaxLength(100, {
     message: "La busqueda no puede superar los 100 caracteres.",

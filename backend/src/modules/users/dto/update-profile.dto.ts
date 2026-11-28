@@ -1,5 +1,4 @@
 /** DTO de `PUT /auth/profile`: todos los campos son opcionales. */
-import { Transform } from "class-transformer";
 import {
   IsNumber,
   IsOptional,
@@ -8,23 +7,21 @@ import {
   Min,
   MinLength,
 } from "class-validator";
-
-const trim = ({ value }: { value: unknown }) =>
-  typeof value === "string" ? value.trim() : value;
+import { Trim } from "../../../common/validation/transforms";
 
 /**
  * PUT /auth/profile (spec §10.1). Los campos de cada rol se controlan en UsersService:
  * cliente → ocupacion, ingreso_estimado, objetivo_financiero; asesor → matricula, especialidad, descripcion.
  */
 export class UpdateProfileDto {
-  @Transform(trim)
+  @Trim()
   @IsString({ message: "El nombre es obligatorio." })
   @MinLength(2, { message: "El nombre debe tener al menos 2 caracteres." })
   @MaxLength(120, { message: "El nombre no puede superar los 120 caracteres." })
   nombre_completo!: string;
 
   @IsOptional()
-  @Transform(trim)
+  @Trim()
   @IsString({ message: "La biografia debe ser texto." })
   @MaxLength(500, {
     message: "La biografia no puede superar los 500 caracteres.",
@@ -32,7 +29,7 @@ export class UpdateProfileDto {
   biografia?: string;
 
   @IsOptional()
-  @Transform(trim)
+  @Trim()
   @IsString({ message: "La ocupacion debe ser texto." })
   @MaxLength(120, {
     message: "La ocupacion no puede superar los 120 caracteres.",
@@ -48,7 +45,7 @@ export class UpdateProfileDto {
   ingreso_estimado?: number | null;
 
   @IsOptional()
-  @Transform(trim)
+  @Trim()
   @IsString({ message: "El objetivo financiero debe ser texto." })
   @MaxLength(300, {
     message: "El objetivo financiero no puede superar los 300 caracteres.",
@@ -56,7 +53,7 @@ export class UpdateProfileDto {
   objetivo_financiero?: string;
 
   @IsOptional()
-  @Transform(trim)
+  @Trim()
   @IsString({ message: "La matricula debe ser texto." })
   @MaxLength(60, {
     message: "La matricula no puede superar los 60 caracteres.",
@@ -64,7 +61,7 @@ export class UpdateProfileDto {
   matricula?: string;
 
   @IsOptional()
-  @Transform(trim)
+  @Trim()
   @IsString({ message: "La especialidad debe ser texto." })
   @MaxLength(120, {
     message: "La especialidad no puede superar los 120 caracteres.",
@@ -72,7 +69,7 @@ export class UpdateProfileDto {
   especialidad?: string;
 
   @IsOptional()
-  @Transform(trim)
+  @Trim()
   @IsString({ message: "La descripcion debe ser texto." })
   @MaxLength(500, {
     message: "La descripcion no puede superar los 500 caracteres.",

@@ -1,5 +1,4 @@
 import { applyDecorators } from "@nestjs/common";
-import { Transform } from "class-transformer";
 import {
   IsIn,
   IsISO8601,
@@ -12,6 +11,7 @@ import {
   MaxLength,
   ValidateBy,
 } from "class-validator";
+import { Trim } from "../../../common/validation/transforms";
 import { DEFAULT_TIMEZONE, todayIn } from "../../analysis/calendar";
 
 /** Valores de los ENUM de la BD que usa el contrato de gastos. */
@@ -38,10 +38,6 @@ const NotAfterToday = () =>
     },
   });
 
-const trim = Transform(({ value }) =>
-  typeof value === "string" ? value.trim() : value,
-);
-
 /**
  * Aplica las reglas en el mismo orden que si estuvieran apiladas sobre la propiedad
  * (de abajo hacia arriba), para que el mensaje que se informa sea el de la primera regla
@@ -57,7 +53,7 @@ const rules = (...decorators: PropertyDecorator[]) =>
 export const ExpenseField = {
   comercio: () =>
     rules(
-      trim,
+      Trim(),
       IsString({ message: "El comercio es obligatorio." }),
       IsNotEmpty({ message: "El comercio es obligatorio." }),
       MaxLength(100, {
@@ -81,7 +77,7 @@ export const ExpenseField = {
   categoria: () => IsUUID(undefined, { message: "La categoria no existe." }),
   descripcion: () =>
     rules(
-      trim,
+      Trim(),
       IsString({ message: "La descripcion debe ser texto." }),
       MaxLength(500, {
         message: "La descripcion no puede superar los 500 caracteres.",

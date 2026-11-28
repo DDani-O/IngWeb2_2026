@@ -1,11 +1,9 @@
-import { Transform } from "class-transformer";
 import { IsEmail, IsNotEmpty, IsString } from "class-validator";
+import { TrimLowercase } from "../../../common/validation/transforms";
 
 /** POST /auth/login (spec §10.1). */
 export class LoginDto {
-  @Transform(({ value }) =>
-    typeof value === "string" ? value.trim().toLowerCase() : value,
-  )
+  @TrimLowercase()
   @IsEmail({}, { message: "El email no es valido." })
   email!: string;
 
