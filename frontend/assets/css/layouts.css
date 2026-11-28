@@ -250,6 +250,11 @@
   .dashboard-hero > .alert-list {
     grid-column: 1 / -1;
   }
+
+  /* Hero sin tarjeta de fecha (detalle del cliente): una columna, sin el hueco de la fecha. */
+  .dashboard-hero--no-date {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 @media (min-width: 1200px) {
@@ -259,6 +264,11 @@
 
   .dashboard-hero > .alert-list {
     grid-column: auto;
+  }
+
+  /* Hero sin fecha: vuelven las 3 columnas (regla de arriba) y las alertas usan la 2 y la 3. */
+  .dashboard-hero--no-date > .alert-list {
+    grid-column: 2 / -1;
   }
 }
 
