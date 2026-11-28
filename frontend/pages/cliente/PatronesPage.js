@@ -3,15 +3,11 @@ import { alertItem } from "../../components/molecules/alertItem.js";
 import { emptyState } from "../../components/molecules/stateBlock.js";
 import { mediaItem } from "../../components/molecules/mediaItem.js";
 import { statCard } from "../../components/molecules/statCard.js";
-import { unusualExpenseList } from "../../components/molecules/spendingAnalysis.js";
-import { ChartCard } from "../../components/organisms/ChartCard.js";
+import { patternCharts, unusualExpenseList } from "../../components/molecules/spendingAnalysis.js";
 import { analysisService } from "../../services/analysis.service.js";
 import { CHART_PALETTE_SIZE } from "../../utils/constants.js";
-import { formatCurrency, formatMonth, formatWeekday } from "../../utils/formatters.js";
+import { formatCurrency, formatWeekday } from "../../utils/formatters.js";
 import { html } from "../../utils/html.js";
-
-/** Cantidad de categorías que se muestran en el gráfico de evolución por categoría. */
-const EVOLUTION_TOP_CATEGORIES = 4;
 
 /**
  * Patrones de consumo (consigna §4.5): promedio mensual, categorías con más gasto,
@@ -111,58 +107,12 @@ export class PatronesPage extends PageController {
   }
 
   _renderCharts(analysis) {
-    const monthLabels = analysis.byMonth.map((item) => formatMonth(item.month));
-    const topCategories = analysis.byCategory.slice(0, EVOLUTION_TOP_CATEGORIES).map((item) => item.category);
-
-    const charts = {
-      "#patternsCategoryChart": {
-        title: "Distribucion por categoria",
-        icon: "fa-chart-pie",
-        type: "doughnut",
-        valueFormat: "percent",
-        labels: analysis.byCategory.map((item) => item.category),
-        datasets: [{ label: "Porcentaje", data: analysis.byCategory.map((item) => item.percentage) }],
-      },
-      "#patternsMonthlyChart": {
-        title: "Gasto total mensual",
-        icon: "fa-chart-line",
-        type: "line",
-        valueFormat: "currency",
-        labels: monthLabels,
-        datasets: [{ label: "Gasto mensual", data: analysis.byMonth.map((item) => item.amount) }],
-      },
-      "#patternsByCategoryChart": {
-        title: "Evolucion por categoria",
-        icon: "fa-chart-line",
-        type: "line",
-        valueFormat: "currency",
-        labels: monthLabels,
-        datasets: topCategories.map((category) => ({
-          label: category,
-          data: analysis.byMonth.map(({ month }) => analysis.byMonthCategory.find((item) => item.month === month && item.category === category)?.amount || 0),
-        })),
-      },
-      "#patternsUnusualChart": {
-        title: "Inusual vs. promedio de la categoria",
-        icon: "fa-chart-column",
-        type: "bar",
-        valueFormat: "currency",
-        emptyMessage: "No hay gastos inusuales para comparar.",
-        labels: analysis.unusualExpenses.map((item) => item.merchant),
-        datasets: [
-          { label: "Promedio de la categoria", data: analysis.unusualExpenses.map((item) => item.categoryAverage) },
-          { label: "Gasto detectado", data: analysis.unusualExpenses.map((item) => item.amount) },
-        ],
-      },
-    };
-
-    this.charts = this.charts || {};
-    Object.entries(charts).forEach(([selector, props]) => {
-      if (this.charts[selector]) {
-        this.charts[selector].update(props);
-      } else {
-        this.charts[selector] = this.mountChild(ChartCard, selector, props);
-      }
+    const charts = patternCharts(analysis);
+    this._showCharts({
+      "#patternsCategoryChart": charts.category,
+      "#patternsMonthlyChart": charts.monthly,
+      "#patternsByCategoryChart": charts.byCategory,
+      "#patternsUnusualChart": charts.unusual,
     });
   }
 }

@@ -7,7 +7,6 @@ import { infoCard } from "../../components/molecules/infoCard.js";
 import { keyValueList } from "../../components/molecules/keyValueList.js";
 import { analysisCharts, analysisStats, merchantRanking } from "../../components/molecules/spendingAnalysis.js";
 import { recommendationLabels } from "../../components/molecules/recommendationCard.js";
-import { ChartCard } from "../../components/organisms/ChartCard.js";
 import { findSpendingProfileContent } from "../../content/spendingProfiles.js";
 import { analysisService } from "../../services/analysis.service.js";
 import { expensesService } from "../../services/expenses.service.js";
@@ -125,13 +124,10 @@ export class DashboardPage extends PageController {
       categoryLink: { href: buildHash(ROUTES.CLIENT_PATRONES), label: "Ver mas detalles en Patrones de Consumo", newTab: true },
     });
 
-    this.charts = this.charts || {};
-    [
-      ["daily", "#dashboardDailyChart"],
-      ["category", "#dashboardCategoryChart"],
-      ["monthly", "#dashboardMonthlyChart"],
-    ].forEach(([key, selector]) => {
-      this.charts[key] = this.charts[key] ? this.charts[key].update(charts[key]) : this.mountChild(ChartCard, selector, charts[key]);
+    this._showCharts({
+      "#dashboardDailyChart": charts.daily,
+      "#dashboardCategoryChart": charts.category,
+      "#dashboardMonthlyChart": charts.monthly,
     });
   }
 }

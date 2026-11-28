@@ -8,7 +8,6 @@ import { infoCard } from "../../components/molecules/infoCard.js";
 import { recommendationCard } from "../../components/molecules/recommendationCard.js";
 import { analysisCharts, analysisStats, merchantRanking, unusualExpenseList } from "../../components/molecules/spendingAnalysis.js";
 import { emptyState } from "../../components/molecules/stateBlock.js";
-import { ChartCard } from "../../components/organisms/ChartCard.js";
 import { DataTable } from "../../components/organisms/DataTable.js";
 import { RecommendationDialog } from "../../components/organisms/RecommendationDialog.js";
 import { analysisService } from "../../services/analysis.service.js";
@@ -169,12 +168,10 @@ export class AsesorClienteDetallePage extends PageController {
     this.element.querySelector("#clientMerchants").innerHTML = merchantRanking(analysis.merchantRanking);
 
     const charts = analysisCharts(analysis);
-    [
-      ["daily", "#clientDailyChart"],
-      ["category", "#clientCategoryChart"],
-      ["monthly", "#clientMonthlyChart"],
-    ].forEach(([key, selector]) => {
-      this.charts[key] = this.charts[key] ? this.charts[key].update(charts[key]) : this.mountChild(ChartCard, selector, charts[key]);
+    this._showCharts({
+      "#clientDailyChart": charts.daily,
+      "#clientCategoryChart": charts.category,
+      "#clientMonthlyChart": charts.monthly,
     });
   }
 

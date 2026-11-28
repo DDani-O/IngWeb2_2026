@@ -92,51 +92,25 @@ export class ChartCard extends Component {
       .join(". ");
   }
 
+  /** Configuración de Chart.js: series con los colores del tema, ejes y tooltips formateados. */
   _config() {
     const { type, labels, datasets } = this.options;
     const theme = getChartThemeColors();
     const palette = getChartPalette();
     const circular = CIRCULAR.includes(type);
-    const axis = {
-      ticks: { color: theme.label, callback: (value) => this._format(value, true) },
-      grid: { color: theme.grid },
-    };
 
     return {
       type,
       data: {
         labels,
-        datasets: datasets.map((dataset, index) => {
-          const color = palette[index % palette.length];
-          if (circular) {
-            return {
-              label: dataset.label,
-              data: dataset.data,
-              backgroundColor: dataset.data.map((_, pointIndex) => palette[pointIndex % palette.length]),
-              borderColor: theme.border,
-              borderWidth: 2,
-            };
-          }
-
-          const isLine = (dataset.kind || type) === "line";
-          return {
-            type: dataset.kind || type,
-            label: dataset.label,
-            data: dataset.data,
-            backgroundColor: isLine ? "transparent" : color,
-            borderColor: color,
-            borderWidth: isLine ? 2 : 1,
-            borderDash: dataset.dashed ? [6, 4] : [],
-            pointRadius: isLine ? 3 : 0,
-            tension: 0.32,
-            order: isLine ? 0 : 1,
-          };
-        }),
+        datasets: datasets.map((dataset, index) =>
+          circular ? this._circularDataset(dataset, palette, theme) : this._cartesianDataset(dataset, palette[index % palette.length])
+        ),
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        scales: circular ? {} : { x: { ticks: { color: theme.label }, grid: { color: theme.grid } }, y: axis },
+        scales: circular ? {} : this._scales(theme),
         plugins: {
           legend: { labels: { color: theme.label }, position: circular ? "bottom" : "top" },
           tooltip: {
@@ -146,6 +120,46 @@ export class ChartCard extends Component {
           },
         },
       },
+    };
+  }
+
+  /** Torta o dona: un color de la paleta por porción, separadas con el color de borde del tema. */
+  _circularDataset(dataset, palette, theme) {
+    return {
+      label: dataset.label,
+      data: dataset.data,
+      backgroundColor: dataset.data.map((_, pointIndex) => palette[pointIndex % palette.length]),
+      borderColor: theme.border,
+      borderWidth: 2,
+    };
+  }
+
+  /**
+   * Barras o líneas (se pueden mezclar con `kind`): un color por serie. Las líneas van por
+   * encima de las barras (`order` 0) para que el promedio punteado no quede tapado.
+   */
+  _cartesianDataset(dataset, color) {
+    const kind = dataset.kind || this.options.type;
+    const isLine = kind === "line";
+    return {
+      type: kind,
+      label: dataset.label,
+      data: dataset.data,
+      backgroundColor: isLine ? "transparent" : color,
+      borderColor: color,
+      borderWidth: isLine ? 2 : 1,
+      borderDash: dataset.dashed ? [6, 4] : [],
+      pointRadius: isLine ? 3 : 0,
+      tension: 0.32,
+      order: isLine ? 0 : 1,
+    };
+  }
+
+  /** Ejes x e y con los colores del tema; las marcas del eje y, en el formato del valor. */
+  _scales(theme) {
+    return {
+      x: { ticks: { color: theme.label }, grid: { color: theme.grid } },
+      y: { ticks: { color: theme.label, callback: (value) => this._format(value, true) }, grid: { color: theme.grid } },
     };
   }
 }

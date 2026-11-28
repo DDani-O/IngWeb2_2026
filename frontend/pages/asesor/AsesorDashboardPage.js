@@ -7,7 +7,6 @@ import { infoCard } from "../../components/molecules/infoCard.js";
 import { mediaItem } from "../../components/molecules/mediaItem.js";
 import { emptyState } from "../../components/molecules/stateBlock.js";
 import { statCard } from "../../components/molecules/statCard.js";
-import { ChartCard } from "../../components/organisms/ChartCard.js";
 import { DataTable } from "../../components/organisms/DataTable.js";
 import { RecommendationDialog } from "../../components/organisms/RecommendationDialog.js";
 import { ViewToggle } from "../../components/organisms/ViewToggle.js";
@@ -106,7 +105,7 @@ export class AsesorDashboardPage extends PageController {
   }
 
   _renderCharts(summary) {
-    const charts = {
+    this._showCharts({
       "#advisorProfileChart": {
         title: "Clientes por perfil de gasto",
         icon: "fa-chart-pie",
@@ -131,10 +130,6 @@ export class AsesorDashboardPage extends PageController {
         labels: summary.monthlyActivity.map((item) => formatMonth(item.month)),
         datasets: [{ label: "Clientes activos", data: summary.monthlyActivity.map((item) => item.activeClients) }],
       },
-    };
-
-    Object.entries(charts).forEach(([selector, props]) => {
-      this.charts[selector] = this.charts[selector] ? this.charts[selector].update(props) : this.mountChild(ChartCard, selector, props);
     });
   }
 

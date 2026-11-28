@@ -63,6 +63,68 @@ export function analysisCharts(analysis, { categoryLink = null } = {}) {
   };
 }
 
+/** Cantidad de categorías que se muestran en el gráfico de evolución por categoría. */
+const EVOLUTION_TOP_CATEGORIES = 4;
+
+/**
+ * Gasto mensual de una categoría, alineado con la serie de meses (0 en los meses sin gastos).
+ * @returns {number[]}
+ */
+function monthlyAmountsOf(analysis, category) {
+  return analysis.byMonth.map(
+    ({ month }) => analysis.byMonthCategory.find((item) => item.month === month && item.category === category)?.amount || 0
+  );
+}
+
+/**
+ * Props de ChartCard de la página Patrones: distribución por categoría, gasto mensual,
+ * evolución de las categorías principales y gastos inusuales contra su promedio.
+ * @returns {{category: object, monthly: object, byCategory: object, unusual: object}}
+ */
+export function patternCharts(analysis) {
+  const monthLabels = analysis.byMonth.map((item) => formatMonth(item.month));
+  const topCategories = analysis.byCategory.slice(0, EVOLUTION_TOP_CATEGORIES).map((item) => item.category);
+
+  return {
+    category: {
+      title: "Distribucion por categoria",
+      icon: "fa-chart-pie",
+      type: "doughnut",
+      valueFormat: "percent",
+      labels: analysis.byCategory.map((item) => item.category),
+      datasets: [{ label: "Porcentaje", data: analysis.byCategory.map((item) => item.percentage) }],
+    },
+    monthly: {
+      title: "Gasto total mensual",
+      icon: "fa-chart-line",
+      type: "line",
+      valueFormat: "currency",
+      labels: monthLabels,
+      datasets: [{ label: "Gasto mensual", data: analysis.byMonth.map((item) => item.amount) }],
+    },
+    byCategory: {
+      title: "Evolucion por categoria",
+      icon: "fa-chart-line",
+      type: "line",
+      valueFormat: "currency",
+      labels: monthLabels,
+      datasets: topCategories.map((category) => ({ label: category, data: monthlyAmountsOf(analysis, category) })),
+    },
+    unusual: {
+      title: "Inusual vs. promedio de la categoria",
+      icon: "fa-chart-column",
+      type: "bar",
+      valueFormat: "currency",
+      emptyMessage: "No hay gastos inusuales para comparar.",
+      labels: analysis.unusualExpenses.map((item) => item.merchant),
+      datasets: [
+        { label: "Promedio de la categoria", data: analysis.unusualExpenses.map((item) => item.categoryAverage) },
+        { label: "Gasto detectado", data: analysis.unusualExpenses.map((item) => item.amount) },
+      ],
+    },
+  };
+}
+
 /** Ranking de comercios por monto (consigna §4.4). */
 export function merchantRanking(ranking) {
   return ranking.length

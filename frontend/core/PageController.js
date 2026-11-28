@@ -1,6 +1,7 @@
 /** Base de las páginas con datos: carga con estado, acciones con aviso y helpers de DOM. */
 import { ROUTES } from "../utils/constants.js";
 import { errorState, loadingState } from "../components/molecules/stateBlock.js";
+import { ChartCard } from "../components/organisms/ChartCard.js";
 import { Component } from "./Component.js";
 
 /**
@@ -88,6 +89,18 @@ export class PageController extends Component {
 
   _clearStatus() {
     this._statusElement?.remove();
+  }
+
+  /**
+   * Monta cada gráfico la primera vez y después solo le pasa las props nuevas, sin
+   * recrear el componente (al recargar los datos de la página).
+   * @param {Record<string, object>} charts selector del contenedor → props de `ChartCard`
+   */
+  _showCharts(charts) {
+    this.charts = this.charts || {};
+    Object.entries(charts).forEach(([selector, props]) => {
+      this.charts[selector] = this.charts[selector] ? this.charts[selector].update(props) : this.mountChild(ChartCard, selector, props);
+    });
   }
 
   /** Marca la página como destruida para que las respuestas tardías no toquen el DOM. */
