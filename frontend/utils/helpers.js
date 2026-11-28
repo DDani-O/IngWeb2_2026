@@ -1,3 +1,4 @@
+/** Utilidades generales: query strings, rutas y hashes, debounce, iniciales, estrellas y colores de los gráficos. */
 import { html } from "./html.js";
 
 /**

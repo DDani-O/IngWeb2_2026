@@ -1,3 +1,4 @@
+/** Servicio de OCR: manda la imagen del ticket al modelo con visión de Groq y normaliza su respuesta. */
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import OpenAI from "openai";

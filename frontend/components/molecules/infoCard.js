@@ -1,3 +1,4 @@
+/** Molécula `infoCard` de la biblioteca de componentes; estilos en infoCard.css. */
 import { html } from "../../utils/html.js";
 import { icon as renderIcon } from "../atoms/icon.js";
 

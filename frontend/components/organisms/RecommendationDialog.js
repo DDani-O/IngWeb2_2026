@@ -1,3 +1,4 @@
+/** Organismo `RecommendationDialog` de la biblioteca de componentes (sin estilos propios). */
 import { Component } from "../../core/Component.js";
 import { Modal } from "./Modal.js";
 import { RecommendationForm } from "./RecommendationForm.js";

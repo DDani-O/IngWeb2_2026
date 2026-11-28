@@ -1,3 +1,4 @@
+/** DTO del alta de un gasto. */
 import { IsOptional } from "class-validator";
 import { ExpenseField, ExpenseOrigin } from "./expense-fields";
 

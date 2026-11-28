@@ -1,3 +1,4 @@
+/** Tests e2e de `/analysis` y `/clients`. */
 import { INestApplication } from "@nestjs/common";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { DEFAULT_TIMEZONE, todayIn } from "../../src/modules/analysis/calendar";

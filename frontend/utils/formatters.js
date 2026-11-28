@@ -1,3 +1,4 @@
+/** Formatos de la UI: montos, fechas, meses, días de la semana y fechas relativas. */
 import { APP_CONFIG } from "./constants.js";
 
 /**

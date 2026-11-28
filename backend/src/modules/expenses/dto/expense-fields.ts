@@ -1,3 +1,4 @@
+/** Validaciones de los campos de un gasto, compartidas por los DTOs de alta y de edición. */
 import { applyDecorators } from "@nestjs/common";
 import {
   IsIn,

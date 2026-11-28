@@ -1,3 +1,4 @@
+/** Átomo `trend` de la biblioteca de componentes; estilos en trend.css. */
 import { html } from "../../utils/html.js";
 
 /**

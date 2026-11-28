@@ -1,3 +1,4 @@
+/** DTO de la query de recomendaciones enviadas. */
 import { Type } from "class-transformer";
 import { IsInt, IsOptional, IsUUID, Max, Min } from "class-validator";
 

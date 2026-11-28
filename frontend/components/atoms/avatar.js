@@ -1,3 +1,4 @@
+/** Átomo `avatar` de la biblioteca de componentes; estilos en avatar.css. */
 import { getInitials } from "../../utils/helpers.js";
 import { attrs, html } from "../../utils/html.js";
 

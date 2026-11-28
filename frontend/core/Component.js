@@ -1,3 +1,4 @@
+/** Clase base de los componentes y las páginas. */
 import { eventBus } from "./EventBus.js";
 
 /**

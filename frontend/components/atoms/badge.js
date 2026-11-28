@@ -1,3 +1,4 @@
+/** Átomo `badge` de la biblioteca de componentes; estilos en badge.css. */
 import { attrs, html } from "../../utils/html.js";
 import { icon as renderIcon } from "./icon.js";
 

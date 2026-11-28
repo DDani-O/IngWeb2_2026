@@ -1,3 +1,4 @@
+/** Controller de `/recommendations`: las que recibe el cliente y las que envía el asesor. */
 import {
   Body,
   Controller,

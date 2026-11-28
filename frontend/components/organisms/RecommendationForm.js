@@ -1,3 +1,4 @@
+/** Organismo `RecommendationForm` de la biblioteca de componentes; estilos en RecommendationForm.css. */
 import { Component } from "../../core/Component.js";
 import { RECOMMENDATION_PRIORITIES, RECOMMENDATION_TYPES } from "../../utils/constants.js";
 import { html } from "../../utils/html.js";

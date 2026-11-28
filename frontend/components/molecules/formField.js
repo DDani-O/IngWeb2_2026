@@ -1,3 +1,4 @@
+/** Moléculas `formField` y `formGrid` de la biblioteca de componentes; estilos en formField.css. */
 import { attrs, html } from "../../utils/html.js";
 
 /**

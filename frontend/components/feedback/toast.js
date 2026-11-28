@@ -1,3 +1,4 @@
+/** Avisos breves de la app (`createToaster`); estilos en toast.css. */
 import { UI_TIMING } from "../../utils/constants.js";
 
 /**

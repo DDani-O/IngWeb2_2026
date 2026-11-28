@@ -1,3 +1,4 @@
+/** Organismo `ProfileForm` de la biblioteca de componentes; estilos en ProfileForm.css. */
 import { Component } from "../../core/Component.js";
 import { html } from "../../utils/html.js";
 import { button } from "../atoms/button.js";

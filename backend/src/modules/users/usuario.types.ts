@@ -1,3 +1,4 @@
+/** Tipos del objeto `usuario` del contrato y de sus partes (perfil de gasto, referencias a otros usuarios). */
 import { UserRole } from "../../common/auth";
 
 /** Referencia corta a otro usuario (asesor o cliente) dentro de una respuesta. */

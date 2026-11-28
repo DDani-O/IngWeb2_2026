@@ -1,3 +1,4 @@
+/** Tests unitarios del parseo de la respuesta del modelo de OCR (`parseMonto` y `parseTicketResponse`). */
 import { ConfigService } from "@nestjs/config";
 import { APIConnectionTimeoutError } from "openai";
 import {

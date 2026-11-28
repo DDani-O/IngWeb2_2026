@@ -1,3 +1,4 @@
+/* Layout de la app (navbar, menú lateral, contenido) y patrones compartidos entre páginas. */
 .app-route-container,
 .route-view {
   min-height: 100vh;

@@ -1,3 +1,4 @@
+/** Servicio del front para el análisis de consumo; traduce las respuestas con adapters.js. */
 import { apiClient } from "../core/APIClient.js";
 import { toAdvisorSummary, toClientAnalysis } from "./adapters.js";
 

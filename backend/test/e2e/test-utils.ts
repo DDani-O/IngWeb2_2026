@@ -1,3 +1,4 @@
+/** Utilidades de los tests e2e: levantar la app, pedir rutas, registrar cuentas y limpiar sus datos. */
 import { INestApplication } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
 import { SupabaseClient } from "@supabase/supabase-js";

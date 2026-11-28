@@ -1,3 +1,4 @@
+/** Tipos del análisis: datos que reciben las reglas y objetos `analisis`, `resumen_asesor` y `resumen_cliente`. */
 import { PerfilDeGasto, PerfilVigente } from "../users/usuario.types";
 
 /** Datos mínimos de un gasto para el análisis. */

@@ -1,3 +1,4 @@
+/** Molécula `mediaItem` de la biblioteca de componentes; estilos en mediaItem.css. */
 import { attrs, cx, html } from "../../utils/html.js";
 
 /**

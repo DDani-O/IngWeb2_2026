@@ -1,3 +1,4 @@
+/** Controller de `/auth`: registro, login, usuario autenticado y edición del perfil. */
 import {
   Body,
   Controller,

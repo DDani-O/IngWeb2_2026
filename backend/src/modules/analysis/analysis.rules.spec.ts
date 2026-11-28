@@ -1,3 +1,4 @@
+/** Tests unitarios de las reglas del análisis (`analysis.rules.ts`). */
 import {
   addDays,
   monthKeysUntil,

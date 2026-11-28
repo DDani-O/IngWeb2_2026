@@ -1,3 +1,4 @@
+/** Controller de `/expenses`: CRUD de los gastos del cliente. */
 import {
   Body,
   Controller,

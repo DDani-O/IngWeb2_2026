@@ -1,3 +1,4 @@
+/** Layout autenticado (cliente y asesor) y la configuración de navegación de cada rol. */
 import { Component } from "../../core/Component.js";
 import { EVENTS, ROUTES } from "../../utils/constants.js";
 import { buildHash, getInitials } from "../../utils/helpers.js";

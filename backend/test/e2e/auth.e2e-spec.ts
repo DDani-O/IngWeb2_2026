@@ -1,3 +1,4 @@
+/** Tests e2e de `/auth`. */
 import { INestApplication } from "@nestjs/common";
 import { SupabaseClient } from "@supabase/supabase-js";
 import {

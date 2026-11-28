@@ -1,3 +1,4 @@
+/** Controlador de la página `#/asesor/perfil` (template perfil.html). */
 import { PageController } from "../../core/PageController.js";
 import { button } from "../../components/atoms/button.js";
 import { profileSummary } from "../../components/molecules/profileSummary.js";

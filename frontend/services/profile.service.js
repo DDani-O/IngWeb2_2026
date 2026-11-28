@@ -1,3 +1,4 @@
+/** Servicio del front para el perfil de cuenta y los perfiles de gasto; traduce las respuestas con adapters.js. */
 import { apiClient } from "../core/APIClient.js";
 import { eventBus } from "../core/EventBus.js";
 import { EVENTS } from "../utils/constants.js";

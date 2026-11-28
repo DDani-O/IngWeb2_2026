@@ -1,3 +1,4 @@
+/** DTO de la asignación del perfil de gasto por el asesor. */
 import { IsOptional, IsString, IsUUID, MaxLength } from "class-validator";
 import { TrimToNull } from "../../../common/validation/transforms";
 

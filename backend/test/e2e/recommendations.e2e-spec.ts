@@ -1,3 +1,4 @@
+/** Tests e2e de `/recommendations` y de `/clients/:id/expenses`. */
 import { INestApplication } from "@nestjs/common";
 import { SupabaseClient } from "@supabase/supabase-js";
 import {

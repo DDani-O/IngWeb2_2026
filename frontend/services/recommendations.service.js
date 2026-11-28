@@ -1,3 +1,4 @@
+/** Servicio del front para las recomendaciones; traduce las respuestas con adapters.js. */
 import { apiClient } from "../core/APIClient.js";
 import { toRecommendation, toRecommendationPayload } from "./adapters.js";
 

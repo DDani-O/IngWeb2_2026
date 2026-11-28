@@ -1,3 +1,4 @@
+/** Organismo `ChartCard` de la biblioteca de componentes; estilos en ChartCard.css. */
 import { Component } from "../../core/Component.js";
 import { EVENTS } from "../../utils/constants.js";
 import { formatCurrency } from "../../utils/formatters.js";

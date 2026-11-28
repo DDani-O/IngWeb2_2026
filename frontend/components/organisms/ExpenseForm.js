@@ -1,3 +1,4 @@
+/** Organismo `ExpenseForm` de la biblioteca de componentes (sin estilos propios). */
 import { Component } from "../../core/Component.js";
 import { todayIsoDate } from "../../utils/formatters.js";
 import { html } from "../../utils/html.js";

@@ -1,3 +1,4 @@
+/** Controller de `/tickets/upload`. */
 import {
   Controller,
   Post,

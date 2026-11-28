@@ -1,3 +1,4 @@
+/** Molécula `alertItem` de la biblioteca de componentes; estilos en alertItem.css. */
 import { attrs, html } from "../../utils/html.js";
 
 const DEFAULT_EMOJI = { danger: "⚠️", warning: "📈", success: "✅", info: "💡" };

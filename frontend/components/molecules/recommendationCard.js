@@ -1,3 +1,4 @@
+/** Molécula `recommendationCard` y las etiquetas de tipo y prioridad; estilos en recommendationCard.css. */
 import { PRIORITY_TONES, RECOMMENDATION_PRIORITIES, RECOMMENDATION_TYPES } from "../../utils/constants.js";
 import { formatDate } from "../../utils/formatters.js";
 import { html } from "../../utils/html.js";

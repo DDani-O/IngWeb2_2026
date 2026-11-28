@@ -1,3 +1,4 @@
+/** Molécula `dateCard` de la biblioteca de componentes; estilos en dateCard.css. */
 import { APP_CONFIG } from "../../utils/constants.js";
 import { html } from "../../utils/html.js";
 

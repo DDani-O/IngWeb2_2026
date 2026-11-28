@@ -1,3 +1,4 @@
+/** Tests e2e de `/tickets/upload` y del gasto creado a partir de un ticket. */
 import { INestApplication } from "@nestjs/common";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { APIConnectionTimeoutError } from "openai";

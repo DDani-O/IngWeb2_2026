@@ -1,3 +1,4 @@
+/** Cliente de la API (único punto de red del front), con los drivers `http` y `mock` y el error normalizado. */
 import { API_CONFIG, EVENTS, STORAGE_KEYS, UI_TIMING } from "../utils/constants.js";
 import { sleep } from "../utils/helpers.js";
 import { eventBus } from "./EventBus.js";

@@ -1,3 +1,4 @@
+/** Servicio del front para las categorías de gasto; traduce las respuestas con adapters.js. */
 import { apiClient } from "../core/APIClient.js";
 import { toCategory } from "./adapters.js";
 

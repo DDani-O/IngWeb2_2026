@@ -1,3 +1,4 @@
+/** DTO del login. */
 import { IsEmail, IsNotEmpty, IsString } from "class-validator";
 import { TrimLowercase } from "../../../common/validation/transforms";
 

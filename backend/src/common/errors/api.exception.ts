@@ -1,3 +1,4 @@
+/** Errores del contrato: códigos, cuerpo de error, `ApiException` y los helpers para lanzarlos. */
 import { HttpException, HttpStatus } from "@nestjs/common";
 
 /**

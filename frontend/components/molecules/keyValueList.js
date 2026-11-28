@@ -1,3 +1,4 @@
+/** Molécula `keyValueList` de la biblioteca de componentes; estilos en keyValueList.css. */
 import { html } from "../../utils/html.js";
 
 /**

@@ -1,3 +1,4 @@
+/** Moléculas de estado (vacío, cargando y error) de la biblioteca de componentes; estilos en stateBlock.css. */
 import { html } from "../../utils/html.js";
 import { button } from "../atoms/button.js";
 import { icon as renderIcon } from "../atoms/icon.js";

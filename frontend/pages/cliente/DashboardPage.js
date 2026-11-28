@@ -1,3 +1,4 @@
+/** Controlador de la página `#/cliente/dashboard` (template dashboard.html). */
 import { PageController } from "../../core/PageController.js";
 import { badge } from "../../components/atoms/badge.js";
 import { button } from "../../components/atoms/button.js";

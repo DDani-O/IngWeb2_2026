@@ -1,3 +1,4 @@
+/** Controlador de la página `#/cliente/perfil` (template perfil.html). */
 import { PageController } from "../../core/PageController.js";
 import { themeManager } from "../../core/ThemeManager.js";
 import { button } from "../../components/atoms/button.js";

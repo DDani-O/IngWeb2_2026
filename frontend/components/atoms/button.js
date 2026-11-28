@@ -1,3 +1,4 @@
+/** Átomo `button` de la biblioteca de componentes; estilos en button.css. */
 import { attrs, cx, html } from "../../utils/html.js";
 import { icon as renderIcon } from "./icon.js";
 

@@ -1,3 +1,4 @@
+/** Router de la SPA: ruteo por hash, layouts persistentes y guard de navegación. */
 import { buildHash, parseQueryString } from "../utils/helpers.js";
 import { loadTemplate } from "./templateLoader.js";
 

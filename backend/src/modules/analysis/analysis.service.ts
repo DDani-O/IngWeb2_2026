@@ -1,3 +1,4 @@
+/** Servicio del análisis: lee los gastos de Supabase, aplica las reglas y guarda la clasificación de perfil. */
 import { Inject, Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { SupabaseClient } from "@supabase/supabase-js";

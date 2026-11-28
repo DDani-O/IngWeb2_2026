@@ -1,3 +1,4 @@
+/** Organismo `FilterBar` de la biblioteca de componentes; estilos en FilterBar.css. */
 import { Component } from "../../core/Component.js";
 import { UI_TIMING } from "../../utils/constants.js";
 import { debounce } from "../../utils/helpers.js";

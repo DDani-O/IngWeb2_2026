@@ -1,3 +1,4 @@
+/** Molécula `profileSummary` de la biblioteca de componentes; estilos en profileSummary.css. */
 import { html } from "../../utils/html.js";
 import { avatar } from "../atoms/avatar.js";
 import { keyValueList } from "./keyValueList.js";

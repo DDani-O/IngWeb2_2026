@@ -1,3 +1,4 @@
+/** Servicio de tickets: valida la imagen, la sube a Storage, la analiza con el OCR y guarda el resultado. */
 import { Inject, Injectable, Logger } from "@nestjs/common";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { internalError, validationError } from "../../common/errors";

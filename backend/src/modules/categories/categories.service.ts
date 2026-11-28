@@ -1,3 +1,4 @@
+/** Servicio de los catálogos de categorías y de perfiles de gasto. */
 import { Inject, Injectable, Logger } from "@nestjs/common";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { internalError } from "../../common/errors";

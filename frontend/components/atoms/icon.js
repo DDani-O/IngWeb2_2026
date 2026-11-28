@@ -1,3 +1,4 @@
+/** Átomo `icon` de la biblioteca de componentes (sin estilos propios). */
 import { attrs, html } from "../../utils/html.js";
 
 /**

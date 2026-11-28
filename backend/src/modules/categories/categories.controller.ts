@@ -1,3 +1,4 @@
+/** Controller de los catálogos: `/categories` y `/spending-profiles`. */
 import { Controller, Get, UseGuards } from "@nestjs/common";
 import { JwtAuthGuard } from "../../common/auth";
 import { CategoriesService } from "./categories.service";

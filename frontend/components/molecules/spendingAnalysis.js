@@ -1,3 +1,4 @@
+/** Bloques del análisis de consumo (indicadores, gráficos, ranking e inusuales) que comparten varias páginas. */
 import { formatCurrency, formatDate, formatMonth, formatShortDate } from "../../utils/formatters.js";
 import { html } from "../../utils/html.js";
 import { alertItem } from "./alertItem.js";

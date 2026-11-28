@@ -1,3 +1,4 @@
+/** Molécula `clientCard` y las columnas y vistas de la lista de clientes del asesor; estilos en clientCard.css. */
 import { RISK_LEVELS } from "../../utils/constants.js";
 import { formatCurrency, formatDaysAgo } from "../../utils/formatters.js";
 import { html } from "../../utils/html.js";

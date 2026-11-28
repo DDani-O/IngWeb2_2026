@@ -1,3 +1,4 @@
+/** Tests e2e de `/categories` y `/spending-profiles`. */
 import { INestApplication } from "@nestjs/common";
 import { SupabaseClient } from "@supabase/supabase-js";
 import {

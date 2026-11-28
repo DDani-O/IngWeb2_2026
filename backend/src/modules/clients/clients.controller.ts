@@ -1,3 +1,4 @@
+/** Controller de `/clients`: cartera del asesor, detalle y gastos de cada cliente, y su perfil de gasto. */
 import {
   Body,
   Controller,

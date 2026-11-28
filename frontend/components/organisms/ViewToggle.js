@@ -1,3 +1,4 @@
+/** Organismo `ViewToggle` de la biblioteca de componentes; estilos en ViewToggle.css. */
 import { Component } from "../../core/Component.js";
 import { attrs, html } from "../../utils/html.js";
 import { icon } from "../atoms/icon.js";

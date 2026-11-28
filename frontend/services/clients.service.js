@@ -1,3 +1,4 @@
+/** Servicio del front para la cartera del asesor; traduce las respuestas con adapters.js. */
 import { apiClient } from "../core/APIClient.js";
 import { toClientSummary, toExpense, toExpenseQuery, toSpendingProfile, toUser } from "./adapters.js";
 

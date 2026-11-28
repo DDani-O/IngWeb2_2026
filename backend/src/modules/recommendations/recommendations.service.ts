@@ -1,3 +1,4 @@
+/** Servicio de recomendaciones: listar, crear y marcar como leídas. */
 import { Inject, Injectable, Logger } from "@nestjs/common";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { isUUID } from "class-validator";

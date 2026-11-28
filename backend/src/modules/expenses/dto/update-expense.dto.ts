@@ -1,3 +1,4 @@
+/** DTO de la edición de un gasto. */
 import { IsOptional } from "class-validator";
 import { ExpenseField, ExpenseOrigin } from "./expense-fields";
 

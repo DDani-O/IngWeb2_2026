@@ -1,3 +1,4 @@
+/** Servicio del front para los gastos; traduce las respuestas con adapters.js. */
 import { apiClient } from "../core/APIClient.js";
 import { toExpense, toExpensePayload, toExpenseQuery } from "./adapters.js";
 

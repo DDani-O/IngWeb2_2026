@@ -1,3 +1,4 @@
+/** Organismo `DataTable` de la biblioteca de componentes; estilos en DataTable.css. */
 import { Component } from "../../core/Component.js";
 import { attrs, html } from "../../utils/html.js";
 import { button } from "../atoms/button.js";

@@ -1,3 +1,4 @@
+/** Organismo `Modal` y el atajo `confirmDialog()`; estilos en Modal.css. */
 import { Component } from "../../core/Component.js";
 import { html } from "../../utils/html.js";
 

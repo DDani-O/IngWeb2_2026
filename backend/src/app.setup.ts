@@ -1,3 +1,4 @@
+/** Configuración común de la app Nest (prefijo, validación y errores), compartida por main.ts y los e2e. */
 import {
   INestApplication,
   ValidationError,

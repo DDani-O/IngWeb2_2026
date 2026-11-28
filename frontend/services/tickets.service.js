@@ -1,3 +1,4 @@
+/** Servicio del front para la carga de tickets; traduce las respuestas con adapters.js. */
 import { apiClient } from "../core/APIClient.js";
 import { API_CONFIG } from "../utils/constants.js";
 import { toTicketAnalysis } from "./adapters.js";

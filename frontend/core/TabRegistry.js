@@ -1,3 +1,4 @@
+/** Singleton `tabRegistry`: qué ruta tiene abierta cada pestaña de la app. */
 import { STORAGE_KEYS, UI_TIMING } from "../utils/constants.js";
 
 /**

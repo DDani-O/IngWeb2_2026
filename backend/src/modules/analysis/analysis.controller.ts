@@ -1,3 +1,4 @@
+/** Controller de `/analysis`: análisis propio, el de un cliente y el resumen del asesor. */
 import { Controller, Get, Param, UseGuards } from "@nestjs/common";
 import { AssignmentsService } from "../../common/assignments/assignments.service";
 import {

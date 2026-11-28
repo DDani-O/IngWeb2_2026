@@ -1,3 +1,4 @@
+/** Servicio de gastos: listado con filtros, alta (con vínculo al ticket), edición y borrado. */
 import { Inject, Injectable, Logger } from "@nestjs/common";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { isUUID } from "class-validator";

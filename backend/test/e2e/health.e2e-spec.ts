@@ -1,3 +1,4 @@
+/** Tests e2e de `/health`. */
 import { INestApplication } from "@nestjs/common";
 import { api, createTestApp } from "./test-utils";
 

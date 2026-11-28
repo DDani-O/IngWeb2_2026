@@ -1,3 +1,4 @@
+/** Servicio de autenticación: cuentas en Supabase Auth, emisión del JWT y asignación de asesor al registrar un cliente. */
 import { HttpStatus, Inject, Injectable, Logger } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { SupabaseClient } from "@supabase/supabase-js";

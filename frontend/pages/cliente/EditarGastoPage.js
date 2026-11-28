@@ -1,3 +1,4 @@
+/** Controlador de la página `#/cliente/gastos/:id` (template editar-gasto.html). */
 import { PageController } from "../../core/PageController.js";
 import { badge } from "../../components/atoms/badge.js";
 import { keyValueList } from "../../components/molecules/keyValueList.js";

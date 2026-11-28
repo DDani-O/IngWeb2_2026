@@ -1,3 +1,4 @@
+/** Controller del health check (`GET /health`). */
 import { Controller, Get } from "@nestjs/common";
 
 /**

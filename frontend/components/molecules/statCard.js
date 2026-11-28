@@ -1,3 +1,4 @@
+/** Molécula `statCard` de la biblioteca de componentes; estilos en statCard.css. */
 import { formatCurrency } from "../../utils/formatters.js";
 import { html } from "../../utils/html.js";
 import { trend as renderTrend } from "../atoms/trend.js";

@@ -1,3 +1,4 @@
+/** Servicio que controla si un cliente está asignado a un asesor. */
 import { Inject, Injectable, Logger } from "@nestjs/common";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { isUUID } from "class-validator";

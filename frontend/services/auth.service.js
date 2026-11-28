@@ -1,3 +1,4 @@
+/** Servicio del front para la autenticación; traduce las respuestas con adapters.js. */
 import { apiClient } from "../core/APIClient.js";
 import { toRegisterPayload, toSession, toUser } from "./adapters.js";
 

@@ -1,3 +1,4 @@
+/** Controlador de la página `#/cliente/patrones` (template patrones.html). */
 import { PageController } from "../../core/PageController.js";
 import { alertItem } from "../../components/molecules/alertItem.js";
 import { emptyState } from "../../components/molecules/stateBlock.js";
