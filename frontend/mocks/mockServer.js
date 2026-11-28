@@ -24,20 +24,49 @@ class HttpError extends Error {
 
 const notFound = (what) => new HttpError(404, "NO_ENCONTRADO", `${what} no encontrado.`);
 
-function loadDb() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEYS.MOCK_DB);
-    const parsed = raw ? JSON.parse(raw) : null;
-    if (parsed?.version === SEED_VERSION) {
-      return parsed;
-    }
-  } catch {
-    // Base corrupta: se regenera.
-  }
+/** Colecciones del seed: una base guardada a la que le falta alguna es de otra versión. */
+const SEED_COLLECTIONS = Object.entries(buildSeed(new Date()))
+  .filter(([, value]) => Array.isArray(value))
+  .map(([key]) => key);
 
+/**
+ * Por qué la base guardada no sirve para esta versión del seed, o `null` si sirve.
+ * @returns {string|null}
+ */
+function incompatibility(data) {
+  if (data?.version !== SEED_VERSION) {
+    return `datos de otra versión: ${data?.version ?? "sin versión"}, actual ${SEED_VERSION}`;
+  }
+  const missing = SEED_COLLECTIONS.filter((key) => !Array.isArray(data[key]));
+  return missing.length ? `faltan colecciones: ${missing.join(", ")}` : null;
+}
+
+/** Arma una base nueva desde el seed y la guarda; avisa por consola por qué se regeneró. */
+function resetDb(reason = null) {
+  if (reason) {
+    console.warn(`[mock] Se regeneró la base simulada (${reason}).`);
+  }
   const seed = buildSeed(new Date());
   localStorage.setItem(STORAGE_KEYS.MOCK_DB, JSON.stringify(seed));
   return seed;
+}
+
+/**
+ * Lee la base de localStorage. Si no existe, está corrupta o es de otra versión del front
+ * (otro SEED_VERSION o colecciones distintas), se regenera en vez de fallar en cada pedido.
+ */
+function loadDb() {
+  let parsed = null;
+  try {
+    parsed = JSON.parse(localStorage.getItem(STORAGE_KEYS.MOCK_DB) || "null");
+  } catch {
+    return resetDb("datos guardados ilegibles");
+  }
+  if (!parsed) {
+    return resetDb();
+  }
+  const problem = incompatibility(parsed);
+  return problem ? resetDb(problem) : parsed;
 }
 
 let db = loadDb();
@@ -738,34 +767,55 @@ function matchRoute(method, path) {
  * Atiende un pedido con la misma semántica HTTP que el backend real.
  * @returns {Promise<{status:number, body:any}>}
  */
-export async function handleMockRequest({ method, path, query = {}, body = null, token = null }) {
+/**
+ * Atiende un pedido como lo haría el backend: `{ status, body }` con el formato de error
+ * del contrato. Un error inesperado (no un `HttpError`) suele venir de datos guardados
+ * que ya no coinciden con el código: se regenera la base y se reintenta una sola vez.
+ */
+export async function handleMockRequest(request) {
   try {
-    const match = matchRoute(method, path);
-    if (!match) {
-      throw new HttpError(404, "RUTA_INEXISTENTE", `No existe ${method} ${path}.`);
-    }
-
-    const { route, params } = match;
-    let user = null;
-
-    if (route.auth !== false) {
-      const userId = token?.startsWith(TOKEN_PREFIX) ? token.slice(TOKEN_PREFIX.length) : null;
-      user = db.usuarios.find((item) => item.id === userId) || null;
-      if (!user) {
-        throw new HttpError(401, "NO_AUTENTICADO", "La sesion no es valida o expiro.");
-      }
-      if (route.role && user.rol !== route.role) {
-        throw new HttpError(403, "PROHIBIDO", "No tenes permiso para esta accion.");
-      }
-    }
-
-    // Copia para que el llamador no comparta referencias con la "base".
-    const result = route.handler({ user, params, query, body });
-    return { status: result.status, body: result.body === null ? null : JSON.parse(JSON.stringify(result.body)) };
+    return dispatch(request);
   } catch (error) {
     if (error instanceof HttpError) {
-      return { status: error.status, body: { error: true, mensaje: error.message, codigo: error.codigo, detalles: error.detalles } };
+      return errorResponse(error);
     }
-    return { status: 500, body: { error: true, mensaje: "Error interno del servidor simulado.", codigo: "ERROR_INTERNO", detalles: null } };
+    db = resetDb(`error inesperado: ${error?.message || error}`);
+    try {
+      return dispatch(request);
+    } catch (retryError) {
+      return retryError instanceof HttpError
+        ? errorResponse(retryError)
+        : { status: 500, body: { error: true, mensaje: "Error interno del servidor simulado.", codigo: "ERROR_INTERNO", detalles: null } };
+    }
   }
+}
+
+function errorResponse(error) {
+  return { status: error.status, body: { error: true, mensaje: error.message, codigo: error.codigo, detalles: error.detalles } };
+}
+
+/** Resuelve la ruta, controla sesión y rol, y ejecuta el handler (lanza los errores). */
+function dispatch({ method, path, query = {}, body = null, token = null }) {
+  const match = matchRoute(method, path);
+  if (!match) {
+    throw new HttpError(404, "RUTA_INEXISTENTE", `No existe ${method} ${path}.`);
+  }
+
+  const { route, params } = match;
+  let user = null;
+
+  if (route.auth !== false) {
+    const userId = token?.startsWith(TOKEN_PREFIX) ? token.slice(TOKEN_PREFIX.length) : null;
+    user = db.usuarios.find((item) => item.id === userId) || null;
+    if (!user) {
+      throw new HttpError(401, "NO_AUTENTICADO", "La sesion no es valida o expiro.");
+    }
+    if (route.role && user.rol !== route.role) {
+      throw new HttpError(403, "PROHIBIDO", "No tenes permiso para esta accion.");
+    }
+  }
+
+  // Copia para que el llamador no comparta referencias con la "base".
+  const result = route.handler({ user, params, query, body });
+  return { status: result.status, body: result.body === null ? null : JSON.parse(JSON.stringify(result.body)) };
 }
