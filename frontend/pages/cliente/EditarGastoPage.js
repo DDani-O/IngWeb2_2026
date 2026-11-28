@@ -2,7 +2,7 @@ import { PageController } from "../../core/PageController.js";
 import { badge } from "../../components/atoms/badge.js";
 import { keyValueList } from "../../components/molecules/keyValueList.js";
 import { ExpenseForm } from "../../components/organisms/ExpenseForm.js";
-import { confirmDialog } from "../../components/organisms/Modal.js";
+import { confirmExpenseDeletion } from "../../components/feedback/confirmExpenseDeletion.js";
 import { categoriesService } from "../../services/categories.service.js";
 import { expensesService } from "../../services/expenses.service.js";
 import { EXPENSE_ORIGINS, ROUTES } from "../../utils/constants.js";
@@ -78,11 +78,7 @@ export class EditarGastoPage extends PageController {
       return;
     }
 
-    const confirmed = await confirmDialog({
-      title: "Eliminar gasto",
-      message: `Se eliminara el gasto de ${this.expense.merchant} por ${formatCurrency(this.expense.amount)}.`,
-      confirmLabel: "Eliminar",
-    });
+    const confirmed = await confirmExpenseDeletion(this.expense);
     if (!confirmed || !this._isAlive()) {
       return;
     }

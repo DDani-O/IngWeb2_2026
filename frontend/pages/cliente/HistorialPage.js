@@ -4,7 +4,8 @@ import { badge } from "../../components/atoms/badge.js";
 import { keyValueList } from "../../components/molecules/keyValueList.js";
 import { DataTable } from "../../components/organisms/DataTable.js";
 import { FilterBar } from "../../components/organisms/FilterBar.js";
-import { Modal, confirmDialog } from "../../components/organisms/Modal.js";
+import { confirmExpenseDeletion } from "../../components/feedback/confirmExpenseDeletion.js";
+import { Modal } from "../../components/organisms/Modal.js";
 import { categoriesService } from "../../services/categories.service.js";
 import { expensesService } from "../../services/expenses.service.js";
 import { EXPENSE_ORIGINS, ROUTES } from "../../utils/constants.js";
@@ -82,50 +83,48 @@ export class HistorialPage extends PageController {
     this.table.update({ rows: items });
   }
 
+  /** Acciones de cada fila de la tabla (delegadas por `DataTable`). */
   async _handleRowAction({ action, row: expense, trigger }) {
     if (!expense) {
       return;
     }
+    const handlers = {
+      detail: () => this._showDetail(expense),
+      edit: () => this.options.router?.navigate(fillRoute(ROUTES.CLIENT_EDITAR_GASTO, { id: expense.id })),
+      delete: () => this._deleteExpense(expense, trigger),
+    };
+    await handlers[action]?.();
+  }
 
-    if (action === "detail") {
-      this.detailModal.setContent(
-        keyValueList({
-          items: [
-            { label: "Comercio", value: expense.merchant },
-            { label: "Fecha", value: formatDate(expense.date) },
-            { label: "Categoria", value: expense.category },
-            { label: "Monto", value: formatCurrency(expense.amount) },
-            { label: "Origen", value: originBadge(expense) },
-            { label: "Descripcion", value: expense.description },
-          ],
-        })
-      );
-      this.detailModal.open();
+  _showDetail(expense) {
+    this.detailModal.setContent(
+      keyValueList({
+        items: [
+          { label: "Comercio", value: expense.merchant },
+          { label: "Fecha", value: formatDate(expense.date) },
+          { label: "Categoria", value: expense.category },
+          { label: "Monto", value: formatCurrency(expense.amount) },
+          { label: "Origen", value: originBadge(expense) },
+          { label: "Descripcion", value: expense.description },
+        ],
+      })
+    );
+    this.detailModal.open();
+  }
+
+  /** Pide confirmación, borra y recarga la tabla con los mismos filtros. */
+  async _deleteExpense(expense, trigger) {
+    const confirmed = await confirmExpenseDeletion(expense);
+    if (!confirmed || !this._isAlive()) {
       return;
     }
 
-    if (action === "edit") {
-      this.options.router?.navigate(fillRoute(ROUTES.CLIENT_EDITAR_GASTO, { id: expense.id }));
-      return;
-    }
-
-    if (action === "delete") {
-      const confirmed = await confirmDialog({
-        title: "Eliminar gasto",
-        message: `Se eliminara el gasto de ${expense.merchant} por ${formatCurrency(expense.amount)}.`,
-        confirmLabel: "Eliminar",
-      });
-      if (!confirmed || !this._isAlive()) {
-        return;
-      }
-
-      const removed = await this._runAction(() => expensesService.remove(expense.id).then(() => true), {
-        button: trigger,
-        successMessage: "Gasto eliminado del historial.",
-      });
-      if (removed && this._isAlive()) {
-        this._loadData(() => this._fetchExpenses());
-      }
+    const removed = await this._runAction(() => expensesService.remove(expense.id).then(() => true), {
+      button: trigger,
+      successMessage: "Gasto eliminado del historial.",
+    });
+    if (removed && this._isAlive()) {
+      this._loadData(() => this._fetchExpenses());
     }
   }
 }
