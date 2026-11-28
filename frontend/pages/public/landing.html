@@ -121,125 +121,127 @@
   </main>
 </div>
 
-<div class="modal fade auth-modal" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="loginModalLabel">Bienvenido de nuevo</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-      </div>
-      <form class="modal-body" id="loginForm" novalidate>
-        <div class="mb-3">
-          <label for="loginEmail" class="form-label">Correo Electronico</label>
-          <div class="auth-input-wrap">
-            <i class="fa-solid fa-envelope"></i>
-            <input id="loginEmail" name="email" type="email" class="form-control" placeholder="tu@email.com" required />
-          </div>
+<div id="landingAuthModals">
+  <div class="modal fade auth-modal" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="loginModalLabel">Bienvenido de nuevo</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
         </div>
-        <div class="mb-3">
-          <label for="loginPassword" class="form-label">Contrasena</label>
-          <div class="auth-input-wrap">
-            <i class="fa-solid fa-lock"></i>
-            <input id="loginPassword" name="password" type="password" class="form-control" placeholder="********" required />
+        <form class="modal-body" id="loginForm" novalidate>
+          <div class="mb-3">
+            <label for="loginEmail" class="form-label">Correo Electronico</label>
+            <div class="auth-input-wrap">
+              <i class="fa-solid fa-envelope"></i>
+              <input id="loginEmail" name="email" type="email" class="form-control" placeholder="tu@email.com" required />
+            </div>
           </div>
+          <div class="mb-3">
+            <label for="loginPassword" class="form-label">Contrasena</label>
+            <div class="auth-input-wrap">
+              <i class="fa-solid fa-lock"></i>
+              <input id="loginPassword" name="password" type="password" class="form-control" placeholder="********" required />
+            </div>
+          </div>
+          <p class="text-danger small mb-2 app-hidden" id="loginError"></p>
+          <button type="submit" class="action-btn action-btn--primary w-100 justify-content-center">Ingresar</button>
+        </form>
+        <div class="modal-footer d-flex justify-content-between">
+          <button type="button" class="btn btn-link text-info p-0" id="switchToRegister">No tienes cuenta?</button>
         </div>
-        <p class="text-danger small mb-2 app-hidden" id="loginError"></p>
-        <button type="submit" class="action-btn action-btn--primary w-100 justify-content-center">Ingresar</button>
-      </form>
-      <div class="modal-footer d-flex justify-content-between">
-        <button type="button" class="btn btn-link text-info p-0" id="switchToRegister">No tienes cuenta?</button>
       </div>
     </div>
   </div>
-</div>
 
-<div class="modal fade auth-modal" id="registerModal" tabindex="-1" aria-labelledby="registerModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-scrollable modal-lg register-modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="registerModalLabel">Crea tu cuenta gratis</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-      </div>
-      <form class="modal-body" id="registerForm" novalidate>
-        <div class="mb-3">
-          <label class="form-label d-block">Quiero usar FinTrack como</label>
-          <div class="register-role-group" role="radiogroup" aria-label="Perfil de registro">
-            <div class="form-check register-role-item">
-              <input class="form-check-input" type="radio" name="registerRole" id="registerRoleClient" value="cliente" checked />
-              <label class="form-check-label" for="registerRoleClient">Cliente</label>
-            </div>
-            <div class="form-check register-role-item">
-              <input class="form-check-input" type="radio" name="registerRole" id="registerRoleAdvisor" value="asesor" />
-              <label class="form-check-label" for="registerRoleAdvisor">Asesor</label>
-            </div>
-          </div>
+  <div class="modal fade auth-modal" id="registerModal" tabindex="-1" aria-labelledby="registerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg register-modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="registerModalLabel">Crea tu cuenta gratis</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
         </div>
+        <form class="modal-body" id="registerForm" novalidate>
+          <div class="mb-3">
+            <label class="form-label d-block">Quiero usar FinTrack como</label>
+            <div class="register-role-group" role="radiogroup" aria-label="Perfil de registro">
+              <div class="form-check register-role-item">
+                <input class="form-check-input" type="radio" name="registerRole" id="registerRoleClient" value="cliente" checked />
+                <label class="form-check-label" for="registerRoleClient">Cliente</label>
+              </div>
+              <div class="form-check register-role-item">
+                <input class="form-check-input" type="radio" name="registerRole" id="registerRoleAdvisor" value="asesor" />
+                <label class="form-check-label" for="registerRoleAdvisor">Asesor</label>
+              </div>
+            </div>
+          </div>
 
-        <div class="row g-2">
-          <div class="col-md-12">
-            <label for="registerFullName" class="form-label">Nombre Completo</label>
-            <div class="auth-input-wrap">
-              <i class="fa-solid fa-user"></i>
-              <input id="registerFullName" name="fullName" type="text" class="form-control" placeholder="Juan Perez" maxlength="120" required />
+          <div class="row g-2">
+            <div class="col-md-12">
+              <label for="registerFullName" class="form-label">Nombre Completo</label>
+              <div class="auth-input-wrap">
+                <i class="fa-solid fa-user"></i>
+                <input id="registerFullName" name="fullName" type="text" class="form-control" placeholder="Juan Perez" maxlength="120" required />
+              </div>
+            </div>
+            <div class="col-md-12">
+              <label for="registerEmail" class="form-label">Correo Electronico</label>
+              <div class="auth-input-wrap">
+                <i class="fa-solid fa-envelope"></i>
+                <input id="registerEmail" name="email" type="email" class="form-control" placeholder="tu@email.com" required />
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label for="registerPassword" class="form-label">Crea una Contrasena</label>
+              <div class="auth-input-wrap">
+                <i class="fa-solid fa-lock"></i>
+                <input id="registerPassword" name="password" type="password" class="form-control" placeholder="Minimo 8 caracteres" maxlength="72" required />
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label for="registerConfirmPassword" class="form-label">Confirmar Contrasena</label>
+              <div class="auth-input-wrap">
+                <i class="fa-solid fa-lock"></i>
+                <input id="registerConfirmPassword" name="confirmPassword" type="password" class="form-control" placeholder="Repite tu contrasena" required />
+              </div>
             </div>
           </div>
-          <div class="col-md-12">
-            <label for="registerEmail" class="form-label">Correo Electronico</label>
-            <div class="auth-input-wrap">
-              <i class="fa-solid fa-envelope"></i>
-              <input id="registerEmail" name="email" type="email" class="form-control" placeholder="tu@email.com" required />
+
+          <div id="registerAdvisorFields" class="row g-3 mt-1 app-hidden">
+            <div class="col-md-6">
+              <label for="registerLicenseNumber" class="form-label">Matricula</label>
+              <div class="auth-input-wrap">
+                <i class="fa-solid fa-id-card"></i>
+                <input id="registerLicenseNumber" name="licenseNumber" type="text" class="form-control" placeholder="Ej: A-12345" maxlength="60" />
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label for="registerSpecialty" class="form-label">Especialidad</label>
+              <div class="auth-input-wrap auth-input-wrap--select">
+                <i class="fa-solid fa-briefcase"></i>
+                <select id="registerSpecialty" name="specialty" class="form-select">
+                  <option value="">Seleccionar</option>
+                  <option value="Finanzas personales">Finanzas personales</option>
+                  <option value="Planificacion patrimonial">Planificacion patrimonial</option>
+                  <option value="Deuda y presupuesto">Deuda y presupuesto</option>
+                </select>
+              </div>
             </div>
           </div>
-          <div class="col-md-6">
-            <label for="registerPassword" class="form-label">Crea una Contrasena</label>
-            <div class="auth-input-wrap">
-              <i class="fa-solid fa-lock"></i>
-              <input id="registerPassword" name="password" type="password" class="form-control" placeholder="Minimo 8 caracteres" maxlength="72" required />
-            </div>
+
+          <div class="form-check auth-check-row mt-3">
+            <input class="form-check-input" type="checkbox" id="registerTerms" required />
+            <label class="form-check-label" for="registerTerms">Acepto terminos y condiciones</label>
           </div>
-          <div class="col-md-6">
-            <label for="registerConfirmPassword" class="form-label">Confirmar Contrasena</label>
-            <div class="auth-input-wrap">
-              <i class="fa-solid fa-lock"></i>
-              <input id="registerConfirmPassword" name="confirmPassword" type="password" class="form-control" placeholder="Repite tu contrasena" required />
-            </div>
-          </div>
+
+          <p class="text-danger small mt-2 app-hidden" id="registerError"></p>
+
+          <button type="submit" class="action-btn action-btn--primary w-100 justify-content-center mt-3">Comenzar mi prueba</button>
+        </form>
+        <div class="modal-footer d-flex justify-content-between">
+          <button type="button" class="btn btn-link text-info p-0" id="switchToLogin">Ya tienes cuenta?</button>
+          <button type="button" class="btn btn-link text-info p-0" data-bs-dismiss="modal">Cancelar</button>
         </div>
-
-        <div id="registerAdvisorFields" class="row g-3 mt-1 app-hidden">
-          <div class="col-md-6">
-            <label for="registerLicenseNumber" class="form-label">Matricula</label>
-            <div class="auth-input-wrap">
-              <i class="fa-solid fa-id-card"></i>
-              <input id="registerLicenseNumber" name="licenseNumber" type="text" class="form-control" placeholder="Ej: A-12345" maxlength="60" />
-            </div>
-          </div>
-          <div class="col-md-6">
-            <label for="registerSpecialty" class="form-label">Especialidad</label>
-            <div class="auth-input-wrap auth-input-wrap--select">
-              <i class="fa-solid fa-briefcase"></i>
-              <select id="registerSpecialty" name="specialty" class="form-select">
-                <option value="">Seleccionar</option>
-                <option value="Finanzas personales">Finanzas personales</option>
-                <option value="Planificacion patrimonial">Planificacion patrimonial</option>
-                <option value="Deuda y presupuesto">Deuda y presupuesto</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <div class="form-check auth-check-row mt-3">
-          <input class="form-check-input" type="checkbox" id="registerTerms" required />
-          <label class="form-check-label" for="registerTerms">Acepto terminos y condiciones</label>
-        </div>
-
-        <p class="text-danger small mt-2 app-hidden" id="registerError"></p>
-
-        <button type="submit" class="action-btn action-btn--primary w-100 justify-content-center mt-3">Comenzar mi prueba</button>
-      </form>
-      <div class="modal-footer d-flex justify-content-between">
-        <button type="button" class="btn btn-link text-info p-0" id="switchToLogin">Ya tienes cuenta?</button>
-        <button type="button" class="btn btn-link text-info p-0" data-bs-dismiss="modal">Cancelar</button>
       </div>
     </div>
   </div>

@@ -1,8 +1,8 @@
 /** Landing pública: secciones informativas y modales de login y registro. */
 import { Component } from "../../core/Component.js";
-import { LANDING_CONTENT, ROLES, UI_LAYOUT, UI_TIMING } from "../../utils/constants.js";
+import { AuthModals } from "../../components/organisms/AuthModals.js";
+import { LANDING_CONTENT, UI_LAYOUT, UI_TIMING } from "../../utils/constants.js";
 import { isSafeRelativeUrl, parseQueryString, renderStars } from "../../utils/helpers.js";
-import { validateLoginForm, validateRegisterForm } from "../../utils/validators.js";
 import { html } from "../../utils/html.js";
 
 /** Página `#/`. `?modal=login|register` abre el modal correspondiente al entrar. */
@@ -13,8 +13,7 @@ export class LandingPage extends Component {
     super(element, options);
     this.activeTestimonialIndex = 0;
     this.testimonialAutoplayId = null;
-    this.loginModal = null;
-    this.registerModal = null;
+    this.authModals = null;
   }
 
   render() {
@@ -32,9 +31,12 @@ export class LandingPage extends Component {
   }
 
   attachEvents() {
-    this._wireModals();
+    this.authModals = this.mountChild(AuthModals, "#landingAuthModals", {
+      authManager: this.options.authManager,
+      showToast: this.options.showToast,
+    });
+    this.listen(this.element, "auth-success", (event) => this._navigateByRole(event.detail.user.role));
     this._wireLandingInteractions();
-    this._wireAuthFlows();
     this._startTestimonialsAutoplay();
     this._openModalFromQuery(this.options.query);
 
@@ -64,41 +66,14 @@ export class LandingPage extends Component {
 
   /** Abre el modal de login o de registro (cierra el otro). @param {"login"|"register"} mode */
   openAuthModal(mode = "login") {
-    this._hideError("#loginError");
-    this._hideError("#registerError");
-
-    if (mode === "register") {
-      this.loginModal?.hide();
-      this.registerModal?.show();
-      return;
-    }
-
-    this.registerModal?.hide();
-    this.loginModal?.show();
+    this.authModals?.open(mode);
   }
 
+  /** Corta el carrusel; los modales los cierra `AuthModals` al destruirse con la página. */
   destroy() {
     this._stopTestimonialsAutoplay();
-    this.loginModal?.hide();
-    this.registerModal?.hide();
-    this.loginModal = null;
-    this.registerModal = null;
+    this.authModals = null;
     super.destroy();
-  }
-
-  _wireModals() {
-    const loginModalElement = this.element.querySelector("#loginModal");
-    const registerModalElement = this.element.querySelector("#registerModal");
-
-    this.loginModal =
-      window.bootstrap && loginModalElement
-        ? window.bootstrap.Modal.getOrCreateInstance(loginModalElement)
-        : null;
-
-    this.registerModal =
-      window.bootstrap && registerModalElement
-        ? window.bootstrap.Modal.getOrCreateInstance(registerModalElement)
-        : null;
   }
 
   _wireLandingInteractions() {
@@ -133,98 +108,6 @@ export class LandingPage extends Component {
 
       const direction = navButton.dataset.testimonialNav === "prev" ? -1 : 1;
       this._cycleTestimonials(direction);
-    });
-  }
-
-  _wireAuthFlows() {
-    const switchToRegister = this.element.querySelector("#switchToRegister");
-    const switchToLogin = this.element.querySelector("#switchToLogin");
-    const roleClient = this.element.querySelector("#registerRoleClient");
-    const roleAdvisor = this.element.querySelector("#registerRoleAdvisor");
-    const advisorFields = this.element.querySelector("#registerAdvisorFields");
-
-    this.listen(switchToRegister, "click", () => {
-      this.loginModal?.hide();
-      this.registerModal?.show();
-    });
-
-    this.listen(switchToLogin, "click", () => {
-      this.registerModal?.hide();
-      this.loginModal?.show();
-    });
-
-    const updateAdvisorFields = () => {
-      const advisorEnabled = roleAdvisor?.checked;
-      advisorFields?.classList.toggle("app-hidden", !advisorEnabled);
-    };
-
-    this.listen(roleClient, "change", updateAdvisorFields);
-    this.listen(roleAdvisor, "change", updateAdvisorFields);
-    updateAdvisorFields();
-
-    const loginForm = this.element.querySelector("#loginForm");
-    this.listen(loginForm, "submit", async (event) => {
-      event.preventDefault();
-      this._hideError("#loginError");
-
-      const payload = {
-        email: this.element.querySelector("#loginEmail")?.value || "",
-        password: this.element.querySelector("#loginPassword")?.value || "",
-      };
-
-      const validation = validateLoginForm(payload);
-      if (!validation.isValid) {
-        this._showError("#loginError", validation.errors[0]);
-        return;
-      }
-
-      try {
-        const user = await this.options.authManager.login(payload);
-        this.options.showToast?.(`Bienvenido ${user.fullName}.`, "success");
-        this.loginModal?.hide();
-        this._navigateByRole(user.role);
-      } catch (error) {
-        this._showError("#loginError", error.message || "No se pudo iniciar sesion.");
-      }
-    });
-
-    const registerForm = this.element.querySelector("#registerForm");
-    this.listen(registerForm, "submit", async (event) => {
-      event.preventDefault();
-      this._hideError("#registerError");
-
-      const payload = {
-        role: roleAdvisor?.checked ? ROLES.ADVISOR : ROLES.CLIENT,
-        fullName: this.element.querySelector("#registerFullName")?.value || "",
-        email: this.element.querySelector("#registerEmail")?.value || "",
-        password: this.element.querySelector("#registerPassword")?.value || "",
-        confirmPassword:
-          this.element.querySelector("#registerConfirmPassword")?.value || "",
-        licenseNumber:
-          this.element.querySelector("#registerLicenseNumber")?.value || "",
-        specialty: this.element.querySelector("#registerSpecialty")?.value || "",
-        acceptTerms: Boolean(this.element.querySelector("#registerTerms")?.checked),
-      };
-
-      const validation = validateRegisterForm(payload);
-      if (!validation.isValid) {
-        this._showError("#registerError", validation.errors[0]);
-        return;
-      }
-
-      try {
-        const user = await this.options.authManager.register(payload);
-        this.options.showToast?.(`Cuenta creada para ${user.fullName}.`, "success");
-        this.registerModal?.hide();
-        registerForm.reset();
-        updateAdvisorFields();
-        this._navigateByRole(user.role);
-      } catch (error) {
-        this._showError(
-          "#registerError",
-          error.message || "No se pudo registrar la cuenta."
-        );
-      }
     });
   }
 
@@ -452,23 +335,4 @@ export class LandingPage extends Component {
       .join("");
   }
 
-  _showError(selector, message) {
-    const element = this.element.querySelector(selector);
-    if (!element) {
-      return;
-    }
-
-    element.textContent = message;
-    element.classList.remove("app-hidden");
-  }
-
-  _hideError(selector) {
-    const element = this.element.querySelector(selector);
-    if (!element) {
-      return;
-    }
-
-    element.textContent = "";
-    element.classList.add("app-hidden");
-  }
 }
